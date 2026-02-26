@@ -709,7 +709,8 @@ _gemini_lock = threading.Lock()
 
 
 def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
-                     gemini_disponible, ruta_cuarentena, interactivo):
+                     gemini_disponible, ruta_cuarentena, interactivo,
+                     ruta_inbox=None):
     """Procesa un solo PDF: pdfplumber + OCR tiers + clasificacion + confianza.
 
     Thread-safe: cada PDF es independiente. Gemini serializado via _gemini_lock.
@@ -718,6 +719,13 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         dict con keys: doc (dict|None), hash, avisos (list), tier (int)
     """
     nombre_archivo = ruta_pdf.name
+    # Guardar carpeta origen relativa al inbox (para clasificacion por actividad)
+    carpeta_origen = ""
+    if ruta_inbox and ruta_pdf.parent != ruta_inbox:
+        try:
+            carpeta_origen = str(ruta_pdf.parent.relative_to(ruta_inbox))
+        except ValueError:
+            carpeta_origen = ruta_pdf.parent.name
     logger.info(f"Procesando: {nombre_archivo}")
     avisos = []
 
@@ -908,6 +916,8 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_ocr_tier": ocr_tier,
         "_ocr_tier_motivo": tier_motivo,
         "_ocr_motores_usados": motores_usados,
+        "_carpeta_origen": carpeta_origen,
+        "_ruta_completa": str(ruta_pdf),
     }
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
@@ -942,10 +952,17 @@ def ejecutar_intake(
         resultado.error("No existe carpeta inbox/", {"ruta": str(ruta_inbox)})
         return resultado
 
-    # Buscar PDFs
-    pdfs = sorted(ruta_inbox.glob("*.pdf"))
+    # Buscar PDFs (recursivo para soportar subcarpetas por actividad/trimestre)
+    # Excluir carpetas de referencia/procesado que no deben pasar por pipeline
+    _carpetas_excluidas = {"CARPETA REFERENCIA", "procesado", "cuarentena"}
+    def _filtrar_pdfs(ruta_inbox, patron):
+        return sorted([
+            p for p in ruta_inbox.rglob(patron)
+            if not any(excl in p.parts for excl in _carpetas_excluidas)
+        ])
+    pdfs = _filtrar_pdfs(ruta_inbox, "*.pdf")
     if not pdfs:
-        pdfs = sorted(ruta_inbox.glob("*.PDF"))
+        pdfs = _filtrar_pdfs(ruta_inbox, "*.PDF")
     if not pdfs:
         resultado.aviso("No hay PDFs en inbox/")
         resultado.datos["documentos"] = []
@@ -1003,7 +1020,8 @@ def ejecutar_intake(
         ruta_pdf, hash_pdf = args
         return _procesar_un_pdf(
             ruta_pdf, hash_pdf, config, client, motor_primario,
-            gemini_disponible, ruta_cuarentena, interactivo
+            gemini_disponible, ruta_cuarentena, interactivo,
+            ruta_inbox=ruta_inbox
         )
 
     if usar_paralelo:

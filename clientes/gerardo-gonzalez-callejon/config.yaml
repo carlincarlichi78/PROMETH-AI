@@ -1,9 +1,10 @@
 empresa:
   nombre: "GERARDO GONZALEZ CALLEJON"
-  cif: "25712427R"
+  cif: "76638663H"
   tipo: autonomo
   idempresa: 2
   ejercicio_activo: "2025"
+  codejercicio: "0002"
   regimen_iva: general
 
 perfil:
@@ -13,6 +14,8 @@ perfil:
     Podologia esta exenta de IVA (Art.20.1.3 LIVA - servicios sanitarios).
     Estetica tributa IVA general 21%.
     Los gastos compartidos se reparten por criterio de metros cuadrados.
+    Tiene empleados en ambas actividades (SS Regimen General).
+    Colaboradoras autonomas (podologas) facturan con IRPF 7% → modelo 111.
   actividades:
     - codigo: "8690"
       descripcion: "Podologia"
@@ -30,12 +33,211 @@ perfil:
     - "Dos actividades con IVA diferente requieren sectores diferenciados"
     - "Podologia exenta: no genera IVA repercutido ni permite deduccion IVA soportado en esa actividad"
     - "Gastos compartidos se reparten por metros cuadrados entre ambas actividades"
-  empleados: false
+    - "Colaboradoras autonomas (May, Marta) facturan exentas IVA con retencion IRPF 7%"
+    - "Empleados en Regimen General: SS pagada via TGSS"
+  empleados: true
   importador: false
   exportador: false
   divisas_habituales: []
 
-proveedores: {}
+proveedores:
+  securitas_direct:
+    cif: "A26106013"
+    nombre_fs: "SECURITAS DIRECT ESPAÑA SAU"
+    aliases: ["SECURITAS", "SECURITAS DIRECT", "VERISURE"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6250000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Alarma local. Gasto compartido pod/est"
+
+  masmovil:
+    cif: "A82528548"
+    nombre_fs: "XFERA MOVILES SAU"
+    aliases: ["MASMOVIL", "XFERA", "MAS MOVIL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Internet y telefono. Gasto compartido"
+
+  caixabank:
+    cif: "A08663619"
+    nombre_fs: "CAIXABANK SA"
+    aliases: ["CAIXABANK", "LA CAIXA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6620000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Prestamo local (solo intereses deducibles) + datafono. Gasto compartido"
+
+  vidacaixa:
+    cif: "A58333261"
+    nombre_fs: "VIDACAIXA SA DE SEGUROS"
+    aliases: ["VIDACAIXA", "MYBOX VIDA", "SEGURCAIXA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6250000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Seguro vida vinculado a prestamo. Exento IVA"
+
+  colegio_podologos:
+    cif: "Q4100650C"
+    nombre_fs: "COLEGIO DE PODOLOGOS DE ANDALUCIA"
+    aliases: ["COLEGIO PODOLOGOS", "COLEGIO DE PODOLOGOS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota colegial trimestral. Gasto podologia"
+
+  chito_asesoria:
+    cif: "B92563600"
+    nombre_fs: "JUAN CHITO CRUCES SL"
+    aliases: ["CHITO", "JUAN CHITO", "CHITO CRUCES", "CHITOASESORES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Asesoria laboral mensual. Gasto compartido"
+
+  comunidad:
+    cif: "H92104421"
+    nombre_fs: "CP EDIFICIO CONDESA DE BURETA"
+    aliases: ["CONDESA DE BURETA", "COMUNIDAD", "C P EDIFICIO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6210000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota comunidad propietarios local. Gasto compartido"
+
+  tgss:
+    cif: "Q2827003A"
+    nombre_fs: "TESORERIA GENERAL SEGURIDAD SOCIAL"
+    aliases: ["TGSS", "TESORERIA GENERAL", "SEGURIDAD SOCIAL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6420000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota autonomos + SS empleados RG. Sin IVA"
+
+  naturgy:
+    cif: "A17442920"
+    nombre_fs: "NATURGY IBERIA SA"
+    aliases: ["NATURGY", "GAS NATURAL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro electrico local. Gasto compartido"
+
+  aquaservice:
+    cif: "B04500492"
+    nombre_fs: "AQUASERVICE SA"
+    aliases: ["AQUASERVICE"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Agua dispensador. Gasto compartido"
+
+  clinni:
+    cif: ""
+    nombre_fs: "CLINNI"
+    aliases: ["CLINNI"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Software gestion clinica/agenda. Podologia o estetica segun carpeta"
+
+  skinclinic:
+    cif: ""
+    nombre_fs: "SKINCLINIC"
+    aliases: ["SKINCLINIC", "SKIN CLINIC"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material estetica. Gasto estetica"
+
+  skeyndor:
+    cif: ""
+    nombre_fs: "SKEYNDOR"
+    aliases: ["SKEYNDOR"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Productos cosmeticos. Gasto estetica"
+
+  google:
+    cif: "IE6388047V"
+    nombre_fs: "GOOGLE IRELAND LTD"
+    aliases: ["GOOGLE", "GOOGLE ADS"]
+    pais: IRL
+    divisa: EUR
+    subcuenta: "6270000000"
+    codimpuesto: IVA21
+    regimen: intracomunitario
+    notas: "Publicidad online. Estetica"
+
+  meta:
+    cif: "IE9692928F"
+    nombre_fs: "META PLATFORMS IRELAND LTD"
+    aliases: ["META", "FACEBOOK", "INSTAGRAM"]
+    pais: IRL
+    divisa: EUR
+    subcuenta: "6270000000"
+    codimpuesto: IVA21
+    regimen: intracomunitario
+    notas: "Publicidad redes sociales. Estetica"
+
+  podiatech:
+    cif: ""
+    nombre_fs: "PODIATECH"
+    aliases: ["PODIATECH"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Materiales y herramientas podologia"
+
+  dh_material:
+    cif: ""
+    nombre_fs: "DH MATERIAL MEDICO"
+    aliases: ["DH MATERIAL", "DH MATERIAL MEDICO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material medico. Podologia o estetica segun carpeta"
+
+  groupon:
+    cif: ""
+    nombre_fs: "GROUPON"
+    aliases: ["GROUPON"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Comisiones plataforma. Gasto estetica"
 
 clientes: {}
 
