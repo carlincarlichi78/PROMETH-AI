@@ -1,0 +1,134 @@
+errores:
+  E01:
+    nombre: "CIF invalido"
+    descripcion: "Letra o digito de control incorrecto en CIF/NIF del emisor"
+    probabilidad: 0.02
+    tipos_doc: [factura_compra, factura_venta]
+    accion: corromper_cif
+    parametros: {}
+
+  E02:
+    nombre: "IVA mal calculado"
+    descripcion: "Cuota IVA no coincide con base x tipo (diferencia de unos euros)"
+    probabilidad: 0.03
+    tipos_doc: [factura_compra, factura_venta]
+    accion: alterar_cuota_iva
+    parametros:
+      desviacion_min: 1.0
+      desviacion_max: 5.0
+
+  E03:
+    nombre: "Total no cuadra"
+    descripcion: "Base + IVA + recargos != total factura"
+    probabilidad: 0.02
+    tipos_doc: [factura_compra, factura_venta]
+    accion: alterar_total
+    parametros:
+      desviacion_min: 0.50
+      desviacion_max: 3.00
+
+  E04:
+    nombre: "Factura duplicada"
+    descripcion: "Mismo numero factura + proveedor + fecha (documento repetido)"
+    probabilidad: 0.02
+    tipos_doc: [factura_compra]
+    accion: duplicar_documento
+    parametros: {}
+
+  E05:
+    nombre: "Fecha fuera de ejercicio"
+    descripcion: "Factura con fecha de 2024 en inbox del ejercicio 2025"
+    probabilidad: 0.01
+    tipos_doc: [factura_compra, factura_venta]
+    accion: cambiar_fecha_ejercicio
+    parametros:
+      anio_erroneo: 2024
+
+  E06:
+    nombre: "Retencion incorrecta"
+    descripcion: "Porcentaje IRPF erroneo (7% en vez de 15%, o retencion donde no aplica)"
+    probabilidad: 0.02
+    tipos_doc: [factura_compra, factura_venta]
+    accion: alterar_retencion
+    parametros:
+      retenciones_erroneas: [7, 2, 19, 0]
+
+  E07:
+    nombre: "Tipo IVA incorrecto"
+    descripcion: "IVA equivocado para el producto/servicio (21% en pan, 4% en consultoria)"
+    probabilidad: 0.02
+    tipos_doc: [factura_compra]
+    accion: alterar_tipo_iva
+    parametros:
+      tipos_alternativos: [0, 4, 10, 21]
+
+  E08:
+    nombre: "Divisa sin tipo de cambio"
+    descripcion: "Factura en USD sin indicar conversion a EUR"
+    probabilidad: 0.01
+    tipos_doc: [factura_compra]
+    accion: eliminar_tasaconv
+    parametros: {}
+
+  E09:
+    nombre: "Numero factura ausente"
+    descripcion: "PDF sin numero de factura visible"
+    probabilidad: 0.01
+    tipos_doc: [factura_compra]
+    accion: eliminar_numero
+    parametros: {}
+
+  E10:
+    nombre: "Datos emisor incompletos"
+    descripcion: "Falta CIF, direccion o nombre fiscal del emisor"
+    probabilidad: 0.01
+    tipos_doc: [factura_compra]
+    accion: eliminar_datos_emisor
+    parametros:
+      campos_a_eliminar: [cif, direccion]
+
+  E11:
+    nombre: "IVA en operacion exenta"
+    descripcion: "Cuota IVA donde no deberia haber (fisioterapia con 21%)"
+    probabilidad: 0.01
+    tipos_doc: [factura_venta]
+    accion: anadir_iva_indebido
+    parametros:
+      iva_indebido: 21
+
+  E12:
+    nombre: "Intracomunitaria sin ISP"
+    descripcion: "Factura intracomunitaria sin mencion de inversion sujeto pasivo"
+    probabilidad: 0.01
+    tipos_doc: [factura_compra]
+    accion: eliminar_mencion_isp
+    parametros: {}
+
+  E13:
+    nombre: "Cuota SS incorrecta"
+    descripcion: "Base de cotizacion mal calculada en RLC"
+    probabilidad: 0.01
+    tipos_doc: [rlc_ss]
+    accion: alterar_base_cotizacion
+    parametros:
+      desviacion_pct: 5
+
+  E14:
+    nombre: "Nomina sin retencion"
+    descripcion: "IRPF 0% sin causa justificada (empleado normal sin comunicacion modelo 145)"
+    probabilidad: 0.005
+    tipos_doc: [nomina]
+    accion: eliminar_irpf_nomina
+    parametros: {}
+
+  E15:
+    nombre: "Factura a nombre erroneo"
+    descripcion: "Nombre receptor no coincide con entidad (persona fisica vs SL)"
+    probabilidad: 0.005
+    tipos_doc: [factura_compra]
+    accion: cambiar_nombre_receptor
+    parametros:
+      nombres_alternativos:
+        - "Juan Garcia Perez"
+        - "Maria Lopez Fernandez"
+        - "Carlos Rodriguez Martinez"

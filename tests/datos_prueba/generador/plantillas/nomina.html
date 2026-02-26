@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>N&oacute;mina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .nomina .tabla-nomina { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .nomina .tabla-nomina th { background: #555; color: white; padding: 5px 8px; font-size: 8pt; text-transform: uppercase; text-align: left; }
+    .nomina .tabla-nomina th.col-num { text-align: right; }
+    .nomina .tabla-nomina td { padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt; }
+    .nomina .tabla-nomina td.col-num { text-align: right; }
+    .nomina .tabla-nomina tbody tr:nth-child(even) { background: #fafafa; }
+    .nomina .tabla-nomina tfoot td { font-weight: bold; background: #eee; border-top: 2px solid #333; padding: 6px 8px; }
+    .nomina .ss-empresa { font-size: 8pt; color: #555; border: 1px solid #ddd; padding: 8px 12px; margin-top: 15px; }
+    .nomina .ss-empresa h4 { margin: 0 0 6px 0; font-size: 8pt; text-transform: uppercase; color: #333; }
+    .nomina .ss-empresa table { width: 100%; border-collapse: collapse; }
+    .nomina .ss-empresa td { padding: 2px 6px; }
+    .nomina .ss-empresa td:last-child { text-align: right; }
+    .nomina .especie-nota { background: #fff8e1; border-left: 3px solid #f9a825; padding: 6px 10px; font-size: 8pt; margin-bottom: 10px; }
+    .col-concepto { width: 50%; }
+    .col-pct { width: 10%; text-align: right; }
+    .col-base { width: 20%; text-align: right; }
+    .col-importe { width: 20%; text-align: right; }
+  </style>
+</head>
+<body>
+<div class="nomina">
+
+  <!-- Cabecera: empresa (izquierda) + trabajador (derecha) -->
+  <div class="cabecera-nomina">
+    <div class="datos-empresa">
+      <h2>{{ empresa.nombre }}</h2>
+      <p>CIF: {{ empresa.cif }}</p>
+      <p>{{ empresa.direccion }}</p>
+      <p>C&oacute;d. cuenta cotizaci&oacute;n: {{ empresa.ccc_ss }}</p>
+    </div>
+    <div class="datos-trabajador">
+      <p><strong>Trabajador:</strong> {{ trabajador.nombre }}</p>
+      <p><strong>NIF:</strong> {{ trabajador.nif }}</p>
+      <p><strong>N.&ordm; SS:</strong> {{ trabajador.num_ss }}</p>
+      <p><strong>Puesto:</strong> {{ trabajador.puesto }}</p>
+      <p><strong>Grupo cotizaci&oacute;n:</strong> {{ trabajador.grupo_cotizacion }}</p>
+      <p><strong>Contrato:</strong> {{ trabajador.tipo_contrato }}</p>
+      <p><strong>Antig&uuml;edad:</strong> {{ trabajador.antiguedad }}</p>
+      <p><strong>Fecha alta:</strong> {{ trabajador.fecha_alta | fecha_es }}</p>
+    </div>
+  </div>
+
+  <!-- Barra periodo -->
+  <div class="periodo">
+    {% if paga_extra %}
+      PAGA EXTRA &mdash; {{ periodo.mes | upper }} {{ periodo.anio }}
+    {% else %}
+      N&Oacute;MINA &mdash; {{ periodo.mes | upper }} {{ periodo.anio }}
+    {% endif %}
+    &nbsp;&nbsp;|&nbsp;&nbsp; D&iacute;as trabajados: {{ periodo.dias_trabajados }}
+  </div>
+
+  {% if especie %}
+  <div class="especie-nota">
+    <strong>Retribuci&oacute;n en especie:</strong> {{ especie.concepto }} &mdash; Valor: {{ especie.valor | moneda('EUR') }}
+    (imputado conforme art. 42 LIRPF &mdash; EC24)
+  </div>
+  {% endif %}
+
+  <!-- Devengos -->
+  <div class="devengos">
+    <h4>I. DEVENGOS</h4>
+    <table class="tabla-nomina">
+      <thead>
+        <tr>
+          <th class="col-concepto">Concepto</th>
+          <th class="col-importe">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devengos %}
+        <tr>
+          <td>{{ d.concepto }}</td>
+          <td class="col-num">{{ d.importe | moneda('EUR') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL DEVENGADO</td>
+          <td class="col-num">{{ total_devengos | moneda('EUR') }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Deducciones -->
+  <div class="deducciones">
+    <h4>II. DEDUCCIONES</h4>
+    <table class="tabla-nomina">
+      <thead>
+        <tr>
+          <th class="col-concepto">Concepto</th>
+          <th class="col-pct">%</th>
+          <th class="col-base">Base</th>
+          <th class="col-importe">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in deducciones %}
+        <tr>
+          <td>{{ d.concepto }}</td>
+          <td class="col-num">{% if d.pct %}{{ d.pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+          <td class="col-num">{% if d.base %}{{ d.base | moneda('EUR') }}{% else %}&mdash;{% endif %}</td>
+          <td class="col-num">{{ d.importe | moneda('EUR') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">TOTAL DEDUCCIONES</td>
+          <td class="col-num">{{ total_deducciones | moneda('EUR') }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- L&iacute;quido -->
+  <div class="liquido">
+    TOTAL L&Iacute;QUIDO A PERCIBIR: {{ liquido | moneda('EUR') }}
+  </div>
+
+  <!-- Costes SS empresa (informativo) -->
+  <div class="ss-empresa">
+    <h4>Costes Seguridad Social a cargo de la empresa (informativo)</h4>
+    <table>
+      <tr><td>Contingencias comunes:</td><td>{{ ss_empresa.contingencias_comunes | moneda('EUR') }}</td></tr>
+      <tr><td>Desempleo:</td><td>{{ ss_empresa.desempleo | moneda('EUR') }}</td></tr>
+      <tr><td>FOGASA:</td><td>{{ ss_empresa.fogasa | moneda('EUR') }}</td></tr>
+      <tr><td>Formaci&oacute;n profesional:</td><td>{{ ss_empresa.fp | moneda('EUR') }}</td></tr>
+      <tr><td><strong>Total coste empresa:</strong></td><td><strong>{{ ss_empresa.total | moneda('EUR') }}</strong></td></tr>
+    </table>
+  </div>
+
+  <!-- Firma -->
+  <div class="firma-zona">
+    <div class="firma-bloque">
+      Firma y sello empresa<br>{{ empresa.nombre }}
+    </div>
+    <div class="firma-bloque">
+      Recib&iacute; conforme<br>{{ trabajador.nombre }}
+    </div>
+  </div>
+
+  <div class="texto-legal">
+    El trabajador declarar&aacute; al pagador su situaci&oacute;n personal y familiar para el c&aacute;lculo de las retenciones de IRPF (art. 88 RIRPF). Este recibo de salarios se emite conforme al RD 2064/1995.
+  </div>
+
+</div>
+</body>
+</html>

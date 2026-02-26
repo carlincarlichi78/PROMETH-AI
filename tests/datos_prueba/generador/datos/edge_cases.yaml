@@ -1,0 +1,211 @@
+edge_cases:
+  EC01:
+    nombre: "Factura multimoneda"
+    descripcion: "Factura en USD con tipo de cambio BCE del dia"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [factura_compra]
+    parametros:
+      divisa: USD
+      tasaconv_rango: [1.05, 1.15]
+
+  EC02:
+    nombre: "Factura 3 tipos IVA"
+    descripcion: "Lineas al 4%, 10% y 21% en misma factura"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [factura_compra]
+    parametros:
+      tipos_iva: [4, 10, 21]
+
+  EC03:
+    nombre: "Nota de credito parcial"
+    descripcion: "Devolucion de 3 de 20 unidades de una factura anterior"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [nota_credito]
+    parametros:
+      unidades_devueltas: 3
+      unidades_originales: 20
+
+  EC04:
+    nombre: "Rappel trimestral"
+    descripcion: "Factura negativa por volumen acumulado (rappel/dto comercial)"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [nota_credito]
+    parametros:
+      pct_rappel: 3
+
+  EC05:
+    nombre: "Prorrata IVA"
+    descripcion: "Gasto compartido entre actividad exenta (fisio) y sujeta (pilates)"
+    entidad_principal: elena-navarro
+    tipos_doc: [factura_compra]
+    parametros:
+      prorrata_pct: 35
+
+  EC06:
+    nombre: "Compensacion REAGP"
+    descripcion: "Factura con 12% de compensacion agraria (no es IVA)"
+    entidad_principal: jose-antonio-bermudez
+    tipos_doc: [factura_venta]
+    parametros:
+      compensacion_pct: 12
+
+  EC07:
+    nombre: "Leasing valor residual"
+    descripcion: "Ultima cuota de leasing con opcion de compra (valor residual)"
+    entidad_principal: aurora-digital
+    tipos_doc: [recibo_bancario]
+    parametros:
+      valor_residual_pct: 1
+
+  EC08:
+    nombre: "Subvencion de capital"
+    descripcion: "Kit Digital 12.000 EUR en 2 pagos, imputacion segun amortizacion"
+    entidad_principal: aurora-digital
+    tipos_doc: [subvencion]
+    parametros:
+      importe_total: 12000
+      num_pagos: 2
+
+  EC09:
+    nombre: "Intracomunitaria completa"
+    descripcion: "Factura intracomunitaria con inversion sujeto pasivo y autoliquidacion 472/477"
+    entidad_principal: aurora-digital
+    tipos_doc: [factura_compra]
+    parametros:
+      requiere_autoliquidacion: true
+
+  EC10:
+    nombre: "Retencion arrendamiento"
+    descripcion: "Alquiler local con 19% IRPF retenido al arrendador persona fisica"
+    entidad_principal: elena-navarro
+    tipos_doc: [factura_compra]
+    parametros:
+      retencion_pct: 19
+
+  EC11:
+    nombre: "Factura simplificada"
+    descripcion: "Ticket sin datos receptor, importe < 400 EUR"
+    entidad_principal: marcos-ruiz
+    tipos_doc: [factura_compra]
+    parametros:
+      importe_max: 400
+
+  EC12:
+    nombre: "Anticipo + factura final"
+    descripcion: "30% anticipo de evento, luego factura final descontando anticipo"
+    entidad_principal: catering-costa
+    tipos_doc: [factura_venta]
+    parametros:
+      pct_anticipo: 30
+
+  EC13:
+    nombre: "Prestamo intercompany"
+    descripcion: "Prestamo holding a filial con interes a precio de mercado"
+    entidad_principal: gastro-holding
+    tipos_doc: [recibo_bancario]
+    parametros:
+      interes_mercado: "euribor+2%"
+
+  EC14:
+    nombre: "Dividendo con retencion"
+    descripcion: "Doble nivel: filial->holding (19%), holding->socio persona fisica (19%)"
+    entidad_principal: gastro-holding
+    tipos_doc: [recibo_bancario]
+    parametros:
+      retencion_pct: 19
+
+  EC15:
+    nombre: "Derrama extraordinaria"
+    descripcion: "Cuota extra comunidad sin IVA, aprobada en junta"
+    entidad_principal: comunidad-mirador
+    tipos_doc: [factura_venta]
+    parametros:
+      motivo: "Reparacion urgente fachada"
+
+  EC16:
+    nombre: "Jornalero eventual"
+    descripcion: "Alta y baja SS en mismo mes, regimen especial agrario"
+    entidad_principal: jose-antonio-bermudez
+    tipos_doc: [nomina, rlc_ss]
+    parametros:
+      dias_trabajo: 15
+
+  EC17:
+    nombre: "Factura proforma"
+    descripcion: "Documento proforma que NO se debe contabilizar (se confunde con factura)"
+    entidad_principal: aurora-digital
+    tipos_doc: [factura_compra]
+    parametros:
+      mencion: "PROFORMA - NO VALIDA COMO FACTURA"
+
+  EC18:
+    nombre: "DUA importacion"
+    descripcion: "IVA diferido en importacion extracomunitaria (casilla 77 modelo 303)"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [dua_importacion]
+    parametros:
+      iva_diferido: true
+
+  EC19:
+    nombre: "Confirming/factoring"
+    descripcion: "Cesion de credito comercial con descuento financiero al proveedor"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [recibo_bancario]
+    parametros:
+      comision_pct: 0.5
+
+  EC20:
+    nombre: "Multa no deducible"
+    descripcion: "Sancion de trafico, gasto contable pero no deducible fiscalmente"
+    entidad_principal: restaurante-la-marea
+    tipos_doc: [impuesto_tasa]
+    parametros:
+      importe: 200
+      concepto: "Sancion DGT - Exceso velocidad"
+
+  EC21:
+    nombre: "Modulos IVA simplificado"
+    descripcion: "Cuota fija trimestral IVA en regimen simplificado con regularizacion T4"
+    entidad_principal: francisco-mora
+    tipos_doc: [impuesto_tasa]
+    parametros:
+      cuota_trimestral: 680
+      regularizacion_t4: true
+
+  EC22:
+    nombre: "Venta inmovilizado"
+    descripcion: "Venta tractor viejo con posible plusvalia o minusvalia contable"
+    entidad_principal: jose-antonio-bermudez
+    tipos_doc: [factura_venta]
+    parametros:
+      valor_contable: 7000
+      precio_venta: 5500
+
+  EC23:
+    nombre: "Prestamo cruzado estacional"
+    descripcion: "Catering presta a Chiringuito en temporada (abr-oct), devolucion con intereses"
+    entidad_principal: catering-costa
+    tipos_doc: [recibo_bancario]
+    parametros:
+      importe: 5000
+      interes: 3
+      meses: [4, 5, 6, 7, 8, 9, 10]
+
+  EC24:
+    nombre: "Salario en especie"
+    descripcion: "Vivienda de porteria como retribucion en especie (ingreso a cuenta)"
+    entidad_principal: comunidad-mirador
+    tipos_doc: [nomina]
+    parametros:
+      valor_vivienda_mensual: 450
+
+  EC25:
+    nombre: "Factura con recargo equivalencia"
+    descripcion: "Venta a comerciante minorista con recargo (0.5%, 1.4%, 5.2%)"
+    entidad_principal: distribuciones-levante
+    tipos_doc: [factura_venta]
+    parametros:
+      recargos:
+        4: 0.5
+        10: 1.4
+        21: 5.2

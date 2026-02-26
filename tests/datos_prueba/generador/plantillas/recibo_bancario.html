@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Recibo {{ tipo_recibo | title }} - {{ referencia }} - {{ fecha | fecha_es }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .recibo-bancario .cabecera-banco { border-bottom: 3px solid #003366; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .recibo-bancario .logo-banco { font-size: 18pt; font-weight: bold; color: #003366; letter-spacing: -1px; }
+    .recibo-bancario .logo-banco span { font-size: 9pt; font-weight: normal; color: #555; display: block; letter-spacing: 0; }
+    .recibo-bancario .tipo-doc { text-align: right; }
+    .recibo-bancario .tipo-doc h2 { font-size: 12pt; margin: 0; color: #003366; text-transform: uppercase; }
+    .recibo-bancario .tipo-doc p { font-size: 9pt; color: #555; margin: 2px 0; }
+    .recibo-bancario .datos-titular { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .recibo-bancario .bloque-dato { background: #f5f5f5; border: 1px solid #ddd; padding: 10px 14px; width: 47%; }
+    .recibo-bancario .bloque-dato h3 { font-size: 8pt; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px 0; }
+    .recibo-bancario .bloque-dato p { margin: 2px 0; font-size: 9pt; }
+    .recibo-bancario .tabla-detalle { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+    .recibo-bancario .tabla-detalle thead { background: #003366; color: white; }
+    .recibo-bancario .tabla-detalle th { padding: 7px 10px; font-size: 8pt; text-transform: uppercase; text-align: left; }
+    .recibo-bancario .tabla-detalle th:last-child { text-align: right; }
+    .recibo-bancario .tabla-detalle td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 9pt; }
+    .recibo-bancario .tabla-detalle td:last-child { text-align: right; }
+    .recibo-bancario .tabla-detalle tbody tr:nth-child(even) { background: #fafafa; }
+    .recibo-bancario .desglose-iva-rec { width: 55%; margin-left: auto; border: 1px solid #ccc; margin-bottom: 5px; }
+    .recibo-bancario .desglose-iva-rec table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .recibo-bancario .desglose-iva-rec td { padding: 4px 8px; border-bottom: 1px solid #eee; }
+    .recibo-bancario .desglose-iva-rec td:last-child { text-align: right; }
+    .recibo-bancario .total-cargo { background: #003366; color: white; padding: 10px 15px; font-size: 13pt; font-weight: bold; text-align: right; margin: 10px 0; }
+    .recibo-bancario .info-adicional { display: flex; gap: 15px; margin-top: 15px; }
+    .recibo-bancario .info-adicional .dato-adicional { flex: 1; border: 1px solid #ddd; padding: 8px 12px; text-align: center; }
+    .recibo-bancario .info-adicional .dato-adicional .etiqueta { font-size: 7.5pt; color: #666; text-transform: uppercase; display: block; margin-bottom: 3px; }
+    .recibo-bancario .info-adicional .dato-adicional .valor { font-size: 11pt; font-weight: bold; color: #003366; }
+  </style>
+</head>
+<body>
+<div class="recibo-bancario">
+
+  <!-- Cabecera banco -->
+  <div class="cabecera-banco">
+    <div class="logo-banco">
+      {{ banco.nombre }}
+      <span>Oficina: {{ banco.oficina }}</span>
+    </div>
+    <div class="tipo-doc">
+      <h2>
+        {% if tipo_recibo == 'prestamo' %}Recibo Pr&eacute;stamo
+        {% elif tipo_recibo == 'leasing' %}Cuota Leasing
+        {% elif tipo_recibo == 'renting' %}Cuota Renting
+        {% elif tipo_recibo == 'comision' %}Liquidaci&oacute;n de Comisi&oacute;n
+        {% elif tipo_recibo == 'dividendo' %}Liquidaci&oacute;n Dividendo
+        {% elif tipo_recibo == 'poliza_credito' %}Liquidaci&oacute;n P&oacute;liza de Cr&eacute;dito
+        {% else %}Recibo Bancario
+        {% endif %}
+      </h2>
+      <p>Referencia: <strong>{{ referencia }}</strong></p>
+      <p>Fecha: {{ fecha | fecha_es }}</p>
+    </div>
+  </div>
+
+  <!-- Datos titular y contrato -->
+  <div class="datos-titular">
+    <div class="bloque-dato">
+      <h3>Titular</h3>
+      <p><strong>{{ titular.nombre }}</strong></p>
+      <p>CIF/NIF: {{ titular.cif }}</p>
+      <p>Cuenta: {{ titular.cuenta_iban }}</p>
+    </div>
+    <div class="bloque-dato">
+      <h3>Concepto</h3>
+      <p><strong>{{ concepto }}</strong></p>
+      <p>N.&ordm; contrato/operaci&oacute;n: {{ referencia }}</p>
+      <p>Fecha cargo: {{ fecha | fecha_es }}</p>
+    </div>
+  </div>
+
+  <!-- Tabla detalle -->
+  <div class="detalle-cuota">
+    <table class="tabla-detalle">
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th>Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in detalle %}
+        <tr>
+          <td>{{ d.concepto }}</td>
+          <td>{{ d.importe | moneda('EUR') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Desglose IVA si aplica -->
+  {% if iva %}
+  <div class="desglose-iva-rec">
+    <table>
+      <tr><td>Base imponible:</td><td>{{ iva.base | moneda('EUR') }}</td></tr>
+      <tr><td>IVA ({{ iva.tipo | porcentaje }}):</td><td>{{ iva.cuota | moneda('EUR') }}</td></tr>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Total cargo -->
+  <div class="total-cargo">
+    TOTAL CARGO: {{ total | moneda('EUR') }}
+  </div>
+
+  <!-- Informaci&oacute;n adicional -->
+  {% if saldo_pendiente or cuotas_restantes %}
+  <div class="info-adicional">
+    {% if saldo_pendiente %}
+    <div class="dato-adicional">
+      <span class="etiqueta">Capital pendiente</span>
+      <span class="valor">{{ saldo_pendiente | moneda('EUR') }}</span>
+    </div>
+    {% endif %}
+    {% if cuotas_restantes %}
+    <div class="dato-adicional">
+      <span class="etiqueta">Cuotas restantes</span>
+      <span class="valor">{{ cuotas_restantes }}</span>
+    </div>
+    {% endif %}
+    <div class="dato-adicional">
+      <span class="etiqueta">Modalidad cargo</span>
+      <span class="valor" style="font-size:9pt;">Domiciliaci&oacute;n</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="pie">
+    <p>{{ banco.nombre }} &mdash; Entidad supervisada por el Banco de Espa&ntilde;a. Consulte su extracto de cuenta para verificar el cargo. En caso de discrepancia, contacte con su oficina en el plazo de 13 meses (art. 32 RD-Ley 19/2018).</p>
+  </div>
+
+</div>
+</body>
+</html>

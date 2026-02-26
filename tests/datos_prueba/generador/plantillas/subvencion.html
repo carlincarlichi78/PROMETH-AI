@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Resoluci&oacute;n Subvenci&oacute;n {{ expediente }} - {{ beneficiario.nombre }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .subvencion .cabecera-oficial { border-bottom: 4px double #8b0000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .subvencion .datos-organismo h2 { font-size: 12pt; color: #8b0000; text-transform: uppercase; margin: 0 0 3px 0; letter-spacing: 0.5px; }
+    .subvencion .datos-organismo h3 { font-size: 9.5pt; color: #444; font-weight: normal; margin: 0; }
+    .subvencion .ref-expediente { text-align: right; font-size: 8.5pt; color: #555; border: 1px solid #ddd; padding: 8px 12px; }
+    .subvencion .ref-expediente strong { display: block; font-size: 10pt; color: #333; }
+    .subvencion .titulo-resolucion { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; color: #8b0000; border-top: 2px solid #8b0000; border-bottom: 2px solid #8b0000; padding: 10px; margin-bottom: 20px; letter-spacing: 1px; }
+    .subvencion .bloque-beneficiario { background: #f5f5f5; border-left: 4px solid #8b0000; padding: 10px 15px; margin-bottom: 20px; }
+    .subvencion .bloque-beneficiario h3 { font-size: 8pt; text-transform: uppercase; color: #666; letter-spacing: 1px; margin: 0 0 8px 0; }
+    .subvencion .bloque-beneficiario .fila { display: flex; gap: 30px; }
+    .subvencion .bloque-beneficiario .fila p { margin: 2px 0; font-size: 9.5pt; }
+    .subvencion .datos-programa { margin-bottom: 20px; }
+    .subvencion .datos-programa .tabla-prog { width: 100%; border-collapse: collapse; }
+    .subvencion .datos-programa .tabla-prog td { padding: 5px 10px; border: 1px solid #ddd; font-size: 9.5pt; }
+    .subvencion .datos-programa .tabla-prog td:first-child { background: #f0f0f0; font-weight: bold; width: 30%; color: #555; }
+    .subvencion .importe-concedido { background: #8b0000; color: white; padding: 15px 20px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+    .subvencion .importe-concedido .texto { font-size: 10pt; text-transform: uppercase; letter-spacing: 1px; }
+    .subvencion .importe-concedido .cifra { font-size: 20pt; font-weight: bold; }
+    .subvencion .calendario-pagos { margin-bottom: 20px; }
+    .subvencion .calendario-pagos h4 { font-size: 9pt; text-transform: uppercase; color: #8b0000; border-bottom: 1px solid #8b0000; padding-bottom: 4px; margin-bottom: 8px; }
+    .subvencion .tabla-pagos { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .subvencion .tabla-pagos thead { background: #555; color: white; }
+    .subvencion .tabla-pagos th { padding: 6px 10px; text-align: left; }
+    .subvencion .tabla-pagos th:last-child { text-align: right; }
+    .subvencion .tabla-pagos td { padding: 5px 10px; border-bottom: 1px solid #eee; }
+    .subvencion .tabla-pagos td:last-child { text-align: right; }
+    .subvencion .tabla-pagos tbody tr:nth-child(even) { background: #fafafa; }
+    .subvencion .condiciones { margin-bottom: 20px; }
+    .subvencion .condiciones h4 { font-size: 9pt; text-transform: uppercase; color: #8b0000; border-bottom: 1px solid #8b0000; padding-bottom: 4px; margin-bottom: 8px; }
+    .subvencion .condiciones ol { margin: 0; padding-left: 20px; }
+    .subvencion .condiciones li { font-size: 9pt; margin-bottom: 4px; color: #333; line-height: 1.5; }
+    .subvencion .bloque-firma { display: flex; justify-content: space-between; margin-top: 30px; }
+    .subvencion .bloque-firma .dato-firma { width: 45%; }
+    .subvencion .bloque-firma .dato-firma p { font-size: 9pt; margin: 2px 0; color: #333; }
+    .subvencion .bloque-firma .linea-firma { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-size: 8.5pt; text-align: center; color: #555; }
+  </style>
+</head>
+<body>
+<div class="subvencion">
+
+  <!-- Cabecera oficial -->
+  <div class="cabecera-oficial">
+    <div class="datos-organismo">
+      <h2>{{ organismo.nombre }}</h2>
+      <h3>{{ organismo.departamento }}</h3>
+    </div>
+    <div class="ref-expediente">
+      <strong>N.&ordm; Expediente: {{ expediente }}</strong>
+      Fecha resoluci&oacute;n: {{ fecha_resolucion | fecha_es }}
+    </div>
+  </div>
+
+  <!-- Titulo -->
+  <div class="titulo-resolucion">
+    Resoluci&oacute;n de Concesi&oacute;n de Subvenci&oacute;n
+  </div>
+
+  <!-- Beneficiario -->
+  <div class="bloque-beneficiario">
+    <h3>Beneficiario</h3>
+    <div class="fila">
+      <div>
+        <p><strong>{{ beneficiario.nombre }}</strong></p>
+        <p>CIF/NIF: {{ beneficiario.cif }}</p>
+      </div>
+      <div>
+        <p>{{ beneficiario.direccion }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Programa y expediente -->
+  <div class="datos-programa">
+    <table class="tabla-prog">
+      <tr>
+        <td>Programa de subvenci&oacute;n:</td>
+        <td>{{ programa }}</td>
+      </tr>
+      <tr>
+        <td>N.&ordm; de expediente:</td>
+        <td>{{ expediente }}</td>
+      </tr>
+      <tr>
+        <td>Convocatoria:</td>
+        <td>{{ fecha_resolucion.year if fecha_resolucion.year is defined else '' }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Importe concedido -->
+  <div class="importe-concedido">
+    <span class="texto">Importe total concedido</span>
+    <span class="cifra">{{ importe | moneda('EUR') }}</span>
+  </div>
+
+  <!-- Calendario de pagos -->
+  <div class="calendario-pagos">
+    <h4>Calendario de pagos</h4>
+    <table class="tabla-pagos">
+      <thead>
+        <tr>
+          <th>N.&ordm; Pago</th>
+          <th>Descripci&oacute;n</th>
+          <th>Fecha prevista</th>
+          <th>Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pagos %}
+        <tr>
+          <td>{{ p.numero }}</td>
+          <td>Pago {{ p.numero }} de {{ pagos | length }}</td>
+          <td>{{ p.fecha_prevista | fecha_es }}</td>
+          <td>{{ p.importe | moneda('EUR') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Condiciones -->
+  <div class="condiciones">
+    <h4>Condiciones y obligaciones del beneficiario</h4>
+    <ol>
+      {% for c in condiciones %}
+      <li>{{ c }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+
+  <!-- Fecha y firma -->
+  <div class="bloque-firma">
+    <div class="dato-firma">
+      <p>Lugar y fecha de la resoluci&oacute;n:</p>
+      <p><strong>{{ fecha_resolucion | fecha_es }}</strong></p>
+    </div>
+    <div class="dato-firma">
+      <p>Firmado por:</p>
+      <p>{{ firmante.nombre }}</p>
+      <p>{{ firmante.cargo }}</p>
+      <div class="linea-firma">Firma y sello oficial</div>
+    </div>
+  </div>
+
+  <div class="texto-legal">
+    Esta resoluci&oacute;n se dicta en virtud de lo establecido en la Ley 38/2003, de 17 de noviembre, General de Subvenciones, y su Reglamento de desarrollo (RD 887/2006). Contra esta resoluci&oacute;n cabe interponer recurso de alzada en el plazo de un mes ante el &oacute;rgano superior jer&aacute;rquico. El incumplimiento de las condiciones establecidas conllevar&aacute; el reintegro de las cantidades percibidas m&aacute;s los intereses de demora correspondientes.
+  </div>
+
+</div>
+</body>
+</html>

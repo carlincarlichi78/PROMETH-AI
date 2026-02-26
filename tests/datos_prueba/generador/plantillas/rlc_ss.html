@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>RLC SS - {{ empresa.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .rlc { width: 100%; }
+    .rlc .cabecera-organismo { text-align: center; border-bottom: 3px solid #333; padding-bottom: 12px; margin-bottom: 15px; }
+    .rlc .cabecera-organismo h1 { font-size: 13pt; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px; }
+    .rlc .cabecera-organismo h2 { font-size: 11pt; margin: 0; font-weight: normal; color: #444; }
+    .rlc .datos-empresa-rlc { display: flex; justify-content: space-between; background: #f5f5f5; border: 1px solid #ddd; padding: 10px 15px; margin-bottom: 15px; }
+    .rlc .datos-empresa-rlc .campo { margin: 3px 0; font-size: 9pt; }
+    .rlc .datos-empresa-rlc .campo strong { display: inline-block; width: 140px; color: #555; }
+    .rlc .tabla-trabajadores { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 8.5pt; }
+    .rlc .tabla-trabajadores thead { background: #333; color: white; }
+    .rlc .tabla-trabajadores th { padding: 6px 8px; text-align: left; font-size: 8pt; text-transform: uppercase; }
+    .rlc .tabla-trabajadores th.num { text-align: right; }
+    .rlc .tabla-trabajadores td { padding: 5px 8px; border-bottom: 1px solid #eee; }
+    .rlc .tabla-trabajadores td.num { text-align: right; }
+    .rlc .tabla-trabajadores tbody tr:nth-child(even) { background: #fafafa; }
+    .rlc .tabla-trabajadores tfoot td { font-weight: bold; background: #eee; border-top: 2px solid #555; padding: 6px 8px; }
+    .rlc .desglose-cuotas { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9pt; }
+    .rlc .desglose-cuotas caption { text-align: left; font-weight: bold; font-size: 9pt; text-transform: uppercase; background: #555; color: white; padding: 5px 8px; }
+    .rlc .desglose-cuotas th { background: #e0e0e0; padding: 5px 8px; text-align: right; font-size: 8pt; border: 1px solid #ccc; }
+    .rlc .desglose-cuotas th:first-child { text-align: left; }
+    .rlc .desglose-cuotas td { padding: 5px 8px; border: 1px solid #eee; text-align: right; }
+    .rlc .desglose-cuotas td:first-child { text-align: left; }
+    .rlc .total-ingresar { background: #333; color: white; padding: 12px 20px; font-size: 13pt; font-weight: bold; text-align: right; margin-top: 10px; }
+    .rlc .total-ingresar span { font-size: 10pt; font-weight: normal; margin-right: 20px; }
+    .rlc .info-pago { font-size: 8pt; color: #555; margin-top: 10px; border: 1px solid #ddd; padding: 8px; }
+  </style>
+</head>
+<body>
+<div class="rlc">
+
+  <!-- Cabecera organismo -->
+  <div class="cabecera-organismo">
+    <h1>Tesorer&iacute;a General de la Seguridad Social</h1>
+    <h2>Relaci&oacute;n de Liquidaci&oacute;n de Cotizaciones</h2>
+  </div>
+
+  <!-- Datos empresa -->
+  <div class="datos-empresa-rlc">
+    <div>
+      <p class="campo"><strong>Empresa:</strong> {{ empresa.nombre }}</p>
+      <p class="campo"><strong>CIF:</strong> {{ empresa.cif }}</p>
+    </div>
+    <div>
+      <p class="campo"><strong>C&oacute;d. Cuenta Cotiz.:</strong> {{ empresa.ccc_ss }}</p>
+      <p class="campo"><strong>Per&iacute;odo de liquidaci&oacute;n:</strong> {{ periodo.mes }}/{{ periodo.anio }}</p>
+    </div>
+    <div>
+      <p class="campo"><strong>R&eacute;gimen:</strong> R&eacute;gimen General</p>
+      <p class="campo"><strong>Tipo liquidaci&oacute;n:</strong> Ordinaria (L00)</p>
+    </div>
+  </div>
+
+  <!-- Tabla trabajadores -->
+  <table class="tabla-trabajadores">
+    <caption style="text-align:left; font-weight:bold; font-size:9pt; background:#555; color:white; padding:5px 8px; caption-side:top;">
+      Trabajadores incluidos en la liquidaci&oacute;n
+    </caption>
+    <thead>
+      <tr>
+        <th>Trabajador</th>
+        <th>NIF</th>
+        <th>Grupo</th>
+        <th class="num">D&iacute;as</th>
+        <th class="num">Base C.C.</th>
+        <th class="num">Base C.P.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in trabajadores %}
+      <tr>
+        <td>{{ t.nombre }}</td>
+        <td>{{ t.nif }}</td>
+        <td>{{ t.grupo }}</td>
+        <td class="num">{{ t.dias }}</td>
+        <td class="num">{{ t.base_cc | moneda('EUR') }}</td>
+        <td class="num">{{ t.base_cp | moneda('EUR') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4">TOTALES</td>
+        <td class="num">{{ totales.base_cc | moneda('EUR') }}</td>
+        <td class="num">{{ totales.base_desempleo | moneda('EUR') }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- Desglose cuotas -->
+  <table class="desglose-cuotas">
+    <caption>Desglose de cuotas</caption>
+    <thead>
+      <tr>
+        <th>Contingencia</th>
+        <th>Base</th>
+        <th>Tipo Emp. %</th>
+        <th>Cuota Empresa</th>
+        <th>Tipo Trab. %</th>
+        <th>Cuota Trabajador</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Contingencias comunes</td>
+        <td>{{ totales.base_cc | moneda('EUR') }}</td>
+        <td>23,60%</td>
+        <td>{{ (totales.base_cc * 0.236) | moneda('EUR') }}</td>
+        <td>4,70%</td>
+        <td>{{ (totales.base_cc * 0.047) | moneda('EUR') }}</td>
+        <td>{{ (totales.base_cc * 0.283) | moneda('EUR') }}</td>
+      </tr>
+      <tr>
+        <td>Desempleo (tipo general)</td>
+        <td>{{ totales.base_desempleo | moneda('EUR') }}</td>
+        <td>5,50%</td>
+        <td>{{ totales.cuota_desempleo | moneda('EUR') }}</td>
+        <td>1,55%</td>
+        <td>{{ (totales.base_desempleo * 0.0155) | moneda('EUR') }}</td>
+        <td>{{ (totales.cuota_desempleo + totales.base_desempleo * 0.0155) | moneda('EUR') }}</td>
+      </tr>
+      <tr>
+        <td>FOGASA</td>
+        <td>{{ totales.base_desempleo | moneda('EUR') }}</td>
+        <td>0,20%</td>
+        <td>{{ totales.fogasa | moneda('EUR') }}</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>{{ totales.fogasa | moneda('EUR') }}</td>
+      </tr>
+      <tr>
+        <td>Formaci&oacute;n profesional</td>
+        <td>{{ totales.base_desempleo | moneda('EUR') }}</td>
+        <td>0,60%</td>
+        <td>{{ (totales.base_desempleo * 0.006) | moneda('EUR') }}</td>
+        <td>0,10%</td>
+        <td>{{ totales.fp | moneda('EUR') }}</td>
+        <td>{{ (totales.base_desempleo * 0.007) | moneda('EUR') }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Total a ingresar -->
+  <div class="total-ingresar">
+    <span>Cuota empresa: {{ totales.total_empresa | moneda('EUR') }}</span>
+    <span>Cuota trabajadores: {{ totales.total_trabajador | moneda('EUR') }}</span>
+    TOTAL A INGRESAR: {{ totales.total_ingresar | moneda('EUR') }}
+  </div>
+
+  <!-- Info pago -->
+  <div class="info-pago">
+    <strong>Plazo de ingreso:</strong> Hasta el &uacute;ltimo d&iacute;a h&aacute;bil del mes siguiente al per&iacute;odo de liquidaci&oacute;n. &nbsp;|&nbsp;
+    <strong>V&iacute;a de pago:</strong> Domiciliaci&oacute;n bancaria / Ingreso directo en entidad financiera colaboradora con la TGSS.
+    <br>Este documento ha sido generado sistem&aacute;ticamente. La liquidaci&oacute;n definitiva se realiza a trav&eacute;s del Sistema de Liquidaci&oacute;n Directa (SILTRA/SLD).
+  </div>
+
+</div>
+</body>
+</html>

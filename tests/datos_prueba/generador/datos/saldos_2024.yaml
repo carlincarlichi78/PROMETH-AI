@@ -1,0 +1,371 @@
+saldos:
+  aurora-digital:
+    activo:
+      inmovilizado:
+        - cuenta: "217"
+          concepto: "Servidores y equipos informaticos"
+          importe: 15000
+          amort_acum: 6000
+        - cuenta: "218"
+          concepto: "Vehiculo en leasing"
+          importe: 22000
+          amort_acum: 5500
+      circulante:
+        - cuenta: "430"
+          concepto: "Clientes pendientes de cobro"
+          importe: 8500
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos)"
+          importe: 12000
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Prestamo ICO largo plazo"
+          importe: 18000
+        - cuenta: "1740"
+          concepto: "Leasing vehiculo largo plazo"
+          importe: 16400
+      corto_plazo:
+        - cuenta: "5200"
+          concepto: "Prestamo ICO cuota corto plazo"
+          importe: 6000
+        - cuenta: "5240"
+          concepto: "Leasing vehiculo cuota corto plazo"
+          importe: 6000
+        - cuenta: "400"
+          concepto: "Proveedores"
+          importe: 3200
+        - cuenta: "4750"
+          concepto: "HP acreedora IVA T4"
+          importe: 1800
+    patrimonio_neto:
+      capital: 3000
+      reservas: 15000
+      resultado_2024: 18500
+
+  distribuciones-levante:
+    activo:
+      inmovilizado:
+        - cuenta: "211"
+          concepto: "Nave logistica"
+          importe: 320000
+          amort_acum: 64000
+        - cuenta: "218"
+          concepto: "Flota de vehiculos"
+          importe: 45000
+          amort_acum: 18000
+        - cuenta: "213"
+          concepto: "Camara frigorifica"
+          importe: 45000
+          amort_acum: 9000
+      circulante:
+        - cuenta: "300"
+          concepto: "Existencias de mercaderia"
+          importe: 85000
+        - cuenta: "430"
+          concepto: "Clientes pendientes de cobro"
+          importe: 42000
+        - cuenta: "490"
+          concepto: "Provision por insolvencias (saldo acreedor)"
+          importe: -3500
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos)"
+          importe: 25000
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Hipoteca nave logistica largo plazo"
+          importe: 180000
+        - cuenta: "1701"
+          concepto: "Prestamo flota largo plazo"
+          importe: 120000
+        - cuenta: "1740"
+          concepto: "Leasing camara frigorifica largo plazo"
+          importe: 36000
+      corto_plazo:
+        - cuenta: "5200"
+          concepto: "Poliza de credito circulante"
+          importe: 45000
+        - cuenta: "400"
+          concepto: "Proveedores"
+          importe: 38000
+        - cuenta: "4750"
+          concepto: "HP acreedora IVA T4"
+          importe: 12000
+    patrimonio_neto:
+      capital: 10000
+      reservas: 80000
+      resultado_2024: 42000
+
+  gastro-holding:
+    activo:
+      inmovilizado:
+        - cuenta: "2403"
+          concepto: "Participacion La Marea S.L."
+          importe: 3000
+          amort_acum: 0
+        - cuenta: "2404"
+          concepto: "Participacion Chiringuito Sol y Arena S.L."
+          importe: 3000
+          amort_acum: 0
+        - cuenta: "2405"
+          concepto: "Participacion Catering Costa Events S.L."
+          importe: 3000
+          amort_acum: 0
+      circulante:
+        - cuenta: "4423"
+          concepto: "Prestamos a filiales (La Marea + Chiringuito + Catering)"
+          importe: 33000
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos)"
+          importe: 18000
+    pasivo:
+      largo_plazo: []
+      corto_plazo:
+        - cuenta: "5200"
+          concepto: "Poliza de credito holding"
+          importe: 60000
+        - cuenta: "4750"
+          concepto: "HP acreedora IVA T4"
+          importe: 2400
+    patrimonio_neto:
+      capital: 12000
+      reservas: 8000
+      resultado_2024: 15000
+
+  restaurante-la-marea:
+    activo:
+      inmovilizado:
+        - cuenta: "214"
+          concepto: "Maquinaria cocina en leasing"
+          importe: 30000
+          amort_acum: 6000
+        - cuenta: "211"
+          concepto: "Reforma local"
+          importe: 18000
+          amort_acum: 3600
+      circulante:
+        - cuenta: "300"
+          concepto: "Existencias alimentacion y bebidas"
+          importe: 4500
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos y caja)"
+          importe: 8000
+    pasivo:
+      largo_plazo:
+        - cuenta: "1740"
+          concepto: "Leasing cocina largo plazo"
+          importe: 24000
+      corto_plazo:
+        - cuenta: "4423"
+          concepto: "Deuda con holding (Gastro Holding S.L.)"
+          importe: 15000
+        - cuenta: "400"
+          concepto: "Proveedores alimentacion"
+          importe: 5200
+    patrimonio_neto:
+      capital: 3000
+      reservas: 5000
+      resultado_2024: 12000
+
+  chiringuito-sol-arena:
+    activo:
+      inmovilizado:
+        - cuenta: "211"
+          concepto: "Deposito terraza playa"
+          importe: 2000
+          amort_acum: 0
+      circulante:
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos y caja)"
+          importe: 3500
+    pasivo:
+      largo_plazo: []
+      corto_plazo:
+        - cuenta: "4423"
+          concepto: "Deuda con holding (Gastro Holding S.L.)"
+          importe: 8000
+        - cuenta: "400"
+          concepto: "Proveedores"
+          importe: 1800
+    patrimonio_neto:
+      capital: 3000
+      resultado_negativo_acumulado: -4200
+      resultado_2024: -1500
+
+  catering-costa:
+    activo:
+      inmovilizado:
+        - cuenta: "214"
+          concepto: "Utensilios y equipamiento catering"
+          importe: 6000
+          amort_acum: 1200
+      circulante:
+        - cuenta: "4709"
+          concepto: "Anticipos de clientes pendientes de liquidar"
+          importe: 3500
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos)"
+          importe: 5000
+    pasivo:
+      largo_plazo: []
+      corto_plazo:
+        - cuenta: "4423"
+          concepto: "Deuda con holding (Gastro Holding S.L.)"
+          importe: 10000
+        - cuenta: "400"
+          concepto: "Proveedores"
+          importe: 2800
+    patrimonio_neto:
+      capital: 3000
+      reservas: 2000
+      resultado_2024: 6000
+
+  marcos-ruiz:
+    activo:
+      inmovilizado:
+        - cuenta: "218"
+          concepto: "Furgoneta de trabajo"
+          importe: 12000
+          amort_acum: 4800
+        - cuenta: "214"
+          concepto: "Herramientas y maquinaria"
+          importe: 3000
+          amort_acum: 1500
+      circulante:
+        - cuenta: "572"
+          concepto: "Tesoreria"
+          importe: 0
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Prestamo furgoneta pendiente"
+          importe: 6500
+      corto_plazo: []
+    patrimonio_neto:
+      rendimiento_neto_2024: 22000
+      pagos_fraccionados_130:
+        trimestres: 4
+        importe_por_trimestre: 880
+        total_pagado: 3520
+
+  elena-navarro:
+    activo:
+      inmovilizado:
+        - cuenta: "214"
+          concepto: "Equipamiento fisioterapia y pilates"
+          importe: 18000
+          amort_acum: 3600
+        - cuenta: "214"
+          concepto: "Equipos pilates en leasing"
+          importe: 22000
+          amort_acum: 4400
+      circulante:
+        - cuenta: "572"
+          concepto: "Tesoreria"
+          importe: 0
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Hipoteca local fisioterapia pendiente"
+          importe: 95000
+        - cuenta: "1701"
+          concepto: "Prestamo ICO equipamiento pendiente"
+          importe: 8000
+      corto_plazo: []
+    patrimonio_neto:
+      rendimiento_neto_fisioterapia_2024: 28000
+      rendimiento_neto_pilates_2024: 12000
+      prorrata_iva_2024: 35
+
+  jose-antonio-bermudez:
+    activo:
+      inmovilizado:
+        - cuenta: "214"
+          concepto: "Tractor agricola"
+          importe: 35000
+          amort_acum: 28000
+          pct_afectacion: 80
+        - cuenta: "214"
+          concepto: "Aperos y maquinaria agricola"
+          importe: 8000
+          amort_acum: 4000
+      circulante:
+        - cuenta: "300"
+          concepto: "Existencias aceite de oliva (12000 litros)"
+          importe: 36000
+          unidades: 12000
+          unidad: litros
+        - cuenta: "572"
+          concepto: "Tesoreria"
+          importe: 0
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Hipoteca finca agricola pendiente"
+          importe: 55000
+        - cuenta: "1701"
+          concepto: "Prestamo agrario pendiente"
+          importe: 20000
+      corto_plazo: []
+    patrimonio_neto:
+      rendimiento_neto_2024: 18000
+      regimen: REAGP
+
+  francisco-mora:
+    activo:
+      inmovilizado:
+        - cuenta: "214"
+          concepto: "Cafetera industrial"
+          importe: 4500
+          amort_acum: 900
+        - cuenta: "216"
+          concepto: "Mobiliario bar"
+          importe: 6000
+          amort_acum: 1200
+        - cuenta: "211"
+          concepto: "Reforma local bar"
+          importe: 18000
+          amort_acum: 3600
+      circulante:
+        - cuenta: "572"
+          concepto: "Tesoreria (bancos y caja)"
+          importe: 0
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Prestamo reforma local pendiente"
+          importe: 14500
+      corto_plazo: []
+    patrimonio_neto:
+      rendimiento_neto_modulos_2024: 16000
+      iva_simplificado:
+        cuota_trimestral: 680
+        trimestres_pagados: 4
+        total_pagado: 2720
+
+  comunidad-mirador:
+    activo:
+      inmovilizado: []
+      circulante:
+        - cuenta: "113"
+          concepto: "Fondo de reserva comunidad"
+          importe: 35000
+        - cuenta: "430"
+          concepto: "Cuotas de propietarios morosos pendientes"
+          importe: 2700
+        - cuenta: "572"
+          concepto: "Saldo cuenta mantenimiento comun"
+          importe: 8500
+        - cuenta: "4708"
+          concepto: "Subvencion FEDER pendiente de cobro (2do plazo)"
+          importe: 7500
+    pasivo:
+      largo_plazo:
+        - cuenta: "1700"
+          concepto: "Prestamo ascensor pendiente"
+          importe: 22000
+      corto_plazo: []
+    patrimonio_neto:
+      fondo_reserva: 35000
+      nota: "Comunidad de propietarios - no tiene capital social ni resultado en sentido mercantil"

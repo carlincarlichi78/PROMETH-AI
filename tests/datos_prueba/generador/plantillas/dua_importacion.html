@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>DUA - {{ numero_dua }} - {{ fecha | fecha_es }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .dua .cabecera-aeat { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #c62828; padding-bottom: 12px; margin-bottom: 15px; }
+    .dua .cabecera-aeat .aeat-nombre { font-size: 15pt; font-weight: bold; color: #c62828; text-transform: uppercase; letter-spacing: 1px; }
+    .dua .cabecera-aeat .aeat-nombre span { font-size: 9pt; font-weight: normal; display: block; color: #555; margin-top: 2px; }
+    .dua .cabecera-aeat .doc-info { text-align: right; }
+    .dua .cabecera-aeat .doc-info h2 { font-size: 11pt; color: #c62828; text-transform: uppercase; margin: 0 0 4px 0; }
+    .dua .cabecera-aeat .doc-info p { font-size: 9pt; margin: 2px 0; }
+    .dua .titulo-dua { text-align: center; background: #c62828; color: white; padding: 7px; font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+    .dua .grid-casillas { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .dua .grid-casillas td { border: 1px solid #999; vertical-align: top; padding: 0; }
+    .dua .casilla { padding: 5px 8px; }
+    .dua .casilla .num-casilla { font-size: 7pt; color: #888; display: block; margin-bottom: 2px; font-weight: bold; }
+    .dua .casilla .etiqueta-casilla { font-size: 7.5pt; color: #555; text-transform: uppercase; display: block; margin-bottom: 3px; }
+    .dua .casilla .valor-casilla { font-size: 9.5pt; font-weight: bold; color: #111; }
+    .dua .seccion-calculo { margin-bottom: 15px; }
+    .dua .seccion-calculo .titulo-sec { background: #555; color: white; padding: 5px 10px; font-size: 8.5pt; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+    .dua .tabla-calculo { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .dua .tabla-calculo th { background: #e0e0e0; padding: 5px 10px; border: 1px solid #ccc; text-align: left; font-size: 8pt; text-transform: uppercase; }
+    .dua .tabla-calculo th.num { text-align: right; }
+    .dua .tabla-calculo td { padding: 5px 10px; border: 1px solid #eee; }
+    .dua .tabla-calculo td.num { text-align: right; }
+    .dua .tabla-calculo tfoot td { font-weight: bold; background: #f5f5f5; border-top: 2px solid #555; }
+    .dua .alerta-diferido { background: #fff3e0; border: 2px solid #f57f17; border-left: 5px solid #e65100; padding: 10px 15px; margin: 15px 0; }
+    .dua .alerta-diferido .titulo-alerta { font-weight: bold; color: #e65100; font-size: 9.5pt; text-transform: uppercase; margin-bottom: 5px; }
+    .dua .alerta-diferido p { font-size: 8.5pt; color: #333; margin: 2px 0; }
+    .dua .total-derechos { background: #c62828; color: white; padding: 12px 20px; font-size: 13pt; font-weight: bold; text-align: right; margin-top: 10px; }
+    .dua .total-derechos span { font-size: 9pt; font-weight: normal; margin-right: 20px; }
+    .dua .resumen-cambio { display: flex; gap: 5px; margin-bottom: 15px; font-size: 8.5pt; }
+    .dua .resumen-cambio .dato-cambio { flex: 1; border: 1px solid #ddd; padding: 6px 10px; text-align: center; }
+    .dua .resumen-cambio .dato-cambio .et { font-size: 7.5pt; color: #666; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .dua .resumen-cambio .dato-cambio .vl { font-size: 10pt; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="dua">
+
+  <!-- Cabecera AEAT -->
+  <div class="cabecera-aeat">
+    <div>
+      <p class="aeat-nombre">
+        Agencia Tributaria
+        <span>Aduana: {{ aduana.nombre }} ({{ aduana.codigo }})</span>
+      </p>
+    </div>
+    <div class="doc-info">
+      <h2>Documento &Uacute;nico Administrativo</h2>
+      <p>N.&ordm; DUA: <strong>{{ numero_dua }}</strong></p>
+      <p>Fecha: {{ fecha | fecha_es }}</p>
+      <p>R&eacute;gimen: 40 (Importaci&oacute;n definitiva)</p>
+    </div>
+  </div>
+
+  <div class="titulo-dua">Declaraci&oacute;n de Importaci&oacute;n &mdash; DUA</div>
+
+  <!-- Resumen tipo de cambio -->
+  <div class="resumen-cambio">
+    <div class="dato-cambio">
+      <span class="et">Divisa origen</span>
+      <span class="vl">{{ divisa_origen }}</span>
+    </div>
+    <div class="dato-cambio">
+      <span class="et">Tasa de cambio</span>
+      <span class="vl">1 EUR = {{ tasaconv }} {{ divisa_origen }}</span>
+    </div>
+    <div class="dato-cambio">
+      <span class="et">Valor aduanero ({{ divisa_origen }})</span>
+      <span class="vl">{{ valor_aduanero | moneda(divisa_origen) }}</span>
+    </div>
+    <div class="dato-cambio">
+      <span class="et">Valor aduanero (EUR)</span>
+      <span class="vl">{{ (valor_aduanero / tasaconv) | moneda('EUR') }}</span>
+    </div>
+  </div>
+
+  <!-- Casillas DUA simplificado -->
+  <table class="grid-casillas">
+    <tbody>
+      <tr>
+        <!-- Casilla 1 -->
+        <td style="width:33%;">
+          <div class="casilla">
+            <span class="num-casilla">1</span>
+            <span class="etiqueta-casilla">Tipo de declaraci&oacute;n</span>
+            <span class="valor-casilla">IM 4 ES</span>
+          </div>
+        </td>
+        <!-- Casilla 2 -->
+        <td style="width:33%;">
+          <div class="casilla">
+            <span class="num-casilla">2</span>
+            <span class="etiqueta-casilla">Expedidor / Exportador</span>
+            <span class="valor-casilla">{{ origen.proveedor }}</span>
+          </div>
+        </td>
+        <!-- Casilla 14 -->
+        <td style="width:34%;">
+          <div class="casilla">
+            <span class="num-casilla">14</span>
+            <span class="etiqueta-casilla">Pa&iacute;s de origen</span>
+            <span class="valor-casilla">{{ origen.pais }}</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <!-- Casilla 8 -->
+        <td colspan="2">
+          <div class="casilla">
+            <span class="num-casilla">8</span>
+            <span class="etiqueta-casilla">Destinatario / Importador</span>
+            <span class="valor-casilla">{{ importador.nombre }}</span>
+            <span style="font-size:8.5pt; color:#333; display:block;">NIF/CIF: {{ importador.cif }} &nbsp;|&nbsp; {{ importador.direccion }}</span>
+          </div>
+        </td>
+        <!-- Casilla 33 -->
+        <td>
+          <div class="casilla">
+            <span class="num-casilla">33</span>
+            <span class="etiqueta-casilla">Partida arancelaria</span>
+            <span class="valor-casilla">{{ mercancia.partida_arancelaria }}</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <!-- Casilla 31 -->
+        <td colspan="2">
+          <div class="casilla">
+            <span class="num-casilla">31</span>
+            <span class="etiqueta-casilla">Descripci&oacute;n de la mercanc&iacute;a</span>
+            <span class="valor-casilla">{{ mercancia.descripcion }}</span>
+            <span style="font-size:8.5pt; color:#333; display:block;">Bultos: {{ mercancia.bultos }} &nbsp;|&nbsp; Peso bruto: {{ mercancia.peso_kg }} kg</span>
+          </div>
+        </td>
+        <!-- Casilla 46 -->
+        <td>
+          <div class="casilla">
+            <span class="num-casilla">46</span>
+            <span class="etiqueta-casilla">Valor estad&iacute;stico</span>
+            <span class="valor-casilla">{{ (valor_aduanero / tasaconv) | moneda('EUR') }}</span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Casilla 47: Calculo de la imposicion -->
+  <div class="seccion-calculo">
+    <div class="titulo-sec">Casilla 47 &mdash; C&aacute;lculo de la imposici&oacute;n</div>
+    <table class="tabla-calculo">
+      <thead>
+        <tr>
+          <th>Tipo de impuesto</th>
+          <th>Base imponible (EUR)</th>
+          <th class="num">Tipo (%)</th>
+          <th class="num">Cuota (EUR)</th>
+          <th>Modalidad pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if aranceles > 0 %}
+        <tr>
+          <td>A00 &mdash; Derechos de Arancel</td>
+          <td>{{ (valor_aduanero / tasaconv) | moneda('EUR') }}</td>
+          <td class="num">{{ ((aranceles / (valor_aduanero / tasaconv)) * 100) | porcentaje }}</td>
+          <td class="num">{{ aranceles | moneda('EUR') }}</td>
+          <td>Efectivo</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td>
+            B00 &mdash; IVA importaci&oacute;n
+            {% if iva_diferido %}<em style="font-size:7.5pt; color:#c62828;"> (diferido &mdash; casilla&nbsp;77)</em>{% endif %}
+          </td>
+          <td>{{ base_iva | moneda('EUR') }}</td>
+          <td class="num">{{ iva_tipo | porcentaje }}</td>
+          <td class="num">{{ iva_cuota | moneda('EUR') }}</td>
+          <td>{% if iva_diferido %}Diferido (Modelo 303){% else %}Efectivo{% endif %}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><strong>TOTAL DERECHOS E IMPUESTOS A INGRESAR</strong></td>
+          <td class="num">{{ (aranceles + (iva_cuota if not iva_diferido else 0)) | moneda('EUR') }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Alerta IVA diferido -->
+  {% if iva_diferido %}
+  <div class="alerta-diferido">
+    <div class="titulo-alerta">&#9432; IVA de importaci&oacute;n diferido &mdash; Art. 167.Dos LIVA</div>
+    <p>El sujeto pasivo ha optado por el sistema de diferimiento del IVA de importaci&oacute;n al amparo del art&iacute;culo 167, apartado Dos, de la Ley 37/1992 del IVA.</p>
+    <p>Cuota de IVA a declarar en <strong>Modelo 303, casilla 77</strong>: <strong>{{ iva_cuota | moneda('EUR') }}</strong></p>
+    <p>El IVA diferido no se abona en aduana sino que se autoliquida en la declaraci&oacute;n peri&oacute;dica del per&iacute;odo de importaci&oacute;n, y se deduce simult&aacute;neamente en la casilla correspondiente.</p>
+  </div>
+  {% endif %}
+
+  <!-- Total derechos -->
+  <div class="total-derechos">
+    <span>Aranceles: {{ aranceles | moneda('EUR') }}</span>
+    {% if not iva_diferido %}
+    <span>IVA importaci&oacute;n: {{ iva_cuota | moneda('EUR') }}</span>
+    {% else %}
+    <span>IVA: diferido (Mod. 303)</span>
+    {% endif %}
+    TOTAL A INGRESAR EN ADUANA: {{ (aranceles + (iva_cuota if not iva_diferido else 0)) | moneda('EUR') }}
+  </div>
+
+  <div class="pie">
+    <p>Documento expedido por la Aduana de {{ aduana.nombre }} conforme al Reglamento (UE) n.&ordm; 952/2013 del Parlamento Europeo y del Consejo (C&oacute;digo Aduanero de la Uni&oacute;n) y normativa complementaria. Cons&eacute;rvese como justificante a efectos del art. 97 de la Ley 37/1992 del IVA (deducci&oacute;n del IVA soportado en importaciones).</p>
+  </div>
+
+</div>
+</body>
+</html>

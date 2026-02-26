@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ tipo | title }} - {{ numero_factura }} - {{ fecha_factura | fecha_es }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .recibo-suministro .cabecera-proveedor { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2e7d32; padding-bottom: 12px; margin-bottom: 15px; }
+    .recibo-suministro .nombre-proveedor { font-size: 16pt; font-weight: bold; color: #2e7d32; margin: 0 0 4px 0; }
+    .recibo-suministro .nombre-proveedor span { font-size: 8.5pt; font-weight: normal; color: #555; display: block; margin-top: 2px; }
+    .recibo-suministro .datos-factura-sum { text-align: right; }
+    .recibo-suministro .datos-factura-sum h2 { font-size: 11pt; margin: 0 0 4px 0; color: #2e7d32; text-transform: uppercase; }
+    .recibo-suministro .datos-factura-sum p { margin: 2px 0; font-size: 9pt; }
+    .recibo-suministro .bloque-cliente { background: #f5f5f5; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 14px; }
+    .recibo-suministro .bloque-cliente h3 { font-size: 8pt; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px 0; }
+    .recibo-suministro .bloque-cliente .grid-datos { display: flex; gap: 20px; flex-wrap: wrap; }
+    .recibo-suministro .bloque-cliente .grid-datos p { margin: 2px 0; font-size: 9pt; }
+    .recibo-suministro .periodo-facturacion { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 9pt; border: 1px solid #c8e6c9; background: #f1f8e9; padding: 7px 12px; }
+    .recibo-suministro .periodo-facturacion strong { color: #2e7d32; }
+    .recibo-suministro .barra-consumo { display: flex; align-items: center; gap: 12px; }
+    .recibo-suministro .barra-consumo .icono-tipo { font-size: 22pt; width: 40px; text-align: center; }
+    .recibo-suministro .barra-consumo .detalle-consumo { flex: 1; }
+    .recibo-suministro .barra-consumo .detalle-consumo strong { font-size: 11pt; display: block; }
+    .recibo-suministro .barra-consumo .detalle-consumo span { font-size: 8.5pt; color: #555; }
+    .recibo-suministro .tabla-conceptos-sum { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .recibo-suministro .tabla-conceptos-sum thead { background: #2e7d32; color: white; }
+    .recibo-suministro .tabla-conceptos-sum th { padding: 6px 10px; font-size: 8pt; text-transform: uppercase; text-align: left; }
+    .recibo-suministro .tabla-conceptos-sum th:last-child { text-align: right; }
+    .recibo-suministro .tabla-conceptos-sum td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 9pt; }
+    .recibo-suministro .tabla-conceptos-sum td:last-child { text-align: right; }
+    .recibo-suministro .tabla-conceptos-sum tbody tr:nth-child(even) { background: #fafafa; }
+    .recibo-suministro .totales-sum { width: 45%; margin-left: auto; border: 2px solid #2e7d32; padding: 10px 15px; margin-bottom: 20px; }
+    .recibo-suministro .totales-sum p { display: flex; justify-content: space-between; margin: 4px 0; font-size: 9.5pt; }
+    .recibo-suministro .totales-sum .total-final { border-top: 1px solid #2e7d32; padding-top: 6px; margin-top: 6px; font-size: 12pt; font-weight: bold; color: #2e7d32; }
+    .recibo-suministro .domiciliacion { font-size: 8pt; color: #555; border-top: 1px solid #ccc; padding-top: 8px; margin-top: 5px; }
+    .icono-electricidad::before { content: "⚡"; }
+    .icono-agua::before { content: "💧"; }
+    .icono-gas::before { content: "🔥"; }
+    .icono-telefono::before { content: "📞"; }
+  </style>
+</head>
+<body>
+<div class="recibo-suministro">
+
+  <!-- Cabecera proveedor -->
+  <div class="cabecera-proveedor">
+    <div>
+      <p class="nombre-proveedor">
+        {{ proveedor.nombre }}
+        <span>CIF: {{ proveedor.cif }} &nbsp;|&nbsp; {{ proveedor.direccion }}</span>
+      </p>
+    </div>
+    <div class="datos-factura-sum">
+      <h2>Factura de {{ tipo | title }}</h2>
+      <p>N.&ordm;: <strong>{{ numero_factura }}</strong></p>
+      <p>Fecha: {{ fecha_factura | fecha_es }}</p>
+    </div>
+  </div>
+
+  <!-- Datos cliente -->
+  <div class="bloque-cliente">
+    <h3>Datos del cliente</h3>
+    <div class="grid-datos">
+      <div>
+        <p><strong>{{ cliente.nombre }}</strong></p>
+        <p>CIF/NIF: {{ cliente.cif }}</p>
+        <p>{{ cliente.direccion }}</p>
+      </div>
+      <div>
+        <p><strong>N.&ordm; contrato:</strong> {{ cliente.contrato }}</p>
+        {% if cliente.cups %}<p><strong>CUPS:</strong> {{ cliente.cups }}</p>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Periodo facturacion -->
+  <div class="periodo-facturacion">
+    <strong>Per&iacute;odo de facturaci&oacute;n:</strong>
+    Del {{ periodo.desde | fecha_es }} al {{ periodo.hasta | fecha_es }}
+  </div>
+
+  <!-- Barra consumo -->
+  <div class="barra-consumo">
+    <div class="icono-tipo">
+      {% if tipo == 'electricidad' %}<span class="icono-electricidad"></span>
+      {% elif tipo == 'agua' %}<span class="icono-agua"></span>
+      {% elif tipo == 'gas' %}<span class="icono-gas"></span>
+      {% elif tipo == 'telefono' %}<span class="icono-telefono"></span>
+      {% else %}&#9889;{% endif %}
+    </div>
+    <div class="detalle-consumo">
+      <strong>
+        {{ consumo.cantidad }} {{ consumo.unidades }}
+        {% if tipo == 'electricidad' %}consumidos (kWh)
+        {% elif tipo == 'agua' %}consumidos (m&sup3;)
+        {% elif tipo == 'gas' %}consumidos (kWh)
+        {% elif tipo == 'telefono' %}incluidos en tarifa
+        {% endif %}
+      </strong>
+      <span>Precio unitario: {{ consumo.precio_unidad | moneda('EUR') }} / {{ consumo.unidades }}</span>
+    </div>
+  </div>
+
+  <!-- Tabla conceptos -->
+  <table class="tabla-conceptos-sum">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Importe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in conceptos %}
+      <tr>
+        <td>{{ c.concepto }}</td>
+        <td>{{ c.importe | moneda('EUR') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totales -->
+  <div class="totales-sum">
+    <p><span>Subtotal:</span> <span>{{ subtotal | moneda('EUR') }}</span></p>
+    <p><span>IVA ({{ iva_tipo | porcentaje }}):</span> <span>{{ iva_cuota | moneda('EUR') }}</span></p>
+    <p class="total-final">
+      <span>TOTAL FACTURA:</span>
+      <span>{{ total | moneda('EUR') }}</span>
+    </p>
+  </div>
+
+  <!-- Pie: domiciliacion -->
+  <div class="domiciliacion">
+    <p><strong>Forma de pago:</strong> Domiciliaci&oacute;n bancaria. El importe ser&aacute; cargado en su cuenta en los pr&oacute;ximos d&iacute;as h&aacute;biles.</p>
+    <p class="nota">Esta factura ha sido emitida conforme al Real Decreto 1434/2002 y normativa sectorial aplicable. Para reclamaciones: atencion@{{ proveedor.nombre | lower | replace(' ', '') }}.es o llamando al 900 XXX XXX (gratuito).</p>
+    <p class="texto-legal">Conserve esta factura como justificante del gasto. IVA incluido conforme a la Ley 37/1992 del Impuesto sobre el Valor A&ntilde;adido.</p>
+  </div>
+
+</div>
+</body>
+</html>
