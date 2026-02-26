@@ -33,26 +33,38 @@ logger = crear_logger("intake")
 
 # Prompt del sistema para GPT-4o
 PROMPT_EXTRACCION = """Eres un experto en contabilidad espanola. Analiza el siguiente documento
-(factura, nota de credito, recibo, etc.) y extrae los datos en formato JSON.
+y extrae los datos en formato JSON.
 
-REGLAS:
+REGLAS GENERALES:
 - Todos los importes como numeros decimales (ej: 1234.56, no "1.234,56")
 - Fechas en formato YYYY-MM-DD
 - CIF/NIF sin espacios ni guiones
 - Si un dato no esta presente, usar null
-- Si hay multiples tipos de IVA, incluir cada linea por separado
-- Para notas de credito, los importes deben ser POSITIVOS (el tipo indica que es NC)
 - Divisa: EUR por defecto si no se indica otra
+- Responde SOLO con el JSON, sin texto adicional
 
-Responde SOLO con el JSON, sin texto adicional.
+PASO 1: Determina el tipo de documento:
+- "factura_proveedor": factura de compra donde nuestra empresa es receptora
+- "factura_cliente": factura de venta donde nuestra empresa es emisora
+- "nota_credito": abono o rectificativa
+- "nomina": recibo de salarios de un empleado
+- "recibo_suministro": factura de luz, agua, telefono, gas, internet
+- "recibo_bancario": comision, seguro, renting, intereses, extracto bancario
+- "rlc_ss": recibo de liquidacion de cotizaciones de Seguridad Social
+- "impuesto_tasa": licencia, canon, tasa municipal/estatal, IAE
+- "otro": documento no clasificable
 
-Esquema JSON:
+PASO 2: Extrae los datos segun el tipo.
+
+ESQUEMA JSON SEGUN TIPO:
+
+Para "factura_proveedor", "factura_cliente", "nota_credito":
 {
-  "tipo": "factura_proveedor|factura_cliente|nota_credito|anticipo|recibo|otro",
+  "tipo": "factura_proveedor|factura_cliente|nota_credito",
   "emisor_nombre": "nombre completo del emisor",
-  "emisor_cif": "CIF/NIF del emisor sin espacios",
+  "emisor_cif": "CIF/NIF del emisor",
   "receptor_nombre": "nombre completo del receptor",
-  "receptor_cif": "CIF/NIF del receptor sin espacios",
+  "receptor_cif": "CIF/NIF del receptor",
   "numero_factura": "numero o codigo de factura",
   "fecha": "YYYY-MM-DD",
   "base_imponible": 0.00,
@@ -62,9 +74,96 @@ Esquema JSON:
   "irpf_importe": 0.00,
   "total": 0.00,
   "divisa": "EUR",
-  "lineas": [
-    {"descripcion": "...", "cantidad": 1, "precio_unitario": 0.00, "iva": 21}
-  ]
+  "lineas": [{"descripcion": "...", "cantidad": 1, "precio_unitario": 0.00, "iva": 21}]
+}
+
+Para "nomina":
+{
+  "tipo": "nomina",
+  "emisor_nombre": "nombre empresa que paga",
+  "emisor_cif": "CIF empresa",
+  "receptor_nombre": null,
+  "receptor_cif": null,
+  "empleado_nombre": "nombre completo del trabajador",
+  "empleado_nif": "NIF del trabajador",
+  "fecha": "YYYY-MM-DD (ultimo dia del periodo)",
+  "periodo_desde": "YYYY-MM-DD",
+  "periodo_hasta": "YYYY-MM-DD",
+  "bruto": 0.00,
+  "retenciones_irpf": 0.00,
+  "irpf_porcentaje": 0,
+  "aportaciones_ss_trabajador": 0.00,
+  "aportaciones_ss_empresa": 0.00,
+  "neto": 0.00,
+  "total": 0.00,
+  "divisa": "EUR"
+}
+
+Para "recibo_suministro":
+{
+  "tipo": "recibo_suministro",
+  "emisor_nombre": "nombre compania (Endesa, Movistar, etc.)",
+  "emisor_cif": "CIF compania",
+  "receptor_nombre": "nombre cliente",
+  "receptor_cif": "CIF cliente",
+  "subtipo": "electricidad|agua|telefono|gas|internet",
+  "numero_factura": "numero factura o referencia",
+  "fecha": "YYYY-MM-DD",
+  "periodo_desde": "YYYY-MM-DD",
+  "periodo_hasta": "YYYY-MM-DD",
+  "base_imponible": 0.00,
+  "iva_porcentaje": 21,
+  "iva_importe": 0.00,
+  "total": 0.00,
+  "divisa": "EUR"
+}
+
+Para "recibo_bancario":
+{
+  "tipo": "recibo_bancario",
+  "emisor_nombre": "nombre del banco",
+  "emisor_cif": null,
+  "receptor_nombre": null,
+  "receptor_cif": null,
+  "banco_nombre": "nombre del banco",
+  "subtipo": "comision|seguro|renting|intereses|transferencia",
+  "descripcion": "concepto del cargo",
+  "fecha": "YYYY-MM-DD",
+  "importe": 0.00,
+  "total": 0.00,
+  "divisa": "EUR"
+}
+
+Para "rlc_ss":
+{
+  "tipo": "rlc_ss",
+  "emisor_nombre": "nombre empresa cotizante",
+  "emisor_cif": "CIF empresa",
+  "receptor_nombre": "Tesoreria General de la Seguridad Social",
+  "receptor_cif": null,
+  "fecha": "YYYY-MM-DD",
+  "base_cotizacion": 0.00,
+  "cuota_empresarial": 0.00,
+  "cuota_obrera": 0.00,
+  "total_liquidado": 0.00,
+  "total": 0.00,
+  "divisa": "EUR"
+}
+
+Para "impuesto_tasa":
+{
+  "tipo": "impuesto_tasa",
+  "emisor_nombre": null,
+  "emisor_cif": null,
+  "receptor_nombre": null,
+  "receptor_cif": null,
+  "administracion": "nombre administracion (Ayuntamiento, AEAT, etc.)",
+  "subtipo": "licencia|canon|tasa|iae",
+  "concepto": "descripcion del tributo",
+  "fecha": "YYYY-MM-DD",
+  "importe": 0.00,
+  "total": 0.00,
+  "divisa": "EUR"
 }"""
 
 
@@ -213,11 +312,23 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     """Clasifica el tipo de documento basandose en los datos extraidos.
 
     Returns:
-        FC (factura compra/proveedor), FV (factura venta/cliente),
-        NC (nota credito), ANT (anticipo), REC (recibo), OTRO
+        FC, FV, NC, ANT, REC, NOM, SUM, BAN, RLC, IMP, OTRO
     """
     tipo_gpt = datos_gpt.get("tipo", "").lower()
 
+    # Tipos nuevos — clasificacion directa por tipo GPT
+    if tipo_gpt == "nomina":
+        return "NOM"
+    if tipo_gpt == "recibo_suministro":
+        return "SUM"
+    if tipo_gpt == "recibo_bancario":
+        return "BAN"
+    if tipo_gpt == "rlc_ss":
+        return "RLC"
+    if tipo_gpt == "impuesto_tasa":
+        return "IMP"
+
+    # Tipos facturacion — logica existente
     if "nota_credito" in tipo_gpt:
         return "NC"
     if "anticipo" in tipo_gpt:
@@ -231,11 +342,11 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     cif_empresa = config.cif.upper()
 
     if emisor_cif == cif_empresa:
-        return "FV"  # La empresa es emisora = factura de venta
+        return "FV"
     if receptor_cif == cif_empresa:
-        return "FC"  # La empresa es receptora = factura de compra
+        return "FC"
 
-    # Fallback: si GPT dice factura_cliente -> FV, sino FC
+    # Fallback
     if "factura_cliente" in tipo_gpt:
         return "FV"
     if "factura_proveedor" in tipo_gpt:
@@ -248,21 +359,59 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
                          config: ConfigCliente) -> Optional[dict]:
     """Identifica la entidad (proveedor/cliente) en config.yaml.
 
+    Para tipos no-factura, la logica de identificacion cambia:
+    - NOM: la empresa es emisora (nuestra), no busca proveedor externo
+    - SUM: busca por CIF emisor (compania suministro)
+    - BAN: busca por nombre banco, autodetecta si no existe
+    - RLC: la empresa es emisora, no busca proveedor
+    - IMP: no requiere entidad
+
     Returns:
         dict con datos del proveedor/cliente encontrado, o None si desconocido
     """
-    if tipo_doc in ("FC", "NC", "ANT"):
-        # Buscar emisor como proveedor
+    # Nominas y RLC: nuestra empresa es la emisora, no necesita proveedor
+    if tipo_doc in ("NOM", "RLC"):
+        return {"_nombre_corto": "empresa_propia", "cif": config.cif,
+                "nombre_fs": config.nombre, "skip_fs_lookup": True}
+
+    # Impuestos: no requieren entidad proveedor
+    if tipo_doc == "IMP":
+        admin = datos_gpt.get("administracion", "Administracion")
+        return {"_nombre_corto": "administracion", "cif": "",
+                "nombre_fs": admin, "skip_fs_lookup": True}
+
+    # Bancarios: buscar por nombre del banco
+    if tipo_doc == "BAN":
+        banco = datos_gpt.get("banco_nombre", "")
+        if banco:
+            entidad = config.buscar_proveedor_por_nombre(banco)
+            if entidad:
+                return entidad
+        # Si no existe, devolver datos basicos para autodeteccion
+        return {"_nombre_corto": banco.lower().replace(" ", "_")[:20] if banco else "banco",
+                "cif": "", "nombre_fs": banco or "Banco",
+                "subcuenta": "626", "codimpuesto": "IVA0",
+                "auto_detectado": True}
+
+    # Suministros: buscar por CIF emisor (como factura proveedor)
+    if tipo_doc == "SUM":
         cif = (datos_gpt.get("emisor_cif") or "").upper()
         nombre = datos_gpt.get("emisor_nombre") or ""
+        entidad = config.buscar_proveedor_por_cif(cif) if cif else None
+        if not entidad and nombre:
+            entidad = config.buscar_proveedor_por_nombre(nombre)
+        return entidad  # None si no encontrada -> flujo descubrimiento
 
+    # Facturas: logica existente
+    if tipo_doc in ("FC", "NC", "ANT"):
+        cif = (datos_gpt.get("emisor_cif") or "").upper()
+        nombre = datos_gpt.get("emisor_nombre") or ""
         entidad = config.buscar_proveedor_por_cif(cif) if cif else None
         if not entidad and nombre:
             entidad = config.buscar_proveedor_por_nombre(nombre)
         return entidad
 
     elif tipo_doc == "FV":
-        # Buscar receptor como cliente
         cif = (datos_gpt.get("receptor_cif") or "").upper()
         entidad = config.buscar_cliente_por_cif(cif) if cif else None
         return entidad
@@ -280,7 +429,7 @@ def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
     Returns:
         dict con datos de la nueva entidad, o None si el usuario cancela
     """
-    es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
     tipo_relacion = "proveedor" if es_proveedor else "cliente"
 
     cif = (datos_gpt.get("emisor_cif") if es_proveedor
@@ -438,7 +587,7 @@ def _construir_documento_confianza(
     doc = DocumentoConfianza(archivo=archivo, hash_sha256=hash_pdf, tipo=tipo_doc)
 
     # CIF — fuente pdfplumber (regex) + fuente gpt
-    es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
     cif_gpt = (datos_gpt.get("emisor_cif") if es_proveedor
                else datos_gpt.get("receptor_cif"))
     if cif_gpt:
@@ -634,7 +783,7 @@ def ejecutar_intake(
             logger.info(f"  Entidad identificada: {entidad.get('_nombre_corto', '?')}")
         else:
             # FLUJO DE DESCUBRIMIENTO
-            es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+            es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
             cif_desconocido = (datos_gpt.get("emisor_cif") if es_proveedor
                                else datos_gpt.get("receptor_cif")) or "?"
             nombre_desconocido = (datos_gpt.get("emisor_nombre") if es_proveedor
