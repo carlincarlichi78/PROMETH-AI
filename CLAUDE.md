@@ -51,12 +51,16 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 ## Scripts
 | Script | Uso |
 |--------|-----|
+| `scripts/pipeline.py` | **SFCE Pipeline principal** — 7 fases con quality gates. Ver uso abajo |
+| `scripts/onboarding.py` | Alta interactiva de clientes nuevos. Genera config.yaml + carpetas |
 | `scripts/crear_libros_contables.py` | Genera Excel con 10 pestanas (incluye VALIDACION). Convierte USD→EUR automaticamente |
 | `scripts/resumen_fiscal.py` | Consulta API y muestra resumen fiscal on-demand (303/130/111 + Balance/PyG para S.L.) |
 | `scripts/generar_modelos_fiscales.py` | Genera 13 archivos .txt con modelos fiscales en carpeta cliente |
 | `scripts/validar_asientos.py` | Validacion automatica de asientos (5 checks + --fix para corregir DIVISA y NC) |
 | `scripts/renombrar_documentos.py` | Renombrado inteligente de PDFs (inbox+procesado). Usa OCR JSON + FS API + heuristicas. Reversible con --revertir |
 
+Uso pipeline: `export FS_API_TOKEN='...' OPENAI_API_KEY='...' && python scripts/pipeline.py --cliente pastorino-costa-del-sol --ejercicio 2025`
+Opciones: `--dry-run` (solo intake+validacion), `--resume`, `--fase N`, `--force`, `--no-interactivo`
 Uso resumen_fiscal: `export FS_API_TOKEN='...' && python scripts/resumen_fiscal.py --empresa 2 --trimestre T1`
 
 ## API REST - Lecciones aprendidas (CRITICO)
@@ -75,15 +79,18 @@ Uso resumen_fiscal: `export FS_API_TOKEN='...' && python scripts/resumen_fiscal.
 ## SFCE — Estado implementacion
 Plan: `docs/plans/2026-02-26-sfce-implementation.md`
 
-**Completado (10/18 tareas):**
-- T1-T5: Core completo (`scripts/core/` — logger, fs_api, config, confidence, errors)
-- T6+6b: Reglas globales (`reglas/` — validaciones, errores_conocidos, tipos_entidad)
-- T7-T8: Config clientes (`clientes/*/config.yaml` — Pastorino 11 prov + Gerardo)
-- T9: Fase 0 Intake (`scripts/phases/intake.py` — pdfplumber + GPT-4o + descubrimiento entidades)
+**COMPLETADO (18/18 tareas).**
 
-**Siguiente: Tarea 10** — Fase 1 Validacion pre-FS (9 checks antes de registrar en FS)
-- Luego T11-T15 (fases pipeline), T16 (orquestador), T0 (onboarding), T17 (integracion)
-- Decir "continua SFCE, tarea 10" para retomar
+Modulos implementados:
+- `scripts/core/` — logger, fs_api, config, confidence, errors
+- `reglas/` — validaciones.yaml, errores_conocidos.yaml, tipos_entidad.yaml
+- `clientes/*/config.yaml` — Pastorino (11 prov) + Gerardo
+- `scripts/phases/` — 7 fases: intake, pre_validation, registration, asientos, correction, cross_validation, output
+- `scripts/pipeline.py` — orquestador con quality gates, --resume, --dry-run, --force
+- `scripts/onboarding.py` — alta interactiva de clientes
+- `clientes/*/pipeline.bat` + `onboarding.bat` — integracion Windows
+
+**Siguiente**: testing real con PDFs de Pastorino T1 2025
 
 ## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
