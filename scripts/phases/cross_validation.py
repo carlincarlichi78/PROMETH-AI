@@ -1,4 +1,4 @@
-"""Fase 5: Verificacion cruzada — 12 checks globales.
+"""Fase 5: Verificacion cruzada — 13 checks globales.
 
 Cruces entre facturas, asientos y subcuentas contables:
 1. Total facturas proveedor == subcuenta 600 neto + 4709
@@ -13,6 +13,7 @@ Cruces entre facturas, asientos y subcuentas contables:
 10. Cruce individual por proveedor (base + IVA + total vs asiento)
 11. Cruce individual por cliente (base + IVA vs asiento)
 12. Auditor IA (Gemini Flash revisa cada asiento corregido)
+13. Personal y servicios (coherencia subcuentas 640-662, 476, 4751)
 
 Entrada: API FS completa + config.yaml
 Salida: cross_validation_report.json
@@ -528,6 +529,56 @@ def _check_auditor_ia(datos: dict, config, ruta_ejercicio) -> dict:
     }
 
 
+def _check_personal_servicios(partidas_empresa: list) -> dict:
+    """Check 13: Verifica coherencia de subcuentas de personal y servicios.
+
+    Subcuentas de gasto (640-662) deben tener saldo DEUDOR (debe > haber).
+    Subcuentas acreedoras (476, 4751) deben tener saldo ACREEDOR (haber > debe).
+    """
+    errores = []
+
+    # Subcuentas que deben tener saldo deudor (gastos)
+    subcuentas_debe = {
+        "640": "Sueldos y salarios",
+        "642": "SS a cargo empresa",
+        "626": "Servicios bancarios",
+        "625": "Primas de seguros",
+        "631": "Otros tributos",
+        "621": "Arrendamientos",
+        "662": "Intereses deudas",
+    }
+    # Subcuentas que deben tener saldo acreedor
+    subcuentas_haber = {
+        "476": "Organismos SS",
+        "4751": "HP acreedora IRPF",
+    }
+
+    for prefijo, nombre in subcuentas_debe.items():
+        saldo = sum(
+            float(p.get("debe", 0)) - float(p.get("haber", 0))
+            for p in partidas_empresa
+            if p.get("codsubcuenta", "").startswith(prefijo)
+        )
+        if saldo < -0.01:
+            errores.append(f"{prefijo} ({nombre}): saldo acreedor {saldo:.2f} (esperado deudor)")
+
+    for prefijo, nombre in subcuentas_haber.items():
+        saldo = sum(
+            float(p.get("haber", 0)) - float(p.get("debe", 0))
+            for p in partidas_empresa
+            if p.get("codsubcuenta", "").startswith(prefijo)
+        )
+        if saldo < -0.01:
+            errores.append(f"{prefijo} ({nombre}): saldo deudor inesperado (esperado acreedor)")
+
+    return {
+        "check": 13,
+        "nombre": "Personal y servicios",
+        "pasa": len(errores) == 0,
+        "detalle": "OK — subcuentas personal/servicios coherentes" if not errores else "; ".join(errores),
+    }
+
+
 def ejecutar_cruce(
     config: ConfigCliente,
     ruta_cliente: Path,
@@ -553,7 +604,7 @@ def ejecutar_cruce(
         resultado.error("No se obtuvieron partidas de FS")
         return resultado
 
-    logger.info("Ejecutando 12 checks de cruce...")
+    logger.info("Ejecutando 13 checks de cruce...")
 
     checks = [
         _check_gastos_vs_600(datos, tolerancia),
@@ -573,6 +624,9 @@ def ejecutar_cruce(
     # Check 12: Auditor IA (al final, despues de todos los deterministas)
     ruta_ejercicio = ruta_cliente / str(config.ejercicio)
     checks.append(_check_auditor_ia(datos, config, ruta_ejercicio))
+
+    # Check 13: Personal y servicios (subcuentas nuevas: nominas, bancarios, etc.)
+    checks.append(_check_personal_servicios(datos["partidas"]))
 
     total_ok = 0
     total_fail = 0
@@ -615,6 +669,6 @@ def ejecutar_cruce(
     resultado.datos["ruta_reporte"] = str(ruta_reporte)
 
     logger.info(f"Verificacion cruzada: {total_ok} PASS, {total_fail} FAIL "
-                f"de {len(checks)} checks (12 total)")
+                f"de {len(checks)} checks (13 total)")
 
     return resultado
