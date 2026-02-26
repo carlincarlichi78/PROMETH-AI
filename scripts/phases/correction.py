@@ -23,6 +23,12 @@ from ..core.config import ConfigCliente
 from ..core.errors import CatalogoErrores, ResultadoFase
 from ..core.fs_api import api_get, api_put, convertir_a_eur
 from ..core.logger import crear_logger
+from ..core.reglas_pgc import (
+    validar_subcuenta_lado,
+    detectar_suplidos_en_factura,
+    validar_tipo_irpf,
+    validar_coherencia_cif_iva,
+)
 
 logger = crear_logger("correction")
 
@@ -407,6 +413,81 @@ def _check_importe(asiento_data: dict, partidas: list,
     return None
 
 
+def _check_subcuenta_lado(partidas: list) -> list:
+    """F2: Verifica que cada subcuenta esta en el lado correcto (debe/haber)."""
+    problemas = []
+    for p in partidas:
+        err = validar_subcuenta_lado(
+            p.get("codsubcuenta", ""),
+            float(p.get("debe", 0)),
+            float(p.get("haber", 0)),
+        )
+        if err:
+            problemas.append({
+                "check": "F2",
+                "tipo": "subcuenta_lado_incorrecto",
+                "descripcion": err,
+                "auto_fix": False,
+                "datos": {"idpartida": p.get("idpartida"), "codsubcuenta": p.get("codsubcuenta")},
+            })
+    return problemas
+
+
+def _check_iva_por_linea(asiento_data: dict, partidas: list) -> list:
+    """F3: Verifica que cada linea de factura tiene el codimpuesto correcto."""
+    problemas = []
+    datos = asiento_data.get("datos_extraidos", {})
+    lineas = datos.get("lineas", [])
+
+    # Detectar suplidos por heuristica
+    suplidos_detectados = detectar_suplidos_en_factura(lineas)
+
+    if suplidos_detectados:
+        # Buscar si hay partida 600 que deberia ser 4709
+        for p in partidas:
+            if p.get("codsubcuenta", "").startswith("600") and float(p.get("debe", 0)) > 0:
+                concepto = p.get("concepto", "").upper()
+                for suplido in suplidos_detectados:
+                    if suplido["patron"].upper() in concepto:
+                        problemas.append({
+                            "check": "F3",
+                            "tipo": "suplido_en_subcuenta_incorrecta",
+                            "descripcion": f"Suplido '{suplido['descripcion_linea']}' en 600 (deberia ser 4709)",
+                            "auto_fix": False,
+                            "datos": {
+                                "idpartida": p.get("idpartida"),
+                                "patron": suplido["patron"],
+                                "importe": suplido["importe"],
+                            },
+                        })
+
+    return problemas
+
+
+def _check_irpf_factura_cliente(asiento_data: dict, config) -> list:
+    """F4: Autonomo que emite factura debe tener retencion IRPF."""
+    problemas = []
+    tipo_empresa = getattr(config, "tipo", None) or config.get("tipo", "") if isinstance(config, dict) else getattr(config, "tipo", "")
+    if tipo_empresa not in ("autonomo",):
+        return problemas
+
+    datos = asiento_data.get("datos_extraidos", {})
+    tipo_doc = asiento_data.get("tipo", datos.get("tipo", ""))
+
+    if tipo_doc.upper() in ("FV", "FACTURA_CLIENTE"):
+        irpf = float(datos.get("irpf_porcentaje", 0) or 0)
+        if irpf == 0:
+            problemas.append({
+                "check": "F4",
+                "tipo": "irpf_faltante_autonomo",
+                "descripcion": "Autonomo emite factura sin retencion IRPF",
+                "auto_fix": False,
+                "datos": {"tipo_empresa": tipo_empresa},
+            })
+
+    return problemas
+
+
 def _aplicar_correccion(correccion: dict) -> bool:
     """Aplica una correccion automatica via API PUT.
 
@@ -550,6 +631,11 @@ def ejecutar_correccion(
         err = _check_importe(asiento_data, partidas, config, tolerancia)
         if err:
             problemas.append(err)
+
+        # Checks v2 (F2-F4)
+        problemas.extend(_check_subcuenta_lado(partidas))
+        problemas.extend(_check_iva_por_linea(asiento_data, partidas))
+        problemas.extend(_check_irpf_factura_cliente(asiento_data, config))
 
         # Aplicar correcciones automaticas
         for problema in problemas:

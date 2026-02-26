@@ -1,4 +1,4 @@
-"""Fase 5: Verificacion cruzada — 9 checks globales.
+"""Fase 5: Verificacion cruzada — 12 checks globales.
 
 Cruces entre facturas, asientos y subcuentas contables:
 1. Total facturas proveedor == subcuenta 600 neto + 4709
@@ -10,6 +10,9 @@ Cruces entre facturas, asientos y subcuentas contables:
 7. Libro diario cuadra (sum DEBE global == sum HABER global)
 8. 303 calculado == 303 desde subcuentas
 9. Balance: Activo == Pasivo + PN (si SL)
+10. Cruce individual por proveedor (base + IVA + total vs asiento)
+11. Cruce individual por cliente (base + IVA vs asiento)
+12. Auditor IA (Gemini Flash revisa cada asiento corregido)
 
 Entrada: API FS completa + config.yaml
 Salida: cross_validation_report.json
@@ -22,6 +25,7 @@ from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
 from ..core.fs_api import api_get
 from ..core.logger import crear_logger
+from ..core.ocr_gemini import auditar_asiento_gemini
 
 logger = crear_logger("cross_validation")
 
@@ -348,6 +352,182 @@ def _check_balance(datos: dict, config: ConfigCliente, tolerancia: float) -> dic
     }
 
 
+def _check_cruce_por_proveedor(datos: dict, tolerancia: float = 0.02) -> dict:
+    """Cruce individual: cada proveedor debe cuadrar factura vs asiento."""
+    facturas_prov = datos.get("facturas_prov", [])
+    partidas = datos.get("partidas", [])
+
+    # Agrupar facturas por codproveedor
+    por_proveedor = {}
+    for f in facturas_prov:
+        cod = f.get("codproveedor", f.get("nombre", "desconocido"))
+        if cod not in por_proveedor:
+            por_proveedor[cod] = {"facturas": [], "nombre": f.get("nombre", cod)}
+        por_proveedor[cod]["facturas"].append(f)
+
+    # Para cada proveedor, cruzar
+    detalles_proveedor = []
+    total_errores = 0
+
+    for cod, info in por_proveedor.items():
+        facts = info["facturas"]
+        ids_asientos = {int(f.get("idasiento", 0)) for f in facts if f.get("idasiento")}
+        partidas_prov = [p for p in partidas if int(p.get("idasiento", 0)) in ids_asientos]
+
+        # Base imponible: facturas vs 600+4709
+        total_base = sum(float(f.get("neto", 0)) for f in facts)
+        total_600 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("600")) \
+                  - sum(float(p.get("haber", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("600"))
+        total_4709 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("4709"))
+        diff_base = abs(total_base - (total_600 + total_4709))
+
+        # IVA: facturas vs 472
+        total_iva = sum(float(f.get("totaliva", 0)) for f in facts)
+        total_472 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("472"))
+        diff_iva = abs(total_iva - total_472)
+
+        # Total: facturas vs 400
+        total_total = sum(float(f.get("total", 0)) for f in facts)
+        total_400 = sum(float(p.get("haber", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("400"))
+        diff_total = abs(total_total - total_400)
+
+        pasa = diff_base <= tolerancia and diff_iva <= tolerancia and diff_total <= tolerancia
+
+        detalle = {
+            "proveedor": info["nombre"],
+            "codigo": cod,
+            "num_facturas": len(facts),
+            "pasa": pasa,
+            "base": {"facturas": round(total_base, 2), "contable": round(total_600 + total_4709, 2), "diff": round(diff_base, 2)},
+            "iva": {"facturas": round(total_iva, 2), "contable_472": round(total_472, 2), "diff": round(diff_iva, 2)},
+            "total": {"facturas": round(total_total, 2), "contable_400": round(total_400, 2), "diff": round(diff_total, 2)},
+        }
+        detalles_proveedor.append(detalle)
+        if not pasa:
+            total_errores += 1
+
+    return {
+        "check": 10,
+        "nombre": "Cruce individual por proveedor",
+        "pasa": total_errores == 0,
+        "total_proveedores": len(por_proveedor),
+        "proveedores_con_error": total_errores,
+        "detalle": detalles_proveedor,
+    }
+
+
+def _check_cruce_por_cliente(datos: dict, tolerancia: float = 0.02) -> dict:
+    """Cruce individual por cliente: factura vs asiento."""
+    facturas_cli = datos.get("facturas_cli", [])
+    partidas = datos.get("partidas", [])
+
+    por_cliente = {}
+    for f in facturas_cli:
+        cod = f.get("codcliente", f.get("nombre", "desconocido"))
+        if cod not in por_cliente:
+            por_cliente[cod] = {"facturas": [], "nombre": f.get("nombre", cod)}
+        por_cliente[cod]["facturas"].append(f)
+
+    detalles = []
+    total_errores = 0
+
+    for cod, info in por_cliente.items():
+        facts = info["facturas"]
+        ids_asientos = {int(f.get("idasiento", 0)) for f in facts if f.get("idasiento")}
+        partidas_cli = [p for p in partidas if int(p.get("idasiento", 0)) in ids_asientos]
+
+        total_base = sum(float(f.get("neto", 0)) for f in facts)
+        total_700 = sum(float(p.get("haber", 0)) for p in partidas_cli if p.get("codsubcuenta", "").startswith("700")) \
+                  - sum(float(p.get("debe", 0)) for p in partidas_cli if p.get("codsubcuenta", "").startswith("700"))
+        diff_base = abs(total_base - total_700)
+
+        total_iva = sum(float(f.get("totaliva", 0)) for f in facts)
+        total_477 = sum(float(p.get("haber", 0)) for p in partidas_cli if p.get("codsubcuenta", "").startswith("477"))
+        diff_iva = abs(total_iva - total_477)
+
+        pasa = diff_base <= tolerancia and diff_iva <= tolerancia
+
+        detalles.append({
+            "cliente": info["nombre"],
+            "codigo": cod,
+            "num_facturas": len(facts),
+            "pasa": pasa,
+            "base": {"facturas": round(total_base, 2), "contable": round(total_700, 2), "diff": round(diff_base, 2)},
+            "iva": {"facturas": round(total_iva, 2), "contable_477": round(total_477, 2), "diff": round(diff_iva, 2)},
+        })
+        if not pasa:
+            total_errores += 1
+
+    return {
+        "check": 11,
+        "nombre": "Cruce individual por cliente",
+        "pasa": total_errores == 0,
+        "total_clientes": len(por_cliente),
+        "clientes_con_error": total_errores,
+        "detalle": detalles,
+    }
+
+
+def _check_auditor_ia(datos: dict, config, ruta_ejercicio) -> dict:
+    """Capa 5: Auditor IA revisa cada asiento con Gemini Flash."""
+    import os
+    from pathlib import Path
+    if not os.environ.get("GEMINI_API_KEY"):
+        return {
+            "check": 12,
+            "nombre": "Auditor IA (Gemini Flash)",
+            "pasa": True,
+            "detalle": "GEMINI_API_KEY no configurada, check omitido",
+            "alertas": [],
+        }
+
+    # Cargar asientos corregidos
+    ruta_auditoria = Path(ruta_ejercicio) / "auditoria" if isinstance(ruta_ejercicio, (str, Path)) else ruta_ejercicio
+    if isinstance(ruta_auditoria, str):
+        ruta_auditoria = Path(ruta_auditoria)
+
+    # Intentar buscar auditoria como subcarpeta
+    if not ruta_auditoria.exists():
+        ruta_auditoria = Path(ruta_ejercicio)
+
+    asientos_file = sorted(ruta_auditoria.glob("asientos_corregidos_*.json"), reverse=True)
+    if not asientos_file:
+        return {"check": 12, "nombre": "Auditor IA (Gemini Flash)", "pasa": True, "detalle": "Sin asientos corregidos", "alertas": []}
+
+    import json
+    with open(asientos_file[0], "r", encoding="utf-8") as f:
+        asientos_data = json.load(f)
+
+    alertas = []
+    for asiento in asientos_data.get("asientos", []):
+        datos_ext = asiento.get("datos_extraidos", {})
+        contexto = {
+            "tipo_empresa": getattr(config, "tipo", "desconocido") if not isinstance(config, dict) else config.get("tipo", "desconocido"),
+            "regimen": datos_ext.get("regimen", "general"),
+            "actividad": getattr(config, "actividad", "general") if not isinstance(config, dict) else config.get("actividad", "general"),
+            "checks_previos": f"{asiento.get('problemas_detectados', 0)} problemas, {asiento.get('correcciones_aplicadas', 0)} corregidos",
+        }
+
+        resultado = auditar_asiento_gemini(datos_ext, asiento, contexto)
+
+        if resultado.get("resultado") == "ALERTA":
+            for problema in resultado.get("problemas", []):
+                alertas.append({
+                    "factura": datos_ext.get("numero_factura", "?"),
+                    "proveedor": datos_ext.get("emisor_nombre", "?"),
+                    **problema,
+                })
+
+    return {
+        "check": 12,
+        "nombre": "Auditor IA (Gemini Flash)",
+        "pasa": len(alertas) == 0,
+        "total_asientos_revisados": len(asientos_data.get("asientos", [])),
+        "total_alertas": len(alertas),
+        "alertas": alertas,
+    }
+
+
 def ejecutar_cruce(
     config: ConfigCliente,
     ruta_cliente: Path,
@@ -361,7 +541,7 @@ def ejecutar_cruce(
         auditoria: AuditoriaLogger opcional
 
     Returns:
-        ResultadoFase con resultado de los 9 cruces
+        ResultadoFase con resultado de los 12 cruces
     """
     resultado = ResultadoFase("cruce")
     tolerancia = config.tolerancias.get("comparacion_importes", 0.02)
@@ -373,7 +553,7 @@ def ejecutar_cruce(
         resultado.error("No se obtuvieron partidas de FS")
         return resultado
 
-    logger.info("Ejecutando 9 checks de cruce...")
+    logger.info("Ejecutando 12 checks de cruce...")
 
     checks = [
         _check_gastos_vs_600(datos, tolerancia),
@@ -385,7 +565,14 @@ def ejecutar_cruce(
         _check_libro_diario(datos, tolerancia),
         _check_modelo_303(datos, tolerancia),
         _check_balance(datos, config, tolerancia),
+        # Checks v2 - cruce individual
+        _check_cruce_por_proveedor(datos, tolerancia),
+        _check_cruce_por_cliente(datos, tolerancia),
     ]
+
+    # Check 12: Auditor IA (al final, despues de todos los deterministas)
+    ruta_ejercicio = ruta_cliente / str(config.ejercicio)
+    checks.append(_check_auditor_ia(datos, config, ruta_ejercicio))
 
     total_ok = 0
     total_fail = 0
@@ -428,6 +615,6 @@ def ejecutar_cruce(
     resultado.datos["ruta_reporte"] = str(ruta_reporte)
 
     logger.info(f"Verificacion cruzada: {total_ok} PASS, {total_fail} FAIL "
-                f"de {len(checks)} checks")
+                f"de {len(checks)} checks (12 total)")
 
     return resultado

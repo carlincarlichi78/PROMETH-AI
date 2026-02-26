@@ -16,13 +16,20 @@ Salida: validated_batch.json (documentos que pasan) + excluidos con razon
 """
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ..core.aritmetica import ejecutar_checks_aritmeticos
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
 from ..core.fs_api import api_get
 from ..core.logger import crear_logger
+from ..core.reglas_pgc import (
+    validar_coherencia_cif_iva,
+    validar_tipo_iva,
+    validar_tipo_irpf,
+)
 
 logger = crear_logger("pre_validation")
 
@@ -436,6 +443,34 @@ def ejecutar_pre_validacion(
         if err:
             errores_doc.append(f"[CHECK 9] {err}")
 
+        # --- CHECKS NUEVOS v2 ---
+
+        # A1-A7: Aritmetica pura
+        avisos_aritmetica = ejecutar_checks_aritmeticos(doc)
+        for aviso in avisos_aritmetica:
+            avisos_doc.append(aviso)
+
+        # F1: Coherencia CIF -> pais -> regimen -> IVA
+        cif_emisor = datos.get("emisor_cif", "")
+        iva_pct = float(datos.get("iva_porcentaje", 0) or 0)
+        if cif_emisor and iva_pct > 0:
+            err_f1 = validar_coherencia_cif_iva(cif_emisor, iva_pct)
+            if err_f1:
+                avisos_doc.append(f"[F1] {err_f1}")
+
+        # F10: Fecha coherente
+        fecha_str = datos.get("fecha", "")
+        if fecha_str:
+            try:
+                fecha_doc = datetime.strptime(fecha_str, "%Y-%m-%d")
+                if fecha_doc > datetime.now():
+                    avisos_doc.append(f"[F10] Fecha factura {fecha_str} es futura")
+                dias_antiguedad = (datetime.now() - fecha_doc).days
+                if dias_antiguedad > 365:
+                    avisos_doc.append(f"[F10] Factura con {dias_antiguedad} dias de antiguedad (>1 ano)")
+            except ValueError:
+                pass
+
         # Evaluar resultado
         if errores_doc:
             logger.warning(f"  EXCLUIDO: {len(errores_doc)} errores")
@@ -474,7 +509,7 @@ def ejecutar_pre_validacion(
     # Guardar validated_batch.json
     ruta_validados = ruta_cliente / "validated_batch.json"
     batch_json = {
-        "fecha_validacion": __import__("datetime").datetime.now().isoformat(),
+        "fecha_validacion": datetime.now().isoformat(),
         "total_entrada": len(documentos),
         "total_validados": len(validados),
         "total_excluidos": len(excluidos),

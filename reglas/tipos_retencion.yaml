@@ -1,0 +1,36 @@
+# Tipos de retencion IRPF validos en Espana
+# Porcentajes legales vigentes 2025
+
+tipos_irpf:
+  - porcentaje: 1
+    descripcion: "Actividades ganaderas engorde porcino/avicola, forestales"
+  - porcentaje: 2
+    descripcion: "Actividades agricolas, ganaderas, forestales"
+  - porcentaje: 7
+    descripcion: "Profesionales nuevos (primeros 3 anos)"
+  - porcentaje: 15
+    descripcion: "Profesionales general"
+  - porcentaje: 19
+    descripcion: "Rendimientos capital mobiliario, arrendamientos"
+  - porcentaje: 24
+    descripcion: "Administradores (base < 100K)"
+  - porcentaje: 35
+    descripcion: "Administradores (base >= 100K)"
+
+# IVA tipos legales vigentes
+tipos_iva:
+  - porcentaje: 0
+    codigo: "IVA0"
+    descripcion: "Exento, intracom, extracom, suplidos"
+  - porcentaje: 4
+    codigo: "IVA4"
+    descripcion: "Superreducido (alimentos basicos, libros, medicamentos)"
+  - porcentaje: 5
+    codigo: "IVA5"
+    descripcion: "Reducido especial (aceite, pasta, pan desde 2024)"
+  - porcentaje: 10
+    codigo: "IVA10"
+    descripcion: "Reducido (hosteleria, transporte, vivienda)"
+  - porcentaje: 21
+    codigo: "IVA21"
+    descripcion: "General"

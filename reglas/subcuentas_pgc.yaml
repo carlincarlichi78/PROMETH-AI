@@ -1,0 +1,109 @@
+# Reglas de subcuentas segun PGC espanol
+# lado: debe, haber, ambos
+# tipo: clasificacion contable
+
+grupos:
+  "100-199":
+    lado: ambos
+    tipo: financiacion_basica
+    descripcion: "Capital, reservas, resultados"
+  "200-299":
+    lado: debe
+    tipo: inmovilizado
+    descripcion: "Inmovilizado intangible, material, financiero"
+  "300-399":
+    lado: debe
+    tipo: existencias
+    descripcion: "Mercancias, materias primas"
+  "400":
+    lado: haber
+    tipo: proveedores
+    descripcion: "Proveedores"
+  "410":
+    lado: haber
+    tipo: acreedores
+    descripcion: "Acreedores por prestaciones de servicios"
+  "430":
+    lado: debe
+    tipo: clientes
+    descripcion: "Clientes"
+  "4709":
+    lado: debe
+    tipo: hp_deudora_suplidos
+    descripcion: "HP deudora por suplidos aduaneros"
+  "472":
+    lado: debe
+    tipo: iva_soportado
+    descripcion: "HP IVA soportado"
+  "473":
+    lado: ambos
+    tipo: hp_retenciones
+    descripcion: "HP retenciones y pagos a cuenta"
+  "475":
+    lado: haber
+    tipo: hp_acreedora
+    descripcion: "HP acreedora por conceptos fiscales"
+  "477":
+    lado: haber
+    tipo: iva_repercutido
+    descripcion: "HP IVA repercutido"
+  "480-499":
+    lado: ambos
+    tipo: ajustes_periodificacion
+    descripcion: "Gastos/ingresos anticipados"
+  "500-599":
+    lado: ambos
+    tipo: cuentas_financieras
+    descripcion: "Tesoreria, inversiones financieras"
+  "600-609":
+    lado: debe
+    tipo: compras_gastos
+    descripcion: "Compras de mercancias y materias primas"
+  "610-619":
+    lado: debe
+    tipo: variacion_existencias
+    descripcion: "Variacion de existencias"
+  "620-629":
+    lado: debe
+    tipo: servicios_exteriores
+    descripcion: "Arrendamientos, reparaciones, servicios profesionales, seguros, suministros, transporte"
+  "630-639":
+    lado: debe
+    tipo: tributos
+    descripcion: "Impuestos y tasas"
+  "640-649":
+    lado: debe
+    tipo: gastos_personal
+    descripcion: "Sueldos, seguridad social"
+  "650-669":
+    lado: debe
+    tipo: otros_gastos_gestion
+    descripcion: "Otros gastos de gestion corriente"
+  "670-679":
+    lado: debe
+    tipo: perdidas_procedentes
+    descripcion: "Perdidas procedentes de activos no corrientes"
+  "680-689":
+    lado: debe
+    tipo: amortizaciones
+    descripcion: "Dotaciones para amortizaciones"
+  "690-699":
+    lado: debe
+    tipo: provisiones
+    descripcion: "Perdidas por deterioro y provisiones"
+  "700-709":
+    lado: haber
+    tipo: ventas_ingresos
+    descripcion: "Ventas de mercancias y prestaciones de servicios"
+  "710-759":
+    lado: haber
+    tipo: otros_ingresos
+    descripcion: "Variacion existencias, trabajos para empresa, subvenciones, otros ingresos"
+  "760-769":
+    lado: haber
+    tipo: ingresos_financieros
+    descripcion: "Ingresos de participaciones, valores, creditos"
+  "770-779":
+    lado: haber
+    tipo: beneficios
+    descripcion: "Beneficios procedentes de activos no corrientes"

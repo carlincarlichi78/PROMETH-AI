@@ -92,59 +92,81 @@ class EstadoPipeline:
 
 
 def _calcular_confianza_global(estado: EstadoPipeline) -> dict:
-    """Calcula score de confianza global del pipeline."""
+    """Calcula score global del ejercicio con 6 capas de autoevaluacion v2."""
     resultados = estado.obtener_resultados_acumulados()
+    componentes = []
 
-    # Factores de confianza
-    scores = []
+    # Capa 0: OCR consenso (si existe)
+    score_ocr = 100
+    ocr_data = resultados.get("ocr_consensus", {})
+    if ocr_data:
+        score_ocr = ocr_data.get("score_global", 100)
+    componentes.append({"capa": "0_triple_ocr", "score": score_ocr, "peso": 15})
 
-    # Intake: confianza media de extraccion
-    intake = resultados.get("intake", {})
-    docs = intake.get("documentos", [])
-    if docs:
-        confianzas = [d.get("confianza_global", 0) for d in docs]
-        scores.append(sum(confianzas) / len(confianzas))
-
-    # Pre-validacion: ratio validados/total
+    # Capa 1+2: Pre-validacion (existente + nuevos checks A1-A7, F1, F10)
     pre_val = resultados.get("pre_validacion", {})
     validados = pre_val.get("validados", [])
     excluidos = pre_val.get("excluidos", [])
-    total_pre = len(validados) + len(excluidos)
-    if total_pre > 0:
-        scores.append(len(validados) / total_pre * 100)
-
-    # Registro: ratio registrados/total
-    registro = resultados.get("registro", {})
-    registrados = registro.get("registrados", [])
-    fallidos = registro.get("fallidos", [])
-    total_reg = len(registrados) + len(fallidos)
-    if total_reg > 0:
-        scores.append(len(registrados) / total_reg * 100)
-
-    # Correccion: ratio sin problemas
-    correccion = resultados.get("correccion", {})
-    corregidos = correccion.get("asientos_corregidos", [])
-    if corregidos:
-        sin_problemas = sum(1 for a in corregidos if a.get("problemas_detectados", 0) == 0)
-        scores.append(sin_problemas / len(corregidos) * 100)
-
-    # Cruce: ratio checks OK
-    cruce = resultados.get("cruce", {})
-    checks = cruce.get("checks", [])
-    if checks:
-        ok = sum(1 for c in checks if c.get("pasa", False))
-        scores.append(ok / len(checks) * 100)
-
-    # Score global = promedio ponderado
-    if scores:
-        score = round(sum(scores) / len(scores))
+    total_docs = len(validados) + len(excluidos)
+    if total_docs > 0:
+        score_preval = int(len(validados) / total_docs * 100)
     else:
-        score = 0
+        score_preval = 100
+    componentes.append({"capa": "1_aritmetica_pgc", "score": score_preval, "peso": 25})
+
+    # Capa 3: Cruce por proveedor individual
+    cruce = resultados.get("cruce", {})
+    checks_cruce = cruce.get("checks", [])
+    cruce_individual = [c for c in checks_cruce if c.get("check") in (10, 11)]
+    if cruce_individual:
+        pasan = sum(1 for c in cruce_individual if c.get("pasa"))
+        score_cruce_ind = int(pasan / len(cruce_individual) * 100)
+    else:
+        score_cruce_ind = 100
+    componentes.append({"capa": "3_cruce_proveedor", "score": score_cruce_ind, "peso": 20})
+
+    # Capa 4: Historico (opcional)
+    hist_alertas = resultados.get("historico_alertas", [])
+    if hist_alertas is not None and len(hist_alertas) > 0:
+        score_hist = max(0, 100 - len(hist_alertas) * 10)
+        componentes.append({"capa": "4_historico", "score": score_hist, "peso": 10})
+
+    # Capa 5: Auditor IA
+    auditor = [c for c in checks_cruce if c.get("check") == 12]
+    score_auditor = 100
+    if auditor:
+        alertas_ia = auditor[0].get("total_alertas", 0)
+        score_auditor = max(0, 100 - alertas_ia * 15)
+    componentes.append({"capa": "5_auditor_ia", "score": score_auditor, "peso": 10})
+
+    # Cross-validation global (checks 1-9 existentes)
+    checks_globales = [c for c in checks_cruce if c.get("check", 0) <= 9]
+    if checks_globales:
+        pasan_global = sum(1 for c in checks_globales if c.get("pasa"))
+        score_global_cv = int(pasan_global / len(checks_globales) * 100)
+    else:
+        score_global_cv = 100
+    componentes.append({"capa": "cross_validation_global", "score": score_global_cv, "peso": 20})
+
+    # Calcular score ponderado
+    total_peso = sum(c["peso"] for c in componentes)
+    score_final = sum(c["score"] * c["peso"] for c in componentes) / max(total_peso, 1)
+    score_final = int(round(score_final))
+
+    # Clasificacion
+    if score_final >= 95:
+        nivel = "FIABLE"
+    elif score_final >= 85:
+        nivel = "ACEPTABLE"
+    elif score_final >= 70:
+        nivel = "REVISION"
+    else:
+        nivel = "CRITICO"
 
     return {
-        "score": score,
-        "nivel": calcular_nivel(score),
-        "componentes": scores,
+        "score": score_final,
+        "nivel": nivel,
+        "componentes": componentes,
     }
 
 

@@ -1,0 +1,66 @@
+"""Batch OCR: ejecuta Mistral OCR3 + Gemini Flash sobre facturas ya procesadas."""
+
+import argparse
+import json
+from pathlib import Path
+from scripts.core.ocr_mistral import extraer_batch_mistral
+from scripts.core.ocr_gemini import extraer_batch_gemini
+from scripts.core.config import ConfigCliente
+from scripts.core.logger import crear_logger
+from scripts.phases.ocr_consensus import ejecutar_consenso
+
+logger = crear_logger("batch_ocr")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Batch OCR: triple verificacion de facturas")
+    parser.add_argument("--cliente", required=True, help="Carpeta del cliente")
+    parser.add_argument("--ejercicio", default=None, help="Ejercicio (ano o codejercicio)")
+    parser.add_argument("--solo-mistral", action="store_true", help="Solo Mistral OCR3")
+    parser.add_argument("--solo-gemini", action="store_true", help="Solo Gemini Flash")
+    args = parser.parse_args()
+
+    ruta_base = Path(__file__).parent.parent / "clientes" / args.cliente
+    config = ConfigCliente(ruta_base / "config.yaml")
+    ejercicio = args.ejercicio or config.ejercicio_activo
+
+    # Determinar ruta de auditoria
+    ruta_ejercicio = ruta_base / str(ejercicio)
+    ruta_auditoria = ruta_ejercicio / "auditoria"
+    ruta_auditoria.mkdir(parents=True, exist_ok=True)
+
+    # Obtener PDFs del inbox (o procesado)
+    ruta_inbox = ruta_base / "inbox"
+    ruta_procesado = ruta_base / "procesado"
+    pdfs = list(ruta_inbox.glob("*.pdf")) + list(ruta_procesado.glob("*.pdf"))
+
+    if not pdfs:
+        logger.warning("No se encontraron PDFs para procesar")
+        return
+
+    logger.info(f"Procesando {len(pdfs)} PDFs con OCR batch...")
+
+    # Mistral OCR3
+    if not args.solo_gemini:
+        logger.info("Ejecutando Mistral OCR3...")
+        resultados_mistral = extraer_batch_mistral(pdfs)
+        with open(ruta_auditoria / "ocr_mistral.json", "w", encoding="utf-8") as f:
+            json.dump(resultados_mistral, f, ensure_ascii=False, indent=2)
+        logger.info(f"Mistral: {sum(1 for v in resultados_mistral.values() if v)}/{len(pdfs)} extraidos")
+
+    # Gemini Flash
+    if not args.solo_mistral:
+        logger.info("Ejecutando Gemini Flash...")
+        resultados_gemini = extraer_batch_gemini(pdfs)
+        with open(ruta_auditoria / "ocr_gemini.json", "w", encoding="utf-8") as f:
+            json.dump(resultados_gemini, f, ensure_ascii=False, indent=2)
+        logger.info(f"Gemini: {sum(1 for v in resultados_gemini.values() if v)}/{len(pdfs)} extraidos")
+
+    # Consenso
+    logger.info("Calculando consenso triple OCR...")
+    reporte = ejecutar_consenso(ruta_ejercicio)
+    logger.info(f"Score consenso global: {reporte['score_global']}%")
+
+
+if __name__ == "__main__":
+    main()
