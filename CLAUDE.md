@@ -104,7 +104,13 @@ Enfoque: mismos importes que Pastorino, actores ficticios (nombres/CIFs cambiado
 - Referencia: snapshot Pastorino en `clientes/pastorino-costa-del-sol/2025/snapshot_contabilidad.json`
 - Cifras objetivo: neto prov 141,857.60 / neto cli 172,778.40 / resultado expl 59,813.70
 
-**Proxima sesion**: ejecutar `python scripts/pipeline.py --cliente "EMPRESA PRUEBA" --ejercicio 0003` y comparar resultados con Pastorino.
+**Hallazgo dry-run parcial**: todos los documentos dan 28% confianza (NO_FIABLE). Causa: el sistema de confianza (`scripts/core/confidence.py`) requiere multiples fuentes coincidentes (pdfplumber regex + GPT + config = max ~80%), pero:
+- Regex CIF (`_extraer_cif_del_texto`) solo detecta formato espanol (no CIFs chilenos/portugueses ficticios)
+- Regex importe (`total|importe|amount`) no matchea el formato de nuestros PDFs fpdf2
+- Solo GPT (30 pts) + config (10 pts) = 40 max, umbrales son 85-95
+- **Decidir**: bajar umbrales temporalmente, mejorar PDFs, o ajustar regex de pdfplumber
+
+**Proxima sesion**: resolver confianza baja → ejecutar pipeline completo → comparar con Pastorino.
 
 ## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
