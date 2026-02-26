@@ -1,11 +1,11 @@
 ================================================================
   MODELO 349 - OPERACIONES INTRACOMUNITARIAS (T3 2025)
-  PASTORINO COSTA DEL SOL S.L.
+  EMPRESA PRUEBA S.L.
 ================================================================
 
   NIF-IVA              Nombre                    Pais  Tipo   Base imponible
   ------------------------------------------------------------------------
-  BE0477472701         ODOO S.A.                 BEL   A            29.60 EUR
-  PT129381691          TRANSITAINER PORTUGAL LTD PRT   A         6,908.82 EUR
+  PT111222333          LUSITANIA PORT UNIPESSOAL PRT   A         6,908.82 EUR
+  DK11223344           OCEANLINE A/S             DNK   A        12,120.00 EUR
   ------------------------------------------------------------------------
-  TOTAL                                                       6,938.42 EUR
+  TOTAL                                                      19,028.82 EUR

@@ -1,7 +1,7 @@
 ################################################################
   RESUMEN GENERAL DE MODELOS FISCALES (2025)
-  PASTORINO COSTA DEL SOL S.L.
-  Generado: 26/02/2026 14:19
+  EMPRESA PRUEBA S.L.
+  Generado: 26/02/2026 13:20
 ################################################################
 
 ================================================================
@@ -11,10 +11,10 @@
   --------------------------------------------------
   T1 *           0.00 EUR         0.00 EUR         0.00 EUR
   T2             0.00 EUR         0.00 EUR         0.00 EUR
-  T3         5,528.74 EUR     2,128.71 EUR     3,400.03 EUR
-  T4             0.00 EUR       261.89 EUR      -261.89 EUR
+  T3         5,528.74 EUR     4,479.19 EUR     1,049.55 EUR
+  T4             0.00 EUR       397.97 EUR      -397.97 EUR
   --------------------------------------------------
-  ANUAL                                    3,138.14 EUR
+  ANUAL                                      651.58 EUR
   (* = sin facturas, datos parciales)
 
 ================================================================
@@ -22,29 +22,30 @@
 ================================================================
   T1: Sin operaciones
   T2: Sin operaciones
-  T3: 2 proveedor(es), base total:     6,938.42 EUR
+  T3: 2 proveedor(es), base total:    19,028.82 EUR
   T4: Sin operaciones
 
 ================================================================
   MODELO 347 - OPERACIONES CON TERCEROS (resumen)
 ================================================================
-  Terceros que superan 3,005.06 EUR: 7
-    B93159044            MALAGA NATURAL 2012 S.L.       A   143,747.14 EUR
-    30-70793648-3        CAUQUEN ARGENTINA S.A.U.       B    74,880.00 EUR
-    B16815003            PRIMATRANSIT S.L.              B    25,650.34 EUR
-    30-71035801-6        LNET S.A.                      B    19,500.00 EUR
-    DK53139655           MAERSK A/S                     B    12,120.00 EUR
-    PT129381691          TRANSITAINER PORTUGAL LTDA     B     6,908.82 EUR
-    B73047599            PRIMAFRIO S.L.                 B     3,872.00 EUR
+  Terceros que superan 3,005.06 EUR: 8
+    B77777777            FRUTAS DEL SUR 2020 S.L.       A   143,747.14 EUR
+    CL 76.543.210-K      AGROSUR CHILE S.A.             B    74,880.00 EUR
+    PL1234567890         EUROFRUT SP Z O O              A    34,560.00 EUR
+    B22222222            CARGAEXPRESS S.L.              B    28,136.90 EUR
+    CL 71.234.567-8      TRANSANDES LOGISTICS S.A.      B    19,500.00 EUR
+    DK11223344           OCEANLINE A/S                  B    12,120.00 EUR
+    PT111222333          LUSITANIA PORT UNIPESSOAL LTDA B     6,908.82 EUR
+    B11111111            FRIGOTRANS S.L.                B     3,872.00 EUR
 
 ================================================================
   BALANCE Y PyG (resumen)
 ================================================================
-  Total Activo:             190,196.37 EUR
-  Total PN + Pasivo:        176,899.00 EUR
+  Total Activo:             183,184.30 EUR
+  Total PN + Pasivo:        175,454.10 EUR
   Cuadra: NO
-  Resultado explotacion:     53,189.50 EUR
-  Resultado neto:            39,892.12 EUR
+  Resultado explotacion:     30,920.80 EUR
+  Resultado neto:            23,190.60 EUR
   (Imp. Sociedades estimado al 25%)
 
 ################################################################

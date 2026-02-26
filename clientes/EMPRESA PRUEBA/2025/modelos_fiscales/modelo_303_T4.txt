@@ -1,0 +1,31 @@
+================================================================
+  MODELO 303 - IVA TRIMESTRAL (T4 2025)
+  EMPRESA PRUEBA S.L.
+================================================================
+
+  Facturas emitidas:    0
+  Facturas recibidas:   2
+
+  --------------------------------------------------
+  IVA DEVENGADO
+  --------------------------------------------------
+
+  Regimen general:
+    TOTAL  Base:         0.00 EUR   IVA:         0.00 EUR
+
+  TOTAL IVA DEVENGADO:                0.00 EUR
+
+  --------------------------------------------------
+  IVA DEDUCIBLE
+  --------------------------------------------------
+
+  Operaciones interiores:
+      21%  Base:     1,895.10 EUR   IVA:       397.97 EUR
+    TOTAL  Base:     1,895.10 EUR   IVA:       397.97 EUR
+
+  TOTAL IVA DEDUCIBLE:              397.97 EUR
+
+  ==================================================
+  RESULTADO (devengado - deducible):      -397.97 EUR
+  >> A COMPENSAR:                          397.97 EUR
+  ==================================================

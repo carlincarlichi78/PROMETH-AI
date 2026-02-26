@@ -53,7 +53,9 @@ def _obtener_partidas_asiento(idasiento: int) -> list:
         Lista de partidas con subcuenta, debe, haber, concepto, etc.
     """
     try:
-        partidas = api_get("partidas", params={"idasiento": idasiento})
+        # Filtro idasiento NO funciona en API FS — post-filtrar en Python
+        todas = api_get("partidas", params={"idasiento": idasiento})
+        partidas = [p for p in todas if int(p.get("idasiento", 0)) == idasiento]
         return partidas
     except Exception as e:
         logger.error(f"Error obteniendo partidas del asiento {idasiento}: {e}")

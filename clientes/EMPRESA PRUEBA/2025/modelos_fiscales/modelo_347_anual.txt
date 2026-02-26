@@ -1,0 +1,19 @@
+================================================================
+  MODELO 347 - OPERACIONES CON TERCEROS (2025)
+  EMPRESA PRUEBA S.L.
+  Umbral: 3,005.06 EUR
+================================================================
+
+  CIF                  Nombre                    Tipo            Total
+  -------------------------------------------------------------------
+  B77777777            FRUTAS DEL SUR 2020 S.L.  A       143,747.14 EUR
+  CL 76.543.210-K      AGROSUR CHILE S.A.        B        74,880.00 EUR
+  PL1234567890         EUROFRUT SP Z O O         A        34,560.00 EUR
+  B22222222            CARGAEXPRESS S.L.         B        28,136.90 EUR
+  CL 71.234.567-8      TRANSANDES LOGISTICS S.A. B        19,500.00 EUR
+  DK11223344           OCEANLINE A/S             B        12,120.00 EUR
+  PT111222333          LUSITANIA PORT UNIPESSOAL B         6,908.82 EUR
+  B11111111            FRIGOTRANS S.L.           B         3,872.00 EUR
+  -------------------------------------------------------------------
+  Total compras (B):                                      145,417.72 EUR
+  Total ventas (A):                                       178,307.14 EUR

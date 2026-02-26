@@ -1,6 +1,6 @@
 ================================================================
   MODELO 303 - IVA TRIMESTRAL (T3 2025)
-  PASTORINO COSTA DEL SOL S.L.
+  EMPRESA PRUEBA S.L.
 ================================================================
 
   Facturas emitidas:    5
@@ -16,27 +16,27 @@
     TOTAL  Base:   172,778.40 EUR   IVA:     5,528.74 EUR
 
   Adquisiciones intracomunitarias (casillas 10-11):
-    Base:       6,938.42 EUR
-    IVA 21%:    1,457.07 EUR
+    Base:      19,028.82 EUR
+    IVA 21%:    3,996.05 EUR
 
-  TOTAL IVA DEVENGADO:            6,985.81 EUR
+  TOTAL IVA DEVENGADO:            9,524.79 EUR
 
   --------------------------------------------------
   IVA DEDUCIBLE
   --------------------------------------------------
 
   Operaciones interiores:
-       0%  Base:    83,565.80 EUR   IVA:         0.00 EUR
-      21%  Base:    10,136.70 EUR   IVA:     2,128.71 EUR
-    TOTAL  Base:    93,702.50 EUR   IVA:     2,128.71 EUR
+       0%  Base:    72,372.99 EUR   IVA:         0.00 EUR
+      21%  Base:    21,329.51 EUR   IVA:     4,479.20 EUR
+    TOTAL  Base:    93,702.50 EUR   IVA:     4,479.19 EUR
 
   Adquisiciones intracomunitarias (casillas 36-37):
-    Base:       6,938.42 EUR
-    IVA 21%:    1,457.07 EUR
+    Base:      19,028.82 EUR
+    IVA 21%:    3,996.05 EUR
 
-  TOTAL IVA DEDUCIBLE:            3,585.78 EUR
+  TOTAL IVA DEDUCIBLE:            8,475.24 EUR
 
   ==================================================
-  RESULTADO (devengado - deducible):     3,400.03 EUR
-  >> A INGRESAR:                         3,400.03 EUR
+  RESULTADO (devengado - deducible):     1,049.55 EUR
+  >> A INGRESAR:                         1,049.55 EUR
   ==================================================

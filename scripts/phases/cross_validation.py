@@ -32,40 +32,61 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
     Returns:
         dict con facturas, asientos, partidas, subcuentas
     """
-    params_base = {
-        "idempresa": config.idempresa,
-        "codejercicio": config.ejercicio,
-    }
+    # Filtros idempresa/codejercicio NO funcionan en la API FS
+    # SIEMPRE post-filtrar en Python
+    idempresa = str(config.idempresa)
+    codejercicio = str(config.ejercicio)
 
     datos = {}
 
     try:
-        datos["facturas_prov"] = api_get("facturaproveedores", params=params_base)
-        logger.info(f"  {len(datos['facturas_prov'])} facturas proveedor")
+        todas_fp = api_get("facturaproveedores")
+        datos["facturas_prov"] = [
+            f for f in todas_fp
+            if str(f.get("idempresa")) == idempresa
+            and str(f.get("codejercicio")) == codejercicio
+        ]
+        logger.info(f"  {len(datos['facturas_prov'])} facturas proveedor (de {len(todas_fp)} total)")
     except Exception as e:
         logger.error(f"Error obteniendo facturas proveedor: {e}")
         datos["facturas_prov"] = []
 
     try:
-        datos["facturas_cli"] = api_get("facturaclientes", params=params_base)
-        logger.info(f"  {len(datos['facturas_cli'])} facturas cliente")
+        todas_fc = api_get("facturaclientes")
+        datos["facturas_cli"] = [
+            f for f in todas_fc
+            if str(f.get("idempresa")) == idempresa
+            and str(f.get("codejercicio")) == codejercicio
+        ]
+        logger.info(f"  {len(datos['facturas_cli'])} facturas cliente (de {len(todas_fc)} total)")
     except Exception as e:
         logger.error(f"Error obteniendo facturas cliente: {e}")
         datos["facturas_cli"] = []
 
     try:
-        datos["partidas"] = api_get("partidas", params=params_base)
-        logger.info(f"  {len(datos['partidas'])} partidas")
-    except Exception as e:
-        logger.error(f"Error obteniendo partidas: {e}")
-        datos["partidas"] = []
-
-    try:
-        datos["asientos"] = api_get("asientos", params=params_base)
-        logger.info(f"  {len(datos['asientos'])} asientos")
+        todos_as = api_get("asientos")
+        datos["asientos"] = [
+            a for a in todos_as
+            if str(a.get("idempresa")) == idempresa
+            and str(a.get("codejercicio")) == codejercicio
+        ]
+        logger.info(f"  {len(datos['asientos'])} asientos (de {len(todos_as)} total)")
     except Exception as e:
         logger.error(f"Error obteniendo asientos: {e}")
         datos["asientos"] = []
+
+    try:
+        # Partidas no tienen idempresa — filtrar por idasiento de esta empresa
+        ids_asientos = {int(a.get("idasiento", 0)) for a in datos["asientos"]}
+        todas_p = api_get("partidas")
+        datos["partidas"] = [
+            p for p in todas_p
+            if int(p.get("idasiento", 0)) in ids_asientos
+        ]
+        logger.info(f"  {len(datos['partidas'])} partidas (de {len(todas_p)} total)")
+    except Exception as e:
+        logger.error(f"Error obteniendo partidas: {e}")
+        datos["partidas"] = []
 
     return datos
 

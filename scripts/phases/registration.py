@@ -323,8 +323,20 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
         debe_orig = float(partida.get("debe", 0))
         haber_orig = float(partida.get("haber", 0))
 
-        # Solo corregir si hay movimiento y esta invertido
         if debe_orig == 0 and haber_orig == 0:
+            continue
+
+        # Detectar si esta invertido segun PGC:
+        # Correcto: 600/472 en DEBE, 400 en HABER
+        # Invertido (bug FS): 400 en DEBE, 600/472 en HABER
+        sub = partida.get("codsubcuenta", "")
+        esta_invertido = (
+            (sub.startswith("400") and debe_orig > 0)
+            or (sub.startswith("600") and haber_orig > 0)
+            or (sub.startswith("472") and haber_orig > 0)
+        )
+
+        if not esta_invertido:
             continue
 
         # Swap debe <-> haber

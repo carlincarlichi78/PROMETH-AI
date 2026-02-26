@@ -1,0 +1,23 @@
+================================================================
+  BALANCE DE SITUACION PROVISIONAL (31/12/2025)
+  EMPRESA PRUEBA S.L.
+================================================================
+
+  A) ACTIVO NO CORRIENTE                       0.00 EUR
+  B) ACTIVO CORRIENTE                     183,184.30 EUR
+      II. Deudores comerciales                 178,307.14 EUR
+      III. HP deudora                            4,877.16 EUR
+    --------------------------------------------------
+    TOTAL ACTIVO                          183,184.30 EUR
+
+  A) PATRIMONIO NETO                       23,190.60 EUR
+      V. Resultado del ejercicio                23,190.60 EUR
+  B) PASIVO NO CORRIENTE                        0.00 EUR
+  C) PASIVO CORRIENTE                     152,263.50 EUR
+      I. Proveedores                           146,734.76 EUR
+      IV. HP acreedora                           5,528.74 EUR
+    --------------------------------------------------
+    TOTAL PN + PASIVO                     175,454.10 EUR
+
+  Verificacion: NO CUADRA - revisar asientos
+  Diferencia:     7,730.20 EUR

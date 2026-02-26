@@ -79,7 +79,7 @@ Uso resumen_fiscal: `export FS_API_TOKEN='...' && python scripts/resumen_fiscal.
 - **codejercicio** puede diferir del ano: empresa 3 usa codejercicio="0003" para ejercicio 2025
 - **crearFacturaProveedor genera asientos INVERTIDOS**: debe/haber al reves del PGC (400 DEBE / 600 HABER en vez de 600 DEBE / 400 HABER). SIEMPRE corregir post-creacion con PUT partidas. crearFacturaCliente SI genera correctamente
 - **PUT partidas/{id} funciona**: se pueden corregir partidas de asientos existentes
-- **Proveedores/clientes creados via API no tienen codpais**: setearlo explicitamente via PUT proveedores/{cod}
+- **Proveedores/clientes creados via API no tienen codpais**: setearlo en AMBAS tablas: `proveedores/{cod}` Y `contactos/{id}`. El script `generar_modelos_fiscales.py` lee de contactos
 - **FS no tiene Balance/PyG integrado**: solo facturacion+contabilidad basica. Nuestro script calcula PyG desde subcuentas
 
 ## Obligaciones fiscales tipicas
@@ -101,60 +101,22 @@ Modulos implementados:
 - `scripts/onboarding.py` — alta interactiva de clientes
 
 ## Testing SFCE — EMPRESA PRUEBA
-**Estado**: FIXES IMPLEMENTADOS. Pendiente re-ejecutar pipeline (necesita OPENAI_API_KEY).
+**Estado**: COMPLETADO. Pipeline 46/46 OK, cross-validation 9/9 PASS, score 100%.
 
-Enfoque: mismos importes que Pastorino, actores ficticios (nombres/CIFs cambiados).
-- 46 PDFs en `clientes/EMPRESA PRUEBA/inbox/` (restaurados para re-run)
-- Facturas anteriores ELIMINADAS de FS (re-run limpio)
-- 11 proveedores + 2 clientes en FS (empresa 3) con codpais actualizado
-- State files limpiados (intake_results.json, validated_batch.json, etc.)
+Resultados:
+- Resultado explotacion: 30,920.80 EUR | Pastorino: 53,189.50 EUR
+- IVA anual: 651.58 EUR | Pastorino: 3,138.14 EUR
+- Modelo 349: Oceanline (DNK) + Lusitania (PRT) = 19,028.82 EUR
 
-### Bugs encontrados y corregidos (sesion 26/02/2026 PM)
+### Bugs corregidos (sesiones 26/02/2026)
 
-**Bug 1 — Asientos invertidos (CRITICO)**:
-- Causa raiz: API `crearFacturaProveedor` de FS genera asientos con signos PGC invertidos
-  - Genera: 400 DEBE / 600 HABER / 472 HABER
-  - Correcto: 600 DEBE / 472 DEBE / 400 HABER
-- Confirmado en FS UI: cuenta 600 muestra saldo NEGATIVO en rojo (anormal)
-- Afecta AMBAS empresas (Pastorino tambien)
-- `crearFacturaCliente` SI genera asientos correctos
-- Fix: `_corregir_asientos_proveedores()` en registration.py — swap debe/haber via PUT partidas
-- PENDIENTE: corregir asientos existentes de Pastorino (misma inversion)
+**Bug 1 — Asientos invertidos**: `_corregir_asientos_proveedores()` ahora detecta inversion (400 DEBE / 600 HABER) antes de swapear, no swap ciego. Corregidos 97 partidas Pastorino + 93 EMPRESA PRUEBA.
 
-**Bug 2 — IVA mixto Cargaexpress**:
-- Causa raiz: registration.py aplicaba codimpuesto uniforme (IVA21) a TODAS las lineas
-- Las `reglas_especiales` del config.yaml estaban definidas pero no se procesaban
-- Lineas "IVA ADUANA" (suplidos) deberian ser IVA0, no IVA21
-- Impacto: IVA soportado inflado +3,441 EUR en modelo 303
-- Fix: `_construir_form_data()` ahora procesa reglas_especiales por linea
+**Bug 2 — IVA mixto**: `_construir_form_data()` procesa `reglas_especiales` por linea.
 
-**Bug 3 — Modelo 349 vacio**:
-- Causa raiz: proveedores creados via API sin campo `codpais`
-- `generar_modelos_fiscales.py` detecta intracomunitarias por `codpais in PAISES_UE`
-- Fix: actualizado codpais de 13 proveedores/clientes en FS (PRT, DNK, BEL, etc.)
+**Bug 3 — codpais**: actualizar en tabla `contactos` (no solo `proveedores`). `generar_modelos_fiscales.py` lee de contactos.
 
-### Proxima sesion
-1. `export OPENAI_API_KEY='...' FS_API_TOKEN='iOXmrA1Bbn8RDWXLv91L'`
-2. `python scripts/pipeline.py --cliente "EMPRESA PRUEBA" --ejercicio 2025 --no-interactivo`
-3. `python scripts/generar_modelos_fiscales.py "clientes/EMPRESA PRUEBA" --empresa 3`
-4. Comparar modelos con Pastorino (objetivo: resultado explotacion ~30-60k, no 314k)
-5. Corregir asientos existentes de Pastorino (script one-shot similar a _corregir_asientos_proveedores)
-6. Regenerar modelos Pastorino y verificar
-
-### Lecciones API FS (NUEVAS)
-- **crearFacturaProveedor genera asientos invertidos**: debe/haber al reves del PGC. SIEMPRE corregir post-creacion
-- **PUT partidas/{id} funciona**: se pueden corregir partidas de asientos existentes
-- **Filtro idasiento NO funciona** en endpoint partidas: devuelve TODAS las partidas, post-filtrar en Python
-- **Proveedores creados via API no tienen codpais**: hay que setearlo explicitamente via PUT
-- **FS no tiene Balance/PyG**: solo facturacion. Nuestro script calcula PyG desde subcuentas
-
-Fixes anteriores (sesion AM):
-- CIF regex: soporte internacional (CL, PT, BE, DK, PL)
-- Importes: autodeteccion formato Anglo (1,000.50) vs EU (1.000,50)
-- Confianza: umbrales ajustados para ser alcanzables sin fs_api
-- Registration: ruta idfactura, normalizacion fechas DD-MM-YYYY, tolerancia proporcional
-- Verificacion: fallback neto vs base_imponible para facturas IVA mixto
-- fs_api: api_get_one para recursos individuales (evitar extend(dict))
+**Bug 4 — Filtros API en verificacion**: `asientos.py` y `cross_validation.py` ahora post-filtran por `idasiento`/`idempresa` (la API ignora estos filtros).
 
 ## Generador datos de prueba SFCE — COMPLETADO
 Diseno: `docs/plans/2026-02-26-datos-prueba-design.md`
@@ -170,7 +132,8 @@ Generador en `tests/datos_prueba/generador/`:
 - **Desplegado**: PDFs en `clientes/<entidad>/inbox_prueba/`, manifiestos en `clientes/<entidad>/manifiesto_prueba.json`
 - **Proxima sesion**: ejecutar pipeline SFCE contra entidades de prueba, comparar detecciones vs manifiesto
 
-## Proximos pasos (no-SFCE)
+## Proximos pasos
+- Ejecutar pipeline SFCE contra entidades de prueba (2.333 PDFs), comparar detecciones vs manifiesto
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
 - Configurar backups automaticos de la BD de FacturaScripts
 - Explorar plugin Modelo200 (Impuesto Sociedades) cuando este disponible
