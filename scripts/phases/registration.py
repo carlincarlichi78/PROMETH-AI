@@ -353,6 +353,75 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
     return corregidas
 
 
+def _corregir_divisas_asientos(registrados: list) -> int:
+    """Corrige asientos de facturas en divisa extranjera.
+
+    Bug FS: crearFacturaProveedor genera partidas con importes en divisa
+    original en vez de EUR. Convertir usando tasaconv de la factura.
+
+    Returns:
+        Numero de partidas corregidas
+    """
+    proveedores = [r for r in registrados
+                   if r.get("tipo", "FC") in ("FC", "NC", "ANT")]
+    if not proveedores:
+        return 0
+
+    # Obtener facturas USD y sus asientos
+    facturas_divisa = {}
+    for reg in proveedores:
+        idfactura = reg.get("idfactura")
+        if not idfactura:
+            continue
+        try:
+            factura = verificar_factura(idfactura, tipo="proveedor")
+            divisa = factura.get("coddivisa", "EUR")
+            tasaconv = float(factura.get("tasaconv", 1))
+            if divisa != "EUR" and tasaconv > 1:
+                idasiento = factura.get("idasiento")
+                if idasiento:
+                    facturas_divisa[idasiento] = tasaconv
+        except Exception as e:
+            logger.warning(f"  No se pudo verificar divisa factura {idfactura}: {e}")
+
+    if not facturas_divisa:
+        return 0
+
+    logger.info(f"Corrigiendo divisas en asientos: {len(facturas_divisa)} asientos")
+
+    todas_partidas = api_get("partidas")
+    corregidas = 0
+    for partida in todas_partidas:
+        ida = partida["idasiento"]
+        if ida not in facturas_divisa:
+            continue
+
+        tasaconv = facturas_divisa[ida]
+        debe = float(partida.get("debe", 0))
+        haber = float(partida.get("haber", 0))
+
+        if debe == 0 and haber == 0:
+            continue
+
+        nuevo_debe = round(debe / tasaconv, 2) if debe > 0 else 0
+        nuevo_haber = round(haber / tasaconv, 2) if haber > 0 else 0
+
+        if abs(debe - nuevo_debe) < 0.01:
+            continue
+
+        try:
+            api_put(
+                f"partidas/{partida['idpartida']}",
+                data={"debe": nuevo_debe, "haber": nuevo_haber}
+            )
+            corregidas += 1
+        except Exception as e:
+            logger.error(f"  Error corrigiendo divisa partida {partida['idpartida']}: {e}")
+
+    logger.info(f"  {corregidas} partidas convertidas a EUR")
+    return corregidas
+
+
 def ejecutar_registro(
     config: ConfigCliente,
     ruta_cliente: Path,
@@ -524,6 +593,15 @@ def ejecutar_registro(
         except Exception as e:
             logger.error(f"Error corrigiendo asientos: {e}")
             resultado.aviso(f"Error corrigiendo asientos proveedor: {e}")
+
+        # Corregir divisas: FS genera partidas en divisa original, no EUR
+        try:
+            n_divisas = _corregir_divisas_asientos(registrados)
+            if n_divisas > 0:
+                logger.info(f"Divisas corregidas en asientos: {n_divisas} partidas")
+        except Exception as e:
+            logger.error(f"Error corrigiendo divisas: {e}")
+            resultado.aviso(f"Error corrigiendo divisas asientos: {e}")
 
     logger.info(f"Registro completado: {len(registrados)} OK, "
                 f"{len(fallidos)} fallidos de {len(documentos)} total")

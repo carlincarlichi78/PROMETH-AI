@@ -82,7 +82,23 @@ proveedores:
         patron_linea: "IVA ADUANA"
         subcuenta_correcta: "4709000000"
         descripcion: "IVA PT no deducible — reclasificar de 600 a 4709"
-    notas: "Agente aduanas. Facturas incluyen linea 'IVA ADUANA' = IVA portugues pagado como suplido"
+      - tipo: iva_extranjero
+        patron_linea: "DERECHOS ARANCEL"
+        subcuenta_correcta: "4709000000"
+        descripcion: "Suplido aduanero — reclasificar de 600 a 4709"
+      - tipo: iva_extranjero
+        patron_linea: "CAUCION"
+        subcuenta_correcta: "4709000000"
+        descripcion: "Suplido aduanero — reclasificar de 600 a 4709"
+      - tipo: iva_extranjero
+        patron_linea: "ADQUISICION CERTIFICADOS"
+        subcuenta_correcta: "4709000000"
+        descripcion: "Suplido aduanero — reclasificar de 600 a 4709"
+      - tipo: iva_extranjero
+        patron_linea: "COSTES NAVIERA"
+        subcuenta_correcta: "4709000000"
+        descripcion: "Suplido transporte internacional — reclasificar de 600 a 4709"
+    notas: "Agente aduanas. Facturas incluyen lineas suplidos (IVA ADUANA, DERECHOS ARANCEL, etc.) = gastos aduaneros a reclasificar"
 
   transitainer:
     cif: "PT509702895"

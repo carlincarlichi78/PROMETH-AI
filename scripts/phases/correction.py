@@ -266,6 +266,64 @@ def _check_reglas_especiales(asiento_data: dict, partidas: list,
                         }
                     })
 
+        elif tipo_regla == "iva_extranjero":
+            # Reclasificar suplidos IVA extranjero de 600 a 4709
+            patron = regla.get("patron_linea", "")
+            subcuenta_correcta = regla.get("subcuenta_correcta", "4709000000")
+
+            if not patron:
+                continue
+
+            # Buscar importe IVA ADUANA en las lineas de datos extraidos
+            lineas = datos.get("lineas", [])
+            importe_aduana = 0.0
+            for linea in lineas:
+                desc = (linea.get("descripcion") or "").upper()
+                if patron.upper() in desc:
+                    # pvptotal o base_imponible de la linea
+                    imp = float(linea.get("pvptotal",
+                                linea.get("base_imponible",
+                                linea.get("importe", 0))))
+                    importe_aduana += imp
+
+            if importe_aduana <= 0:
+                continue
+
+            # Verificar que no exista ya partida 4709 (evitar duplicados)
+            tiene_4709 = any(
+                p.get("codsubcuenta", "").startswith("4709")
+                for p in partidas
+            )
+            if tiene_4709:
+                continue
+
+            # Buscar partida 600 para reducir
+            partida_600 = None
+            for p in partidas:
+                if (p.get("codsubcuenta", "").startswith("600")
+                        and float(p.get("debe", 0)) > 0):
+                    partida_600 = p
+                    break
+
+            if partida_600:
+                debe_actual = float(partida_600.get("debe", 0))
+                idasiento = partida_600.get("idasiento")
+                correcciones.append({
+                    "check": 5,
+                    "tipo": "regla_especial_iva_extranjero",
+                    "descripcion": (f"Reclasificar {importe_aduana:.2f} EUR "
+                                    f"de 600 a {subcuenta_correcta} (IVA extranjero)"),
+                    "auto_fix": True,
+                    "datos": {
+                        "idpartida": partida_600.get("idpartida"),
+                        "idasiento": idasiento,
+                        "debe_actual": debe_actual,
+                        "debe_nuevo": round(debe_actual - importe_aduana, 2),
+                        "importe_aduana": importe_aduana,
+                        "subcuenta_destino": subcuenta_correcta,
+                    }
+                })
+
     return correcciones
 
 
@@ -375,6 +433,27 @@ def _aplicar_correccion(correccion: dict) -> bool:
         elif tipo == "regla_especial_reclasificar":
             return bool(api_put(f"partidas/{idpartida}",
                                 {"codsubcuenta": datos["subcuenta_destino"]}))
+
+        elif tipo == "regla_especial_iva_extranjero":
+            # 1. Reducir partida 600 (quitar importe IVA ADUANA)
+            ok_600 = api_put(f"partidas/{idpartida}",
+                             {"debe": datos["debe_nuevo"]})
+            if not ok_600:
+                return False
+
+            # 2. Crear partida nueva en 4709 (IVA extranjero)
+            import requests
+            url = "https://contabilidad.lemonfresh-tuc.com/api/3/partidas"
+            headers = {"Token": "iOXmrA1Bbn8RDWXLv91L"}
+            nueva_partida = {
+                "idasiento": datos["idasiento"],
+                "codsubcuenta": datos["subcuenta_destino"],
+                "debe": datos["importe_aduana"],
+                "haber": 0,
+                "concepto": "IVA extranjero - suplido aduanero",
+            }
+            resp = requests.post(url, data=nueva_partida, headers=headers)
+            return resp.status_code in (200, 201)
 
     except Exception as e:
         logger.error(f"Error aplicando correccion {tipo}: {e}")

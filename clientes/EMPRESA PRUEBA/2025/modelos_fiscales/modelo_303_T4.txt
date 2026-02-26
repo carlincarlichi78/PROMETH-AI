@@ -20,12 +20,13 @@
   --------------------------------------------------
 
   Operaciones interiores:
-      21%  Base:     1,895.10 EUR   IVA:       397.97 EUR
-    TOTAL  Base:     1,895.10 EUR   IVA:       397.97 EUR
+       0%  Base:       648.00 EUR   IVA:         0.00 EUR
+      21%  Base:     1,247.10 EUR   IVA:       261.89 EUR
+    TOTAL  Base:     1,895.10 EUR   IVA:       261.89 EUR
 
-  TOTAL IVA DEDUCIBLE:              397.97 EUR
+  TOTAL IVA DEDUCIBLE:              261.89 EUR
 
   ==================================================
-  RESULTADO (devengado - deducible):      -397.97 EUR
-  >> A COMPENSAR:                          397.97 EUR
+  RESULTADO (devengado - deducible):      -261.89 EUR
+  >> A COMPENSAR:                          261.89 EUR
   ==================================================

@@ -4,19 +4,19 @@
 ================================================================
 
    1. Cifra de negocios                172,778.40 EUR
-   4. Aprovisionamientos            -  141,857.60 EUR
+   4. Aprovisionamientos            -  122,435.89 EUR
    6. Gastos de personal            -        0.00 EUR
    7. Otros gastos de explotacion   -        0.00 EUR
    8. Amortizacion del inmovilizado -        0.00 EUR
   --------------------------------------------------
-  A) RESULTADO DE EXPLOTACION           30,920.80 EUR
+  A) RESULTADO DE EXPLOTACION           50,342.51 EUR
 
   10. Ingresos financieros                   0.00 EUR
   11. Gastos financieros            -        0.00 EUR
   --------------------------------------------------
   B) RESULTADO FINANCIERO                    0.00 EUR
   --------------------------------------------------
-  C) RESULTADO ANTES DE IMPUESTOS       30,920.80 EUR
-  17. Imp. Sociedades (est. 25%)      -    7,730.20 EUR
+  C) RESULTADO ANTES DE IMPUESTOS       50,342.51 EUR
+  17. Imp. Sociedades (est. 25%)      -   12,585.63 EUR
   ==================================================
-  D) RESULTADO DEL EJERCICIO            23,190.60 EUR
+  D) RESULTADO DEL EJERCICIO            37,756.88 EUR
