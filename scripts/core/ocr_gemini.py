@@ -1,4 +1,4 @@
-"""Cliente Gemini Flash para extraccion de facturas y auditoria IA."""
+"""Cliente Gemini Flash para extraccion de documentos multi-tipo y auditoria IA."""
 
 import os
 import json
@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Optional
 from scripts.core.logger import crear_logger
+from scripts.core.prompts import PROMPT_EXTRACCION
 
 # Rate limit Gemini free tier: 5 req/min
 _GEMINI_DELAY_SEGUNDOS = 13  # ~4.6 req/min para margen
@@ -22,8 +23,9 @@ def _obtener_api_key() -> str:
 
 
 def extraer_factura_gemini(ruta_pdf: Path) -> Optional[dict]:
-    """Extrae datos de factura usando Gemini Flash con vision.
+    """Extrae datos de documento usando Gemini Flash con vision.
 
+    Soporta todos los tipos: facturas, nominas, suministros, bancarios, etc.
     Retorna dict con campos estandarizados o None si falla.
     """
     try:
@@ -38,28 +40,13 @@ def extraer_factura_gemini(ruta_pdf: Path) -> Optional[dict]:
         with open(ruta_pdf, "rb") as f:
             pdf_bytes = f.read()
 
-        prompt = """Extrae los datos de esta factura en JSON.
-Responde SOLO con JSON valido:
-{
-  "emisor_cif": "...",
-  "fecha": "YYYY-MM-DD",
-  "numero_factura": "...",
-  "base_imponible": 0.00,
-  "iva_porcentaje": 0,
-  "iva_importe": 0.00,
-  "irpf_porcentaje": 0,
-  "irpf_importe": 0.00,
-  "total": 0.00,
-  "lineas": [{"descripcion": "...", "base_imponible": 0.00, "iva": 0, "pvptotal": 0.00}]
-}"""
-
         respuesta = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=[
                 {
                     "parts": [
                         {"inline_data": {"mime_type": "application/pdf", "data": base64.standard_b64encode(pdf_bytes).decode()}},
-                        {"text": prompt},
+                        {"text": PROMPT_EXTRACCION + "\n\nExtrae los datos de este documento:"},
                     ]
                 }
             ],

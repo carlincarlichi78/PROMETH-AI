@@ -1,4 +1,8 @@
-"""Comparador de consenso triple OCR (GPT-4o + Mistral + Gemini)."""
+"""Comparador de consenso triple OCR (GPT-4o + Mistral + Gemini).
+
+Soporta campos dinamicos por tipo de documento: facturas, nominas,
+suministros, bancarios, RLC, impuestos.
+"""
 
 import json
 from pathlib import Path
@@ -6,6 +10,69 @@ from typing import Optional
 from scripts.core.logger import crear_logger
 
 logger = crear_logger("ocr_consensus")
+
+# Campos de comparacion por tipo de documento
+CAMPOS_POR_TIPO = {
+    "factura": {
+        "numericos": ["base_imponible", "iva_importe", "total", "irpf_importe",
+                       "iva_porcentaje", "irpf_porcentaje"],
+        "texto": ["emisor_cif", "fecha", "numero_factura"],
+    },
+    "nomina": {
+        "numericos": ["bruto", "retenciones_irpf", "aportaciones_ss_trabajador",
+                       "aportaciones_ss_empresa", "neto", "total"],
+        "texto": ["empleado_nombre", "empleado_nif", "fecha"],
+    },
+    "recibo_suministro": {
+        "numericos": ["base_imponible", "iva_importe", "total"],
+        "texto": ["emisor_cif", "fecha", "numero_factura"],
+    },
+    "recibo_bancario": {
+        "numericos": ["importe", "total"],
+        "texto": ["banco_nombre", "subtipo", "fecha"],
+    },
+    "rlc_ss": {
+        "numericos": ["base_cotizacion", "cuota_empresarial", "cuota_obrera",
+                       "total_liquidado", "total"],
+        "texto": ["fecha"],
+    },
+    "impuesto_tasa": {
+        "numericos": ["importe", "total"],
+        "texto": ["administracion", "fecha"],
+    },
+}
+
+
+def _resolver_tipo_consenso(gpt: dict, mistral: dict, gemini: dict) -> str:
+    """Determina la clave de tipo para seleccionar campos de comparacion.
+
+    Prioriza el tipo de GPT, luego Mistral, luego Gemini.
+    """
+    tipo_raw = None
+    for fuente in (gpt, mistral, gemini):
+        if fuente and fuente.get("tipo"):
+            tipo_raw = fuente["tipo"]
+            break
+
+    if not tipo_raw:
+        return "factura"
+
+    tipo_raw = tipo_raw.lower()
+
+    if tipo_raw in ("factura_proveedor", "factura_cliente", "nota_credito"):
+        return "factura"
+    if tipo_raw == "nomina":
+        return "nomina"
+    if tipo_raw == "recibo_suministro":
+        return "recibo_suministro"
+    if tipo_raw == "recibo_bancario":
+        return "recibo_bancario"
+    if tipo_raw == "rlc_ss":
+        return "rlc_ss"
+    if tipo_raw == "impuesto_tasa":
+        return "impuesto_tasa"
+
+    return "factura"  # fallback
 
 
 def _valores_coinciden_numerico(v1, v2, tolerancia: float = 0.02) -> bool:
@@ -64,14 +131,17 @@ def _consenso_campo(valores: list, es_numerico: bool, tolerancia: float = 0.02) 
 
 
 def comparar_extracciones(gpt: dict, mistral: dict, gemini: dict) -> dict:
-    """Compara 3 extracciones de la misma factura.
+    """Compara 3 extracciones del mismo documento.
 
+    Selecciona campos de comparacion dinamicamente segun el tipo de documento.
     Retorna reporte de consenso por campo.
     """
-    campos_numericos = ["base_imponible", "iva_importe", "total", "irpf_importe", "iva_porcentaje", "irpf_porcentaje"]
-    campos_texto = ["emisor_cif", "fecha", "numero_factura"]
+    tipo_key = _resolver_tipo_consenso(gpt, mistral, gemini)
+    campos = CAMPOS_POR_TIPO[tipo_key]
+    campos_numericos = campos["numericos"]
+    campos_texto = campos["texto"]
 
-    reporte = {"campos": {}, "score_global": 100, "alertas": []}
+    reporte = {"campos": {}, "score_global": 100, "alertas": [], "tipo_detectado": tipo_key}
 
     for campo in campos_numericos:
         valores = [

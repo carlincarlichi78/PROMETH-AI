@@ -1,4 +1,4 @@
-"""Cliente Mistral OCR3 para extraccion de facturas."""
+"""Cliente Mistral OCR3 para extraccion de documentos multi-tipo."""
 
 import os
 import json
@@ -6,6 +6,7 @@ import base64
 from pathlib import Path
 from typing import Optional
 from scripts.core.logger import crear_logger
+from scripts.core.prompts import PROMPT_EXTRACCION
 
 logger = crear_logger("ocr_mistral")
 
@@ -18,8 +19,9 @@ def _obtener_api_key() -> str:
 
 
 def extraer_factura_mistral(ruta_pdf: Path) -> Optional[dict]:
-    """Extrae datos de factura usando Mistral OCR3.
+    """Extrae datos de documento usando Mistral OCR3.
 
+    Soporta todos los tipos: facturas, nominas, suministros, bancarios, etc.
     Retorna dict con campos estandarizados o None si falla.
     """
     try:
@@ -54,24 +56,12 @@ def extraer_factura_mistral(ruta_pdf: Path) -> Optional[dict]:
             logger.warning(f"Mistral OCR no extrajo texto de {ruta_pdf.name}")
             return None
 
-        # Parsear campos con segundo llamado a Mistral chat
-        prompt_parseo = f"""Extrae los datos de esta factura en JSON:
+        # Parsear campos con segundo llamado a Mistral chat usando prompt compartido
+        prompt_parseo = f"""{PROMPT_EXTRACCION}
 
-{texto_ocr}
+Documento:
 
-Responde SOLO con JSON valido:
-{{
-  "emisor_cif": "...",
-  "fecha": "YYYY-MM-DD",
-  "numero_factura": "...",
-  "base_imponible": 0.00,
-  "iva_porcentaje": 0,
-  "iva_importe": 0.00,
-  "irpf_porcentaje": 0,
-  "irpf_importe": 0.00,
-  "total": 0.00,
-  "lineas": [{{"descripcion": "...", "base_imponible": 0.00, "iva": 0, "pvptotal": 0.00}}]
-}}"""
+{texto_ocr}"""
 
         chat_resp = client.chat.complete(
             model="mistral-small-latest",
