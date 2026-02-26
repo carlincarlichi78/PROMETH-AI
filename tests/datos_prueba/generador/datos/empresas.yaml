@@ -1,0 +1,2558 @@
+# empresas.yaml — 11 entidades ficticias para generador de datos de prueba SFCE
+# CIFs/NIFs generados con algoritmo oficial espanol (letra control verificada)
+# Todos los IBANs tienen formato ES correcto (ficticios)
+# Fecha creacion: 2026-02-26
+
+entidades:
+
+  # ===========================================================================
+  # 1. AURORA DIGITAL SOLUTIONS S.L. — idempresa=3
+  # Consultoria IT + desarrollo web. Valencia. Regimen general IVA.
+  # Casuisticas: intracomunitarias AWS/Microsoft, retencion 15% ventas publicas,
+  #              leasing vehiculo, poliza credito, teletrabajo, Kit Digital
+  # ===========================================================================
+  aurora-digital:
+    nombre: "AURORA DIGITAL SOLUTIONS S.L."
+    nombre_comercial: "Aurora Digital"
+    cif: "B46023412"
+    tipo: sl
+    actividad: "Consultoria en tecnologias de la informacion y desarrollo de software"
+    cnae: "6202"
+    direccion: "Calle Colón 48, 3º Dcha., 46004 Valencia"
+    email: "admin@aurora-digital.es"
+    telefono: "963112233"
+    banco: "ES72 2100 4151 2312 3456 7890"
+    regimen_iva: general
+    idempresa: 3
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 4
+    css_variante: corporativo
+    docs_estimados: 108
+
+    proveedores:
+      aws-ireland:
+        nombre: "Amazon Web Services EMEA SARL"
+        cif: "IE9692928F"
+        vat: "IE9692928F"
+        pais: IRL
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: intracomunitario
+        frecuencia: mensual
+        importe_rango: [350, 650]
+        concepto: "Servicios de hosting y computacion en la nube (AWS)"
+        retencion: 0
+
+      microsoft-ireland:
+        nombre: "Microsoft Ireland Operations Ltd."
+        cif: "IE8256796U"
+        vat: "IE8256796U"
+        pais: IRL
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: intracomunitario
+        frecuencia: mensual
+        importe_rango: [180, 280]
+        concepto: "Licencias Microsoft 365 Business Premium"
+        retencion: 0
+
+      vodafone:
+        nombre: "Vodafone España S.A.U."
+        cif: "A28068104"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [85, 120]
+        concepto: "Servicio de telefonia movil e internet fibra empresa"
+        retencion: 0
+
+      northgate-renting:
+        nombre: "Northgate Renting S.A."
+        cif: "A28033124"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [800, 800]
+        concepto: "Renting equipos informaticos (laptops + servidores)"
+        retencion: 0
+
+      mutua-madrilena:
+        nombre: "Mutua Madrileña Automovilista"
+        cif: "A28066140"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: anual
+        importe_rango: [2400, 2400]
+        concepto: "Seguro RC profesional + salud colectivo empleados (exento IVA IPS)"
+        retencion: 0
+
+      ofiprix:
+        nombre: "Ofiprix S.L."
+        cif: "B46044129"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [40, 120]
+        concepto: "Material de oficina y consumibles informaticos"
+        retencion: 0
+
+    clientes:
+      ayto-valencia:
+        nombre: "Ajuntament de Valencia"
+        cif: "P4601000E"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 15
+        frecuencia: trimestral
+        importe_rango: [3500, 8000]
+        concepto: "Desarrollo y mantenimiento portal web municipal"
+
+      clinica-dental-sonrisa:
+        nombre: "Clinica Dental Sonrisa S.L."
+        cif: "B46077103"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [600, 1200]
+        concepto: "Mantenimiento IT y soporte tecnico mensual"
+
+      techberlin-gmbh:
+        nombre: "TechBerlin GmbH"
+        cif: "DE814565701"
+        vat: "DE814565701"
+        pais: DEU
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: trimestral
+        importe_rango: [4000, 9000]
+        concepto: "Consultoria especializada en arquitectura de software"
+
+      particulares:
+        nombre: "Clientes particulares varios"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [500, 2500]
+        concepto: "Desarrollo de sitios web para particulares y pymes"
+
+    servicios_profesionales:
+      gestoria-martinez:
+        nombre: "Gestoria Martinez y Asociados S.L."
+        cif: "B46098125"
+        retencion: 15
+        importe_mensual: 280
+        concepto: "Asesoria fiscal, contable y laboral mensual"
+
+      bufete-ramirez:
+        nombre: "Bufete Juridico Ramirez S.L."
+        cif: "B46033411"
+        retencion: 15
+        importe_mensual: 0
+        concepto: "Asesoria juridica puntual (contratos, litigios)"
+
+      prevencion-global:
+        nombre: "Prevencion Global S.L."
+        cif: "B46055018"
+        retencion: 0
+        importe_mensual: 0
+        concepto: "Servicio de prevencion de riesgos laborales (PRL) anual"
+
+    empleados_detalle:
+      - nombre: "Carmen Alvarado Torres"
+        nif: "20345671W"
+        puesto: "Directora de Proyectos"
+        bruto_anual: 42000
+        convenio: "Consultoras de planificacion, organizacion de empresas y contable"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          teletrabajo_euros_mes: 55
+          formacion_fundae: true
+
+      - nombre: "Ivan Serrano Molina"
+        nif: "48712340R"
+        puesto: "Desarrollador Full Stack Senior"
+        bruto_anual: 38000
+        convenio: "Consultoras de planificacion, organizacion de empresas y contable"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          teletrabajo_euros_mes: 55
+
+      - nombre: "Laura Jimenez Ruiz"
+        nif: "44812905T"
+        puesto: "Desarrolladora Frontend"
+        bruto_anual: 32000
+        convenio: "Consultoras de planificacion, organizacion de empresas y contable"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          teletrabajo_euros_mes: 55
+
+      - nombre: "Pablo Ortega Vidal"
+        nif: "53201478N"
+        puesto: "Becario de Desarrollo (Practicas)"
+        bruto_anual: 9000
+        convenio: "Consultoras de planificacion, organizacion de empresas y contable"
+        tipo_contrato: formacion
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo ICO Digitalizacion"
+        importe: 30000
+        pendiente: 24000
+        plazo_meses: 60
+        cuota: 550
+        interes: 3.5
+        cuenta: "1700/5200"
+
+      - tipo: poliza_credito
+        nombre: "Poliza de credito BBVA"
+        importe: 30000
+        pendiente: 0
+        plazo_meses: 12
+        cuota: 0
+        interes: 5.25
+        cuenta: "5201"
+
+      - tipo: leasing
+        nombre: "Leasing vehiculo Seat Ateca empresa"
+        importe: 28000
+        pendiente: 21000
+        plazo_meses: 48
+        cuota: 620
+        interes: 4.2
+        cuenta: "1740/5240"
+
+      - tipo: renting
+        nombre: "Renting equipos informaticos Northgate"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 36
+        cuota: 800
+        interes: 0
+        cuenta: "621"
+
+    subvenciones:
+      - nombre: "Kit Digital — Segmento II"
+        organismo: "Red.es / Ministerio de Asuntos Economicos"
+        importe: 12000
+        pagos: 2
+        tipo: capital
+        cuenta: "130/746"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [80, 150]
+          iva: 21
+        - tipo: agua
+          proveedor: "Empresa Municipal Aguas Valencia"
+          importe_rango: [25, 45]
+          iva: 10
+        - tipo: telefono
+          proveedor: "Vodafone España S.A.U."
+          importe_rango: [85, 120]
+          iva: 21
+      seguros:
+        - tipo: rc
+          proveedor: "Mutua Madrileña Automovilista"
+          importe_anual: 1200
+          frecuencia: anual
+        - tipo: salud
+          proveedor: "Mutua Madrileña Automovilista"
+          importe_anual: 2400
+          frecuencia: anual
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 600
+          frecuencia: anual
+      impuestos:
+        - tipo: iae
+          importe: 0
+          frecuencia: anual
+        - tipo: basuras
+          importe: 180
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 2. DISTRIBUCIONES LEVANTE MEDITERRANEO S.L. — idempresa=4
+  # Compra-venta alimentacion mayorista. Alicante. Regimen general IVA.
+  # Casuisticas: multi-tipo IVA, importacion India USD/DUA, rappels, devoluciones,
+  #              confirming, hipoteca nave, flota furgonetas
+  # ===========================================================================
+  distribuciones-levante:
+    nombre: "DISTRIBUCIONES LEVANTE MEDITERRANEO S.L."
+    nombre_comercial: "Levante Mediterraneo"
+    cif: "B03078128"
+    tipo: sl
+    actividad: "Comercio al por mayor de frutas, verduras y productos alimenticios"
+    cnae: "4631"
+    direccion: "Poligono Industrial La Marina, Nave 14, 03194 La Marina (Alicante)"
+    email: "admin@levantemediterraneo.es"
+    telefono: "965441122"
+    banco: "ES41 0049 1805 2123 4567 8901"
+    regimen_iva: general
+    idempresa: 4
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 8
+    css_variante: corporativo
+    docs_estimados: 145
+
+    proveedores:
+      coop-agricola-huerta:
+        nombre: "Cooperativa Agricola La Huerta S. Coop."
+        cif: "F0302218C"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA4
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [8000, 22000]
+        concepto: "Frutas y verduras frescas de temporada (IVA 4% y 10% segun producto)"
+        retencion: 0
+
+      frigorificos-sur:
+        nombre: "Frigorificos del Sur S.L."
+        cif: "B03044179"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [2000, 4500]
+        concepto: "Transporte refrigerado y almacenamiento en camara"
+        retencion: 0
+
+      envases-plasticos:
+        nombre: "Envases Plasticos Alicante S.L."
+        cif: "B03066297"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [800, 2000]
+        concepto: "Packaging y envases plasticos para distribucion"
+        retencion: 0
+
+      importadora-especias-bombay:
+        nombre: "Bombay Spices Import & Export Pvt. Ltd."
+        cif: "IN07AAACB2230M1Z5"
+        vat: ""
+        pais: IND
+        divisa: USD
+        codimpuesto: IVA0
+        regimen: extracomunitario
+        frecuencia: trimestral
+        importe_rango: [3500, 7000]
+        concepto: "Especias y condimentos importacion extracomunitaria (DUA, IVA diferido casilla 77)"
+        retencion: 0
+
+      repsol-gasolinera:
+        nombre: "Repsol S.A."
+        cif: "A28044279"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [600, 1200]
+        concepto: "Combustible flota de furgonetas (gasoil)"
+        retencion: 0
+
+      fertiberia-almacen:
+        nombre: "Fertiberia S.A."
+        cif: "A28077030"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [150, 350]
+        concepto: "Productos de limpieza e higiene para almacen y nave"
+        retencion: 0
+
+    clientes:
+      supermercados-consum:
+        nombre: "Supermercados Consum S. Coop."
+        cif: "F4608020F"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [25000, 55000]
+        concepto: "Suministro mayorista frutas, verduras y alimentacion general. Rappels trimestrales s/volumen"
+
+      hosteleria-costa-blanca:
+        nombre: "Hosteleria Costa Blanca S.L."
+        cif: "B03088317"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [4000, 9000]
+        concepto: "Suministro alimentacion a establecimientos hosteleros. Con devoluciones frecuentes"
+
+      restaurante-el-faro:
+        nombre: "Restaurante El Faro S.L."
+        cif: "B03011459"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [1500, 3500]
+        concepto: "Suministro de alimentacion y bebidas a restaurante"
+
+      exportaciones-maghreb:
+        nombre: "Exportaciones Maghreb S.L."
+        cif: "B29088234"
+        pais: MAR
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: trimestral
+        importe_rango: [8000, 18000]
+        concepto: "Exportacion alimentacion a Marruecos (IVA 0% exportacion, DUA exportacion)"
+
+    servicios_profesionales:
+      gestoria-hernandez:
+        nombre: "Asesoria Hernandez y Asociados S.L."
+        cif: "B03022471"
+        retencion: 15
+        importe_mensual: 350
+        concepto: "Asesoria fiscal, contable y laboral mensual"
+
+      bufete-comercial:
+        nombre: "Bufete Juridico Comercial Alicante S.L."
+        cif: "B03055834"
+        retencion: 15
+        importe_mensual: 0
+        concepto: "Asesoria juridica puntual (contratos, reclamaciones)"
+
+    empleados_detalle:
+      - nombre: "Andres Molla Sempere"
+        nif: "48501234Y"
+        puesto: "Gerente de Logistica"
+        bruto_anual: 36000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          plus_transporte: 100
+
+      - nombre: "Rosa Gomez Abad"
+        nif: "33612987P"
+        puesto: "Administrativo-Contable"
+        bruto_anual: 26000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+      - nombre: "Miguel Ibanez Puig"
+        nif: "20978456F"
+        puesto: "Conductor-Repartidor"
+        bruto_anual: 24000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          plus_transporte: 100
+          dietas: 12
+
+      - nombre: "Jorge Reig Ferrer"
+        nif: "22134567X"
+        puesto: "Conductor-Repartidor"
+        bruto_anual: 24000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          plus_transporte: 100
+          dietas: 12
+
+      - nombre: "Pilar Sanchez Mora"
+        nif: "48890123A"
+        puesto: "Operaria Almacen"
+        bruto_anual: 22000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+      - nombre: "Rafael Quiles Martinez"
+        nif: "21345678L"
+        puesto: "Operario Almacen"
+        bruto_anual: 22000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+      - nombre: "Lidia Crespo Vives"
+        nif: "53789012Z"
+        puesto: "Auxiliar Almacen (Campaña)"
+        bruto_anual: 18000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+      - nombre: "Carlos Navarro Perez"
+        nif: "20456789Q"
+        puesto: "Auxiliar Almacen (Campaña)"
+        bruto_anual: 18000
+        convenio: "Comercio de alimentacion"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo circulante Banco Sabadell"
+        importe: 150000
+        pendiente: 120000
+        plazo_meses: 36
+        cuota: 4500
+        interes: 4.75
+        cuenta: "1700/5200"
+
+      - tipo: hipoteca
+        nombre: "Hipoteca nave industrial La Marina"
+        importe: 320000
+        pendiente: 180000
+        plazo_meses: 180
+        cuota: 1400
+        interes: 3.8
+        cuenta: "1705/5205"
+
+      - tipo: leasing
+        nombre: "Leasing camara frigorifica industrial"
+        importe: 45000
+        pendiente: 36000
+        plazo_meses: 60
+        cuota: 830
+        interes: 4.5
+        cuenta: "1740/5240"
+
+      - tipo: renting
+        nombre: "Renting 3 furgonetas refrigeradas"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 48
+        cuota: 1200
+        interes: 0
+        cuenta: "621"
+
+      - tipo: linea_descuento
+        nombre: "Linea descuento comercial CaixaBank"
+        importe: 80000
+        pendiente: 0
+        plazo_meses: 12
+        cuota: 0
+        interes: 4.25
+        cuenta: "5208"
+
+      - tipo: confirming
+        nombre: "Confirming proveedores BBVA"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 0
+        cuota: 0
+        interes: 0
+        cuenta: "400/5201"
+
+    subvenciones:
+      - nombre: "Subvencion contratacion indefinida — GVA"
+        organismo: "Generalitat Valenciana — LABORA"
+        importe: 8000
+        pagos: 1
+        tipo: explotacion
+        cuenta: "740"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [400, 800]
+          iva: 21
+        - tipo: agua
+          proveedor: "Aguas de Alicante"
+          importe_rango: [80, 150]
+          iva: 10
+        - tipo: telefono
+          proveedor: "Vodafone España S.A.U."
+          importe_rango: [90, 130]
+          iva: 21
+        - tipo: gas
+          proveedor: "Naturgy S.A."
+          importe_rango: [150, 350]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 2000
+          frecuencia: anual
+        - tipo: vehiculos
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 3000
+          frecuencia: anual
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 800
+          frecuencia: anual
+      impuestos:
+        - tipo: iae
+          importe: 1500
+          frecuencia: anual
+        - tipo: ibi
+          importe: 3000
+          frecuencia: anual
+        - tipo: ivtm
+          importe: 540
+          frecuencia: anual
+        - tipo: basuras
+          importe: 400
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 3. GRUPO GASTRO COSTA DEL SOL S.L. — idempresa=5 (HOLDING)
+  # Sociedad holding del grupo gastro. Marbella. Sin actividad operativa propia.
+  # Casuisticas: prestamos intercompany, dividendos con retencion 19%,
+  #              management fees a filiales, poliza credito grupo
+  # ===========================================================================
+  gastro-holding:
+    nombre: "GRUPO GASTRO COSTA DEL SOL S.L."
+    nombre_comercial: "Grupo Gastro"
+    cif: "B29055407"
+    tipo: sl
+    actividad: "Actividades de las sociedades holding"
+    cnae: "6420"
+    direccion: "Avenida Ricardo Soriano 72, 2º, 29601 Marbella (Malaga)"
+    email: "holding@grupogastro.es"
+    telefono: "952861100"
+    banco: "ES83 0075 3300 5023 4567 8901"
+    regimen_iva: general
+    idempresa: 5
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 2
+    css_variante: corporativo
+    docs_estimados: 68
+
+    proveedores:
+      gestoria-costa-del-sol:
+        nombre: "Gestoria Costa del Sol S.L."
+        cif: "B29077120"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [400, 400]
+        concepto: "Asesoria fiscal, contable y laboral del grupo (todos los ejercicios)"
+        retencion: 15
+
+      seguros-mapfre-grupo:
+        nombre: "Seguros Mapfre S.A."
+        cif: "A28099208"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: anual
+        importe_rango: [2800, 3200]
+        concepto: "Poliza multirriesgo y RC grupo hostelero (exento IVA IPS)"
+        retencion: 0
+
+      google-ads-ireland:
+        nombre: "Google Ireland Limited"
+        cif: "IE6388047V"
+        vat: "IE6388047V"
+        pais: IRL
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: intracomunitario
+        frecuencia: mensual
+        importe_rango: [300, 800]
+        concepto: "Publicidad Google Ads campanas grupo (inversion sujeto pasivo)"
+        retencion: 0
+
+    clientes:
+      la-marea-mgmt:
+        nombre: "Restaurante La Marea S.L."
+        cif: "B29011236"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [500, 500]
+        concepto: "Management fee mensual servicios de direccion y gestion"
+
+      chiringuito-mgmt:
+        nombre: "Chiringuito Sol y Arena S.L."
+        cif: "B29066776"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [300, 300]
+        concepto: "Management fee mensual servicios de gestion (solo meses activos abr-oct)"
+
+      catering-mgmt:
+        nombre: "Catering Costa Events S.L."
+        cif: "B29033982"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [350, 350]
+        concepto: "Management fee mensual servicios de direccion y gestion"
+
+    servicios_profesionales: {}
+
+    empleados_detalle:
+      - nombre: "Beatriz Ponce de Leon"
+        nif: "52341807V"
+        puesto: "Directora General (Alta Direccion)"
+        bruto_anual: 68000
+        convenio: "Relacion laboral especial alta direccion"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          bonus_anual: 8000
+
+      - nombre: "Manuel Ruiz Soto"
+        nif: "47628390J"
+        puesto: "Controller Financiero"
+        bruto_anual: 38000
+        convenio: "Oficinas y despachos"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+    productos_financieros:
+      - tipo: poliza_credito
+        nombre: "Poliza de credito grupo Banco Santander"
+        importe: 200000
+        pendiente: 60000
+        plazo_meses: 12
+        cuota: 0
+        interes: 5.0
+        cuenta: "5201"
+
+    intercompany:
+      management_fee_la_marea: 500
+      management_fee_chiringuito: 300
+      management_fee_catering: 350
+      prestamo_a_la_marea:
+        importe: 15000
+        interes: 5.5
+        plazo_meses: 36
+      prestamo_a_chiringuito:
+        importe: 8000
+        interes: 5.5
+        plazo_meses: 24
+      prestamo_a_catering:
+        importe: 10000
+        interes: 5.5
+        plazo_meses: 36
+      dividendos_recibidos:
+        de_la_marea:
+          bruto: 12000
+          retencion_19pct: 2280
+          neto: 9720
+        de_catering:
+          bruto: 6000
+          retencion_19pct: 1140
+          neto: 4860
+        de_chiringuito:
+          bruto: 0
+          nota: "Perdidas — no reparte dividendo"
+      dividendos_pagados_socios:
+        socio_a_60pct:
+          nif: "52341807V"
+          bruto: 10800
+          retencion_19pct: 2052
+          neto: 8748
+        socio_b_40pct:
+          nif: "47628390J"
+          bruto: 7200
+          retencion_19pct: 1368
+          neto: 5832
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: telefono
+          proveedor: "Vodafone España S.A.U."
+          importe_rango: [60, 90]
+          iva: 21
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [80, 120]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 3000
+          frecuencia: anual
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 1200
+          frecuencia: anual
+      impuestos:
+        - tipo: iae
+          importe: 0
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 4. RESTAURANTE LA MAREA S.L. — idempresa=6
+  # Restauracion a la carta. Marbella. IVA 10% comida, 21% bebidas y servicios.
+  # Casuisticas: multi-tipo IVA, propinas, leasing cocina, 6 empleados hosteleria,
+  #              management fee + prestamo intercompany al holding
+  # ===========================================================================
+  restaurante-la-marea:
+    nombre: "RESTAURANTE LA MAREA S.L."
+    nombre_comercial: "La Marea"
+    cif: "B29011236"
+    tipo: sl
+    actividad: "Restaurantes y puestos de comidas"
+    cnae: "5610"
+    direccion: "Paseo Maritimo 18, Local 2, 29601 Marbella (Malaga)"
+    email: "admin@restaurantelamarea.es"
+    telefono: "952771234"
+    banco: "ES56 0049 3366 7123 4567 8902"
+    regimen_iva: general
+    idempresa: 6
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 6
+    css_variante: corporativo
+    docs_estimados: 110
+
+    proveedores:
+      makro-la-marea:
+        nombre: "Makro Autoservicio S.A."
+        cif: "A28054609"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [3000, 6000]
+        concepto: "Alimentacion, bebidas y consumibles (IVA mixto 4/10/21% segun producto)"
+        retencion: 0
+
+      distribuidora-bebidas-sur:
+        nombre: "Distribuidora de Bebidas Sur S.L."
+        cif: "B29091105"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [1500, 3000]
+        concepto: "Vinos, cervezas, refrescos y aguas para servicio de barra y mesa"
+        retencion: 0
+
+      lavanderia-industrial:
+        nombre: "Lavanderia Industrial Malaga S.L."
+        cif: "B29044328"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [300, 600]
+        concepto: "Lavado y planchado de manteles, servilletas y uniformes"
+        retencion: 0
+
+      gas-natural-cocina:
+        nombre: "Naturgy (Gas Natural) S.A."
+        cif: "A08032104"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [180, 400]
+        concepto: "Suministro de gas natural para cocinas industriales"
+        retencion: 0
+
+      gastro-holding-fee:
+        nombre: "Grupo Gastro Costa del Sol S.L."
+        cif: "B29055407"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [500, 500]
+        concepto: "Management fee mensual + intereses prestamo intercompany"
+        retencion: 0
+
+    clientes:
+      clientes-diarios:
+        nombre: "Clientes diarios (tickets simplificados)"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [18000, 35000]
+        concepto: "Ventas diarias comidas y cenas (facturacion simplificada agregada mensual)"
+
+      hotel-marbella-palace:
+        nombre: "Hotel Marbella Palace S.A."
+        cif: "A29044153"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [2000, 8000]
+        concepto: "Servicio de catering puntual para eventos del hotel"
+
+      empresa-eventos:
+        nombre: "Empresa Eventos Corporativos S.L."
+        cif: "B29066180"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [1500, 5000]
+        concepto: "Servicio de comidas para eventos corporativos"
+
+    servicios_profesionales:
+      gestoria-costa-sol:
+        nombre: "Gestoria Costa del Sol S.L."
+        cif: "B29077120"
+        retencion: 15
+        importe_mensual: 0
+        concepto: "Coordinada por holding — ver grupo"
+
+    empleados_detalle:
+      - nombre: "Santiago Fernandez Ruiz"
+        nif: "29512340H"
+        puesto: "Jefe de Sala"
+        bruto_anual: 28000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          turnicidad: true
+          nocturnidad_fin_semana: true
+
+      - nombre: "Ana Belen Castillo Vega"
+        nif: "45678123R"
+        puesto: "Cocinera"
+        bruto_anual: 26000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          turnicidad: true
+
+      - nombre: "Francisco Torres Medina"
+        nif: "52134567G"
+        puesto: "Camarero"
+        bruto_anual: 22000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          turnicidad: true
+
+      - nombre: "Dolores Pena Santos"
+        nif: "31298765S"
+        puesto: "Camarera"
+        bruto_anual: 22000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          turnicidad: true
+
+      - nombre: "Luis Garcia Moreno"
+        nif: "29876543C"
+        puesto: "Ayudante Cocina (Fijo Discontinuo)"
+        bruto_anual: 19000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+      - nombre: "Rosa Maria Diaz Lopez"
+        nif: "45012367B"
+        puesto: "Auxiliar Sala (Fijo Discontinuo)"
+        bruto_anual: 18000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras: {}
+
+    productos_financieros:
+      - tipo: leasing
+        nombre: "Leasing cocina industrial completa"
+        importe: 30000
+        pendiente: 24000
+        plazo_meses: 60
+        cuota: 550
+        interes: 4.3
+        cuenta: "1740/5240"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [350, 700]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMASA Marbella"
+          importe_rango: [80, 150]
+          iva: 10
+        - tipo: gas
+          proveedor: "Naturgy S.A."
+          importe_rango: [180, 400]
+          iva: 21
+        - tipo: telefono
+          proveedor: "Movistar Empresas"
+          importe_rango: [50, 80]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 1800
+          frecuencia: anual
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 900
+          frecuencia: anual
+      impuestos:
+        - tipo: ibi
+          importe: 1200
+          frecuencia: anual
+        - tipo: basuras
+          importe: 350
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 5. CHIRINGUITO SOL Y ARENA S.L. — idempresa=7
+  # Restauracion estacional (abr-oct). Marbella. Concesion playa.
+  # Casuisticas: actividad estacional, fijos-discontinuos, altas/bajas SS,
+  #              licencia canon playa, resultado negativo acumulado
+  # ===========================================================================
+  chiringuito-sol-arena:
+    nombre: "CHIRINGUITO SOL Y ARENA S.L."
+    nombre_comercial: "Sol y Arena"
+    cif: "B29066776"
+    tipo: sl
+    actividad: "Restaurantes y establecimientos en playas y piscinas"
+    cnae: "5610"
+    direccion: "Playa de la Bajadilla s/n (Concesion 14-B), 29601 Marbella (Malaga)"
+    email: "admin@chiringuitosolyarena.es"
+    telefono: "952880088"
+    banco: "ES19 2103 0065 1823 4567 8903"
+    regimen_iva: general
+    idempresa: 7
+    ejercicio: "2025"
+    meses_activos: [4, 5, 6, 7, 8, 9, 10]
+    empleados: 4
+    css_variante: corporativo
+    docs_estimados: 72
+
+    proveedores:
+      makro-chiringuito:
+        nombre: "Makro Autoservicio S.A."
+        cif: "A28054609"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [2000, 4500]
+        concepto: "Alimentacion, bebidas y consumibles temporada (abr-oct)"
+        retencion: 0
+
+      ayto-marbella-canon:
+        nombre: "Ayuntamiento de Marbella"
+        cif: "P2906010J"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: anual
+        importe_rango: [8000, 8000]
+        concepto: "Canon anual licencia de ocupacion de dominio publico maritimo-terrestre"
+        retencion: 0
+
+      renting-mobiliario-terraza:
+        nombre: "Renting Mobiliario Terraza S.L."
+        cif: "B29022340"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [600, 600]
+        concepto: "Renting hamacas, sombrillas y mobiliario de terraza de playa (abr-oct)"
+        retencion: 0
+
+      gastro-holding-chiringuito:
+        nombre: "Grupo Gastro Costa del Sol S.L."
+        cif: "B29055407"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [300, 300]
+        concepto: "Management fee + intereses prestamo intercompany"
+        retencion: 0
+
+    clientes:
+      ventas-diarias-chiringuito:
+        nombre: "Ventas diarias playa (tickets simplificados)"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [15000, 40000]
+        concepto: "Ventas diarias de comidas, bebidas y helados en chiringuito (abr-oct)"
+
+      eventos-privados-playa:
+        nombre: "Eventos privados playa"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [1500, 6000]
+        concepto: "Celebraciones y eventos privados en el chiringuito"
+
+    servicios_profesionales: {}
+
+    empleados_detalle:
+      - nombre: "Javier Montoya Reyes"
+        nif: "44823456T"
+        puesto: "Encargado Chiringuito (Fijo Discontinuo)"
+        bruto_anual: 22000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [4, 5, 6, 7, 8, 9, 10]
+
+      - nombre: "Elena Campos Ruiz"
+        nif: "31567890W"
+        puesto: "Camarera (Fijo Discontinuo)"
+        bruto_anual: 18000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [4, 5, 6, 7, 8, 9, 10]
+
+      - nombre: "Pedro Jimenez Navarro"
+        nif: "52890123N"
+        puesto: "Cocinero (Fijo Discontinuo)"
+        bruto_anual: 20000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [5, 6, 7, 8, 9]
+
+      - nombre: "Maria Jose Solis Torres"
+        nif: "45678901K"
+        puesto: "Ayudante Sala (Fijo Discontinuo)"
+        bruto_anual: 17000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: fijo_discontinuo
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [6, 7, 8, 9]
+
+    productos_financieros:
+      - tipo: renting
+        nombre: "Renting mobiliario terraza playa (estacional)"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 12
+        cuota: 600
+        interes: 0
+        cuenta: "621"
+
+    intercompany:
+      prestamo_de: "gastro-holding"
+      prestamo_importe: 8000
+      prestamo_interes: 5.5
+      prestamo_cruzado_de: "catering-costa"
+      prestamo_cruzado_importe: 5000
+      prestamo_cruzado_interes: 3.0
+      prestamo_cruzado_meses: [4, 5, 6, 7, 8, 9, 10]
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [200, 450]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMASA Marbella"
+          importe_rango: [60, 120]
+          iva: 10
+        - tipo: telefono
+          proveedor: "Movistar Empresas"
+          importe_rango: [40, 60]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 900
+          frecuencia: anual
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 600
+          frecuencia: anual
+      impuestos:
+        - tipo: licencia
+          importe: 8000
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 6. CATERING COSTA EVENTS S.L. — idempresa=8
+  # Catering para eventos. Marbella. Anticipos, nocturnidad/festivos.
+  # Casuisticas: anticipos + factura final, facturas a medida, retencion ayto,
+  #              nocturnidad, prestamo cruzado con chiringuito
+  # ===========================================================================
+  catering-costa:
+    nombre: "CATERING COSTA EVENTS S.L."
+    nombre_comercial: "Catering Costa Events"
+    cif: "B29033982"
+    tipo: sl
+    actividad: "Suministro de comidas preparadas para eventos"
+    cnae: "5621"
+    direccion: "Poligono Industrial El Angel, Nave 7, 29006 Malaga"
+    email: "admin@cateringcostaevents.es"
+    telefono: "952445566"
+    banco: "ES94 2038 5025 6023 4567 8904"
+    regimen_iva: general
+    idempresa: 8
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 3
+    css_variante: corporativo
+    docs_estimados: 85
+
+    proveedores:
+      makro-catering:
+        nombre: "Makro Autoservicio S.A."
+        cif: "A28054609"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [2500, 5500]
+        concepto: "Alimentacion y bebidas para elaboracion catering eventos"
+        retencion: 0
+
+      alquiler-menaje-eventos:
+        nombre: "Alquiler Menaje Eventos S.L."
+        cif: "B29022514"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: puntual
+        importe_rango: [300, 1200]
+        concepto: "Alquiler de vajilla, cristaleria y menaje para eventos"
+        retencion: 0
+
+      gastro-holding-catering:
+        nombre: "Grupo Gastro Costa del Sol S.L."
+        cif: "B29055407"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [350, 350]
+        concepto: "Management fee + intereses prestamo intercompany"
+        retencion: 0
+
+      chiringuito-prestamo:
+        nombre: "Chiringuito Sol y Arena S.L."
+        cif: "B29066776"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: puntual
+        importe_rango: [5000, 5000]
+        concepto: "Devoluciones prestamo cruzado estacional (abr-oct)"
+        retencion: 0
+
+    clientes:
+      bodas-eventos-particulares:
+        nombre: "Bodas y eventos particulares"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [3000, 15000]
+        concepto: "Catering para bodas y celebraciones privadas (30% anticipo + factura final)"
+
+      empresas-eventos-corp:
+        nombre: "Empresas eventos corporativos"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [1500, 6000]
+        concepto: "Catering para eventos corporativos, presentaciones y reuniones"
+
+      ayto-marbella-catering:
+        nombre: "Ayuntamiento de Marbella"
+        cif: "P2906010J"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 15
+        frecuencia: puntual
+        importe_rango: [2000, 8000]
+        concepto: "Catering fiestas municipales y actos del Ayuntamiento"
+
+    servicios_profesionales: {}
+
+    empleados_detalle:
+      - nombre: "Maria Carmen Ruiz Olmo"
+        nif: "45123456Y"
+        puesto: "Jefa de Cocina"
+        bruto_anual: 30000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          nocturnidad: true
+          festivos: true
+
+      - nombre: "Antonio Perez Lara"
+        nif: "29234567M"
+        puesto: "Cocinero"
+        bruto_anual: 24000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          nocturnidad: true
+          festivos: true
+
+      - nombre: "Cristina Morales Serrano"
+        nif: "44345678F"
+        puesto: "Auxiliar de Catering"
+        bruto_anual: 20000
+        convenio: "Hosteleria de Malaga"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          nocturnidad: true
+
+    productos_financieros:
+      - tipo: renting
+        nombre: "Renting furgoneta refrigerada Peugeot Partner"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 48
+        cuota: 450
+        interes: 0
+        cuenta: "621"
+
+    intercompany:
+      prestamo_de: "gastro-holding"
+      prestamo_importe: 10000
+      prestamo_interes: 5.5
+      prestamo_cruzado_a: "chiringuito-sol-arena"
+      prestamo_cruzado_importe: 5000
+      prestamo_cruzado_interes: 3.0
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [200, 400]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMASA Malaga"
+          importe_rango: [50, 100]
+          iva: 10
+        - tipo: gas
+          proveedor: "Naturgy S.A."
+          importe_rango: [100, 250]
+          iva: 21
+        - tipo: telefono
+          proveedor: "Movistar Empresas"
+          importe_rango: [45, 70]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 1200
+          frecuencia: anual
+        - tipo: vehiculos
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 700
+          frecuencia: anual
+      impuestos:
+        - tipo: basuras
+          importe: 200
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 7. MARCOS RUIZ DELGADO — idempresa=9
+  # Autonomo, fontaneria y reformas. Malaga. Estimacion directa, modelo 130.
+  # Casuisticas: retencion 15% a empresas, facturas simplificadas particulares,
+  #              contrato formacion, renting Hilti, prestamo furgoneta
+  # ===========================================================================
+  marcos-ruiz:
+    nombre: "MARCOS RUIZ DELGADO"
+    nombre_comercial: "Fontaneria Marcos Ruiz"
+    cif: "29457823K"
+    tipo: autonomo
+    actividad: "Fontaneria, instalaciones de calefaccion y aire acondicionado"
+    cnae: "4322"
+    direccion: "Calle Larios 23, 2º B, 29015 Malaga"
+    email: "marcos.ruiz@fontaneriamalaga.es"
+    telefono: "622334455"
+    banco: "ES27 2103 0025 4823 4567 8905"
+    regimen_iva: general
+    idempresa: 9
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 1
+    css_variante: autonomo
+    docs_estimados: 95
+
+    proveedores:
+      saneamientos-perez:
+        nombre: "Saneamientos Perez S.L."
+        cif: "B29033073"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [400, 1200]
+        concepto: "Materiales de fontaneria: tuberias, griferia, accesorios"
+        retencion: 0
+
+      leroy-merlin:
+        nombre: "Leroy Merlin España S.L.U."
+        cif: "B82084920"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [100, 350]
+        concepto: "Materiales de bricolaje y herramientas (tickets simplificados)"
+        retencion: 0
+
+      repsol-marcos:
+        nombre: "Repsol S.A."
+        cif: "A28044279"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [150, 300]
+        concepto: "Combustible gasolina furgoneta de trabajo"
+        retencion: 0
+
+      reta-marcos:
+        nombre: "Tesoreria General de la Seguridad Social"
+        cif: "S2800009B"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [320, 380]
+        concepto: "Cuota RETA (Regimen Especial Trabajadores Autonomos)"
+        retencion: 0
+
+      gestoria-lopez:
+        nombre: "Gestoria Lopez S.L."
+        cif: "B29011889"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [120, 120]
+        concepto: "Asesoria fiscal y contable mensual (tramitacion modelos 130/303/100)"
+        retencion: 15
+
+    clientes:
+      comunidad-propietarios-edificio-sol:
+        nombre: "Comunidad de Propietarios Edificio Sol"
+        cif: "H29033222"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 15
+        frecuencia: mensual
+        importe_rango: [300, 800]
+        concepto: "Mantenimiento fontaneria zonas comunes y reparaciones"
+
+      particulares-marcos:
+        nombre: "Clientes particulares"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [200, 1500]
+        concepto: "Reformas y fontaneria para particulares (facturas simplificadas <400eur)"
+
+      constructora-hernandez:
+        nombre: "Constructora Hernandez S.L."
+        cif: "B29077443"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 15
+        frecuencia: trimestral
+        importe_rango: [1500, 5000]
+        concepto: "Instalaciones fontaneria en obras de construccion y reforma"
+
+    servicios_profesionales:
+      gestoria-lopez-autonomo:
+        nombre: "Gestoria Lopez S.L."
+        cif: "B29011889"
+        retencion: 15
+        importe_mensual: 120
+        concepto: "Asesoria fiscal autonomo (IVA, IRPF, modelo 130, modelo 303)"
+
+    empleados_detalle:
+      - nombre: "Diego Ruiz Sanchez"
+        nif: "32134567P"
+        puesto: "Ayudante Fontanero (Formacion en Alternancia)"
+        bruto_anual: 9500
+        convenio: "Construccion y obras publicas"
+        tipo_contrato: formacion
+        jornada: completa
+        horas_semana: 40
+        extras:
+          bonificacion_ss: true
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo personal furgoneta Volkswagen Transporter"
+        importe: 15000
+        pendiente: 6500
+        plazo_meses: 60
+        cuota: 280
+        interes: 5.5
+        cuenta: "1700/5200"
+
+      - tipo: renting
+        nombre: "Renting herramientas profesionales Hilti"
+        importe: 0
+        pendiente: 0
+        plazo_meses: 24
+        cuota: 150
+        interes: 0
+        cuenta: "621"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [50, 90]
+          iva: 21
+        - tipo: telefono
+          proveedor: "Movistar"
+          importe_rango: [35, 50]
+          iva: 21
+      seguros:
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 800
+          frecuencia: anual
+        - tipo: vehiculos
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 650
+          frecuencia: anual
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 400
+          frecuencia: anual
+      impuestos:
+        - tipo: ivtm
+          importe: 120
+          frecuencia: anual
+        - tipo: ibi
+          importe: 350
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 8. ELENA NAVARRO PRECIADOS — idempresa=10
+  # Autonoma, fisioterapia (exenta) + pilates (21%). Granada. Prorrata 35%.
+  # Casuisticas: prorrata IVA, exencion sanitaria, gastos compartidos,
+  #              hipoteca local, alquiler con retencion 19%, Spotify intracom
+  # ===========================================================================
+  elena-navarro:
+    nombre: "ELENA NAVARRO PRECIADOS"
+    nombre_comercial: "Centro Fisio & Pilates Elena Navarro"
+    cif: "24813607B"
+    tipo: autonomo
+    actividad: "Actividades de fisioterapia y actividades deportivas (pilates)"
+    cnae: "8690"
+    direccion: "Calle Recogidas 44, Local, 18005 Granada"
+    email: "elena@elenafisiopilates.es"
+    telefono: "958221144"
+    banco: "ES63 2103 7125 7223 4567 8906"
+    regimen_iva: exento_parcial
+    prorrata: 35
+    idempresa: 10
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 1
+    css_variante: autonomo
+    docs_estimados: 88
+
+    proveedores:
+      quirumed:
+        nombre: "Quirumed S.L."
+        cif: "B46011995"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: trimestral
+        importe_rango: [300, 800]
+        concepto: "Equipamiento sanitario y material clinico para fisioterapia"
+        retencion: 0
+
+      farmacia-central:
+        nombre: "Farmacia Central de Granada"
+        cif: "14789456B"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA4
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [40, 120]
+        concepto: "Material sanitario fungible: vendas, esparadrapo, electrodos"
+        retencion: 0
+
+      propietario-local:
+        nombre: "Antonio Fernandez Gimenez (arrendador)"
+        cif: "24501386S"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [950, 950]
+        concepto: "Alquiler local comercial Calle Recogidas 44 (retencion 19% IRPF arrendador)"
+        retencion: 19
+
+      spotify-sweden:
+        nombre: "Spotify AB"
+        cif: "SE556703748501"
+        vat: "SE556703748501"
+        pais: SWE
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: intracomunitario
+        frecuencia: mensual
+        importe_rango: [15, 18]
+        concepto: "Spotify for Business — musica ambiente (inversion sujeto pasivo)"
+        retencion: 0
+
+      colegio-fisioterapeutas:
+        nombre: "Colegio Oficial de Fisioterapeutas de Andalucia"
+        cif: "G1805503H"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: anual
+        importe_rango: [180, 200]
+        concepto: "Cuota colegio profesional anual (exenta de IVA)"
+        retencion: 0
+
+    clientes:
+      pacientes-fisioterapia:
+        nombre: "Pacientes fisioterapia (exento)"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [3500, 7000]
+        concepto: "Sesiones de fisioterapia — exentas de IVA (art. 20.1.3 LIVA)"
+
+      alumnos-pilates:
+        nombre: "Alumnos clases de pilates"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [1800, 3500]
+        concepto: "Clases de pilates grupales e individuales (IVA 21%)"
+
+      club-deportivo-municipal:
+        nombre: "Club Deportivo Municipal Granada"
+        cif: "G1802214E"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [600, 1200]
+        concepto: "Servicio mixto fisioterapia deportiva (exenta) + pilates colectivo (21%)"
+
+    servicios_profesionales:
+      gestoria-granada:
+        nombre: "Asesoria Garcia y Mora S.L."
+        cif: "B18044512"
+        retencion: 15
+        importe_mensual: 150
+        concepto: "Asesoria fiscal autonoma, declaraciones trimestrales y anuales, prorrata"
+
+    empleados_detalle:
+      - nombre: "Laura Suarez Vega"
+        nif: "75812345R"
+        puesto: "Auxiliar Recepcion-Administracion"
+        bruto_anual: 14000
+        convenio: "Oficinas y despachos"
+        tipo_contrato: indefinido
+        jornada: parcial
+        horas_semana: 20
+        extras:
+          reduccion_jornada: true
+
+    productos_financieros:
+      - tipo: hipoteca
+        nombre: "Hipoteca local comercial Calle Recogidas"
+        importe: 120000
+        pendiente: 95000
+        plazo_meses: 240
+        cuota: 580
+        interes: 3.2
+        cuenta: "1705/5205"
+
+      - tipo: prestamo
+        nombre: "Microcredito ICO Emprendedoras"
+        importe: 12000
+        pendiente: 8000
+        plazo_meses: 48
+        cuota: 280
+        interes: 2.5
+        cuenta: "1700/5200"
+
+      - tipo: leasing
+        nombre: "Leasing equipamiento clinica (camilla, ultrasonidos, electroestimulador)"
+        importe: 22000
+        pendiente: 15000
+        plazo_meses: 60
+        cuota: 400
+        interes: 4.0
+        cuenta: "1740/5240"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [90, 160]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMASAGRA Granada"
+          importe_rango: [25, 50]
+          iva: 10
+        - tipo: telefono
+          proveedor: "Movistar"
+          importe_rango: [35, 55]
+          iva: 21
+      seguros:
+        - tipo: rc
+          proveedor: "Colegio Fisioterapeutas Andalucia (seguro colegial)"
+          importe_anual: 350
+          frecuencia: anual
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 550
+          frecuencia: anual
+      impuestos:
+        - tipo: ibi
+          importe: 0
+          frecuencia: anual
+        - tipo: basuras
+          importe: 120
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 9. JOSE ANTONIO BERMUDEZ FLORES — idempresa=11
+  # Autonomo, olivar y produccion aceite. Jaen. Regimen REAGP.
+  # Casuisticas: compensacion REAGP 12%, jornaleros eventuales agrarios,
+  #              PAC, Agroseguro, existencias aceite, hipoteca finca rustica
+  # ===========================================================================
+  jose-antonio-bermudez:
+    nombre: "JOSE ANTONIO BERMUDEZ FLORES"
+    nombre_comercial: "Aceites Bermudez"
+    cif: "26341589B"
+    tipo: autonomo
+    actividad: "Cultivo de olivos y produccion de aceite de oliva"
+    cnae: "0111"
+    direccion: "Finca La Encina, Partido Rural Las Colonias s/n, 23650 Torredonjimeno (Jaen)"
+    email: "jabermudez@aceitesjaen.es"
+    telefono: "619887766"
+    banco: "ES38 3045 0015 2223 4567 8907"
+    regimen_iva: reagp
+    idempresa: 11
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 5
+    css_variante: autonomo
+    docs_estimados: 90
+
+    proveedores:
+      fertiberia-agricola:
+        nombre: "Fertiberia S.A."
+        cif: "A28077030"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: trimestral
+        importe_rango: [800, 2500]
+        concepto: "Fertilizantes, fitosanitarios y productos para el cultivo del olivar"
+        retencion: 0
+
+      talleres-agricolas-jaen:
+        nombre: "Talleres Agricolas Jaen S.L."
+        cif: "B23044183"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: trimestral
+        importe_rango: [200, 800]
+        concepto: "Reparacion y mantenimiento de maquinaria agricola (tractor, aperos)"
+        retencion: 0
+
+      comunidad-regantes:
+        nombre: "Comunidad de Regantes Sierra Magina"
+        cif: "H23011059"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: trimestral
+        importe_rango: [180, 450]
+        concepto: "Cuota de riego y canon uso agua comunidad de regantes"
+        retencion: 0
+
+      gasoil-agricola:
+        nombre: "Distribuidora Gasoil Agricola Sur S.L."
+        cif: "B23055291"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [200, 600]
+        concepto: "Gasoil agricola bonificado para maquinaria agricola"
+        retencion: 0
+
+      reta-agraria:
+        nombre: "Tesoreria General de la Seguridad Social"
+        cif: "S2800009B"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [280, 320]
+        concepto: "Cuota RETA base minima — Sistema especial agrario autonomo"
+        retencion: 0
+
+    clientes:
+      coop-oleicola-sierra-magina:
+        nombre: "Cooperativa Oleicola Sierra Magina S. Coop."
+        cif: "F2306621J"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [8000, 25000]
+        concepto: "Venta aceituna recolectada — la cooperativa emite recibo con compensacion REAGP 12% sobre precio"
+
+      aceites-jaen-premium:
+        nombre: "Aceites Jaen Premium S.L."
+        cif: "B23011075"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [3000, 12000]
+        concepto: "Venta directa aceite de oliva virgen extra (AOVE) — con compensacion REAGP 12%"
+
+      venta-mercadillo:
+        nombre: "Venta mercadillo local (tickets)"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [200, 600]
+        concepto: "Venta directa al consumidor en mercadillo semanal Torredonjimeno (tickets simplificados)"
+
+    servicios_profesionales:
+      gestoria-jaen:
+        nombre: "Asesoria Agraria Castillo y Hnos. S.L."
+        cif: "B23018834"
+        retencion: 15
+        importe_mensual: 120
+        concepto: "Asesoria fiscal agricola: modelo 130, PAC, REAGP, RENTA"
+
+    empleados_detalle:
+      - nombre: "Mohamed Ait Benhaddou"
+        nif: "X5512345G"
+        puesto: "Jornalero Recoleccion Aceituna (Eventual Agrario)"
+        bruto_anual: 8000
+        convenio: "Sector agrario"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [10, 11, 12, 1]
+          regimen_especial_agrario: true
+
+      - nombre: "Francisco Ruiz Navarrete"
+        nif: "26789012C"
+        puesto: "Jornalero Recoleccion Aceituna (Eventual Agrario)"
+        bruto_anual: 8000
+        convenio: "Sector agrario"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [10, 11, 12, 1]
+          regimen_especial_agrario: true
+
+      - nombre: "Juan Antonio Perez Cobos"
+        nif: "26901234H"
+        puesto: "Tractorista (Eventual Agrario)"
+        bruto_anual: 10000
+        convenio: "Sector agrario"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [3, 4, 9, 10, 11]
+          regimen_especial_agrario: true
+
+      - nombre: "Antonio Bermudez Navarro"
+        nif: "26234567Y"
+        puesto: "Peon Agricola (Eventual Agrario)"
+        bruto_anual: 7500
+        convenio: "Sector agrario"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [10, 11, 12]
+          regimen_especial_agrario: true
+
+      - nombre: "Carlos Lopez Marin"
+        nif: "26456789Z"
+        puesto: "Peon Agricola (Eventual Agrario)"
+        bruto_anual: 7500
+        convenio: "Sector agrario"
+        tipo_contrato: temporal
+        jornada: completa
+        horas_semana: 40
+        extras:
+          meses_activos: [10, 11]
+          regimen_especial_agrario: true
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo agrario subvencionado SEAD-ICO"
+        importe: 25000
+        pendiente: 20000
+        plazo_meses: 84
+        cuota: 320
+        interes: 2.0
+        cuenta: "1700/5200"
+
+      - tipo: hipoteca
+        nombre: "Hipoteca finca rustica La Encina"
+        importe: 80000
+        pendiente: 55000
+        plazo_meses: 240
+        cuota: 380
+        interes: 3.5
+        cuenta: "1705/5205"
+
+      - tipo: leasing
+        nombre: "Leasing tractor John Deere 5075E"
+        importe: 35000
+        pendiente: 18000
+        plazo_meses: 72
+        cuota: 520
+        interes: 3.8
+        cuenta: "1740/5240"
+
+    subvenciones:
+      - nombre: "Ayuda directa PAC — Politica Agricola Comun"
+        organismo: "AGAPA — Agencia de Gestion Agricola y Pesquera de Andalucia"
+        importe: 3500
+        pagos: 1
+        tipo: explotacion
+        cuenta: "740"
+
+      - nombre: "Subvencion seguro cosechas Agroseguro"
+        organismo: "Agroseguro S.A. — ENESA"
+        importe: 600
+        pagos: 1
+        tipo: explotacion
+        cuenta: "740"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [60, 120]
+          iva: 21
+        - tipo: agua
+          proveedor: "Comunidad Regantes Sierra Magina"
+          importe_rango: [180, 450]
+          iva: 0
+        - tipo: telefono
+          proveedor: "Movistar"
+          importe_rango: [30, 45]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Agroseguro S.A."
+          importe_anual: 1200
+          frecuencia: anual
+        - tipo: vehiculos
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 500
+          frecuencia: anual
+      impuestos:
+        - tipo: ibi
+          importe: 220
+          frecuencia: anual
+        - tipo: ivtm
+          importe: 80
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 10. FRANCISCO MORA CASTILLO — idempresa=12
+  # Autonomo, bar/cafeteria. Cordoba. Estimacion objetiva MODULOS. IVA simplificado.
+  # Casuisticas: modulos IVA simplificado, cuota fija trimestral, no lleva contabilidad
+  #              convencional, maquina tragaperras, modelo 131
+  # ===========================================================================
+  francisco-mora:
+    nombre: "FRANCISCO MORA CASTILLO"
+    nombre_comercial: "Bar Cafeteria La Esquina"
+    cif: "30612475G"
+    tipo: autonomo
+    actividad: "Bares y cafeterias"
+    cnae: "5630"
+    direccion: "Calle Cruz Conde 12, Local, 14001 Cordoba"
+    email: "franciscomora.bar@gmail.com"
+    telefono: "634556677"
+    banco: "ES57 0237 0030 5023 4567 8908"
+    regimen_iva: simplificado
+    idempresa: 12
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 1
+    css_variante: autonomo
+    docs_estimados: 75
+
+    proveedores:
+      distribuidora-bebidas-andalucia:
+        nombre: "Distribuidora de Bebidas Andalucia S.L."
+        cif: "B14055230"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [800, 1800]
+        concepto: "Cervezas, refrescos, aguas y licores para barra"
+        retencion: 0
+
+      makro-bar:
+        nombre: "Makro Autoservicio S.A."
+        cif: "A28054609"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [500, 1200]
+        concepto: "Alimentacion, cafes, desayunos y consumibles bar (IVA 4/10/21% segun producto)"
+        retencion: 0
+
+      propietario-local-francisco:
+        nombre: "Carmen Ruiz Blanco (arrendadora)"
+        cif: "30721456B"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [650, 650]
+        concepto: "Alquiler local bar Calle Cruz Conde 12 (retencion 19% IRPF arrendadora)"
+        retencion: 19
+
+      suministros-varios:
+        nombre: "Endesa Energia S.A.U."
+        cif: "A28025419"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [120, 250]
+        concepto: "Suministro electrico bar/cafeteria"
+        retencion: 0
+
+      gestoria-lopez-bar:
+        nombre: "Gestoria Lopez S.L."
+        cif: "B29011889"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [100, 100]
+        concepto: "Asesoria fiscal y tramitacion modelos 131 y cuotas IVA simplificado"
+        retencion: 15
+
+    clientes:
+      ventas-diarias-bar:
+        nombre: "Ventas diarias bar (regimen simplificado)"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA10
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [6000, 12000]
+        concepto: "Ingresos bar/cafeteria — no se emiten facturas individuales (IVA simplificado, cuota fija trimestral)"
+
+      maquina-tragaperras:
+        nombre: "Operador Maquinas Recreativas Iberia S.L."
+        cif: "B28055123"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [120, 200]
+        concepto: "Ingreso fijo mensual por maquina recreativa en el bar (gestion del operador)"
+
+    servicios_profesionales:
+      gestoria-lopez-fp:
+        nombre: "Gestoria Lopez S.L."
+        cif: "B29011889"
+        retencion: 15
+        importe_mensual: 100
+        concepto: "Asesoria fiscal bar modulos — declaraciones trimestrales 131 + IVA simplificado"
+
+    empleados_detalle:
+      - nombre: "Antonio Jimenez Garcia"
+        nif: "30456789L"
+        puesto: "Camarero (Turnicidad)"
+        bruto_anual: 20000
+        convenio: "Hosteleria de Cordoba"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          turnicidad: true
+          festivos: true
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo reforma bar Banco Santander"
+        importe: 18000
+        pendiente: 14500
+        plazo_meses: 60
+        cuota: 340
+        interes: 5.75
+        cuenta: "1700/5200"
+
+    subvenciones:
+      - nombre: "Ayuda directa autonomos hosteleria post-COVID"
+        organismo: "Junta de Andalucia — Consejeria de Empresa"
+        importe: 2000
+        pagos: 1
+        tipo: explotacion
+        cuenta: "740"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [120, 250]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMACSA Cordoba"
+          importe_rango: [30, 60]
+          iva: 10
+        - tipo: gas
+          proveedor: "Naturgy S.A."
+          importe_rango: [50, 120]
+          iva: 21
+        - tipo: telefono
+          proveedor: "Movistar"
+          importe_rango: [30, 45]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 700
+          frecuencia: anual
+        - tipo: rc
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 400
+          frecuencia: anual
+      impuestos:
+        - tipo: ibi
+          importe: 0
+          frecuencia: anual
+        - tipo: basuras
+          importe: 180
+          frecuencia: anual
+        - tipo: iae
+          importe: 0
+          frecuencia: anual
+
+
+  # ===========================================================================
+  # 11. COMUNIDAD DE PROPIETARIOS MIRADOR DEL MAR — idempresa=13
+  # Comunidad de propietarios, 24 vecinos. Malaga.
+  # Casuisticas: cuotas ordinarias, derramas, alquiler local (IVA+retencion),
+  #              portero con vivienda en especie, prestamo ascensor, FEDER rehab.
+  # ===========================================================================
+  comunidad-mirador-del-mar:
+    nombre: "COMUNIDAD DE PROPIETARIOS MIRADOR DEL MAR"
+    nombre_comercial: "C.P. Mirador del Mar"
+    cif: "H29044013"
+    tipo: comunidad_propietarios
+    actividad: "Actividades de comunidades de propietarios"
+    cnae: "9820"
+    direccion: "Calle Marbella 8, Escalera A, 29601 Marbella (Malaga)"
+    email: "comunidad.miradordelmar@gmail.com"
+    telefono: "952992211"
+    banco: "ES82 2100 1234 5023 4567 8909"
+    regimen_iva: exento_parcial
+    prorrata: 0
+    idempresa: 13
+    ejercicio: "2025"
+    meses_activos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    empleados: 1
+    css_variante: administracion
+    docs_estimados: 78
+
+    proveedores:
+      limpisa:
+        nombre: "Limpisa S.L."
+        cif: "B29055514"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [400, 500]
+        concepto: "Servicio de limpieza zonas comunes, portal y escaleras (contrato mensual)"
+        retencion: 0
+
+      endesa-comunidad:
+        nombre: "Endesa Energia S.A.U."
+        cif: "A28025419"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [200, 400]
+        concepto: "Electricidad zonas comunes: portal, ascensor, garaje y piscina"
+        retencion: 0
+
+      ascensores-otis:
+        nombre: "Ascensores Otis S.A."
+        cif: "A28077188"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: trimestral
+        importe_rango: [280, 320]
+        concepto: "Contrato mantenimiento preventivo y correctivo ascensor"
+        retencion: 0
+
+      jardineria-verde:
+        nombre: "Jardineria Verde S.L."
+        cif: "B29088135"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [180, 250]
+        concepto: "Mantenimiento zonas ajardinadas y piscina comunitaria"
+        retencion: 0
+
+      administrador-fincas:
+        nombre: "Francisco Javier Herrera Soto (Administrador de Fincas)"
+        cif: "29815340A"
+        vat: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        regimen: general
+        frecuencia: mensual
+        importe_rango: [250, 250]
+        concepto: "Honorarios administracion y gestion de la comunidad (retencion 15%)"
+        retencion: 15
+
+    clientes:
+      cuotas-propietarios:
+        nombre: "24 Propietarios — Cuotas ordinarias"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: mensual
+        importe_rango: [1800, 2000]
+        concepto: "Cuotas mensuales ordinarias de los 24 propietarios (no sujetas a IVA)"
+
+      derrama-extraordinaria:
+        nombre: "Propietarios — Derrama extraordinaria"
+        cif: ""
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA0
+        retencion: 0
+        frecuencia: puntual
+        importe_rango: [3000, 8000]
+        concepto: "Derramas extraordinarias aprobadas en junta: ascensor, fachada, impermeabilizacion"
+
+      alquiler-local-comercial:
+        nombre: "Inquilino local planta baja"
+        cif: "B29112345"
+        pais: ESP
+        divisa: EUR
+        codimpuesto: IVA21
+        retencion: 19
+        frecuencia: mensual
+        importe_rango: [600, 600]
+        concepto: "Alquiler local comercial planta baja — con IVA 21% y retencion 19% IRPF"
+
+    servicios_profesionales:
+      admin-fincas:
+        nombre: "Francisco Javier Herrera Soto"
+        cif: "29815340A"
+        retencion: 15
+        importe_mensual: 250
+        concepto: "Administracion de finca — honorarios con retencion 15%"
+
+    empleados_detalle:
+      - nombre: "Eugenio Ramos Dominguez"
+        nif: "29567890L"
+        puesto: "Portero-Conserje"
+        bruto_anual: 18000
+        convenio: "Empleados de fincas urbanas"
+        tipo_contrato: indefinido
+        jornada: completa
+        horas_semana: 40
+        extras:
+          vivienda_especie: true
+          valor_especie_anual: 4800
+
+    productos_financieros:
+      - tipo: prestamo
+        nombre: "Prestamo obras ascensor — Banco Caja Rural"
+        importe: 30000
+        pendiente: 22000
+        plazo_meses: 96
+        cuota: 340
+        interes: 4.1
+        cuenta: "1700/5200"
+
+    subvenciones:
+      - nombre: "FEDER — Rehabilitacion fachada y eficiencia energetica"
+        organismo: "Junta de Andalucia — Consejeria de Fomento"
+        importe: 15000
+        pagos: 2
+        tipo: capital
+        cuenta: "130/746"
+
+    gastos_recurrentes:
+      suministros:
+        - tipo: electricidad
+          proveedor: "Endesa Energia S.A.U."
+          importe_rango: [200, 400]
+          iva: 21
+        - tipo: agua
+          proveedor: "EMASA Marbella"
+          importe_rango: [80, 150]
+          iva: 10
+        - tipo: telefono
+          proveedor: "Movistar"
+          importe_rango: [25, 40]
+          iva: 21
+      seguros:
+        - tipo: multirriesgo
+          proveedor: "Seguros Mapfre S.A."
+          importe_anual: 2800
+          frecuencia: anual
+      impuestos:
+        - tipo: ibi
+          importe: 0
+          frecuencia: anual
+        - tipo: basuras
+          importe: 300
+          frecuencia: anual

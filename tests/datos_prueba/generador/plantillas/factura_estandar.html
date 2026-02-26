@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ factura.numero }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+</head>
+<body>
+<div class="factura">
+
+  {% if pagada %}<div class="sello-pagado">PAGADO</div>{% endif %}
+
+  <div class="cabecera">
+    <div class="emisor">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>CIF/NIF: {{ emisor.cif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="datos-factura">
+      <h1>FACTURA</h1>
+      {% if factura.serie %}<p>Serie: {{ factura.serie }}</p>{% endif %}
+      <p>N.&ordm;: <strong>{{ factura.numero }}</strong></p>
+      <p>Fecha: {{ factura.fecha | fecha_es }}</p>
+    </div>
+  </div>
+
+  <div class="receptor">
+    <h3>Datos del cliente</h3>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>CIF/NIF: {{ receptor.cif }}</p>
+    <p>{{ receptor.direccion }}</p>
+  </div>
+
+  <table class="tabla-lineas">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Uds.</th>
+        <th>Precio ud.</th>
+        <th>Dto.</th>
+        <th>Base</th>
+        <th>IVA</th>
+        <th>Cuota IVA</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda(divisa) }}</td>
+        <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td>{{ l.base | moneda(divisa) }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td>{{ l.cuota_iva | moneda(divisa) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% set desglose = resumen.desglose_iva() %}
+  {% if desglose | length > 1 %}
+  <div class="desglose-iva">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo IVA</th>
+          <th>Base imponible</th>
+          <th>Cuota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tipo, d in desglose.items() %}
+        <tr>
+          <td>{{ tipo | porcentaje }}</td>
+          <td>{{ d.base | moneda(divisa) }}</td>
+          <td>{{ d.cuota | moneda(divisa) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="totales">
+    <p><span>Base imponible:</span> <span>{{ resumen.base_imponible | moneda(divisa) }}</span></p>
+    {% for tipo, d in desglose.items() %}
+    <p><span>IVA {{ tipo | porcentaje }}:</span> <span>{{ d.cuota | moneda(divisa) }}</span></p>
+    {% endfor %}
+    {% if resumen.total_recargo > 0 %}
+    <p><span>Recargo equivalencia:</span> <span>{{ resumen.total_recargo | moneda(divisa) }}</span></p>
+    {% endif %}
+    {% if resumen.total_retencion > 0 %}
+    <p><span>Retenci&oacute;n IRPF:</span> <span>-{{ resumen.total_retencion | moneda(divisa) }}</span></p>
+    {% endif %}
+    <p class="total-final"><strong>TOTAL:</strong> <strong>{{ resumen.total | moneda(divisa) }}</strong></p>
+  </div>
+
+  <div class="pie">
+    <p><strong>Forma de pago:</strong> {{ forma_pago }}</p>
+    {% if cuenta_bancaria %}<p><strong>IBAN:</strong> {{ cuenta_bancaria }}</p>{% endif %}
+    {% for nota in notas %}
+    <p class="nota">{{ nota }}</p>
+    {% endfor %}
+    <p class="texto-legal">Factura emitida conforme al Real Decreto 1619/2012, de 30 de noviembre, por el que se regula la obligaci&oacute;n de expedir y entregar factura. Inscrita en el Registro Mercantil.</p>
+  </div>
+
+</div>
+</body>
+</html>

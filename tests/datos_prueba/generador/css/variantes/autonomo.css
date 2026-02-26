@@ -1,0 +1,8 @@
+/* Variante: Autonomo */
+body { font-family: Arial, sans-serif; }
+.cabecera { border-bottom: 1px solid #999; }
+.emisor h2 { font-size: 12pt; }
+.datos-factura h1 { font-size: 14pt; color: #555; }
+.tabla-lineas thead { background: #666; }
+.totales { border: 1px solid #999; }
+.receptor { background: #f8f8f8; border-color: #ccc; }

@@ -1,0 +1,9 @@
+/* Variante: Empresa corporativa */
+.cabecera { border-bottom-color: #1a365d; }
+.datos-factura h1 { color: #1a365d; }
+.tabla-lineas thead { background: #1a365d; }
+.totales { border-color: #1a365d; }
+.total-final { border-top-color: #1a365d; }
+.receptor { background: #f0f4f8; border-color: #c3d5e8; }
+.nomina .periodo { background: #1a365d; }
+.nomina .liquido { background: #1a365d; }

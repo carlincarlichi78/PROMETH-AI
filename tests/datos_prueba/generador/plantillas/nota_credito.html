@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nota de Cr&eacute;dito {{ factura.numero }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* Cabecera con color diferenciador para nota de credito */
+    .cabecera-nc {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #c62828;
+    }
+    .datos-factura-nc h1 {
+      font-size: 15pt;
+      margin: 0 0 5px 0;
+      color: #c62828;
+      line-height: 1.2;
+    }
+    .datos-factura-nc {
+      width: 40%;
+      text-align: right;
+    }
+    .datos-factura-nc p { margin: 3px 0; font-size: 10pt; }
+    .referencia-original {
+      background: #fce4e4;
+      border: 1px solid #ef9a9a;
+      border-left: 4px solid #c62828;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      font-size: 9pt;
+    }
+    .referencia-original strong { color: #c62828; }
+    .motivo-rectificacion {
+      background: #fff3e0;
+      border: 1px solid #ffcc80;
+      border-left: 4px solid #e65100;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      font-size: 9pt;
+      color: #555;
+    }
+    .importe-negativo { color: #c62828; }
+    .totales-nc { border-color: #c62828; }
+    .total-final-nc {
+      border-top: 1px solid #c62828;
+      padding-top: 8px;
+      margin-top: 8px !important;
+      font-size: 12pt !important;
+      color: #c62828;
+    }
+    .sello-rectificativa {
+      position: absolute;
+      top: 40%;
+      left: 25%;
+      transform: rotate(-30deg);
+      font-size: 36pt;
+      font-weight: bold;
+      color: rgba(198, 40, 40, 0.12);
+      border: 4px solid rgba(198, 40, 40, 0.12);
+      padding: 10px 20px;
+      text-transform: uppercase;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+<div class="factura">
+
+  <div class="sello-rectificativa">NOTA DE CR&Eacute;DITO</div>
+
+  <div class="cabecera cabecera-nc">
+    <div class="emisor">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>CIF/NIF: {{ emisor.cif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="datos-factura datos-factura-nc">
+      <h1>NOTA DE CR&Eacute;DITO<br><span style="font-size: 11pt;">FACTURA RECTIFICATIVA</span></h1>
+      {% if factura.serie %}<p>Serie: {{ factura.serie }}</p>{% endif %}
+      <p>N.&ordm;: <strong>{{ factura.numero }}</strong></p>
+      <p>Fecha: {{ factura.fecha | fecha_es }}</p>
+    </div>
+  </div>
+
+  <div class="referencia-original">
+    <strong>Factura rectificada:</strong>
+    Rectifica factura n.&ordm; <strong>{{ factura_original.numero }}</strong>
+    de fecha <strong>{{ factura_original.fecha | fecha_es }}</strong>
+  </div>
+
+  {% if motivo %}
+  <div class="motivo-rectificacion">
+    <strong>Motivo de la rectificaci&oacute;n:</strong> {{ motivo }}
+  </div>
+  {% endif %}
+
+  <div class="receptor">
+    <h3>Datos del cliente</h3>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>CIF/NIF: {{ receptor.cif }}</p>
+    <p>{{ receptor.direccion }}</p>
+  </div>
+
+  <table class="tabla-lineas">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Uds.</th>
+        <th>Precio ud.</th>
+        <th>Dto.</th>
+        <th>Base</th>
+        <th>IVA</th>
+        <th>Cuota IVA</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr class="importe-negativo">
+        <td>{{ l.concepto }}</td>
+        <td>-{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda(divisa) }}</td>
+        <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td class="importe-negativo">-{{ l.base | moneda(divisa) }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td class="importe-negativo">-{{ l.cuota_iva | moneda(divisa) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% set desglose = resumen.desglose_iva() %}
+  {% if desglose | length > 1 %}
+  <div class="desglose-iva">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo IVA</th>
+          <th>Base imponible</th>
+          <th>Cuota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tipo, d in desglose.items() %}
+        <tr>
+          <td>{{ tipo | porcentaje }}</td>
+          <td class="importe-negativo">-{{ d.base | moneda(divisa) }}</td>
+          <td class="importe-negativo">-{{ d.cuota | moneda(divisa) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="totales totales-nc">
+    <p>
+      <span>Base imponible:</span>
+      <span class="importe-negativo">-{{ resumen.base_imponible | moneda(divisa) }}</span>
+    </p>
+    {% for tipo, d in desglose.items() %}
+    <p>
+      <span>IVA {{ tipo | porcentaje }}:</span>
+      <span class="importe-negativo">-{{ d.cuota | moneda(divisa) }}</span>
+    </p>
+    {% endfor %}
+    {% if resumen.total_recargo > 0 %}
+    <p>
+      <span>Recargo equivalencia:</span>
+      <span class="importe-negativo">-{{ resumen.total_recargo | moneda(divisa) }}</span>
+    </p>
+    {% endif %}
+    {% if resumen.total_retencion > 0 %}
+    <p>
+      <span>Retenci&oacute;n IRPF (devoluci&oacute;n):</span>
+      <span>+{{ resumen.total_retencion | moneda(divisa) }}</span>
+    </p>
+    {% endif %}
+    <p class="total-final total-final-nc">
+      <strong>TOTAL A DEVOLVER:</strong>
+      <strong class="importe-negativo">-{{ resumen.total | moneda(divisa) }}</strong>
+    </p>
+  </div>
+
+  <div class="pie">
+    <p><strong>Forma de pago:</strong> {{ forma_pago }}</p>
+    {% if cuenta_bancaria %}<p><strong>IBAN (devoluci&oacute;n):</strong> {{ cuenta_bancaria }}</p>{% endif %}
+    {% for nota in notas %}
+    <p class="nota">{{ nota }}</p>
+    {% endfor %}
+    <p class="texto-legal">
+      Factura rectificativa emitida conforme al art. 15 del Real Decreto 1619/2012, de 30 de noviembre.
+      Los importes reflejados son negativos e implican un cr&eacute;dito a favor del receptor.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

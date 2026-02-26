@@ -1,0 +1,10 @@
+/* Variante: Administracion publica */
+body { font-family: "Times New Roman", Georgia, serif; font-size: 11pt; }
+.cabecera { border-bottom: 3px double #333; }
+.emisor h2 { font-size: 13pt; text-transform: uppercase; letter-spacing: 2px; }
+.datos-factura h1 { font-family: "Times New Roman", serif; font-size: 16pt; }
+.tabla-lineas thead { background: #4a4a4a; }
+.receptor { border: 2px solid #333; background: white; }
+.totales { border: 2px solid #333; }
+.escudo { font-family: serif; font-size: 14pt; font-weight: bold; }
+.impuesto .datos-liquidacion { border: 3px double #333; }

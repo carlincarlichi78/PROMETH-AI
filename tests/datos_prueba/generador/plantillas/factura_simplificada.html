@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Simplificada {{ factura.numero }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* Ajustes especificos para formato ticket/compacto */
+    @page { margin: 10mm 15mm; }
+    .factura-simplificada { max-width: 100%; }
+    .datos-factura h1 { font-size: 14pt; }
+    .tabla-simplificada { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .tabla-simplificada thead { background: #333; color: white; }
+    .tabla-simplificada th { padding: 6px 10px; font-size: 8pt; text-transform: uppercase; }
+    .tabla-simplificada th:last-child { text-align: right; }
+    .tabla-simplificada td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 9pt; }
+    .tabla-simplificada td:last-child { text-align: right; }
+    .tabla-simplificada tbody tr:nth-child(even) { background: #fafafa; }
+    .totales-simplificado { width: 55%; margin-left: auto; border: 2px solid #333; padding: 8px 12px; margin-bottom: 15px; }
+    .totales-simplificado p { display: flex; justify-content: space-between; margin: 3px 0; font-size: 10pt; }
+    .iva-incluido { font-size: 8pt; color: #666; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="factura factura-simplificada">
+
+  {% if pagada %}<div class="sello-pagado">PAGADO</div>{% endif %}
+
+  <div class="cabecera">
+    <div class="emisor">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>CIF/NIF: {{ emisor.cif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="datos-factura">
+      <h1>FACTURA<br>SIMPLIFICADA</h1>
+      {% if factura.serie %}<p>Serie: {{ factura.serie }}</p>{% endif %}
+      <p>N.&ordm;: <strong>{{ factura.numero }}</strong></p>
+      <p>Fecha: {{ factura.fecha | fecha_es }}</p>
+    </div>
+  </div>
+
+  <table class="tabla-simplificada">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Importe (IVA incl.)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ (l.base + l.cuota_iva) | moneda(divisa) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% set desglose = resumen.desglose_iva() %}
+
+  <div class="totales-simplificado">
+    {% for tipo, d in desglose.items() %}
+    <p>
+      <span>Base {{ tipo | porcentaje }} IVA:</span>
+      <span>{{ d.base | moneda(divisa) }}</span>
+    </p>
+    <p>
+      <span>Cuota IVA {{ tipo | porcentaje }}:</span>
+      <span>{{ d.cuota | moneda(divisa) }}</span>
+    </p>
+    {% endfor %}
+    {% if resumen.total_recargo > 0 %}
+    <p><span>Recargo equiv.:</span> <span>{{ resumen.total_recargo | moneda(divisa) }}</span></p>
+    {% endif %}
+    <p class="total-final"><strong>TOTAL:</strong> <strong>{{ resumen.total | moneda(divisa) }}</strong></p>
+    <p class="iva-incluido">IVA incluido en el precio</p>
+  </div>
+
+  <div class="pie">
+    <p><strong>Forma de pago:</strong> {{ forma_pago }}</p>
+    {% if cuenta_bancaria %}<p><strong>IBAN:</strong> {{ cuenta_bancaria }}</p>{% endif %}
+    {% for nota in notas %}
+    <p class="nota">{{ nota }}</p>
+    {% endfor %}
+    <p class="texto-legal">Factura simplificada emitida conforme al art. 4 del Real Decreto 1619/2012, de 30 de noviembre.</p>
+  </div>
+
+</div>
+</body>
+</html>

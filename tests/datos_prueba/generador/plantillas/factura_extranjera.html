@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Invoice {{ factura.numero }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/variantes/extranjero.css">
+  <style>
+    /* Estilos especificos para factura internacional */
+    .datos-factura h1 { font-size: 15pt; line-height: 1.2; }
+    .mencion-isp {
+      background: #fff8e1;
+      border: 1px solid #f9a825;
+      border-left: 4px solid #f9a825;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      font-size: 9pt;
+      color: #555;
+    }
+    .mencion-dua {
+      background: #e8f5e9;
+      border: 1px solid #388e3c;
+      border-left: 4px solid #388e3c;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      font-size: 9pt;
+      color: #555;
+    }
+    .tipo-cambio {
+      font-size: 8pt;
+      color: #666;
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    .vat-number { font-weight: bold; color: #333; }
+    .etiqueta-bilingue { font-size: 8pt; color: #888; }
+  </style>
+</head>
+<body>
+<div class="factura">
+
+  {% if pagada %}<div class="sello-pagado">PAGADO</div>{% endif %}
+
+  <div class="cabecera">
+    <div class="emisor">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>CIF/NIF: {{ emisor.cif }}</p>
+      {% if vat_emisor %}
+      <p class="vat-number">VAT Number: {{ vat_emisor }}</p>
+      {% endif %}
+      <p>{{ emisor.direccion }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="datos-factura">
+      <h1>FACTURA / INVOICE</h1>
+      {% if factura.serie %}<p>Serie / Series: {{ factura.serie }}</p>{% endif %}
+      <p>
+        <span class="etiqueta-bilingue">N.&ordm; / No.:</span>
+        <strong>{{ factura.numero }}</strong>
+      </p>
+      <p>
+        <span class="etiqueta-bilingue">Fecha / Date:</span>
+        {{ factura.fecha | fecha_es }}
+      </p>
+    </div>
+  </div>
+
+  {% if divisa != 'EUR' %}
+  <p class="tipo-cambio">
+    Exchange rate / Tipo de cambio: 1 EUR = {{ tasaconv }} {{ divisa }}
+  </p>
+  {% endif %}
+
+  <div class="receptor">
+    <h3>Cliente / Customer</h3>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>CIF/NIF / VAT: {{ receptor.cif }}</p>
+    <p>{{ receptor.direccion }}</p>
+  </div>
+
+  {% if intracomunitaria %}
+  <div class="mencion-isp">
+    <strong>Inversi&oacute;n del sujeto pasivo / Reverse charge</strong><br>
+    Operaci&oacute;n sujeta a inversi&oacute;n del sujeto pasivo. Art. 84.Uno.2&ordm; LIVA.<br>
+    Reverse charge &mdash; VAT to be accounted for by the recipient. Art. 196 Directive 2006/112/EC.
+  </div>
+  {% endif %}
+
+  {% if extracomunitaria and dua_ref %}
+  <div class="mencion-dua">
+    <strong>Importaci&oacute;n / Import</strong><br>
+    Operaci&oacute;n de importaci&oacute;n. DUA de referencia: <strong>{{ dua_ref }}</strong><br>
+    IVA a la importaci&oacute;n liquidado en aduana (casilla 77 del modelo 303).
+  </div>
+  {% endif %}
+
+  <table class="tabla-lineas">
+    <thead>
+      <tr>
+        <th>Concepto / Description</th>
+        <th>Uds.</th>
+        <th>Precio ud. / Unit price</th>
+        <th>Dto.</th>
+        <th>Base / Net amount</th>
+        <th>IVA / VAT</th>
+        <th>Cuota IVA / VAT amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda(divisa) }}</td>
+        <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td>{{ l.base | moneda(divisa) }}</td>
+        <td>
+          {% if intracomunitaria %}
+            <span title="Inversi&oacute;n sujeto pasivo">0% (ISP)</span>
+          {% else %}
+            {{ l.iva_tipo | porcentaje }}
+          {% endif %}
+        </td>
+        <td>
+          {% if intracomunitaria %}
+            {{ 0 | moneda(divisa) }}
+          {% else %}
+            {{ l.cuota_iva | moneda(divisa) }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% set desglose = resumen.desglose_iva() %}
+  {% if not intracomunitaria and desglose | length > 1 %}
+  <div class="desglose-iva">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo IVA / VAT rate</th>
+          <th>Base / Net</th>
+          <th>Cuota / Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tipo, d in desglose.items() %}
+        <tr>
+          <td>{{ tipo | porcentaje }}</td>
+          <td>{{ d.base | moneda(divisa) }}</td>
+          <td>{{ d.cuota | moneda(divisa) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="totales">
+    <p><span>Base imponible / Net amount:</span> <span>{{ resumen.base_imponible | moneda(divisa) }}</span></p>
+    {% if intracomunitaria %}
+    <p><span>IVA / VAT (ISP):</span> <span>{{ 0 | moneda(divisa) }}</span></p>
+    {% else %}
+      {% for tipo, d in desglose.items() %}
+      <p><span>IVA {{ tipo | porcentaje }}:</span> <span>{{ d.cuota | moneda(divisa) }}</span></p>
+      {% endfor %}
+    {% endif %}
+    {% if resumen.total_recargo > 0 %}
+    <p><span>Recargo equivalencia:</span> <span>{{ resumen.total_recargo | moneda(divisa) }}</span></p>
+    {% endif %}
+    {% if resumen.total_retencion > 0 %}
+    <p><span>Retenci&oacute;n IRPF:</span> <span>-{{ resumen.total_retencion | moneda(divisa) }}</span></p>
+    {% endif %}
+    <p class="total-final">
+      <strong>TOTAL / TOTAL AMOUNT:</strong>
+      <strong>{{ resumen.total | moneda(divisa) }}</strong>
+    </p>
+  </div>
+
+  <div class="pie">
+    <p><strong>Forma de pago / Payment method:</strong> {{ forma_pago }}</p>
+    {% if cuenta_bancaria %}<p><strong>IBAN:</strong> {{ cuenta_bancaria }}</p>{% endif %}
+    {% for nota in notas %}
+    <p class="nota">{{ nota }}</p>
+    {% endfor %}
+    <p class="texto-legal">
+      Factura emitida conforme al Real Decreto 1619/2012. Invoice issued in accordance with EU Directive 2006/112/EC.
+      {% if intracomunitaria %}
+      Operaci&oacute;n intracomunitaria exenta de IVA. Intra-EU supply exempt from VAT.
+      {% endif %}
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

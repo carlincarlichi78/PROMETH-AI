@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Restauraci&oacute;n {{ factura.numero }}</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* Estilo ticket restaurante: mas compacto e informal */
+    @page { margin: 10mm 15mm; }
+
+    .cabecera-restaurante {
+      text-align: center;
+      border-bottom: 2px dashed #333;
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+    }
+    .cabecera-restaurante h2 {
+      font-size: 16pt;
+      margin: 0 0 4px 0;
+      letter-spacing: 1px;
+    }
+    .cabecera-restaurante p {
+      margin: 2px 0;
+      font-size: 9pt;
+      color: #555;
+    }
+    .datos-ticket {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 9pt;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 8px;
+    }
+    .datos-ticket-col { display: flex; flex-direction: column; gap: 2px; }
+    .datos-ticket strong { font-size: 10pt; }
+
+    .info-mesa {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 6px 12px;
+      margin-bottom: 12px;
+      font-size: 9pt;
+      display: flex;
+      gap: 20px;
+    }
+
+    .tabla-restaurante {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+    .tabla-restaurante thead { background: #333; color: white; }
+    .tabla-restaurante th {
+      padding: 6px 8px;
+      font-size: 8pt;
+      text-transform: uppercase;
+      text-align: left;
+    }
+    .tabla-restaurante th:not(:first-child) { text-align: right; }
+    .tabla-restaurante td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 9pt;
+    }
+    .tabla-restaurante td:not(:first-child) { text-align: right; }
+    .tabla-restaurante tbody tr:nth-child(even) { background: #fafafa; }
+
+    .separador-dashed {
+      border: none;
+      border-top: 1px dashed #ccc;
+      margin: 10px 0;
+    }
+
+    .totales-restaurante {
+      width: 60%;
+      margin-left: auto;
+      padding: 8px 12px;
+      border: 1px solid #333;
+      margin-bottom: 12px;
+    }
+    .totales-restaurante p {
+      display: flex;
+      justify-content: space-between;
+      margin: 3px 0;
+      font-size: 9pt;
+    }
+
+    .propina-bloque {
+      width: 60%;
+      margin-left: auto;
+      background: #f0f8f0;
+      border: 1px solid #c8e6c9;
+      padding: 6px 12px;
+      margin-bottom: 12px;
+    }
+    .propina-bloque p {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+      font-size: 9pt;
+      color: #2e7d32;
+    }
+
+    .desglose-iva-restaurante {
+      margin-bottom: 12px;
+      font-size: 8pt;
+    }
+    .desglose-iva-restaurante table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .desglose-iva-restaurante th, .desglose-iva-restaurante td {
+      padding: 4px 8px;
+      text-align: right;
+      border-bottom: 1px solid #eee;
+    }
+    .desglose-iva-restaurante th { background: #f0f0f0; }
+    .desglose-iva-restaurante td:first-child, .desglose-iva-restaurante th:first-child {
+      text-align: left;
+    }
+
+    .pie-restaurante {
+      border-top: 2px dashed #333;
+      padding-top: 10px;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+    }
+    .pie-restaurante .mensaje { font-size: 9pt; font-style: italic; margin-bottom: 8px; }
+    .receptor-restaurante {
+      background: #f5f5f5;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      font-size: 9pt;
+    }
+    .receptor-restaurante h4 {
+      font-size: 8pt;
+      color: #666;
+      margin: 0 0 4px 0;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+<div class="factura">
+
+  {% if pagada %}<div class="sello-pagado">PAGADO</div>{% endif %}
+
+  <div class="cabecera-restaurante">
+    <h2>{{ emisor.nombre }}</h2>
+    <p>CIF/NIF: {{ emisor.cif }}</p>
+    <p>{{ emisor.direccion }}</p>
+    {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+    {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+  </div>
+
+  <div class="datos-ticket">
+    <div class="datos-ticket-col">
+      <span><strong>FACTURA N.&ordm;:</strong> {{ factura.numero }}</span>
+      {% if factura.serie %}<span>Serie: {{ factura.serie }}</span>{% endif %}
+      <span>Fecha: {{ factura.fecha | fecha_es }}</span>
+    </div>
+    <div class="datos-ticket-col" style="text-align: right;">
+      {% if mesa %}<span><strong>Mesa:</strong> {{ mesa }}</span>{% endif %}
+      {% if comensales %}<span><strong>Comensales:</strong> {{ comensales }}</span>{% endif %}
+      <span><strong>Forma pago:</strong> {{ forma_pago }}</span>
+    </div>
+  </div>
+
+  {% if mesa or comensales %}
+  <div class="info-mesa">
+    {% if mesa %}<span><strong>Mesa n.&ordm;:</strong> {{ mesa }}</span>{% endif %}
+    {% if comensales %}<span><strong>N.&ordm; comensales:</strong> {{ comensales }}</span>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if receptor and receptor.nombre %}
+  <div class="receptor-restaurante">
+    <h4>Factura a nombre de</h4>
+    <p><strong>{{ receptor.nombre }}</strong> &mdash; CIF/NIF: {{ receptor.cif }}</p>
+    <p>{{ receptor.direccion }}</p>
+  </div>
+  {% endif %}
+
+  <table class="tabla-restaurante">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Cant.</th>
+        <th>Precio</th>
+        <th>IVA</th>
+        <th>Importe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda(divisa) }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td>{{ (l.base + l.cuota_iva) | moneda(divisa) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <hr class="separador-dashed">
+
+  {% set desglose = resumen.desglose_iva() %}
+  <div class="desglose-iva-restaurante">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo IVA</th>
+          <th>Base</th>
+          <th>Cuota IVA</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tipo, d in desglose.items() %}
+        <tr>
+          <td>{{ tipo | porcentaje }}</td>
+          <td>{{ d.base | moneda(divisa) }}</td>
+          <td>{{ d.cuota | moneda(divisa) }}</td>
+          <td>{{ (d.base + d.cuota) | moneda(divisa) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="totales-restaurante">
+    <p><span>Base imponible:</span> <span>{{ resumen.base_imponible | moneda(divisa) }}</span></p>
+    {% for tipo, d in desglose.items() %}
+    <p><span>IVA {{ tipo | porcentaje }}:</span> <span>{{ d.cuota | moneda(divisa) }}</span></p>
+    {% endfor %}
+    {% if resumen.total_recargo > 0 %}
+    <p><span>Recargo equiv.:</span> <span>{{ resumen.total_recargo | moneda(divisa) }}</span></p>
+    {% endif %}
+    <p class="total-final"><strong>TOTAL:</strong> <strong>{{ resumen.total | moneda(divisa) }}</strong></p>
+  </div>
+
+  {% if propina %}
+  <div class="propina-bloque">
+    <p><span>Propina voluntaria:</span> <span>{{ propina | moneda(divisa) }}</span></p>
+    <p><strong><span>Total con propina:</span> <span>{{ (resumen.total + propina) | moneda(divisa) }}</span></strong></p>
+  </div>
+  {% endif %}
+
+  <div class="pie-restaurante">
+    {% if cuenta_bancaria %}<p><strong>IBAN:</strong> {{ cuenta_bancaria }}</p>{% endif %}
+    {% for nota in notas %}
+    <p class="nota">{{ nota }}</p>
+    {% endfor %}
+    <p class="mensaje">Gracias por su visita. &iexcl;Esperamos verle pronto!</p>
+    <p class="texto-legal">
+      Factura emitida conforme al Real Decreto 1619/2012.
+      IVA desglosado por tipos: alimentos/mens&uacute; 10%, bebidas alcoh&oacute;licas y otros 21%.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+/* Variante: Factura extranjera/internacional */
+body { font-family: "Segoe UI", "Helvetica Neue", sans-serif; }
+.cabecera { border-bottom: 1px solid #0066cc; padding-bottom: 20px; }
+.emisor h2 { color: #0066cc; }
+.datos-factura h1 { color: #0066cc; font-size: 20pt; }
+.tabla-lineas thead { background: #0066cc; }
+.totales { border-color: #0066cc; }
+.total-final { border-top-color: #0066cc; }
+.receptor { background: #f0f6ff; border-color: #b3d1ff; }
+.mencion-isp {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 9pt;
+  font-weight: bold;
+}
