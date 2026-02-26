@@ -40,7 +40,7 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
     # Filtros idempresa/codejercicio NO funcionan en la API FS
     # SIEMPRE post-filtrar en Python
     idempresa = str(config.idempresa)
-    codejercicio = str(config.ejercicio)
+    codejercicio = str(config.codejercicio)
 
     datos = {}
 

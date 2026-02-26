@@ -104,7 +104,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     # Datos base
     form = {
         "idempresa": config.idempresa,
-        "codejercicio": config.ejercicio,
+        "codejercicio": config.codejercicio,
         "fecha": datos.get("fecha", ""),
     }
 
@@ -521,7 +521,7 @@ def ejecutar_registro(
                 resultado_asiento = crear_asiento_directo(
                     concepto=concepto,
                     fecha=datos.get("fecha", ""),
-                    codejercicio=config.ejercicio,
+                    codejercicio=config.codejercicio,
                     idempresa=config.idempresa,
                     partidas=partidas,
                 )

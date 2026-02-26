@@ -48,6 +48,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 | PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa. Snapshot + modelos fiscales + Excel actualizados |
 | GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado (empresa+ejercicio+PGC), carpetas creadas |
 | EMPRESA PRUEBA S.L. (testing SFCE) | clientes/EMPRESA PRUEBA/ | 3 | FS creada (ejercicio 0003, PGC importado). 46 PDFs ficticios en inbox |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | FS creada (ejercicio 0004, PGC importado). 141 PDFs en inbox_prueba. Pipeline dry-run OK, completo FALLA en registro |
 
 ## Scripts
 | Script | Uso |
@@ -192,12 +193,31 @@ Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
 **Tests**: 67 unitarios pasando (29 asientos_directos + 17 pre_validation_tipos + 21 existentes)
 **Pendiente**: Task 9 (test E2E con PDFs chiringuito-sol-arena) + Task 10 (actualizar docs)
 
+## Test E2E chiringuito-sol-arena — EN PROGRESO
+
+**FS configurado**: empresa 4, ejercicio 0004, PGC importado, codejercicio="0004"
+**Dry-run OK**: 105/106 validados (1 duplicado excluido). BAN:28, FC:37, IMP:2, NOM:32, RLC:7. Score 100%
+**Pipeline completo FALLO en registro**: 0 OK, 105 fallidos. 3 errores a resolver:
+
+1. **"No se encontro entidad en FS"** (FC) — Proveedores (Makro, Renting, Gastro Holding, Ayto Marbella) no existen en FS para empresa 4. registration.py busca proveedor por CIF pero no lo encuentra. Solucion: crear proveedores via API antes del pipeline, o que registration.py los cree automaticamente
+2. **"Error creando asiento directo: 'idasiento'"** (NOM/BAN) — `crear_asiento_directo()` llama POST asientos pero la respuesta no contiene 'idasiento'. Posible causa: codejercicio incorrecto o empresa activa del usuario API afecta. **NOTA**: se crearon 62 asientos huerfanos en empresa 4 — limpiar antes de re-ejecutar
+3. **"object of type 'NoneType' has no len()"** (RLC) — partidas es None para documentos RLC. Falta generacion de partidas para tipo RLC en registration.py
+
+**Cambios de esta sesion**:
+- `--inbox` flag en pipeline.py y intake.py para usar carpetas alternativas
+- Mistral OCR3 como motor primario (GPT-4o como fallback)
+- `config.codejercicio` property en config.py (separar codejercicio FS del ano)
+- registration.py y cross_validation.py usan `config.codejercicio` para API calls
+- pre_validation.py: CIF y fecha non-blocking para NOM/BAN/RLC/IMP
+
 ## Proximos pasos
 
-### Prioritario
-1. **Test E2E intake multi-tipo** — ejecutar pipeline contra chiringuito-sol-arena (141 PDFs, todos los tipos). Verificar clasificacion correcta y asientos en FS
-2. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs generados, 11 entidades)
+### Prioritario (proxima sesion)
+1. **Resolver 3 errores registro chiringuito** — crear proveedores en FS, debug asientos directos API, generar partidas RLC
+2. **Limpiar 62 asientos huerfanos** en empresa 4 antes de re-ejecutar
+3. **Re-ejecutar pipeline completo** contra chiringuito-sol-arena
 
 ### Otros
+- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados, 11 entidades)
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts

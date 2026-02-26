@@ -2,8 +2,9 @@ empresa:
   nombre: "CHIRINGUITO SOL Y ARENA S.L."
   cif: "B29066776"
   tipo: sl
-  idempresa: 7
+  idempresa: 4
   ejercicio_activo: "2025"
+  codejercicio: "0004"
   regimen_iva: general
   direccion: "Playa de la Bajadilla s/n (Concesion 14-B), 29601 Marbella, Malaga"
   email: "admin@chiringuitosolyarena.es"

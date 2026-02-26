@@ -456,18 +456,37 @@ def ejecutar_pre_validacion(
 
         logger.info(f"Validando: {archivo} ({tipo_doc})")
 
-        # Determinar pais de la entidad para validacion CIF
-        es_proveedor = tipo_doc in ("FC", "NC", "ANT")
-        cif_entidad = (datos.get("emisor_cif") if es_proveedor
-                       else datos.get("receptor_cif")) or ""
-        entidad = (config.buscar_proveedor_por_cif(cif_entidad) if es_proveedor
-                   else config.buscar_cliente_por_cif(cif_entidad))
+        # Determinar CIF relevante segun tipo documento
+        es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
+        if tipo_doc in ("FC", "NC", "ANT", "SUM"):
+            # Facturas compra/suplidos: CIF del emisor (proveedor)
+            cif_entidad = datos.get("emisor_cif") or ""
+            entidad = config.buscar_proveedor_por_cif(cif_entidad) if cif_entidad else None
+        elif tipo_doc in ("FV", "REC"):
+            # Facturas venta: CIF del receptor (cliente)
+            cif_entidad = datos.get("receptor_cif") or ""
+            entidad = config.buscar_cliente_por_cif(cif_entidad) if cif_entidad else None
+        elif tipo_doc in ("NOM", "RLC"):
+            # Nominas y SS: CIF empresa propia (emisor), siempre valido
+            cif_entidad = datos.get("emisor_cif") or config.empresa.get("cif", "")
+            entidad = None  # No buscar en proveedores/clientes
+        elif tipo_doc in ("BAN", "IMP"):
+            # Bancarios e impuestos: CIF puede no existir, no bloquear
+            cif_entidad = datos.get("emisor_cif") or datos.get("receptor_cif") or ""
+            entidad = None
+        else:
+            cif_entidad = datos.get("emisor_cif") or ""
+            entidad = config.buscar_proveedor_por_cif(cif_entidad) if cif_entidad else None
         pais_entidad = entidad.get("pais", "ESP") if entidad else "ESP"
 
-        # Check 1: CIF formato
+        # Check 1: CIF formato (no bloquear NOM/BAN/RLC/IMP si falta CIF)
+        tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
         err = _validar_cif_formato(cif_entidad, pais_entidad)
         if err:
-            errores_doc.append(f"[CHECK 1] {err}")
+            if tipo_doc in tipos_cif_opcional:
+                avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
+            else:
+                errores_doc.append(f"[CHECK 1] {err}")
 
         # Check 2: Entidad existe
         err = _validar_entidad_existe(doc, tipo_doc, config)
@@ -484,10 +503,13 @@ def ejecutar_pre_validacion(
         if err:
             avisos_doc.append(f"[CHECK 4] {err}")
 
-        # Check 5: Fecha en ejercicio
+        # Check 5: Fecha en ejercicio (no bloqueante para RLC/BAN)
         err = _validar_fecha_ejercicio(doc, config)
         if err:
-            errores_doc.append(f"[CHECK 5] {err}")
+            if tipo_doc in ("RLC", "BAN"):
+                avisos_doc.append(f"[CHECK 5] {err} (no bloqueante para {tipo_doc})")
+            else:
+                errores_doc.append(f"[CHECK 5] {err}")
 
         # Check 6: Importe positivo
         err = _validar_importe_positivo(doc, tipo_doc)

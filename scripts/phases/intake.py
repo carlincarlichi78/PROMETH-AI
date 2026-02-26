@@ -1,10 +1,10 @@
-"""Fase 0: Intake — Extraccion de documentos PDF con pdfplumber + GPT-4o.
+"""Fase 0: Intake — Extraccion de documentos PDF con pdfplumber + Mistral/GPT.
 
 Flujo:
 1. Escanear inbox/ buscando PDFs nuevos (no procesados previamente)
 2. Hash SHA256 por PDF (deduplicacion)
 3. pdfplumber: extraer texto raw
-4. GPT-4o: parsear texto a JSON estructurado (o vision si no hay texto)
+4. Mistral OCR3 (primario) o GPT-4o (fallback): parsear texto a JSON estructurado
 5. Identificar proveedor/cliente por CIF contra config.yaml
 6. Clasificar tipo documento (FC/FV/NC/ANT/etc.)
 7. Calcular confianza por campo
@@ -28,6 +28,7 @@ from ..core.confidence import DocumentoConfianza, calcular_nivel
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
 from ..core.logger import crear_logger
+from ..core.ocr_mistral import extraer_factura_mistral
 from ..core.prompts import PROMPT_EXTRACCION
 
 logger = crear_logger("intake")
@@ -550,7 +551,8 @@ def ejecutar_intake(
     config: ConfigCliente,
     ruta_cliente: Path,
     interactivo: bool = True,
-    auditoria=None
+    auditoria=None,
+    carpeta_inbox: str = "inbox"
 ) -> ResultadoFase:
     """Ejecuta la fase 0 de intake.
 
@@ -564,7 +566,7 @@ def ejecutar_intake(
         ResultadoFase con datos de extraccion
     """
     resultado = ResultadoFase("intake")
-    ruta_inbox = ruta_cliente / "inbox"
+    ruta_inbox = ruta_cliente / carpeta_inbox
     ruta_cuarentena = ruta_cliente / "cuarentena"
 
     if not ruta_inbox.exists():
@@ -586,12 +588,21 @@ def ejecutar_intake(
     estado = _cargar_estado_pipeline(ruta_cliente)
     hashes_previos = set(estado.get("hashes_procesados", []))
 
-    # Inicializar cliente OpenAI
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        resultado.error("Variable OPENAI_API_KEY no configurada")
+    # Determinar motor OCR disponible
+    mistral_disponible = bool(os.environ.get("MISTRAL_API_KEY"))
+    openai_disponible = bool(os.environ.get("OPENAI_API_KEY"))
+
+    if not mistral_disponible and not openai_disponible:
+        resultado.error("Ninguna API key configurada (MISTRAL_API_KEY o OPENAI_API_KEY)")
         return resultado
-    client = OpenAI(api_key=api_key)
+
+    client = None
+    if openai_disponible:
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+    motor_primario = "mistral" if mistral_disponible else "openai"
+    logger.info(f"Motor OCR primario: {motor_primario}"
+                f"{' (fallback: openai)' if mistral_disponible and openai_disponible else ''}")
 
     documentos_extraidos = []
     hashes_nuevos = []
@@ -616,18 +627,34 @@ def ejecutar_intake(
             resultado.aviso(f"Error pdfplumber: {nombre_archivo}", {"error": str(e)})
             continue
 
-        # 3. Llamar GPT-4o
+        # 3. Extraer datos con Mistral (primario) o GPT-4o (fallback)
         datos_gpt = None
-        if texto_raw.strip():
-            logger.info(f"  Texto extraido ({len(texto_raw)} chars), llamando GPT-4o...")
-            datos_gpt = _llamar_gpt_texto(client, texto_raw)
+
+        if motor_primario == "mistral":
+            logger.info(f"  Texto extraido ({len(texto_raw)} chars), llamando Mistral OCR3...")
+            datos_gpt = extraer_factura_mistral(ruta_pdf)
+            if datos_gpt:
+                logger.info(f"  Mistral OK")
+            elif client:
+                logger.warning(f"  Mistral fallo, intentando GPT-4o fallback...")
+                if texto_raw.strip():
+                    datos_gpt = _llamar_gpt_texto(client, texto_raw)
+                else:
+                    imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
+                    if imagen_b64:
+                        datos_gpt = _llamar_gpt_vision(client, imagen_b64)
         else:
-            logger.info(f"  Sin texto, intentando GPT-4o Vision...")
-            imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-            if imagen_b64:
-                datos_gpt = _llamar_gpt_vision(client, imagen_b64)
+            # Motor primario: OpenAI
+            if texto_raw.strip():
+                logger.info(f"  Texto extraido ({len(texto_raw)} chars), llamando GPT-4o...")
+                datos_gpt = _llamar_gpt_texto(client, texto_raw)
             else:
-                logger.warning(f"  No se pudo extraer texto ni imagen de {nombre_archivo}")
+                logger.info(f"  Sin texto, intentando GPT-4o Vision...")
+                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
+                if imagen_b64:
+                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
+                else:
+                    logger.warning(f"  No se pudo extraer texto ni imagen de {nombre_archivo}")
 
         if not datos_gpt:
             _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,

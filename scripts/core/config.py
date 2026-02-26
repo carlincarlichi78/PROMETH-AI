@@ -65,6 +65,11 @@ class ConfigCliente:
         return self.empresa.get("ejercicio_activo", "2025")
 
     @property
+    def codejercicio(self) -> str:
+        """Codigo de ejercicio en FS (puede diferir del ano, ej: '0004' vs '2025')."""
+        return self.empresa.get("codejercicio", self.ejercicio)
+
+    @property
     def obligaciones(self) -> dict:
         """Devuelve obligaciones fiscales/contables segun tipo de entidad."""
         return self._tipo_entidad or {}

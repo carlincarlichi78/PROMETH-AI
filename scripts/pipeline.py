@@ -206,6 +206,10 @@ def parsear_argumentos() -> argparse.Namespace:
         "--verbose", action="store_true",
         help="Activar logging DEBUG"
     )
+    parser.add_argument(
+        "--inbox", type=str, default="inbox",
+        help="Subcarpeta de entrada (default: inbox). Ej: inbox_prueba"
+    )
     return parser.parse_args()
 
 
@@ -268,7 +272,8 @@ def main():
             "descripcion": "Fase 0: Intake — Extraccion de documentos",
             "ejecutar": lambda: ejecutar_intake(config, ruta_cliente,
                                                  interactivo=interactivo,
-                                                 auditoria=auditoria),
+                                                 auditoria=auditoria,
+                                                 carpeta_inbox=args.inbox),
         },
         {
             "nombre": "pre_validacion",
