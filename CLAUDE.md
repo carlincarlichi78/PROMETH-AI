@@ -165,15 +165,23 @@ Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
 - Gemini Flash: SDK `google-genai`, env `GEMINI_API_KEY`
 
 **Tests**: 21 unitarios pasando. Pipeline compila OK.
-**Test E2E**: Mistral 46/46 OK, Gemini 9/46 (limite free tier 20 req/dia), consenso GPT+Mistral 100%.
-**Gemini free tier**: 20 req/dia para gemini-2.5-flash. OK para uso diario, no para batches >20.
+**Test E2E batch OCR**: Mistral 46/46 OK, Gemini 9/46 (limite free tier 20 req/dia), consenso GPT+Mistral 100%.
+**Test E2E chiringuito-sol-arena**: 8/8 errores inyectados detectados (100%). 5/8 con causa raiz especifica, 3/8 por anomalia aritmetica.
+
+**Checks F7-F9**: divisa sin conversion (F7), intracomunitaria sin ISP (F8), IRPF anomalo (F9).
 
 ## Proximos pasos
 
 ### Prioritario
-1. **Ejecutar pipeline contra entidades de prueba** (2.333 PDFs generados)
+1. **Ampliar intake para procesar TODOS los tipos de documento** — actualmente solo facturas (FC/FV/NC). Faltan:
+   - **Nominas**: critico, muy importantes para contabilidad. Extraer: empleado, bruto, IRPF, SS, neto
+   - **Recibos bancarios**: comisiones, transferencias, intereses. Investigar contabilizacion correcta
+   - **Suministros**: luz, agua, telefono. Son facturas de compra pero el intake no matchea el CIF
+   - **Seguros**: polizas anuales. Contabilizar como gasto anticipado
+   - **Impuestos/tasas**: licencias, canon concesion
+   - El pipeline actual manda 103/141 documentos a cuarentena (solo procesa 38 facturas)
 
 ### Otros
-- Corregir Pastorino suplidos Primatransit (misma reclasificacion 600→4709 que se hizo en EMPRESA PRUEBA)
-- Considerar dominio propio para contabilidad
+- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados)
+- Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts
