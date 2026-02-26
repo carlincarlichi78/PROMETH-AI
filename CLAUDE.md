@@ -47,7 +47,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 |---------|---------|-----------|--------|
 | PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | FS configurado, carpetas creadas |
 | GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado (empresa+ejercicio+PGC), carpetas creadas |
-| PASTORINO PRUEBA SFCE (testing) | clientes/pastorino-prueba/ | 3 | Replica de Pastorino para validar SFCE (41 FP + 5 FC, mismos totales) |
+
 
 ## Scripts
 | Script | Uso |
@@ -59,7 +59,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 | `scripts/generar_modelos_fiscales.py` | Genera 13 archivos .txt con modelos fiscales en carpeta cliente |
 | `scripts/validar_asientos.py` | Validacion automatica de asientos (5 checks + --fix para corregir DIVISA y NC) |
 | `scripts/renombrar_documentos.py` | Renombrado inteligente de PDFs (inbox+procesado). Usa OCR JSON + FS API + heuristicas. Reversible con --revertir |
-| `scripts/replay_snapshot.py` | Replica facturas de snapshot en empresa de prueba. `--snapshot X --idempresa 3 [--dry-run]` |
+
 
 Uso pipeline: `export FS_API_TOKEN='...' OPENAI_API_KEY='...' && python scripts/pipeline.py --cliente pastorino-costa-del-sol --ejercicio 2025`
 Opciones: `--dry-run` (solo intake+validacion), `--resume`, `--fase N`, `--force`, `--no-interactivo`
