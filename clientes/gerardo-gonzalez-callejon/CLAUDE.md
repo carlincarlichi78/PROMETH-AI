@@ -87,15 +87,38 @@ inbox/                          ← el usuario tira todo aqui
 ## Estado en FacturaScripts
 - Empresa creada (codigo 2, nombre corto G. GONZALEZ)
 - Tipo: Persona fisica, NIF 76638663H
-- Ejercicio 2025 creado (01/01/2025 - 31/12/2025, estado Abierto)
+- Ejercicio 2025 creado (codejercicio=0002, 01/01/2025 - 31/12/2025, estado Abierto)
 - Plan contable PGC espanol importado (802 cuentas, 721 subcuentas)
 - Regimen general de IVA
 
-## Pendiente
+## SFCE Pipeline - Estado
+- config.yaml completo: 17 proveedores, codejercicio 0002, empleados true
+- intake.py adaptado: rglob recursivo para subcarpetas, filtro CARPETA REFERENCIA
+- **Dry-run exitoso**: 126/127 validados (BAN:71, FC:28, SUM:17, RLC:10, IMP:1)
+- 1 excluido: SkinClinic CIF invalido
+- Nota: autonomo no necesita PGC legalmente (estimacion directa simplificada), pero FS lo usa internamente. Resultado final = libros simplificados
+
+## Ingresos (del Libro bienes de ingresos)
+- Podologia (exenta IVA): T1=18,646.68 T2=22,641.68 T3=28,830.00 T4=29,629.50 Total=99,747.86
+- Estetica (IVA 21%): T1=6,327.59 T2=5,387.04 T3=3,374.38 T4=12,208.40 Total=27,297.41
+- IVA repercutido estetica: T1=1,328.79 T2=1,131.28 T3=708.62 T4=1,884.32 Total=5,053.01
+
+## Bienes de inversion
+- 25 items, amortizacion 2025 = 8,229.94 EUR
+- Items 1-16, 23-25: Podologia | Items 17-22: Estetica
+- Nuevos 2025: #23 ROTULACION LUCES 1,211€ | #24 ESTORES 450.37€ | #25 APSE4 3,049.20€
+
+## Proximos pasos
+1. Ejecutar pipeline completo (sin --dry-run, con --force)
+2. Resolver entidades desconocidas que surjan en registro
+3. Clasificar gastos por actividad usando carpeta_origen
+4. Generar libros simplificados (ingresos, gastos, bienes inversion)
+5. Comparar con modelos oficiales de CARPETA REFERENCIA
+
+## Pendiente general
 - [ ] Confirmar email
 - [ ] Confirmar regimen de estimacion directa (simplificada o normal)
 - [ ] Confirmar epigrafes IAE de ambas actividades
 - [x] Dar de alta en FacturaScripts como empresa
-- [ ] Recibir documentacion 2024 del gestor
-- [ ] Configurar subcuentas contables para ambas actividades
-- [ ] Configurar subcuentas contables para ambas actividades
+- [x] Configurar config.yaml SFCE con proveedores
+- [x] Dry-run pipeline exitoso
