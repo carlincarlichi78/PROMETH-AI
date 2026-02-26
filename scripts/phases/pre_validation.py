@@ -330,6 +330,72 @@ def _validar_no_existe_en_fs(doc: dict, tipo_doc: str,
     return None
 
 
+# --- Checks para tipos nuevos ---
+
+def _check_nomina_cuadre(datos: dict) -> Optional[str]:
+    """N1: bruto - irpf - ss_trabajador = neto."""
+    bruto = float(datos.get("bruto", 0))
+    irpf = float(datos.get("retenciones_irpf", 0))
+    ss = float(datos.get("aportaciones_ss_trabajador", 0))
+    neto = float(datos.get("neto", 0))
+    if bruto == 0 and neto == 0:
+        return None
+    esperado = bruto - irpf - ss
+    if abs(esperado - neto) > 0.01:
+        return f"[N1] Nomina no cuadra: bruto({bruto}) - IRPF({irpf}) - SS({ss}) = {esperado:.2f}, neto={neto:.2f}"
+    return None
+
+
+def _check_nomina_irpf(datos: dict) -> Optional[str]:
+    """N2: IRPF entre 0-45%."""
+    pct = float(datos.get("irpf_porcentaje", 0))
+    if pct < 0 or pct > 45:
+        return f"[N2] IRPF anomalo en nomina: {pct}% (esperado 0-45%)"
+    return None
+
+
+def _check_nomina_ss(datos: dict) -> Optional[str]:
+    """N3: SS trabajador <= 10% del bruto."""
+    bruto = float(datos.get("bruto", 0))
+    ss = float(datos.get("aportaciones_ss_trabajador", 0))
+    if bruto > 0 and ss > bruto * 0.10:
+        return f"[N3] SS trabajador anomala: {ss:.2f} > 10% de bruto {bruto:.2f}"
+    return None
+
+
+def _check_suministro_cuadre(datos: dict) -> Optional[str]:
+    """S1: base + IVA = total."""
+    base = float(datos.get("base_imponible", 0))
+    iva = float(datos.get("iva_importe", 0))
+    total = float(datos.get("total", 0))
+    if total == 0:
+        return None
+    esperado = base + iva
+    if abs(esperado - total) > 0.02:
+        return f"[S1] Suministro no cuadra: base({base}) + IVA({iva}) = {esperado:.2f}, total={total:.2f}"
+    return None
+
+
+def _check_bancario_importe(datos: dict) -> Optional[str]:
+    """B1: importe > 0."""
+    importe = float(datos.get("importe", 0))
+    if importe <= 0:
+        return f"[B1] Recibo bancario con importe <= 0: {importe}"
+    return None
+
+
+def _check_rlc_cuota(datos: dict) -> Optional[str]:
+    """R1: cuota coherente con base (tolerancia amplia por alicuotas variables)."""
+    base = float(datos.get("base_cotizacion", 0))
+    cuota = float(datos.get("cuota_empresarial", 0))
+    if base == 0 or cuota == 0:
+        return None
+    ratio = cuota / base
+    if ratio < 0.20 or ratio > 0.45:
+        return f"[R1] Ratio SS anomalo: cuota/base = {ratio:.2%} (esperado 20-45%)"
+    return None
+
+
 # === Funcion principal ===
 
 def ejecutar_pre_validacion(
@@ -428,20 +494,23 @@ def ejecutar_pre_validacion(
         if err:
             errores_doc.append(f"[CHECK 6] {err}")
 
-        # Check 7: Cuadre base+iva=total
-        err = _validar_cuadre_base_iva_total(doc, tolerancia)
-        if err:
-            avisos_doc.append(f"[CHECK 7] {err}")
+        # Check 7: Cuadre base+iva=total (solo facturas y suministros)
+        if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+            err = _validar_cuadre_base_iva_total(doc, tolerancia)
+            if err:
+                avisos_doc.append(f"[CHECK 7] {err}")
 
-        # Check 8: No duplicado
-        err = _validar_no_duplicado(doc, docs_procesados, hashes_procesados)
-        if err:
-            errores_doc.append(f"[CHECK 8] {err}")
+        # Check 8: No duplicado (solo facturas y suministros)
+        if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+            err = _validar_no_duplicado(doc, docs_procesados, hashes_procesados)
+            if err:
+                errores_doc.append(f"[CHECK 8] {err}")
 
-        # Check 9: No existe en FS
-        err = _validar_no_existe_en_fs(doc, tipo_doc, config)
-        if err:
-            errores_doc.append(f"[CHECK 9] {err}")
+        # Check 9: No existe en FS (solo facturas y suministros)
+        if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+            err = _validar_no_existe_en_fs(doc, tipo_doc, config)
+            if err:
+                errores_doc.append(f"[CHECK 9] {err}")
 
         # --- CHECKS NUEVOS v2 ---
 
@@ -537,6 +606,28 @@ def ejecutar_pre_validacion(
                     avisos_doc.append(f"[F10] Factura con {dias_antiguedad} dias de antiguedad (>1 ano)")
             except ValueError:
                 pass
+
+        # --- Checks especificos por tipo ---
+        if tipo_doc == "NOM":
+            for check_fn in [_check_nomina_cuadre, _check_nomina_irpf, _check_nomina_ss]:
+                aviso = check_fn(datos)
+                if aviso:
+                    avisos_doc.append(aviso)
+
+        elif tipo_doc == "SUM":
+            aviso = _check_suministro_cuadre(datos)
+            if aviso:
+                avisos_doc.append(aviso)
+
+        elif tipo_doc == "BAN":
+            aviso = _check_bancario_importe(datos)
+            if aviso:
+                avisos_doc.append(aviso)
+
+        elif tipo_doc == "RLC":
+            aviso = _check_rlc_cuota(datos)
+            if aviso:
+                avisos_doc.append(aviso)
 
         # Evaluar resultado
         if errores_doc:
