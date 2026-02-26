@@ -140,7 +140,7 @@ Generador en `tests/datos_prueba/generador/`:
 - **Desplegado**: PDFs en `clientes/<entidad>/inbox_prueba/`, manifiestos en `clientes/<entidad>/manifiesto_prueba.json`
 - **Proxima sesion**: ejecutar pipeline SFCE contra entidades de prueba, comparar detecciones vs manifiesto
 
-## Motor Autoevaluacion v2 — EN PROGRESO
+## Motor Autoevaluacion v2 — COMPLETADO
 Design: `docs/plans/2026-02-26-autoevaluacion-v2-design.md`
 Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
 
@@ -149,22 +149,30 @@ Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
 
 **6 capas**: Triple OCR (GPT+Mistral+Gemini) → Aritmetica pura → Reglas PGC/fiscal → Cruce por proveedor → Historico opcional → Auditor IA
 
-**12 tasks** en plan de implementacion. Ejecucion optima: Tasks 1,2,3,4,8,10 en paralelo → 5,6 → 7,9 → 11,12
+**12/12 tasks implementados**. Modulos nuevos:
+- `scripts/core/reglas_pgc.py` — F1-F6, A7: validaciones PGC/fiscales universales
+- `scripts/core/aritmetica.py` — A1-A7: checks aritmeticos puros
+- `scripts/core/ocr_mistral.py` — cliente Mistral OCR3
+- `scripts/core/ocr_gemini.py` — cliente Gemini Flash + auditor IA (capa 5)
+- `scripts/core/historico.py` — H1-H3: anomalias vs ejercicios previos
+- `scripts/phases/ocr_consensus.py` — comparador triple OCR
+- `scripts/batch_ocr.py` — batch processing Mistral+Gemini
+- 4 YAMLs en `reglas/`: subcuentas_pgc, coherencia_fiscal, patrones_suplidos, tipos_retencion
+- Integrado en pre_validation.py, correction.py, cross_validation.py, pipeline.py
 
-**APIs nuevas**:
-- Mistral OCR3: SDK `mistralai`, env `MISTRAL_API_KEY` (pendiente obtener key en console.mistral.ai)
-- Gemini Flash: SDK `google-genai`, env `GEMINI_API_KEY` (key de prueba disponible)
+**APIs**:
+- Mistral OCR3: SDK `mistralai`, env `MISTRAL_API_KEY` (key obtenida)
+- Gemini Flash: SDK `google-genai`, env `GEMINI_API_KEY`
 
-**Estado**: Design doc + plan completados. Implementacion pendiente (proxima sesion).
+**Tests**: 21 unitarios pasando. Pipeline compila OK.
 
 ## Proximos pasos
 
 ### Prioritario
-1. **Implementar autoevaluacion v2** — ejecutar plan de 12 tasks
-2. **Obtener API key Mistral** — https://console.mistral.ai, plan Experiment (gratis)
+1. **Test E2E batch OCR** — ejecutar `batch_ocr.py` contra EMPRESA PRUEBA con las keys reales
+2. **Ejecutar pipeline contra entidades de prueba** (2.333 PDFs generados)
 
 ### Otros
-- Ejecutar pipeline contra entidades de prueba (2.333 PDFs)
 - Corregir Pastorino suplidos Primatransit (misma reclasificacion 600→4709 que se hizo en EMPRESA PRUEBA)
 - Considerar dominio propio para contabilidad
 - Configurar backups automaticos BD FacturaScripts
