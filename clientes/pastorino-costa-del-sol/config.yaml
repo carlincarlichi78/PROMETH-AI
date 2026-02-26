@@ -1,0 +1,202 @@
+empresa:
+  nombre: "PASTORINO COSTA DEL SOL S.L."
+  cif: "B13995519"
+  tipo: sl
+  idempresa: 1
+  ejercicio_activo: "2025"
+  regimen_iva: general
+  direccion: "Av. General Lopez Dominguez 12, 29603 Marbella, Malaga"
+  email: "info@pastorinocostadelsol.com"
+  banco:
+    - "ES13 2100 3889 1802 0018 6156"
+    - "ES82 2100 3889 1872 0130 6481"
+
+perfil:
+  descripcion: "Importacion y comercializacion de limones argentinos en Espana"
+  modelo_negocio: |
+    Cauquen Argentina envia limones bajo consignacion con anticipo (8 USD/caja).
+    Jose Manuel Pastorino gestiona importacion (flete, aduana, transporte) y venta
+    a distribuidores (Malaga Natural en Mercamalaga, Tropical Trade en Polonia).
+    Liquidacion final: precio venta - comision distribuidor - 10% margen JM - gastos = pago a Cauquen.
+  actividades:
+    - codigo: "4631"
+      descripcion: "Comercio al por mayor de frutas y hortalizas"
+      iva_venta: 4
+      exenta: false
+      notas: "Limones = alimento basico, IVA superreducido 4%"
+  particularidades:
+    - "Importaciones via Portugal generan IVA PT no deducible (modelo 360 para recuperacion)"
+    - "Facturas USD de Argentina (Cauquen, LOGINET) requieren tipo de cambio"
+    - "Maersk: IVA 0% pendiente consulta asesor fiscal (Art.22 LIVA vs autoliquidacion)"
+    - "Modelo consignacion: anticipos Cauquen (8 USD/caja) + liquidacion final"
+  empleados: false
+  importador: true
+  exportador: false
+  divisas_habituales: [USD]
+
+proveedores:
+  cauquen:
+    cif: "AR 30-70793648-3"
+    nombre_fs: "CAUQUEN ARGENTINA S.A.U."
+    aliases: ["CAUQUEN", "CAUQUEN ARGENTINA"]
+    pais: ARG
+    divisa: USD
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: extracomunitario
+    notas: "Exportador limones FOB Buenos Aires. Anticipos 8 USD/caja."
+
+  loginet:
+    cif: "AR 30-71035801-6"
+    nombre_fs: "LNET S.A."
+    aliases: ["LOGINET", "LNET"]
+    pais: ARG
+    divisa: USD
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: extracomunitario
+    notas: "Flete maritimo Buenos Aires > Europa"
+
+  primafrio:
+    cif: "B73047599"
+    nombre_fs: "PRIMAFRIO S.L."
+    aliases: ["PRIMAFRIO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Transporte frigorifico terrestre Portugal > Mercamalaga"
+
+  primatransit:
+    cif: "B16815003"
+    nombre_fs: "PRIMATRANSIT S.L."
+    aliases: ["PRIMATRANSIT"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    reglas_especiales:
+      - tipo: iva_extranjero
+        patron_linea: "IVA ADUANA"
+        subcuenta_correcta: "4709000000"
+        descripcion: "IVA PT no deducible — reclasificar de 600 a 4709"
+    notas: "Agente aduanas. Facturas incluyen linea 'IVA ADUANA' = IVA portugues pagado como suplido"
+
+  transitainer:
+    cif: "PT509702895"
+    nombre_fs: "TRANSITAINER PORTUGAL UNIPESSOAL LTDA"
+    aliases: ["TRANSITAINER", "TRANSITAINER PORTUGAL"]
+    pais: PRT
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    autoliquidacion:
+      iva: 21
+      subcuenta_soportado: "4720000021"
+      subcuenta_repercutido: "4770000021"
+    notas: "Despacho aduanero en Portugal. Intracomunitario con autoliquidacion."
+
+  maersk:
+    cif: "DK53139655"
+    nombre_fs: "MAERSK A/S"
+    aliases: ["MAERSK", "MAERSK A/S"]
+    pais: DNK
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: general
+    pendiente_fiscal: true
+    notas: "Naviera internacional. IVA 0% pendiente consulta asesor (Art.22 LIVA). No auto-fix."
+
+  maersk_spain:
+    cif: "B67476871"
+    nombre_fs: "MAERSK SPAIN S.L.U."
+    aliases: ["MAERSK SPAIN", "MAERSK SPAIN SLU"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: general
+    pendiente_fiscal: true
+    notas: "Filial espanola Maersk. Mismo tratamiento fiscal pendiente."
+
+  odoo_sa:
+    cif: "BE0477472701"
+    nombre_fs: "ODOO S.A."
+    aliases: ["ODOO SA", "ODOO S.A."]
+    pais: BEL
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    autoliquidacion:
+      iva: 21
+      subcuenta_soportado: "4720000021"
+      subcuenta_repercutido: "4770000021"
+    notas: "Software ERP. Intracomunitario con autoliquidacion."
+
+  odoo_erp_sp:
+    cif: "B72659014"
+    nombre_fs: "ODOO ERP SP S.L."
+    aliases: ["ODOO ERP SP", "ODOO ERP"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Filial espanola Odoo."
+
+  copyrap:
+    cif: "B04973621"
+    nombre_fs: "COPYRAP S.L."
+    aliases: ["COPYRAP"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Publicidad y artes graficas."
+
+  el_corte_ingles:
+    cif: "A28017895"
+    nombre_fs: "EL CORTE INGLES S.A."
+    aliases: ["EL CORTE INGLES", "CORTE INGLES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material de oficina."
+
+clientes:
+  malaga_natural:
+    cif: "B93159044"
+    nombre_fs: "MALAGA NATURAL 2012 S.L."
+    aliases: ["MALAGA NATURAL", "MN"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA4
+    regimen: general
+    notas: "Distribuidor Mercamalaga. Comision 10-12%. IVA 4% alimentos."
+
+  tropical_trade:
+    cif: "PL5252819471"
+    nombre_fs: "TROPICAL TRADE SP Z O O"
+    aliases: ["TROPICAL TRADE"]
+    pais: POL
+    divisa: EUR
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    notas: "Comprador Rotterdam. Intracomunitaria IVA 0%. FOT Rotterdam."
+
+tipos_cambio:
+  USD_EUR: 1.1775
+  fecha_tc: "2025-02-25"
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
