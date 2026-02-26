@@ -72,8 +72,19 @@ Uso resumen_fiscal: `export FS_API_TOKEN='...' && python scripts/resumen_fiscal.
 - **S.L.**: 303 (IVA), 111 (retenciones) trimestrales; 390, 200 (Imp. Sociedades), 347, cuentas anuales
 - **Importaciones**: IVA diferido casilla 77 modelo 303, DUA como justificante
 
-## Proximos pasos
-- Balance y PyG en resumen_fiscal.py ya en formato PGC abreviado completo
+## SFCE — Estado implementacion
+Plan: `docs/plans/2026-02-26-sfce-implementation.md`
+
+**Completado (9/18 tareas):**
+- T1-T5: Core completo (`scripts/core/` — logger, fs_api, config, confidence, errors)
+- T6+6b: Reglas globales (`reglas/` — validaciones, errores_conocidos, tipos_entidad)
+- T7-T8: Config clientes (`clientes/*/config.yaml` — Pastorino 11 prov + Gerardo)
+
+**Siguiente: Tarea 9** — Fase 0 Intake (extraccion PDF con pdfplumber + GPT-4o)
+- Luego T10-T15 (fases pipeline), T16 (orquestador), T0 (onboarding), T17 (integracion)
+- Decir "continua SFCE, tarea 9" para retomar
+
+## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
 - Configurar backups automaticos de la BD de FacturaScripts
 - Explorar plugin Modelo200 (Impuesto Sociedades) cuando este disponible
