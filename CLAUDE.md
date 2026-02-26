@@ -19,6 +19,16 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 - **DNS**: A record contabilidad -> 65.108.60.69 (DonDominio)
 - **Credenciales**: ver ACCESOS.md maestro (PROYECTOS/ACCESOS.md, seccion 19)
 
+## API Keys del SFCE
+| Variable de entorno | Servicio | Rol en SFCE |
+|---------------------|----------|-------------|
+| `FS_API_TOKEN` | FacturaScripts REST API | Registro facturas, asientos, subcuentas |
+| `MISTRAL_API_KEY` | Mistral OCR3 | Motor OCR primario |
+| `OPENAI_API_KEY` | GPT-4o | OCR fallback + extraccion datos |
+| `GEMINI_API_KEY` | Gemini Flash | Triple consenso OCR + auditor IA (capa 5) |
+
+Uso: `export FS_API_TOKEN='...' MISTRAL_API_KEY='...' OPENAI_API_KEY='...' GEMINI_API_KEY='...'`
+
 ## API REST - Endpoints clave
 | Operacion | Endpoint | Metodo |
 |-----------|----------|--------|
@@ -227,11 +237,12 @@ Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
 
 ## Proximos pasos
 
-### Prioritario
-- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs, 11 entidades) — validar aprendizaje en produccion
-- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
+### Prioritario (proxima sesion)
+1. **Implementar OCR por Tiers** — Plan aprobado en `~/.claude/plans/frolicking-chasing-rivest.md`. Solo modifica `intake.py`. Tier 0 (Mistral solo, ~70%), Tier 1 (+GPT, ~25%), Tier 2 (+Gemini desempate, ~5%).
+2. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs, 11 entidades) — validar aprendizaje en produccion
 
 ### Otros
+- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts
 - Mejorar OCR renting: desglosar base/IVA cuando no viene separado
