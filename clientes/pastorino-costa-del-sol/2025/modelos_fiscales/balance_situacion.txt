@@ -4,20 +4,20 @@
 ================================================================
 
   A) ACTIVO NO CORRIENTE                       0.00 EUR
-  B) ACTIVO CORRIENTE                     156,424.86 EUR
-      II. Deudores comerciales                 144,535.63 EUR
-      III. HP deudora                           11,889.23 EUR
+  B) ACTIVO CORRIENTE                     370,894.11 EUR
+      II. Deudores comerciales                 356,614.28 EUR
+      III. HP deudora                           14,279.83 EUR
     --------------------------------------------------
-    TOTAL ACTIVO                          156,424.86 EUR
+    TOTAL ACTIVO                          370,894.11 EUR
 
-  A) PATRIMONIO NETO                       38,430.39 EUR
-      V. Resultado del ejercicio                38,430.39 EUR
+  A) PATRIMONIO NETO                       68,050.88 EUR
+      V. Resultado del ejercicio                68,050.88 EUR
   B) PASIVO NO CORRIENTE                        0.00 EUR
-  C) PASIVO CORRIENTE                     105,184.34 EUR
-      I. Proveedores                            98,168.20 EUR
-      IV. HP acreedora                           7,016.14 EUR
+  C) PASIVO CORRIENTE                     280,159.61 EUR
+      I. Proveedores                           267,645.06 EUR
+      IV. HP acreedora                          12,514.55 EUR
     --------------------------------------------------
-    TOTAL PN + PASIVO                     143,614.73 EUR
+    TOTAL PN + PASIVO                     348,210.48 EUR
 
   Verificacion: NO CUADRA - revisar asientos
-  Diferencia:    12,810.13 EUR
+  Diferencia:    22,683.63 EUR

@@ -6,13 +6,13 @@
 
   CIF                  Nombre                    Tipo            Total
   -------------------------------------------------------------------
-  B93159044            MALAGA NATURAL 2012 S.L.  A       144,535.63 EUR
-  30-70793648-3        CAUQUEN ARGENTINA S.A.U.  B        28,800.00 EUR
+  B93159044            MALAGA NATURAL 2012 S.L.  A       143,747.14 EUR
+  30-70793648-3        CAUQUEN ARGENTINA S.A.U.  B        74,880.00 EUR
   B16815003            PRIMATRANSIT S.L.         B        25,650.34 EUR
   30-71035801-6        LNET S.A.                 B        19,500.00 EUR
   DK53139655           MAERSK A/S                B        12,120.00 EUR
   PT129381691          TRANSITAINER PORTUGAL LTD B         6,908.82 EUR
   B73047599            PRIMAFRIO S.L.            B         3,872.00 EUR
   -------------------------------------------------------------------
-  Total compras (B):                                       96,851.16 EUR
-  Total ventas (A):                                       144,535.63 EUR
+  Total compras (B):                                      142,931.16 EUR
+  Total ventas (A):                                       143,747.14 EUR

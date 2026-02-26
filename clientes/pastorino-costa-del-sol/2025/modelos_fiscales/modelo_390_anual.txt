@@ -9,29 +9,30 @@
   --------------------------------------------------
   T1             0.00 EUR         0.00 EUR         0.00 EUR
   T2             0.00 EUR         0.00 EUR         0.00 EUR
-  T3         5,559.07 EUR     2,128.71 EUR     3,430.36 EUR
+  T3         5,528.74 EUR     2,128.71 EUR     3,400.03 EUR
   T4             0.00 EUR       261.89 EUR      -261.89 EUR
   --------------------------------------------------
-  TOTAL      5,559.07 EUR     2,390.60 EUR     3,168.47 EUR
+  TOTAL      5,528.74 EUR     2,390.60 EUR     3,138.14 EUR
 
   ==================================================
   DESGLOSE ANUAL POR TIPO DE IVA
   --------------------------------------------------
 
   IVA REPERCUTIDO:
-       4%  Base:   138,976.56 EUR   IVA:     5,559.06 EUR
-    TOTAL  Base:   138,976.56 EUR   IVA:     5,559.07 EUR
+       0%  Base:    34,560.00 EUR   IVA:         0.00 EUR
+       4%  Base:   138,218.40 EUR   IVA:     5,528.74 EUR
+    TOTAL  Base:   172,778.40 EUR   IVA:     5,528.74 EUR
 
   IVA SOPORTADO:
-       0%  Base:    84,393.80 EUR   IVA:         0.00 EUR
+       0%  Base:   130,473.80 EUR   IVA:         0.00 EUR
       21%  Base:    11,383.80 EUR   IVA:     2,390.60 EUR
-    TOTAL  Base:    95,777.60 EUR   IVA:     2,390.60 EUR
+    TOTAL  Base:   141,857.60 EUR   IVA:     2,390.60 EUR
 
   OPERACIONES INTRACOMUNITARIAS:
     Base:       19,058.42 EUR
     IVA 21%:     4,002.27 EUR
 
   ==================================================
-  RESULTADO ANUAL:      3,168.47 EUR
-  >> A INGRESAR:        3,168.47 EUR
+  RESULTADO ANUAL:      3,138.14 EUR
+  >> A INGRESAR:        3,138.14 EUR
   ==================================================

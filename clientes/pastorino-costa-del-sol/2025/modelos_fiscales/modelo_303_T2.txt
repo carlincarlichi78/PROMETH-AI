@@ -4,7 +4,7 @@
 ================================================================
 
   Facturas emitidas:    0
-  Facturas recibidas:   3
+  Facturas recibidas:   6
 
   --------------------------------------------------
   IVA DEVENGADO
@@ -20,8 +20,8 @@
   --------------------------------------------------
 
   Operaciones interiores:
-       0%  Base:    11,700.00 EUR   IVA:         0.00 EUR
-    TOTAL  Base:    11,700.00 EUR   IVA:         0.00 EUR
+       0%  Base:    46,260.00 EUR   IVA:         0.00 EUR
+    TOTAL  Base:    46,260.00 EUR   IVA:         0.00 EUR
 
   TOTAL IVA DEDUCIBLE:                0.00 EUR
 
