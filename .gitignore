@@ -21,6 +21,9 @@ venv/
 *.tmp
 *.log
 
+# Generador datos prueba (salida)
+tests/datos_prueba/generador/salida/
+
 # Datos sensibles
 ACCESOS.md
 *.env

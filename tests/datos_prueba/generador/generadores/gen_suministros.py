@@ -232,6 +232,39 @@ def generar_suministros(
 
             nombre_archivo = f"{anio}-{mes:02d}_suministro_{tipo}_{slug_proveedor}.pdf"
 
+            # Datos de consumo para la plantilla
+            unidades_map = {
+                "electricidad": "kWh",
+                "gas": "kWh",
+                "agua": "m3",
+                "telefono": "GB",
+            }
+            unidades = unidades_map.get(tipo, "uds")
+            # Calcular consumo ficticio a partir del termino variable
+            if tipo in ("electricidad", "gas"):
+                precio_unidad = round(rng.uniform(0.10, 0.25), 4)
+                termino_variable = next(
+                    (c["importe"] for c in conceptos if "consumo" in c["concepto"].lower() or "energia" in c["concepto"].lower()),
+                    subtotal * 0.6,
+                )
+                cantidad_consumo = round(float(termino_variable) / precio_unidad, 1) if precio_unidad > 0 else 0
+            elif tipo == "agua":
+                precio_unidad = round(rng.uniform(1.50, 3.00), 4)
+                termino_variable = next(
+                    (c["importe"] for c in conceptos if "consumo" in c["concepto"].lower()),
+                    subtotal * 0.5,
+                )
+                cantidad_consumo = round(float(termino_variable) / precio_unidad, 1) if precio_unidad > 0 else 0
+            else:  # telefono
+                precio_unidad = 0
+                cantidad_consumo = rng.randint(10, 100)
+
+            consumo = {
+                "cantidad": cantidad_consumo,
+                "unidades": unidades,
+                "precio_unidad": precio_unidad,
+            }
+
             datos_plantilla = {
                 "numero_factura": numero,
                 "fecha_factura": fecha.isoformat(),
@@ -246,6 +279,7 @@ def generar_suministros(
                 },
                 "tipo": tipo,
                 "periodo": periodo,
+                "consumo": consumo,
                 "conceptos": conceptos,
                 "subtotal": subtotal,
                 "iva_tipo": iva_tipo,

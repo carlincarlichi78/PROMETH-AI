@@ -378,6 +378,15 @@ def _generar_recibos_renting(
         mes_num = fecha.month
 
         datos = {
+            "banco": {
+                "nombre": f"{proveedor_renting} S.A.",
+                "oficina": "Central",
+            },
+            "titular": {
+                "nombre": nombre_entidad,
+                "cif": nif_entidad,
+                "cuenta_iban": "ES00 0000 0000 0000 0000 0000",
+            },
             "emisor": {
                 "nombre": f"{proveedor_renting} S.A.",
                 "nif": "A00000001",

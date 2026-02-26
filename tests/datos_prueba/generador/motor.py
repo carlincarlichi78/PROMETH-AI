@@ -179,6 +179,54 @@ def generar_entidad(
 # Renderizado de PDFs
 # ---------------------------------------------------------------------------
 
+def _normalizar_datos(datos: dict) -> dict:
+    """Adapta keys del generador al formato que esperan las plantillas.
+
+    Las plantillas usan factura.numero, factura.fecha, factura.serie.
+    Los generadores ponen numero, fecha como keys de primer nivel.
+    Esta funcion crea el sub-dict 'factura' si no existe.
+    Tambien asegura que resumen.desglose_iva() funcione como metodo.
+    """
+    d = dict(datos)
+
+    # Crear sub-dict 'factura' si no existe
+    if "factura" not in d:
+        d["factura"] = {
+            "numero": d.get("numero", ""),
+            "fecha": d.get("fecha", ""),
+            "serie": d.get("serie", ""),
+        }
+
+    # Asegurar variables comunes con defaults
+    d.setdefault("divisa", "EUR")
+    d.setdefault("forma_pago", "Transferencia bancaria")
+    d.setdefault("cuenta_bancaria", "")
+    d.setdefault("notas", [])
+    d.setdefault("pagada", False)
+    d.setdefault("retencion_pct", 0)
+
+    # Si resumen es dict (no objeto), asegurar campos y wrappear desglose_iva
+    if "resumen" in d and isinstance(d["resumen"], dict):
+        resumen_dict = d["resumen"]
+        resumen_dict.setdefault("total_recargo", 0)
+        resumen_dict.setdefault("total_retencion", 0)
+        if "desglose_iva" in resumen_dict and isinstance(resumen_dict["desglose_iva"], dict):
+            # Ya viene serializado como dict, wrappear en lambda
+            desglose_existente = resumen_dict["desglose_iva"]
+            resumen_dict["desglose_iva"] = lambda: desglose_existente
+        elif "desglose_iva" not in resumen_dict:
+            # Construir desglose desde datos disponibles
+            iva_tipo = resumen_dict.get("iva_tipo", 21)
+            resumen_dict["desglose_iva"] = lambda: {
+                iva_tipo: {
+                    "base": resumen_dict.get("base_imponible", 0),
+                    "cuota": resumen_dict.get("total_iva", 0),
+                }
+            }
+
+    return d
+
+
 def renderizar_docs(docs: list, dir_inbox: Path, rng: random.Random) -> int:
     """
     Renderiza cada DocGenerado a PDF en dir_inbox.
@@ -193,7 +241,8 @@ def renderizar_docs(docs: list, dir_inbox: Path, rng: random.Random) -> int:
     for doc in docs:
         ruta_pdf = dir_inbox / doc.archivo
         try:
-            datos = aplicar_ruido(doc.datos_plantilla, doc.tipo, rng)
+            datos = _normalizar_datos(doc.datos_plantilla)
+            datos = aplicar_ruido(datos, doc.tipo, rng)
             html = renderizar_html(doc.plantilla, datos)
             html_a_pdf(html, ruta_pdf, doc.css_variante)
             generados += 1

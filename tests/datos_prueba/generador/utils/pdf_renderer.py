@@ -55,8 +55,16 @@ def _filtro_fecha_es(fecha) -> str:
     """
     Formatea una fecha como 'dd/mm/yyyy'.
 
-    Acepta objetos date o datetime.
+    Acepta objetos date, datetime o strings ISO (yyyy-mm-dd).
     """
+    if fecha is None:
+        return ""
+    if isinstance(fecha, str):
+        from datetime import date as _date
+        try:
+            fecha = _date.fromisoformat(fecha)
+        except (ValueError, TypeError):
+            return str(fecha)
     return fecha.strftime("%d/%m/%Y")
 
 
@@ -132,8 +140,12 @@ def html_a_pdf(html: str, ruta_salida: Path, css_variante: str = "corporativo") 
 
     # Construir lista de hojas de estilo
     hojas_css = []
-    for nombre_css in ["base", css_variante]:
-        ruta_css = DIR_CSS / f"{nombre_css}.css"
+    # base.css esta en css/, variantes en css/variantes/
+    rutas_css = [
+        DIR_CSS / "base.css",
+        DIR_CSS / "variantes" / f"{css_variante}.css",
+    ]
+    for ruta_css in rutas_css:
         if ruta_css.exists():
             hojas_css.append(weasyprint.CSS(filename=str(ruta_css)))
             logger.debug(f"CSS cargado: {ruta_css.name}")

@@ -99,7 +99,7 @@
       {% if tipo_gravamen %}
       <div class="fila-dato">
         <span class="etiqueta">Tipo de gravamen:</span>
-        <span class="valor">{{ tipo_gravamen | porcentaje }}</span>
+        <span class="valor">{% if tipo_gravamen is number %}{{ tipo_gravamen | porcentaje }}{% else %}{{ tipo_gravamen }}{% endif %}</span>
       </div>
       {% endif %}
 
