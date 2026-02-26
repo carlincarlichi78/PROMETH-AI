@@ -17,6 +17,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ..core.asientos_directos import (
+    crear_asiento_directo,
+    construir_partidas_nomina,
+    construir_partidas_bancario,
+    construir_partidas_rlc,
+    construir_partidas_impuesto,
+)
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
 from ..core.fs_api import (api_delete, api_get, api_get_one, api_post,
@@ -422,6 +429,28 @@ def _corregir_divisas_asientos(registrados: list) -> int:
     return corregidas
 
 
+def _generar_concepto_asiento(tipo_doc: str, datos: dict) -> str:
+    """Genera concepto descriptivo para asiento directo."""
+    fecha = datos.get("fecha", "")
+    mes = fecha[5:7] if len(fecha) >= 7 else ""
+    anio = fecha[:4] if len(fecha) >= 4 else ""
+
+    if tipo_doc == "NOM":
+        empleado = datos.get("empleado_nombre", "")
+        return f"Nomina {empleado} {mes}/{anio}" if empleado else f"Nomina {fecha}"
+    elif tipo_doc == "BAN":
+        desc = datos.get("descripcion", "")
+        subtipo = datos.get("subtipo", "")
+        return f"{subtipo.capitalize()} bancaria - {desc}" if desc else f"Gasto bancario {fecha}"
+    elif tipo_doc == "RLC":
+        return f"SS empresa {mes}/{anio}"
+    elif tipo_doc == "IMP":
+        concepto = datos.get("concepto", "")
+        return concepto or f"Impuesto/tasa {fecha}"
+
+    return f"Asiento {tipo_doc} {fecha}"
+
+
 def ejecutar_registro(
     config: ConfigCliente,
     ruta_cliente: Path,
@@ -463,6 +492,61 @@ def ejecutar_registro(
         archivo = doc.get("archivo", "?")
         tipo_doc = doc.get("tipo", "OTRO")
         logger.info(f"Registrando: {archivo} ({tipo_doc})")
+
+        # === BIFURCACION: factura vs asiento directo ===
+        TIPOS_ASIENTO_DIRECTO = ("NOM", "BAN", "RLC", "IMP")
+        if tipo_doc in TIPOS_ASIENTO_DIRECTO:
+            try:
+                datos = doc.get("datos_extraidos", {})
+                concepto = _generar_concepto_asiento(tipo_doc, datos)
+
+                # Construir partidas segun tipo
+                if tipo_doc == "NOM":
+                    partidas = construir_partidas_nomina(datos)
+                elif tipo_doc == "BAN":
+                    subtipo = datos.get("subtipo", "comision")
+                    partidas = construir_partidas_bancario(datos, subtipo)
+                elif tipo_doc == "RLC":
+                    partidas = construir_partidas_rlc(datos)
+                elif tipo_doc == "IMP":
+                    partidas = construir_partidas_impuesto(datos)
+                else:
+                    partidas = []
+
+                if not partidas:
+                    logger.warning(f"  Sin partidas para {archivo}, saltando")
+                    fallidos.append({**doc, "error_registro": "Sin partidas"})
+                    continue
+
+                resultado_asiento = crear_asiento_directo(
+                    concepto=concepto,
+                    fecha=datos.get("fecha", ""),
+                    codejercicio=config.ejercicio,
+                    idempresa=config.idempresa,
+                    partidas=partidas,
+                )
+
+                registro = {
+                    **doc,
+                    "idasiento": resultado_asiento["idasiento"],
+                    "num_partidas": resultado_asiento["num_partidas"],
+                    "tipo_registro": "asiento_directo",
+                    "verificacion_ok": True,
+                }
+                registrados.append(registro)
+
+                if auditoria:
+                    auditoria.registrar(
+                        "registro", "info",
+                        f"Asiento directo: {archivo} -> ID {resultado_asiento['idasiento']}",
+                        {"idasiento": resultado_asiento["idasiento"], "tipo": tipo_doc}
+                    )
+                continue  # Saltar flujo de facturas
+            except Exception as e:
+                logger.error(f"  Error creando asiento directo: {e}")
+                resultado.aviso(f"Error asiento directo: {archivo}", {"error": str(e)})
+                fallidos.append({**doc, "error_registro": str(e)})
+                continue
 
         # 1. Buscar codigo de entidad en FS
         codigo_entidad = _buscar_codigo_entidad_fs(config, doc, tipo_doc)
@@ -583,11 +667,13 @@ def ejecutar_registro(
     if fallidos:
         resultado.aviso(f"{len(fallidos)} facturas no se pudieron registrar")
 
-    # Corregir asientos invertidos de facturas proveedor
+    # Solo corregir asientos de facturas proveedor (no asientos directos)
     # Bug FS: crearFacturaProveedor genera debe/haber al reves del PGC
-    if registrados:
+    registrados_facturas = [r for r in registrados
+                            if r.get("tipo_registro") != "asiento_directo"]
+    if registrados_facturas:
         try:
-            n_corregidas = _corregir_asientos_proveedores(registrados)
+            n_corregidas = _corregir_asientos_proveedores(registrados_facturas)
             if n_corregidas > 0:
                 logger.info(f"Asientos proveedor corregidos: {n_corregidas} partidas")
         except Exception as e:
@@ -596,7 +682,7 @@ def ejecutar_registro(
 
         # Corregir divisas: FS genera partidas en divisa original, no EUR
         try:
-            n_divisas = _corregir_divisas_asientos(registrados)
+            n_divisas = _corregir_divisas_asientos(registrados_facturas)
             if n_divisas > 0:
                 logger.info(f"Divisas corregidas en asientos: {n_divisas} partidas")
         except Exception as e:
