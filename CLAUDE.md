@@ -128,6 +128,8 @@ Generador en `tests/datos_prueba/generador/`:
 - 13 plantillas HTML + 5 CSS + 4 YAML datos
 - Errores inyectados (~5.5%), edge cases, ruido visual
 - Requiere: weasyprint 68.0 + MSYS2 (`pacman -S mingw-w64-x86_64-pango`)
+- **Desplegado**: PDFs en `clientes/<entidad>/inbox_prueba/`, manifiestos en `clientes/<entidad>/manifiesto_prueba.json`
+- **Proxima sesion**: ejecutar pipeline SFCE contra entidades de prueba, comparar detecciones vs manifiesto
 
 ## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
