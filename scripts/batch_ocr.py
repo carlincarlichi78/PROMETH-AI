@@ -2,10 +2,15 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+# Raiz del proyecto
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from scripts.core.ocr_mistral import extraer_batch_mistral
 from scripts.core.ocr_gemini import extraer_batch_gemini
-from scripts.core.config import ConfigCliente
+from scripts.core.config import cargar_config
 from scripts.core.logger import crear_logger
 from scripts.phases.ocr_consensus import ejecutar_consenso
 
@@ -21,18 +26,20 @@ def main():
     args = parser.parse_args()
 
     ruta_base = Path(__file__).parent.parent / "clientes" / args.cliente
-    config = ConfigCliente(ruta_base / "config.yaml")
-    ejercicio = args.ejercicio or config.ejercicio_activo
+    config = cargar_config(ruta_base)
+    ejercicio = args.ejercicio or config.data.get("empresa", {}).get("ejercicio_activo", "2025")
 
     # Determinar ruta de auditoria
     ruta_ejercicio = ruta_base / str(ejercicio)
     ruta_auditoria = ruta_ejercicio / "auditoria"
     ruta_auditoria.mkdir(parents=True, exist_ok=True)
 
-    # Obtener PDFs del inbox (o procesado)
-    ruta_inbox = ruta_base / "inbox"
-    ruta_procesado = ruta_base / "procesado"
-    pdfs = list(ruta_inbox.glob("*.pdf")) + list(ruta_procesado.glob("*.pdf"))
+    # Obtener PDFs: buscar en inbox, procesado (raiz y ejercicio)
+    pdfs = []
+    for carpeta in [ruta_base / "inbox", ruta_base / "procesado",
+                    ruta_ejercicio / "procesado", ruta_ejercicio / "inbox"]:
+        if carpeta.exists():
+            pdfs.extend(carpeta.rglob("*.pdf"))
 
     if not pdfs:
         logger.warning("No se encontraron PDFs para procesar")

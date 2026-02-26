@@ -3,9 +3,13 @@
 import os
 import json
 import base64
+import time
 from pathlib import Path
 from typing import Optional
 from scripts.core.logger import crear_logger
+
+# Rate limit Gemini free tier: 5 req/min
+_GEMINI_DELAY_SEGUNDOS = 13  # ~4.6 req/min para margen
 
 logger = crear_logger("ocr_gemini")
 
@@ -146,10 +150,14 @@ Si todo es correcto: {{"resultado": "OK", "problemas": []}}"""
 
 
 def extraer_batch_gemini(rutas_pdf: list) -> dict:
-    """Extrae multiples facturas. Retorna {nombre_archivo: datos}."""
+    """Extrae multiples facturas con rate limiting. Retorna {nombre_archivo: datos}."""
     resultados = {}
-    for ruta in rutas_pdf:
+    for i, ruta in enumerate(rutas_pdf):
         ruta = Path(ruta)
+        if i > 0:
+            time.sleep(_GEMINI_DELAY_SEGUNDOS)
         datos = extraer_factura_gemini(ruta)
         resultados[ruta.name] = datos
+        if datos:
+            logger.info(f"  [{i+1}/{len(rutas_pdf)}] {ruta.name} OK")
     return resultados
