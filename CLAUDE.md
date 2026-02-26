@@ -140,20 +140,28 @@ Generador en `tests/datos_prueba/generador/`:
 - **Desplegado**: PDFs en `clientes/<entidad>/inbox_prueba/`, manifiestos en `clientes/<entidad>/manifiesto_prueba.json`
 - **Proxima sesion**: ejecutar pipeline SFCE contra entidades de prueba, comparar detecciones vs manifiesto
 
+## Motor Autoevaluacion v2 — EN PROGRESO
+Design: `docs/plans/2026-02-26-autoevaluacion-v2-design.md`
+Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
+
+**Objetivo**: cobertura ~55-60% actual → ~95-97% con 6 capas, sin depender de comparacion externa.
+**Coste**: ~$0.50/mes adicional (Mistral OCR3 batch + Gemini Flash free tier)
+
+**6 capas**: Triple OCR (GPT+Mistral+Gemini) → Aritmetica pura → Reglas PGC/fiscal → Cruce por proveedor → Historico opcional → Auditor IA
+
+**12 tasks** en plan de implementacion. Ejecucion optima: Tasks 1,2,3,4,8,10 en paralelo → 5,6 → 7,9 → 11,12
+
+**APIs nuevas**:
+- Mistral OCR3: SDK `mistralai`, env `MISTRAL_API_KEY` (pendiente obtener key en console.mistral.ai)
+- Gemini Flash: SDK `google-genai`, env `GEMINI_API_KEY` (key de prueba disponible)
+
+**Estado**: Design doc + plan completados. Implementacion pendiente (proxima sesion).
+
 ## Proximos pasos
 
-### Prioritario: Mejorar autoevaluacion pipeline (analisis completado)
-Analisis de gaps realizado. Cobertura actual ~75-85% en validaciones basicas. Gaps criticos:
-1. **IVA por linea (20% cobertura)**: solo valida IVA global, no por linea. Depende de `reglas_especiales` en config
-2. **Suplidos automaticos (30%)**: reclasificacion 600→4709 solo si `iva_extranjero` en config. Otros suplidos = manual
-3. **Cruce por proveedor (0%)**: fase 5 cruza totales globales, no por proveedor individual (errores se compensan)
-4. **Documentacion aduanal (0%)**: sin validacion de DUAs, certificados origen
-
-Mejoras propuestas:
-- P1: Validacion IVA por linea en fase 4 (check nuevo)
-- P2: Deteccion automatica de suplidos sin config (heuristica por descripcion)
-- P3: Cruce de importes por proveedor individual (no solo global)
-- P4: Check de subcuentas validas por tipo contable (6xx gastos, 7xx ingresos, 472 IVA sop, 477 IVA rep)
+### Prioritario
+1. **Implementar autoevaluacion v2** — ejecutar plan de 12 tasks
+2. **Obtener API key Mistral** — https://console.mistral.ai, plan Experiment (gratis)
 
 ### Otros
 - Ejecutar pipeline contra entidades de prueba (2.333 PDFs)
