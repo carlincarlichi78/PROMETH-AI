@@ -114,6 +114,8 @@ def obtener_facturas_cliente(token, idempresa, ejercicio, trimestre=None):
         "idempresa": idempresa,
         "codejercicio": ejercicio,
     })
+    # Post-filtro por idempresa (la API FS ignora el filtro en algunos endpoints)
+    facturas = [f for f in facturas if str(f.get("idempresa")) == str(idempresa)]
     facturas = filtrar_por_fecha(facturas, "fecha", ejercicio, trimestre)
     return convertir_a_eur(facturas)
 
@@ -124,6 +126,8 @@ def obtener_facturas_proveedor(token, idempresa, ejercicio, trimestre=None):
         "idempresa": idempresa,
         "codejercicio": ejercicio,
     })
+    # Post-filtro por idempresa (la API FS ignora el filtro en algunos endpoints)
+    facturas = [f for f in facturas if str(f.get("idempresa")) == str(idempresa)]
     facturas = filtrar_por_fecha(facturas, "fecha", ejercicio, trimestre)
     return convertir_a_eur(facturas)
 

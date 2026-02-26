@@ -222,6 +222,11 @@ def cargar_datos(idempresa):
     partidas = api_get("partidas")
     subcuentas = api_get("subcuentas")
 
+    # Post-filtro por idempresa (la API FS ignora el filtro en algunos endpoints)
+    facturas_cliente = [f for f in facturas_cliente if str(f.get("idempresa")) == str(idempresa)]
+    facturas_proveedor = [f for f in facturas_proveedor if str(f.get("idempresa")) == str(idempresa)]
+    asientos = [a for a in asientos if str(a.get("idempresa")) == str(idempresa)]
+
     # Filtrar lineas por facturas de esta empresa
     ids_fc = {f["idfactura"] for f in facturas_cliente}
     ids_fp = {f["idfactura"] for f in facturas_proveedor}
