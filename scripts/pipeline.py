@@ -388,10 +388,32 @@ def main():
     estado.data["confianza_global"] = confianza
     estado.guardar()
 
+    # Resumen por tipo de documento
+    resultados_acum = estado.obtener_resultados_acumulados()
+    pre_val = resultados_acum.get("pre_validacion", {})
+    docs_validados = pre_val.get("validados", [])
+    docs_excluidos = pre_val.get("excluidos", [])
+    todos_docs = docs_validados + docs_excluidos
+    if todos_docs:
+        tipos_conteo = {}
+        for doc in todos_docs:
+            t = doc.get("tipo", "OTRO")
+            tipos_conteo[t] = tipos_conteo.get(t, 0) + 1
+        resumen_tipos = ", ".join(f"{t}:{n}" for t, n in sorted(tipos_conteo.items()))
+    else:
+        resumen_tipos = "(sin datos)"
+
+    registro_data = resultados_acum.get("registro", {})
+    n_registrados = len(registro_data.get("registrados", []))
+    n_fallidos = len(registro_data.get("fallidos", []))
+
     logger.info("")
     logger.info("=" * 60)
     logger.info(f"  PIPELINE COMPLETADO")
     logger.info(f"  Score fiabilidad: {confianza['score']}% ({confianza['nivel']})")
+    logger.info(f"  Documentos por tipo: {resumen_tipos}")
+    if n_registrados or n_fallidos:
+        logger.info(f"  Registrados: {n_registrados} OK, {n_fallidos} fallidos")
     logger.info("=" * 60)
 
     auditoria.registrar("pipeline", "info",

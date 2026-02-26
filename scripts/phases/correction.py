@@ -579,13 +579,23 @@ def ejecutar_correccion(
     with open(ruta_asientos, "r", encoding="utf-8") as f:
         asientos_data = json.load(f)
 
-    asientos = asientos_data.get("asientos", [])
-    if not asientos:
+    todos_asientos = asientos_data.get("asientos", [])
+    if not todos_asientos:
         resultado.aviso("No hay asientos para verificar")
         resultado.datos["asientos_corregidos"] = []
         return resultado
 
-    logger.info(f"Verificando {len(asientos)} asientos (VERIFICACION 3)...")
+    # Separar: solo corregir asientos de facturas, no asientos directos
+    asientos = [a for a in todos_asientos
+                if a.get("tipo_registro") != "asiento_directo"]
+    asientos_directos = [a for a in todos_asientos
+                         if a.get("tipo_registro") == "asiento_directo"]
+
+    if asientos_directos:
+        logger.info(f"Saltando {len(asientos_directos)} asientos directos "
+                     f"(NOM/BAN/RLC/IMP) — no requieren correccion de facturas")
+
+    logger.info(f"Verificando {len(asientos)} asientos de facturas (VERIFICACION 3)...")
 
     tolerancia = config.tolerancias.get("comparacion_importes", 0.02)
     asientos_corregidos = []
@@ -697,11 +707,21 @@ def ejecutar_correccion(
                 {"idasiento": idasiento}
             )
 
+    # Incluir asientos directos sin modificaciones (para cross_validation)
+    for ad in asientos_directos:
+        asientos_corregidos.append({
+            **ad,
+            "problemas_detectados": 0,
+            "correcciones_aplicadas": 0,
+            "problemas": [],
+        })
+
     # Guardar asientos_corregidos.json
     ruta_corregidos = ruta_cliente / "asientos_corregidos.json"
     corregidos_json = {
         "fecha_correccion": datetime.now().isoformat(),
         "total_asientos": len(asientos),
+        "total_asientos_directos": len(asientos_directos),
         "total_problemas": sum(a["problemas_detectados"] for a in asientos_corregidos),
         "total_correcciones": sum(a["correcciones_aplicadas"] for a in asientos_corregidos),
         "asientos": asientos_corregidos,
@@ -715,6 +735,8 @@ def ejecutar_correccion(
     total_problemas = sum(a["problemas_detectados"] for a in asientos_corregidos)
     total_corrs = sum(a["correcciones_aplicadas"] for a in asientos_corregidos)
     logger.info(f"Correccion completada: {total_problemas} problemas, "
-                f"{total_corrs} corregidos automaticamente")
+                f"{total_corrs} corregidos automaticamente"
+                + (f" (+{len(asientos_directos)} directos sin correccion)"
+                   if asientos_directos else ""))
 
     return resultado

@@ -90,16 +90,80 @@ def ejecutar_asientos(
 
     registrados = registro_data.get("registrados", [])
     if not registrados:
-        resultado.aviso("No hay facturas registradas")
+        resultado.aviso("No hay documentos registrados")
         resultado.datos["asientos"] = []
         return resultado
 
-    logger.info(f"Verificando asientos de {len(registrados)} facturas...")
+    # Separar asientos directos (NOM, BAN, RLC, IMP) de facturas
+    registrados_facturas = [r for r in registrados
+                            if r.get("tipo_registro") != "asiento_directo"]
+    registrados_directos = [r for r in registrados
+                            if r.get("tipo_registro") == "asiento_directo"]
+
+    logger.info(f"Verificando asientos: {len(registrados_facturas)} facturas, "
+                f"{len(registrados_directos)} asientos directos")
 
     asientos_obtenidos = []
     sin_asiento = []
 
-    for reg in registrados:
+    # --- Asientos directos: ya tienen idasiento, solo obtener partidas ---
+    for reg in registrados_directos:
+        archivo = reg.get("archivo", "?")
+        idasiento = reg.get("idasiento")
+        tipo_doc = reg.get("tipo", "?")
+
+        if not idasiento:
+            logger.warning(f"  {archivo}: asiento directo sin idasiento, saltando")
+            continue
+
+        logger.info(f"Verificando asiento directo: {archivo} ({tipo_doc}, asiento {idasiento})")
+
+        # Obtener asiento completo desde API
+        try:
+            asiento = api_get_one(f"asientos/{idasiento}")
+        except Exception as e:
+            logger.error(f"  Error obteniendo asiento {idasiento}: {e}")
+            sin_asiento.append(reg)
+            continue
+
+        if not asiento:
+            logger.warning(f"  {archivo}: asiento {idasiento} no encontrado en FS")
+            sin_asiento.append(reg)
+            continue
+
+        # Obtener partidas
+        partidas = _obtener_partidas_asiento(idasiento)
+        logger.info(f"  {len(partidas)} partidas obtenidas")
+
+        total_debe = sum(float(p.get("debe", 0)) for p in partidas)
+        total_haber = sum(float(p.get("haber", 0)) for p in partidas)
+        cuadra = abs(total_debe - total_haber) < 0.01
+
+        if not cuadra:
+            logger.warning(f"  DESCUADRE: DEBE={total_debe:.2f} HABER={total_haber:.2f}")
+
+        asiento_completo = {
+            **reg,
+            "idasiento": idasiento,
+            "asiento": asiento,
+            "partidas": partidas,
+            "total_debe": total_debe,
+            "total_haber": total_haber,
+            "cuadra": cuadra,
+            "tipo_registro": "asiento_directo",
+        }
+        asientos_obtenidos.append(asiento_completo)
+
+        if auditoria:
+            auditoria.registrar(
+                "asientos", "verificacion",
+                f"{archivo}: asiento directo {idasiento}, "
+                f"DEBE={total_debe:.2f} HABER={total_haber:.2f}",
+                {"cuadra": cuadra, "partidas": len(partidas), "tipo": tipo_doc}
+            )
+
+    # --- Facturas: obtener asiento vinculado via idfactura ---
+    for reg in registrados_facturas:
         archivo = reg.get("archivo", "?")
         idfactura = reg.get("idfactura")
         tipo_doc = reg.get("tipo", "FC")
@@ -193,9 +257,14 @@ def ejecutar_asientos(
 
     # Guardar asientos_generados.json
     ruta_asientos = ruta_cliente / "asientos_generados.json"
+    n_directos = sum(1 for a in asientos_obtenidos
+                     if a.get("tipo_registro") == "asiento_directo")
+    n_facturas = len(asientos_obtenidos) - n_directos
     asientos_json = {
         "fecha_verificacion": datetime.now().isoformat(),
-        "total_facturas": len(registrados),
+        "total_documentos": len(registrados),
+        "total_facturas": len(registrados_facturas),
+        "total_directos": len(registrados_directos),
         "total_con_asiento": len(asientos_obtenidos),
         "total_sin_asiento": len(sin_asiento),
         "asientos": asientos_obtenidos,
@@ -207,7 +276,8 @@ def ejecutar_asientos(
     resultado.datos["sin_asiento"] = sin_asiento
     resultado.datos["ruta_asientos"] = str(ruta_asientos)
 
-    logger.info(f"Asientos verificados: {len(asientos_obtenidos)} OK, "
+    logger.info(f"Asientos verificados: {len(asientos_obtenidos)} OK "
+                f"({n_facturas} facturas, {n_directos} directos), "
                 f"{len(sin_asiento)} pendientes")
 
     return resultado
