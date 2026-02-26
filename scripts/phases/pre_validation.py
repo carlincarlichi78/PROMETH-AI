@@ -458,6 +458,73 @@ def ejecutar_pre_validacion(
             if err_f1:
                 avisos_doc.append(f"[F1] {err_f1}")
 
+        # F7: Divisa extranjera sin tipo de cambio
+        divisa_doc = (datos.get("divisa") or "EUR").upper()
+        if divisa_doc != "EUR":
+            tc_key = f"{divisa_doc}_EUR"
+            tiene_tc = bool(config.tipos_cambio.get(tc_key))
+            if not tiene_tc:
+                avisos_doc.append(
+                    f"[F7] Factura en {divisa_doc} sin tipo de cambio "
+                    f"configurado ({tc_key} no existe en config.yaml)"
+                )
+
+        # F8: Intracomunitaria sin mencion de ISP
+        if es_proveedor and entidad:
+            regimen_prov = entidad.get("regimen", "general")
+            if regimen_prov == "intracomunitario":
+                # Verificar que IVA sea 0% (factura original no debe llevar IVA)
+                iva_factura = float(datos.get("iva_porcentaje", 0) or 0)
+                if iva_factura > 0:
+                    avisos_doc.append(
+                        f"[F8] Proveedor intracomunitario "
+                        f"({entidad.get('_nombre_corto', cif_entidad)}) "
+                        f"con IVA {iva_factura}% en factura (esperado 0% + ISP)"
+                    )
+                # Verificar mencion ISP en lineas o texto
+                lineas = datos.get("lineas", [])
+                texto_lineas = " ".join(
+                    l.get("descripcion", "") for l in lineas
+                ).lower()
+                texto_completo = (
+                    datos.get("notas", "") or ""
+                ).lower() + " " + texto_lineas
+                tiene_isp = any(
+                    term in texto_completo
+                    for term in [
+                        "inversion sujeto pasivo", "inversión sujeto pasivo",
+                        "isp", "reverse charge", "art. 84",
+                        "articulo 84", "artículo 84",
+                    ]
+                )
+                if not tiene_isp and not entidad.get("autoliquidacion"):
+                    avisos_doc.append(
+                        f"[F8] Proveedor intracomunitario sin mencion de ISP "
+                        f"ni autoliquidacion configurada"
+                    )
+
+        # F9: IRPF anomalo
+        irpf_pct = datos.get("irpf_porcentaje")
+        irpf_imp = float(datos.get("irpf_importe", 0) or 0)
+        if irpf_pct is not None:
+            irpf_pct = float(irpf_pct)
+            if irpf_pct < 0:
+                avisos_doc.append(
+                    f"[F9] IRPF negativo ({irpf_pct}%) — posible error de signo"
+                )
+            elif irpf_pct > 0:
+                tasas_legales = {1, 2, 7, 15, 19, 24, 35}
+                if irpf_pct not in tasas_legales:
+                    avisos_doc.append(
+                        f"[F9] IRPF {irpf_pct}% no es una tasa legal "
+                        f"(validas: {sorted(tasas_legales)})"
+                    )
+        if irpf_imp < 0:
+            avisos_doc.append(
+                f"[F9] Cuota IRPF negativa ({irpf_imp}€) — "
+                f"retencion no puede ser negativa"
+            )
+
         # F10: Fecha coherente
         fecha_str = datos.get("fecha", "")
         if fecha_str:

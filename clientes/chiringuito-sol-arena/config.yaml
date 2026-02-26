@@ -1,0 +1,103 @@
+empresa:
+  nombre: "CHIRINGUITO SOL Y ARENA S.L."
+  cif: "B29066776"
+  tipo: sl
+  idempresa: 7
+  ejercicio_activo: "2025"
+  regimen_iva: general
+  direccion: "Playa de la Bajadilla s/n (Concesion 14-B), 29601 Marbella, Malaga"
+  email: "admin@chiringuitosolyarena.es"
+  banco:
+    - "ES19 2103 0065 1823 4567 8903"
+
+perfil:
+  descripcion: "Chiringuito de playa en Marbella, actividad estacional abril-octubre"
+  modelo_negocio: |
+    Restauracion de temporada en concesion de dominio publico maritimo-terrestre.
+    Ventas diarias por tickets simplificados + eventos privados.
+    Fijos discontinuos estacionales.
+  actividades:
+    - codigo: "5610"
+      descripcion: "Restaurantes y establecimientos en playas y piscinas"
+      iva_venta: 10
+      exenta: false
+      notas: "Restauracion = IVA reducido 10%"
+  particularidades:
+    - "Actividad estacional abril-octubre (7 meses)"
+    - "Empleados fijos discontinuos con altas/bajas SS estacionales"
+    - "Canon concesion playa como gasto relevante"
+  empleados: true
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores:
+  makro:
+    cif: "A28054609"
+    nombre_fs: "MAKRO AUTOSERVICIO S.A."
+    aliases: ["MAKRO", "MAKRO AUTOSERVICIO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Alimentacion, bebidas y consumibles temporada"
+
+  ayto_marbella:
+    cif: "P2906010J"
+    nombre_fs: "AYUNTAMIENTO DE MARBELLA"
+    aliases: ["AYUNTAMIENTO DE MARBELLA", "AYTO MARBELLA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Canon anual licencia ocupacion dominio publico"
+
+  renting_mobiliario:
+    cif: "B29022340"
+    nombre_fs: "RENTING MOBILIARIO TERRAZA S.L."
+    aliases: ["RENTING MOBILIARIO", "RENTING MOBILIARIO TERRAZA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Renting hamacas, sombrillas y mobiliario playa"
+
+  gastro_holding:
+    cif: "B29055407"
+    nombre_fs: "GRUPO GASTRO COSTA DEL SOL S.L."
+    aliases: ["GRUPO GASTRO", "GASTRO COSTA DEL SOL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Management fee + intereses prestamo intercompany"
+
+clientes:
+  ventas_diarias:
+    cif: "B29066776"
+    nombre_fs: "VENTAS DIARIAS PLAYA"
+    aliases: ["VENTAS DIARIAS", "TICKETS SIMPLIFICADOS"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA10
+    regimen: general
+    notas: "Tickets simplificados restauracion — CIF propio como emisor"
+
+  eventos_privados:
+    cif: "B29066776"
+    nombre_fs: "EVENTOS PRIVADOS PLAYA"
+    aliases: ["EVENTOS PRIVADOS"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA10
+    regimen: general
+    notas: "Celebraciones y eventos privados — CIF propio como emisor"
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
