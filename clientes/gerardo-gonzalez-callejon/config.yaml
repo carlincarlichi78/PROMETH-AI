@@ -1,0 +1,47 @@
+empresa:
+  nombre: "GERARDO GONZALEZ CALLEJON"
+  cif: "25712427R"
+  tipo: autonomo
+  idempresa: 2
+  ejercicio_activo: "2025"
+  regimen_iva: general
+
+perfil:
+  descripcion: "Autonomo con dos actividades: podologia (exenta IVA) y estetica (IVA 21%)"
+  modelo_negocio: |
+    Gerardo ejerce dos actividades economicas desde el mismo local.
+    Podologia esta exenta de IVA (Art.20.1.3 LIVA - servicios sanitarios).
+    Estetica tributa IVA general 21%.
+    Los gastos compartidos se reparten por criterio de metros cuadrados.
+  actividades:
+    - codigo: "8690"
+      descripcion: "Podologia"
+      iva_venta: 0
+      exenta: true
+      base_legal: "Art.20.1.3 LIVA - servicios sanitarios"
+    - codigo: "9602"
+      descripcion: "Estetica"
+      iva_venta: 21
+      exenta: false
+  prorrata:
+    tipo: sectores_diferenciados
+    criterio_reparto: "metros cuadrados"
+  particularidades:
+    - "Dos actividades con IVA diferente requieren sectores diferenciados"
+    - "Podologia exenta: no genera IVA repercutido ni permite deduccion IVA soportado en esa actividad"
+    - "Gastos compartidos se reparten por metros cuadrados entre ambas actividades"
+  empleados: false
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores: {}
+
+clientes: {}
+
+tipos_cambio: {}
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
