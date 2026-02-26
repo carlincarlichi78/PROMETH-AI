@@ -133,11 +133,47 @@ def obtener_facturas_proveedor(token, idempresa, ejercicio, trimestre=None):
 
 
 def obtener_subcuentas(token, idempresa, ejercicio):
-    """Subcuentas contables con saldos acumulados."""
-    return api_get(token, "subcuentas", {
-        "idempresa": idempresa,
+    """Subcuentas contables con saldos recalculados para la empresa especifica.
+
+    Los saldos de subcuentas en FS acumulan movimientos de TODAS las empresas.
+    Esta funcion recalcula debe/haber/saldo desde partidas filtradas por empresa
+    (via asientos) para obtener datos correctos por empresa.
+    """
+    # Obtener subcuentas base (para descripciones y codigos)
+    subcuentas_raw = api_get(token, "subcuentas", {
         "codejercicio": ejercicio,
     })
+
+    # Obtener asientos de esta empresa
+    asientos = api_get(token, "asientos", {"codejercicio": ejercicio})
+    asientos = [a for a in asientos if str(a.get("idempresa")) == str(idempresa)]
+    ids_asientos = {a["idasiento"] for a in asientos}
+
+    # Obtener partidas de esos asientos
+    partidas = api_get(token, "partidas")
+    partidas = [p for p in partidas if p["idasiento"] in ids_asientos]
+
+    # Recalcular debe/haber por subcuenta
+    from collections import defaultdict
+    saldos = defaultdict(lambda: {"debe": 0.0, "haber": 0.0})
+    for p in partidas:
+        cod = p.get("codsubcuenta", "")
+        saldos[cod]["debe"] += float(p.get("debe", 0))
+        saldos[cod]["haber"] += float(p.get("haber", 0))
+
+    # Construir subcuentas con saldos corregidos
+    mapa_desc = {s["codsubcuenta"]: s.get("descripcion", "") for s in subcuentas_raw}
+    resultado = []
+    for cod, vals in saldos.items():
+        resultado.append({
+            "codsubcuenta": cod,
+            "descripcion": mapa_desc.get(cod, ""),
+            "debe": vals["debe"],
+            "haber": vals["haber"],
+            "saldo": vals["debe"] - vals["haber"],
+        })
+
+    return resultado
 
 
 # --- Modelos fiscales ---

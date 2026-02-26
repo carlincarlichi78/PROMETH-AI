@@ -158,11 +158,40 @@ def obtener_todas_lineas_factura_proveedor(token):
 
 
 def obtener_subcuentas(token, idempresa, ejercicio):
-    """Subcuentas contables con saldos acumulados."""
-    return api_get(token, "subcuentas", {
-        "idempresa": idempresa,
-        "codejercicio": ejercicio,
-    })
+    """Subcuentas contables con saldos recalculados para la empresa especifica.
+
+    Los saldos de subcuentas en FS acumulan movimientos de TODAS las empresas.
+    Recalculamos desde partidas filtradas por empresa para datos correctos.
+    """
+    from collections import defaultdict
+
+    subcuentas_raw = api_get(token, "subcuentas", {"codejercicio": ejercicio})
+
+    asientos = api_get(token, "asientos", {"codejercicio": ejercicio})
+    asientos = [a for a in asientos if str(a.get("idempresa")) == str(idempresa)]
+    ids_asientos = {a["idasiento"] for a in asientos}
+
+    partidas = api_get(token, "partidas")
+    partidas = [p for p in partidas if p["idasiento"] in ids_asientos]
+
+    saldos = defaultdict(lambda: {"debe": 0.0, "haber": 0.0})
+    for p in partidas:
+        cod = p.get("codsubcuenta", "")
+        saldos[cod]["debe"] += float(p.get("debe", 0))
+        saldos[cod]["haber"] += float(p.get("haber", 0))
+
+    mapa_desc = {s["codsubcuenta"]: s.get("descripcion", "") for s in subcuentas_raw}
+    resultado = []
+    for cod, vals in saldos.items():
+        resultado.append({
+            "codsubcuenta": cod,
+            "descripcion": mapa_desc.get(cod, ""),
+            "debe": vals["debe"],
+            "haber": vals["haber"],
+            "saldo": vals["debe"] - vals["haber"],
+        })
+
+    return resultado
 
 
 def obtener_contactos(token):

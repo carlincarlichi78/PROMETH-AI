@@ -1,7 +1,7 @@
 ################################################################
   RESUMEN GENERAL DE MODELOS FISCALES (2025)
   PASTORINO COSTA DEL SOL S.L.
-  Generado: 26/02/2026 09:27
+  Generado: 26/02/2026 09:33
 ################################################################
 
 ================================================================
@@ -40,11 +40,11 @@
 ================================================================
   BALANCE Y PyG (resumen)
 ================================================================
-  Total Activo:             370,894.11 EUR
-  Total PN + Pasivo:        348,210.48 EUR
+  Total Activo:             190,196.37 EUR
+  Total PN + Pasivo:        175,242.95 EUR
   Cuadra: NO
-  Resultado explotacion:     90,734.50 EUR
-  Resultado neto:            68,050.88 EUR
+  Resultado explotacion:     59,813.70 EUR
+  Resultado neto:            44,860.27 EUR
   (Imp. Sociedades estimado al 25%)
 
 ################################################################
