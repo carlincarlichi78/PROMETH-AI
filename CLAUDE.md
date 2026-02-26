@@ -165,12 +165,13 @@ Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
 - Gemini Flash: SDK `google-genai`, env `GEMINI_API_KEY`
 
 **Tests**: 21 unitarios pasando. Pipeline compila OK.
+**Test E2E**: Mistral 46/46 OK, Gemini 9/46 (limite free tier 20 req/dia), consenso GPT+Mistral 100%.
+**Gemini free tier**: 20 req/dia para gemini-2.5-flash. OK para uso diario, no para batches >20.
 
 ## Proximos pasos
 
 ### Prioritario
-1. **Test E2E batch OCR** — ejecutar `batch_ocr.py` contra EMPRESA PRUEBA con las keys reales
-2. **Ejecutar pipeline contra entidades de prueba** (2.333 PDFs generados)
+1. **Ejecutar pipeline contra entidades de prueba** (2.333 PDFs generados)
 
 ### Otros
 - Corregir Pastorino suplidos Primatransit (misma reclasificacion 600→4709 que se hizo en EMPRESA PRUEBA)
