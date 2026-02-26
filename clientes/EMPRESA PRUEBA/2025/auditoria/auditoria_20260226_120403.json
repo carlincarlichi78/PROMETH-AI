@@ -1,0 +1,2412 @@
+{
+  "inicio": "2026-02-26T12:04:03.941259",
+  "fin": "2026-02-26T12:11:07.166131",
+  "total_registros": 248,
+  "registros": [
+    {
+      "timestamp": "2026-02-26T12:04:06.712879",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: ANT_20250728_AgrosurChile_ANTE00005-00004696_11520.00USD.pdf -> ANT (78%)",
+      "datos": {
+        "entidad": "agrosur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:09.233810",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250609_AgrosurChile_E00005-00004401_11520.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "agrosur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:11.059157",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250616_AgrosurChile_E00005-00004446_11520.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "agrosur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:13.315640",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250626_Transandes_A0003-00026826_3900.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "transandes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:15.532545",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250627_Transandes_B0003-00026855_3900.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "transandes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:17.633631",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250629_AgrosurChile_E00005-00004509_11520.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "agrosur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:18.997428",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250701_SoftcloudSA_2025-07-000004_14.80EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "softcloud_sa"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:20.450492",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250703_Oceanline_7532598963_801.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:22.576735",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250706_Oceanline_7532745537_378.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:24.327533",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250707_Transandes_B0003-00027144_3900.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "transandes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:26.329197",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250718_Oceanline_7533441178_2510.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:28.319010",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250718_Oceanline_7533441271_3060.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:29.869479",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250718_Oceanline_7533442509_123.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:32.388466",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250718_Oceanline_7533463809_1390.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:34.072655",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250718_Oceanline_7533463896_1620.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:36.381028",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250721_Oceanline_7533589808_440.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:39.019526",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250721_Oceanline_7533590105_360.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:40.494843",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250722_Oceanline_7533642938_110.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:42.415074",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250722_Oceanline_7533642998_180.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:44.578170",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250722_Oceanline_7533658621_140.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:52.257712",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250722_Oceanline_7533658622_180.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:54.632867",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250723_Oceanline_7533677478_180.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:56.918122",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250728_AgrosurChile_E00005-00004696_28800.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "agrosur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:04:59.662125",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250730_Frigotrans_1090161585_968.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "frigotrans"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:01.661089",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250805_Transandes_A0003-00027760_3900.00USD.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "transandes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:03.623367",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250806_Frigotrans_1090165048_968.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "frigotrans"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:05.221473",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250808_Frigotrans_1090167087_968.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "frigotrans"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:07.801169",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250812_Frigotrans_1090168047_968.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "frigotrans"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:10.077941",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250814_LusitaniaPort_TTFT25S-000116_6908.82EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "lusitania_port"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:34.085845",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250827_Cargaexpress_2390101398_7777.86EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "cargaexpress"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:39.480193",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250827_Cargaexpress_2390101399_7986.55EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "cargaexpress"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:44.166182",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250827_Cargaexpress_2390101400_7746.85EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "cargaexpress"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:45.842841",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250901_SoftcloudSA_2025-09-000020_14.80EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "softcloud_sa"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:48.113791",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250908_Oceanline_7536263946_195.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:49.892015",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250910_GrandesAlmacenes_06975016374_792.24EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "grandes_almacenes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:52.671415",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250915_GrandesAlmacenes_06975016660_434.87EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "grandes_almacenes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:55.142812",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250922_Oceanline_7537075071_453.00EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "oceanline"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:56.760194",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20250930_Papelgraf_T-AUR-25-023355_42.42EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "papelgraf"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:05:58.672452",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20251009_SoftcloudIberia_INV-2025-10-00669_17.91EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "softcloud_sp"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:02.673295",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FC_20251230_Cargaexpress_2390102446_2139.08EUR.pdf -> FC (78%)",
+      "datos": {
+        "entidad": "cargaexpress"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:06.487098",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FV_20250825_FrutasDelSur_INV-2025-00001_34693.40EUR.pdf -> FV (78%)",
+      "datos": {
+        "entidad": "frutas_sur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:08.554557",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FV_20250825_FrutasDelSur_INV-2025-00002_36331.03EUR.pdf -> FV (78%)",
+      "datos": {
+        "entidad": "frutas_sur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:10.703703",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FV_20250825_FrutasDelSur_INV-2025-00003_36391.68EUR.pdf -> FV (78%)",
+      "datos": {
+        "entidad": "frutas_sur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:12.705881",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FV_20250825_FrutasDelSur_INV-2025-00004_36331.03EUR.pdf -> FV (78%)",
+      "datos": {
+        "entidad": "frutas_sur"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:14.533900",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: FV_20250917_Eurofrut_INV-2025-00005_34560.00EUR.pdf -> FV (78%)",
+      "datos": {
+        "entidad": "eurofrut"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:16.960349",
+      "fase": "intake",
+      "tipo": "info",
+      "detalle": "Extraido: NC_20250626_Transandes_NCB0003-00003967_3900.00USD.pdf -> NC (78%)",
+      "datos": {
+        "entidad": "transandes"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:16.969348",
+      "fase": "intake",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase intake",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:06:17.560357",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "ANT_20250728_AgrosurChile_ANTE00005-00004696_11520.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:18.036256",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250609_AgrosurChile_E00005-00004401_11520.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:18.505986",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250616_AgrosurChile_E00005-00004446_11520.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:18.973987",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250626_Transandes_A0003-00026826_3900.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:19.442656",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250627_Transandes_B0003-00026855_3900.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:19.925770",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250629_AgrosurChile_E00005-00004509_11520.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:20.396767",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250701_SoftcloudSA_2025-07-000004_14.80EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:20.868454",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250703_Oceanline_7532598963_801.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:21.345451",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250706_Oceanline_7532745537_378.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:21.841127",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250707_Transandes_B0003-00027144_3900.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:22.303329",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441178_2510.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:22.779329",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441271_3060.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:23.264111",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533442509_123.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:23.731882",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463809_1390.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:24.222394",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463896_1620.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:24.701031",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533589808_440.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:25.179794",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533590105_360.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:25.628883",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642938_110.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:26.128423",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642998_180.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:26.627569",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658621_140.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:27.085568",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658622_180.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:27.549026",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250723_Oceanline_7533677478_180.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:28.007416",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250728_AgrosurChile_E00005-00004696_28800.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:28.457416",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250730_Frigotrans_1090161585_968.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:28.939336",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250805_Transandes_A0003-00027760_3900.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:29.434458",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250806_Frigotrans_1090165048_968.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:29.911677",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250808_Frigotrans_1090167087_968.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:30.398679",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250812_Frigotrans_1090168047_968.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:30.867050",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250814_LusitaniaPort_TTFT25S-000116_6908.82EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:31.347232",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101398_7777.86EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:31.840183",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101399_7986.55EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:32.315782",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101400_7746.85EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:32.795781",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250901_SoftcloudSA_2025-09-000020_14.80EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:33.283907",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250908_Oceanline_7536263946_195.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:33.736944",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250910_GrandesAlmacenes_06975016374_792.24EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:34.194491",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250915_GrandesAlmacenes_06975016660_434.87EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:34.669109",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250922_Oceanline_7537075071_453.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:35.159109",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250930_Papelgraf_T-AUR-25-023355_42.42EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:35.632508",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20251009_SoftcloudIberia_INV-2025-10-00669_17.91EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:36.131037",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FC_20251230_Cargaexpress_2390102446_2139.08EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:36.558982",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00001_34693.40EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:36.982983",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00002_36331.03EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:37.393983",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00003_36391.68EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:37.805421",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00004_36331.03EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:38.196830",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250917_Eurofrut_INV-2025-00005_34560.00EUR.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:38.668039",
+      "fase": "pre_validacion",
+      "tipo": "verificacion",
+      "detalle": "NC_20250626_Transandes_NCB0003-00003967_3900.00USD.pdf: validado",
+      "datos": {
+        "errores": [],
+        "avisos": []
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:38.680037",
+      "fase": "pre_validacion",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase pre_validacion",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:06:40.806440",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: ANT_20250728_AgrosurChile_ANTE00005-00004696_11520.00USD.pdf -> ID 342",
+      "datos": {
+        "idfactura": "342",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:42.897920",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250609_AgrosurChile_E00005-00004401_11520.00USD.pdf -> ID 343",
+      "datos": {
+        "idfactura": "343",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:45.086812",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250616_AgrosurChile_E00005-00004446_11520.00USD.pdf -> ID 344",
+      "datos": {
+        "idfactura": "344",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:47.189295",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250626_Transandes_A0003-00026826_3900.00USD.pdf -> ID 345",
+      "datos": {
+        "idfactura": "345",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:49.365080",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250627_Transandes_B0003-00026855_3900.00USD.pdf -> ID 346",
+      "datos": {
+        "idfactura": "346",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:51.503895",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250629_AgrosurChile_E00005-00004509_11520.00USD.pdf -> ID 347",
+      "datos": {
+        "idfactura": "347",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:53.656961",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250701_SoftcloudSA_2025-07-000004_14.80EUR.pdf -> ID 348",
+      "datos": {
+        "idfactura": "348",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:55.818523",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250703_Oceanline_7532598963_801.00EUR.pdf -> ID 349",
+      "datos": {
+        "idfactura": "349",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:06:57.976826",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250706_Oceanline_7532745537_378.00EUR.pdf -> ID 350",
+      "datos": {
+        "idfactura": "350",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:00.176164",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250707_Transandes_B0003-00027144_3900.00USD.pdf -> ID 351",
+      "datos": {
+        "idfactura": "351",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:02.293610",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250718_Oceanline_7533441178_2510.00EUR.pdf -> ID 352",
+      "datos": {
+        "idfactura": "352",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:04.395839",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250718_Oceanline_7533441271_3060.00EUR.pdf -> ID 353",
+      "datos": {
+        "idfactura": "353",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:06.534468",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250718_Oceanline_7533442509_123.00EUR.pdf -> ID 354",
+      "datos": {
+        "idfactura": "354",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:08.626118",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250718_Oceanline_7533463809_1390.00EUR.pdf -> ID 355",
+      "datos": {
+        "idfactura": "355",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:10.741419",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250718_Oceanline_7533463896_1620.00EUR.pdf -> ID 356",
+      "datos": {
+        "idfactura": "356",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:12.829457",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250721_Oceanline_7533589808_440.00EUR.pdf -> ID 357",
+      "datos": {
+        "idfactura": "357",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:14.990649",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250721_Oceanline_7533590105_360.00EUR.pdf -> ID 358",
+      "datos": {
+        "idfactura": "358",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:17.282349",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250722_Oceanline_7533642938_110.00EUR.pdf -> ID 359",
+      "datos": {
+        "idfactura": "359",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:19.432324",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250722_Oceanline_7533642998_180.00EUR.pdf -> ID 360",
+      "datos": {
+        "idfactura": "360",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:21.574040",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250722_Oceanline_7533658621_140.00EUR.pdf -> ID 361",
+      "datos": {
+        "idfactura": "361",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:23.720393",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250722_Oceanline_7533658622_180.00EUR.pdf -> ID 362",
+      "datos": {
+        "idfactura": "362",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:25.806108",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250723_Oceanline_7533677478_180.00EUR.pdf -> ID 363",
+      "datos": {
+        "idfactura": "363",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:27.967895",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250728_AgrosurChile_E00005-00004696_28800.00USD.pdf -> ID 364",
+      "datos": {
+        "idfactura": "364",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:30.079149",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250730_Frigotrans_1090161585_968.00EUR.pdf -> ID 365",
+      "datos": {
+        "idfactura": "365",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:32.163625",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250805_Transandes_A0003-00027760_3900.00USD.pdf -> ID 366",
+      "datos": {
+        "idfactura": "366",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:34.305892",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250806_Frigotrans_1090165048_968.00EUR.pdf -> ID 367",
+      "datos": {
+        "idfactura": "367",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:36.467992",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250808_Frigotrans_1090167087_968.00EUR.pdf -> ID 368",
+      "datos": {
+        "idfactura": "368",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:38.621552",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250812_Frigotrans_1090168047_968.00EUR.pdf -> ID 369",
+      "datos": {
+        "idfactura": "369",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:40.785752",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250814_LusitaniaPort_TTFT25S-000116_6908.82EUR.pdf -> ID 370",
+      "datos": {
+        "idfactura": "370",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:43.022400",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250827_Cargaexpress_2390101398_7777.86EUR.pdf -> ID 371",
+      "datos": {
+        "idfactura": "371",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:45.192161",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250827_Cargaexpress_2390101399_7986.55EUR.pdf -> ID 372",
+      "datos": {
+        "idfactura": "372",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:47.323478",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250827_Cargaexpress_2390101400_7746.85EUR.pdf -> ID 373",
+      "datos": {
+        "idfactura": "373",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:49.441713",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250901_SoftcloudSA_2025-09-000020_14.80EUR.pdf -> ID 374",
+      "datos": {
+        "idfactura": "374",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:51.575761",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250908_Oceanline_7536263946_195.00EUR.pdf -> ID 375",
+      "datos": {
+        "idfactura": "375",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:53.705110",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250910_GrandesAlmacenes_06975016374_792.24EUR.pdf -> ID 376",
+      "datos": {
+        "idfactura": "376",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:55.808279",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250915_GrandesAlmacenes_06975016660_434.87EUR.pdf -> ID 377",
+      "datos": {
+        "idfactura": "377",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:07:57.917955",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250922_Oceanline_7537075071_453.00EUR.pdf -> ID 378",
+      "datos": {
+        "idfactura": "378",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:00.018847",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20250930_Papelgraf_T-AUR-25-023355_42.42EUR.pdf -> ID 379",
+      "datos": {
+        "idfactura": "379",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:02.178279",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20251009_SoftcloudIberia_INV-2025-10-00669_17.91EUR.pdf -> ID 380",
+      "datos": {
+        "idfactura": "380",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:04.299288",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FC_20251230_Cargaexpress_2390102446_2139.08EUR.pdf -> ID 381",
+      "datos": {
+        "idfactura": "381",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:06.348488",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FV_20250825_FrutasDelSur_INV-2025-00001_34693.40EUR.pdf -> ID 37",
+      "datos": {
+        "idfactura": "37",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:08.425882",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FV_20250825_FrutasDelSur_INV-2025-00002_36331.03EUR.pdf -> ID 38",
+      "datos": {
+        "idfactura": "38",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:10.511667",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FV_20250825_FrutasDelSur_INV-2025-00003_36391.68EUR.pdf -> ID 39",
+      "datos": {
+        "idfactura": "39",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:12.798393",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FV_20250825_FrutasDelSur_INV-2025-00004_36331.03EUR.pdf -> ID 40",
+      "datos": {
+        "idfactura": "40",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:15.374365",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: FV_20250917_Eurofrut_INV-2025-00005_34560.00EUR.pdf -> ID 41",
+      "datos": {
+        "idfactura": "41",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:18.012492",
+      "fase": "registro",
+      "tipo": "info",
+      "detalle": "Factura registrada: NC_20250626_Transandes_NCB0003-00003967_3900.00USD.pdf -> ID 382",
+      "datos": {
+        "idfactura": "382",
+        "pagada": true
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:18.066494",
+      "fase": "registro",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase registro",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:08:20.212127",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "ANT_20250728_AgrosurChile_ANTE00005-00004696_11520.00USD.pdf: asiento 296, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:21.986201",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250609_AgrosurChile_E00005-00004401_11520.00USD.pdf: asiento 297, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:23.840587",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250616_AgrosurChile_E00005-00004446_11520.00USD.pdf: asiento 298, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:25.696241",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250626_Transandes_A0003-00026826_3900.00USD.pdf: asiento 299, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:27.521438",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250627_Transandes_B0003-00026855_3900.00USD.pdf: asiento 300, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:29.395085",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250629_AgrosurChile_E00005-00004509_11520.00USD.pdf: asiento 301, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:31.193719",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250701_SoftcloudSA_2025-07-000004_14.80EUR.pdf: asiento 302, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:33.041850",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250703_Oceanline_7532598963_801.00EUR.pdf: asiento 303, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:34.822922",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250706_Oceanline_7532745537_378.00EUR.pdf: asiento 304, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:36.616794",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250707_Transandes_B0003-00027144_3900.00USD.pdf: asiento 305, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:38.441939",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441178_2510.00EUR.pdf: asiento 306, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:40.270664",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441271_3060.00EUR.pdf: asiento 307, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:42.065215",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533442509_123.00EUR.pdf: asiento 308, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:43.925805",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463809_1390.00EUR.pdf: asiento 309, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:45.755701",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463896_1620.00EUR.pdf: asiento 310, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:47.570957",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533589808_440.00EUR.pdf: asiento 311, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:49.418603",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533590105_360.00EUR.pdf: asiento 312, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:51.282099",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642938_110.00EUR.pdf: asiento 313, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:53.147033",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642998_180.00EUR.pdf: asiento 314, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:54.925244",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658621_140.00EUR.pdf: asiento 315, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:56.732156",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658622_180.00EUR.pdf: asiento 316, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:08:58.627316",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250723_Oceanline_7533677478_180.00EUR.pdf: asiento 317, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:00.419150",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250728_AgrosurChile_E00005-00004696_28800.00USD.pdf: asiento 318, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:02.286445",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250730_Frigotrans_1090161585_968.00EUR.pdf: asiento 319, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:04.147463",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250805_Transandes_A0003-00027760_3900.00USD.pdf: asiento 320, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:05.955800",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250806_Frigotrans_1090165048_968.00EUR.pdf: asiento 321, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:07.861592",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250808_Frigotrans_1090167087_968.00EUR.pdf: asiento 322, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:09.683834",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250812_Frigotrans_1090168047_968.00EUR.pdf: asiento 323, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:11.525471",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250814_LusitaniaPort_TTFT25S-000116_6908.82EUR.pdf: asiento 324, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:13.320463",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101398_7777.86EUR.pdf: asiento 325, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:15.094728",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101399_7986.55EUR.pdf: asiento 326, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:16.969221",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101400_7746.85EUR.pdf: asiento 327, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:18.827845",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250901_SoftcloudSA_2025-09-000020_14.80EUR.pdf: asiento 328, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:20.678635",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250908_Oceanline_7536263946_195.00EUR.pdf: asiento 329, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:22.537364",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250910_GrandesAlmacenes_06975016374_792.24EUR.pdf: asiento 330, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:24.425279",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250915_GrandesAlmacenes_06975016660_434.87EUR.pdf: asiento 331, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:26.294730",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250922_Oceanline_7537075071_453.00EUR.pdf: asiento 332, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:28.160422",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20250930_Papelgraf_T-AUR-25-023355_42.42EUR.pdf: asiento 333, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:29.993964",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20251009_SoftcloudIberia_INV-2025-10-00669_17.91EUR.pdf: asiento 334, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:31.811978",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FC_20251230_Cargaexpress_2390102446_2139.08EUR.pdf: asiento 335, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:33.662776",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00001_34693.40EUR.pdf: asiento 336, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:35.488164",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00002_36331.03EUR.pdf: asiento 337, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:37.294570",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00003_36391.68EUR.pdf: asiento 338, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:39.118283",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00004_36331.03EUR.pdf: asiento 339, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:40.922291",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "FV_20250917_Eurofrut_INV-2025-00005_34560.00EUR.pdf: asiento 340, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:42.790154",
+      "fase": "asientos",
+      "tipo": "verificacion",
+      "detalle": "NC_20250626_Transandes_NCB0003-00003967_3900.00USD.pdf: asiento 341, DEBE=635918.03 HABER=635918.03",
+      "datos": {
+        "cuadra": true,
+        "partidas": 286
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.295558",
+      "fase": "asientos",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase asientos",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.346561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "ANT_20250728_AgrosurChile_ANTE00005-00004696_11520.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 296
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.347559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250609_AgrosurChile_E00005-00004401_11520.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 297
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.347559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250616_AgrosurChile_E00005-00004446_11520.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 298
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.347559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250626_Transandes_A0003-00026826_3900.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 299
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.347559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250627_Transandes_B0003-00026855_3900.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 300
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.348560",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250629_AgrosurChile_E00005-00004509_11520.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 301
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.348560",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250701_SoftcloudSA_2025-07-000004_14.80EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 302
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.348560",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250703_Oceanline_7532598963_801.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 303
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.348560",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250706_Oceanline_7532745537_378.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 304
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.348560",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250707_Transandes_B0003-00027144_3900.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 305
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.349559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441178_2510.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 306
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.349559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533441271_3060.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 307
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.349559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533442509_123.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 308
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.349559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463809_1390.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 309
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.349559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250718_Oceanline_7533463896_1620.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 310
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533589808_440.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 311
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250721_Oceanline_7533590105_360.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 312
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642938_110.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 313
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533642998_180.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 314
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658621_140.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 315
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.350558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250722_Oceanline_7533658622_180.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 316
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.351558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250723_Oceanline_7533677478_180.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 317
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.351558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250728_AgrosurChile_E00005-00004696_28800.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 318
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.351558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250730_Frigotrans_1090161585_968.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 319
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.351558",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250805_Transandes_A0003-00027760_3900.00USD.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 320
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.352561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250806_Frigotrans_1090165048_968.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 321
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.352561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250808_Frigotrans_1090167087_968.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 322
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.352561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250812_Frigotrans_1090168047_968.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 323
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.352561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250814_LusitaniaPort_TTFT25S-000116_6908.82EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 324
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.352561",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101398_7777.86EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 325
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.353559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101399_7986.55EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 326
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.353559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250827_Cargaexpress_2390101400_7746.85EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 327
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.353559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250901_SoftcloudSA_2025-09-000020_14.80EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 328
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.353559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250908_Oceanline_7536263946_195.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 329
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.353559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250910_GrandesAlmacenes_06975016374_792.24EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 330
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250915_GrandesAlmacenes_06975016660_434.87EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 331
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250922_Oceanline_7537075071_453.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 332
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20250930_Papelgraf_T-AUR-25-023355_42.42EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 333
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20251009_SoftcloudIberia_INV-2025-10-00669_17.91EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 334
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FC_20251230_Cargaexpress_2390102446_2139.08EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 335
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.354559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00001_34693.40EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 336
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.355559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00002_36331.03EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 337
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.355559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00003_36391.68EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 338
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.355559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250825_FrutasDelSur_INV-2025-00004_36331.03EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 339
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:09:43.355559",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "FV_20250917_Eurofrut_INV-2025-00005_34560.00EUR.pdf: 1 problemas, 0 corregidos",
+      "datos": {
+        "idasiento": 340
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:01.745874",
+      "fase": "correccion",
+      "tipo": "verificacion",
+      "detalle": "NC_20250626_Transandes_NCB0003-00003967_3900.00USD.pdf: 190 problemas, 189 corregidos",
+      "datos": {
+        "idasiento": 341
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:02.514205",
+      "fase": "correccion",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase correccion |   189 correcciones auto-aplicadas |   46 avisos",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Gastos vs subcuenta 600+4709: FAIL",
+      "datos": {
+        "check": 1,
+        "nombre": "Gastos vs subcuenta 600+4709",
+        "pasa": false,
+        "total_facturas": 283715.2,
+        "total_contable": -253404.94,
+        "diferencia": 537120.14,
+        "detalle": "Base fact prov: 283715.20 | 600 neto: -261446.50 + 4709: 8041.56 = -253404.94"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Ingresos vs subcuenta 700: PASS",
+      "datos": {
+        "check": 2,
+        "nombre": "Ingresos vs subcuenta 700",
+        "pasa": true,
+        "total_facturas": 345556.8,
+        "total_contable": 345556.8,
+        "diferencia": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "IVA repercutido vs 477: FAIL",
+      "datos": {
+        "check": 3,
+        "nombre": "IVA repercutido vs 477",
+        "pasa": false,
+        "total_facturas": 11057.48,
+        "total_contable": 12514.55,
+        "diferencia": 1457.0699999999997
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "IVA soportado vs 472: FAIL",
+      "datos": {
+        "check": 4,
+        "nombre": "IVA soportado vs 472",
+        "pasa": false,
+        "total_facturas": 8358.62,
+        "total_contable": 0.0,
+        "diferencia": 8358.62
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Autoliquidacion 472 == 477: FAIL",
+      "datos": {
+        "check": 5,
+        "nombre": "Autoliquidacion 472 == 477",
+        "pasa": false,
+        "autoliq_472": -8358.62,
+        "autoliq_477": 1457.0699999999997,
+        "diferencia": 9815.69
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Facturas == Asientos: PASS",
+      "datos": {
+        "check": 6,
+        "nombre": "Facturas == Asientos",
+        "pasa": true,
+        "total_facturas": 92,
+        "total_asientos_factura": 92,
+        "sin_asiento": 0
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Libro diario cuadra: FAIL",
+      "datos": {
+        "check": 7,
+        "nombre": "Libro diario cuadra",
+        "pasa": false,
+        "total_debe": 642502.52,
+        "total_haber": 629333.54,
+        "diferencia": 13168.979999999981
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "303 subcuentas vs facturas: FAIL",
+      "datos": {
+        "check": 8,
+        "nombre": "303 subcuentas vs facturas",
+        "pasa": false,
+        "iva_subcuentas": 12514.55,
+        "iva_facturas": 2698.8599999999988,
+        "diferencia": 9815.69,
+        "detalle": "477=12514.55 - 472=0.00 = 12514.55 | IVA rep=11057.48 - IVA sop=8358.62 = 2698.86"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:04.926466",
+      "fase": "cruce",
+      "tipo": "verificacion",
+      "detalle": "Balance Activo == Pasivo + PN: FAIL",
+      "datos": {
+        "check": 9,
+        "nombre": "Balance Activo == Pasivo + PN",
+        "pasa": false,
+        "saldos_por_grupo": {
+          "4": 620172.2800000001,
+          "6": -261446.49999999994,
+          "7": -345556.8
+        },
+        "diferencia": 13168.979999999981,
+        "nota": "Verificacion simplificada via cuadre global"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:05.438734",
+      "fase": "cruce",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase cruce |   7 avisos",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:11:06.131926",
+      "fase": "salidas",
+      "tipo": "info",
+      "detalle": "Salidas finales generadas",
+      "datos": {
+        "informe": "C:\\Users\\carli\\PROYECTOS\\CONTABILIDAD\\clientes\\EMPRESA PRUEBA\\2025\\auditoria\\pipeline_20260226_121105.log"
+      }
+    },
+    {
+      "timestamp": "2026-02-26T12:11:06.666061",
+      "fase": "salidas",
+      "tipo": "fase_completada",
+      "detalle": "[OK] Fase salidas",
+      "datos": {}
+    },
+    {
+      "timestamp": "2026-02-26T12:11:07.166131",
+      "fase": "pipeline",
+      "tipo": "info",
+      "detalle": "Pipeline completado. Score: 60%",
+      "datos": {}
+    }
+  ]
+}

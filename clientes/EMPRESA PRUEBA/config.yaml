@@ -4,6 +4,7 @@ empresa:
   tipo: sl
   idempresa: 3
   ejercicio_activo: "0003"
+  anio_ejercicio: "2025"
   regimen_iva: general
   direccion: "Calle Ficticia 1, 28001 Madrid"
   email: "info@empresaprueba.com"

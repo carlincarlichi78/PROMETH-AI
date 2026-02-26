@@ -21,6 +21,12 @@ PAISES_UE = {
 }
 
 
+def _normalizar_cif(cif: str) -> str:
+    """Normaliza CIF removiendo espacios, puntos y guiones para comparacion."""
+    import re
+    return re.sub(r'[\s\.\-/]', '', cif).upper()
+
+
 class ConfigCliente:
     """Configuracion cargada y validada de un cliente."""
 
@@ -84,9 +90,10 @@ class ConfigCliente:
         return self.obligaciones.get("libros_obligatorios", [])
 
     def buscar_proveedor_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca proveedor en config por CIF."""
+        """Busca proveedor en config por CIF (normalizado)."""
+        cif_norm = _normalizar_cif(cif)
         for nombre, datos in self.proveedores.items():
-            if datos.get("cif", "").upper() == cif.upper():
+            if _normalizar_cif(datos.get("cif", "")) == cif_norm:
                 return {**datos, "_nombre_corto": nombre}
         return None
 
@@ -104,9 +111,10 @@ class ConfigCliente:
         return None
 
     def buscar_cliente_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca cliente en config por CIF."""
+        """Busca cliente en config por CIF (normalizado)."""
+        cif_norm = _normalizar_cif(cif)
         for nombre, datos in self.clientes.items():
-            if datos.get("cif", "").upper() == cif.upper():
+            if _normalizar_cif(datos.get("cif", "")) == cif_norm:
                 return {**datos, "_nombre_corto": nombre}
         return None
 

@@ -54,6 +54,28 @@ def api_get(endpoint: str, params: dict = None, token: str = None,
     return todos
 
 
+def api_get_one(endpoint: str, token: str = None) -> dict | None:
+    """GET un recurso individual por ID (sin paginacion).
+
+    Args:
+        endpoint: endpoint con ID (ej: 'asientos/123')
+
+    Returns:
+        dict con datos del recurso, o None si no existe
+    """
+    token = token or obtener_token()
+    headers = {"Token": token}
+    url = f"{API_BASE}/{endpoint}"
+    resp = requests.get(url, headers=headers, timeout=30)
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    data = resp.json()
+    if isinstance(data, list):
+        return data[0] if data else None
+    return data
+
+
 def api_post(endpoint: str, data: dict, token: str = None) -> dict:
     """POST form-encoded a la API.
 

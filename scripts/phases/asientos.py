@@ -16,7 +16,7 @@ from pathlib import Path
 
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import api_get, verificar_factura
+from ..core.fs_api import api_get, api_get_one, verificar_factura
 from ..core.logger import crear_logger
 
 logger = crear_logger("asientos")
@@ -38,13 +38,9 @@ def _obtener_asiento_factura(idfactura: int, tipo_doc: str,
         if not idasiento:
             return None
 
-        # Obtener asiento completo
-        asientos = api_get(f"asientos/{idasiento}")
-        if isinstance(asientos, list) and asientos:
-            return asientos[0]
-        elif isinstance(asientos, dict):
-            return asientos
-        return None
+        # Obtener asiento completo (recurso individual, no lista)
+        asiento = api_get_one(f"asientos/{idasiento}")
+        return asiento
     except Exception as e:
         logger.error(f"Error obteniendo asiento de factura {idfactura}: {e}")
         return None

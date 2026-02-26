@@ -173,12 +173,39 @@ def _llamar_gpt_vision(client: OpenAI, imagen_b64: str) -> Optional[dict]:
 
 
 def _extraer_cif_del_texto(texto: str) -> list[str]:
-    """Extrae posibles CIFs/NIFs del texto raw con regex."""
-    # Patrones CIF/NIF espanol: letra+8digitos o 8digitos+letra
-    patron = r'\b([A-HJ-NP-SUVW]\d{7}[0-9A-J])\b|\b(\d{8}[A-Z])\b'
-    coincidencias = re.findall(patron, texto.upper())
-    # Aplanar tuplas y filtrar vacios
-    cifs = [c for tupla in coincidencias for c in tupla if c]
+    """Extrae posibles CIFs/NIFs/VAT del texto raw con regex.
+
+    Soporta formatos:
+    - Espanol: B12345678, 12345678A
+    - EU VAT: BE0999888777, DK11223344, PT111222333, PL1234567890
+    - Chileno RUT: CL 76.543.210-K, CL71234567-8
+    - Etiquetado: "CIF: XXX", "NIF: XXX", "VAT: XXX", "RUT: XXX"
+    """
+    texto_upper = texto.upper()
+    cifs = []
+
+    # 1. Buscar por etiqueta (mas fiable: captura lo que sigue a CIF/NIF/VAT/RUT)
+    # Usar espacio literal (no \s) para evitar capturar saltos de linea
+    patron_etiqueta = r'(?:CIF|NIF|VAT|RUT)\s*:?\s*([A-Z0-9][A-Z0-9 \.\-]{4,20})'
+    for match in re.finditer(patron_etiqueta, texto_upper):
+        valor = match.group(1).strip().rstrip(".")
+        # Limpiar espacios y puntos internos para normalizar
+        valor_limpio = re.sub(r'[ \.\-]', '', valor)
+        if len(valor_limpio) >= 6:
+            cifs.append(valor_limpio)
+
+    # 2. CIF/NIF espanol clasico (sin etiqueta)
+    patron_esp = r'\b([A-HJ-NP-SUVW]\d{7}[0-9A-J])\b|\b(\d{8}[A-Z])\b'
+    for match in re.findall(patron_esp, texto_upper):
+        for c in match:
+            if c:
+                cifs.append(c)
+
+    # 3. EU VAT: 2 letras + 8-12 digitos
+    patron_eu = r'\b([A-Z]{2}\d{8,12})\b'
+    for match in re.findall(patron_eu, texto_upper):
+        cifs.append(match)
+
     return list(dict.fromkeys(cifs))  # eliminar duplicados manteniendo orden
 
 
@@ -350,6 +377,54 @@ def _mover_a_cuarentena(ruta_pdf: Path, ruta_cuarentena: Path, motivo: str):
     logger.warning(f"PDF movido a cuarentena: {destino.name} — Motivo: {motivo}")
 
 
+def _parsear_importe(texto: str) -> Optional[float]:
+    """Parsea un importe detectando automaticamente formato anglo vs europeo.
+
+    Anglo: 1,234.56 (coma=miles, punto=decimal)
+    Europeo: 1.234,56 (punto=miles, coma=decimal)
+    """
+    texto = texto.strip()
+    if not texto:
+        return None
+
+    tiene_punto = "." in texto
+    tiene_coma = "," in texto
+
+    try:
+        if tiene_punto and tiene_coma:
+            # Determinar formato por posicion del ultimo separador
+            ultima_coma = texto.rfind(",")
+            ultimo_punto = texto.rfind(".")
+            if ultimo_punto > ultima_coma:
+                # Anglo: 1,234.56 → punto es decimal
+                return float(texto.replace(",", ""))
+            else:
+                # Europeo: 1.234,56 → coma es decimal
+                return float(texto.replace(".", "").replace(",", "."))
+        elif tiene_coma:
+            # Solo coma: podria ser decimal europeo (14,80) o miles anglo (1,234)
+            partes = texto.split(",")
+            if len(partes[-1]) == 2:
+                # Probablemente decimal europeo: 14,80
+                return float(texto.replace(",", "."))
+            else:
+                # Miles anglo sin decimales: 1,234
+                return float(texto.replace(",", ""))
+        elif tiene_punto:
+            # Solo punto: decimal anglo (14.80) o miles europeo (1.234)
+            partes = texto.split(".")
+            if len(partes[-1]) <= 2:
+                # Decimal anglo: 14.80
+                return float(texto)
+            else:
+                # Miles europeo sin decimales: 1.234 → 1234
+                return float(texto.replace(".", ""))
+        else:
+            return float(texto)
+    except ValueError:
+        return None
+
+
 def _construir_documento_confianza(
     archivo: str,
     hash_pdf: str,
@@ -389,41 +464,67 @@ def _construir_documento_confianza(
         doc.agregar_dato("importe", "gpt", total_gpt)
 
     # Intentar extraer importe del texto raw
-    importes_raw = re.findall(r'(?:total|importe|amount)\s*:?\s*[\$€]?\s*([\d.,]+)',
-                              texto_raw, re.IGNORECASE)
+    # Soporta simbolo antes o despues del numero: "$1,234.56" o "1.234,56 EUR"
+    importes_raw = re.findall(
+        r'(?:total|importe|amount)\s*:?\s*[\$€]?\s*([\d.,]+)\s*[\$€A-Z]*',
+        texto_raw, re.IGNORECASE
+    )
     if importes_raw:
         # Tomar el ultimo match (suele ser el total)
-        importe_str = importes_raw[-1].replace(".", "").replace(",", ".")
-        try:
-            importe_raw = float(importe_str)
+        importe_str = importes_raw[-1]
+        importe_raw = _parsear_importe(importe_str)
+        if importe_raw is not None:
             doc.agregar_dato("importe", "pdfplumber", importe_raw)
-        except ValueError:
-            pass
 
-    # Fecha
+    # Fecha — fuente GPT + pdfplumber
     fecha_gpt = datos_gpt.get("fecha")
     if fecha_gpt:
         doc.agregar_dato("fecha", "gpt", fecha_gpt)
 
-    # Numero factura
+    # Extraer fecha del texto raw: "Fecha: DD/MM/YYYY" o "Fecha: DD-MM-YYYY"
+    match_fecha = re.search(
+        r'[Ff]echa\s*:?\s*(\d{2})[/\-\.](\d{2})[/\-\.](\d{4})',
+        texto_raw
+    )
+    if match_fecha:
+        d, m, a = match_fecha.group(1), match_fecha.group(2), match_fecha.group(3)
+        fecha_raw = f"{a}-{m}-{d}"
+        doc.agregar_dato("fecha", "pdfplumber", fecha_raw)
+
+    # Numero factura — fuente GPT + pdfplumber
     num_factura = datos_gpt.get("numero_factura")
     if num_factura:
         doc.agregar_dato("numero_factura", "gpt", num_factura)
+
+    # Extraer numero factura del texto raw: "N. Factura: XXX" hasta siguiente campo
+    match_num = re.search(
+        r'N\.?\s*Factura\s*:?\s*(.+?)(?:\s+Fecha|\s*$)',
+        texto_raw, re.MULTILINE
+    )
+    if match_num:
+        num_raw = match_num.group(1).strip()
+        if num_raw:
+            doc.agregar_dato("numero_factura", "pdfplumber", num_raw)
 
     # Tipo IVA
     iva_pct = datos_gpt.get("iva_porcentaje")
     if iva_pct is not None:
         doc.agregar_dato("tipo_iva", "gpt", iva_pct)
         if entidad:
-            # Verificar contra config
             codimpuesto = entidad.get("codimpuesto", "")
             iva_esperado = {"IVA0": 0, "IVA4": 4, "IVA10": 10, "IVA21": 21}.get(codimpuesto)
             if iva_esperado is not None:
                 doc.agregar_dato("tipo_iva", "config", iva_esperado)
 
-    # Divisa
+    # Divisa — fuente GPT + pdfplumber + config
     divisa_gpt = datos_gpt.get("divisa", "EUR")
     doc.agregar_dato("divisa", "gpt", divisa_gpt)
+
+    # Extraer divisa del texto raw: "Divisa: EUR/USD"
+    match_divisa = re.search(r'[Dd]ivisa\s*:?\s*(EUR|USD|GBP)', texto_raw)
+    if match_divisa:
+        doc.agregar_dato("divisa", "pdfplumber", match_divisa.group(1))
+
     if entidad:
         doc.agregar_dato("divisa", "config", entidad.get("divisa", "EUR"))
 

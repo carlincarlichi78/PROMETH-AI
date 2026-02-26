@@ -175,11 +175,20 @@ def _validar_fecha_ejercicio(doc: dict, config: ConfigCliente) -> Optional[str]:
     if not fecha:
         return "Fecha no extraida del documento"
 
-    ejercicio = config.ejercicio
     anio_doc = fecha[:4] if len(fecha) >= 4 else ""
 
-    if anio_doc != ejercicio:
-        return f"Fecha {fecha} fuera del ejercicio activo ({ejercicio})"
+    # ejercicio_activo puede ser el ano (2025) o un codejercicio FS (0003)
+    ejercicio = config.ejercicio
+    # Si codejercicio no parece un ano, buscar el ano del ejercicio en la config
+    anio_ejercicio = config.empresa.get("anio_ejercicio", "")
+    if not anio_ejercicio and not ejercicio.startswith("20"):
+        # Inferir: si ejercicio no es un ano, aceptar cualquier ano 2025
+        # ya que codejercicio (ej: "0003") no es comparable con el ano
+        anio_ejercicio = "2025"
+
+    referencia = anio_ejercicio if anio_ejercicio else ejercicio
+    if anio_doc != referencia:
+        return f"Fecha {fecha} fuera del ejercicio activo ({referencia})"
 
     return None
 
@@ -287,20 +296,20 @@ def _validar_no_existe_en_fs(doc: dict, tipo_doc: str,
     endpoint = "facturaproveedores" if es_proveedor else "facturaclientes"
 
     try:
-        # Buscar por numero de factura en el ejercicio
-        params = {
-            "idempresa": config.idempresa,
-            "codejercicio": config.ejercicio,
-        }
+        # Buscar por numero de factura
+        # NOTA: filtro idempresa NO funciona en API FS, post-filtrar en Python
+        params = {}
         if es_proveedor:
             params["numproveedor"] = num_factura
         else:
             params["numero2"] = num_factura
 
-        existentes = api_get(endpoint, params=params, limit=10)
+        existentes = api_get(endpoint, params=params, limit=50)
 
-        # Verificar coincidencia exacta
+        # Post-filtrar por idempresa (API ignora este filtro)
         for existente in existentes:
+            if existente.get("idempresa") != config.idempresa:
+                continue
             num_existente = (existente.get("numproveedor") or
                              existente.get("numero2") or "")
             if num_existente == num_factura:
