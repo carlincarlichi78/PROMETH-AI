@@ -1,0 +1,22 @@
+================================================================
+  CUENTA DE PERDIDAS Y GANANCIAS PROVISIONAL (2025)
+  PASTORINO COSTA DEL SOL S.L.
+================================================================
+
+   1. Cifra de negocios                138,976.56 EUR
+   4. Aprovisionamientos            -   87,736.04 EUR
+   6. Gastos de personal            -        0.00 EUR
+   7. Otros gastos de explotacion   -        0.00 EUR
+   8. Amortizacion del inmovilizado -        0.00 EUR
+  --------------------------------------------------
+  A) RESULTADO DE EXPLOTACION           51,240.52 EUR
+
+  10. Ingresos financieros                   0.00 EUR
+  11. Gastos financieros            -        0.00 EUR
+  --------------------------------------------------
+  B) RESULTADO FINANCIERO                    0.00 EUR
+  --------------------------------------------------
+  C) RESULTADO ANTES DE IMPUESTOS       51,240.52 EUR
+  17. Imp. Sociedades (est. 25%)      -   12,810.13 EUR
+  ==================================================
+  D) RESULTADO DEL EJERCICIO            38,430.39 EUR

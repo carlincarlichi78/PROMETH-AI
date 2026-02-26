@@ -1,0 +1,54 @@
+################################################################
+  RESUMEN GENERAL DE MODELOS FISCALES (2025)
+  PASTORINO COSTA DEL SOL S.L.
+  Generado: 25/02/2026 20:55
+################################################################
+
+================================================================
+  MODELO 303 - IVA (resumen trimestral)
+================================================================
+  Trim.       Repercut.      Soportado      Resultado
+  --------------------------------------------------
+  T1 *           0.00 EUR         0.00 EUR         0.00 EUR
+  T2             0.00 EUR         0.00 EUR         0.00 EUR
+  T3         5,559.07 EUR     2,128.71 EUR     3,430.36 EUR
+  T4             0.00 EUR       261.89 EUR      -261.89 EUR
+  --------------------------------------------------
+  ANUAL                                    3,168.47 EUR
+  (* = sin facturas, datos parciales)
+
+================================================================
+  MODELO 349 - OPERACIONES INTRACOMUNITARIAS (resumen)
+================================================================
+  T1: Sin operaciones
+  T2: Sin operaciones
+  T3: 3 proveedor(es), base total:    19,058.42 EUR
+  T4: Sin operaciones
+
+================================================================
+  MODELO 347 - OPERACIONES CON TERCEROS (resumen)
+================================================================
+  Terceros que superan 3,005.06 EUR: 7
+    B93159044            MALAGA NATURAL 2012 S.L.       A   144,535.63 EUR
+    30-70793648-3        CAUQUEN ARGENTINA S.A.U.       B    28,800.00 EUR
+    B16815003            PRIMATRANSIT S.L.              B    25,650.34 EUR
+    30-71035801-6        LNET S.A.                      B    19,500.00 EUR
+    DK53139655           MAERSK A/S                     B    12,120.00 EUR
+    PT129381691          TRANSITAINER PORTUGAL LTDA     B     6,908.82 EUR
+    B73047599            PRIMAFRIO S.L.                 B     3,872.00 EUR
+
+================================================================
+  BALANCE Y PyG (resumen)
+================================================================
+  Total Activo:             156,424.86 EUR
+  Total PN + Pasivo:        143,614.73 EUR
+  Cuadra: NO
+  Resultado explotacion:     51,240.52 EUR
+  Resultado neto:            38,430.39 EUR
+  (Imp. Sociedades estimado al 25%)
+
+################################################################
+  AVISO: Datos PROVISIONALES basados en la contabilidad
+  registrada hasta la fecha. Para modelos fiscales oficiales
+  usar FacturaScripts > Informes > Modelo correspondiente.
+################################################################

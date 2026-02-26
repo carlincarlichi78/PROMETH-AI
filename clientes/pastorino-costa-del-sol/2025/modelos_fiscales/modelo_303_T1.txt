@@ -1,0 +1,31 @@
+================================================================
+  MODELO 303 - IVA TRIMESTRAL (T1 2025)
+  PASTORINO COSTA DEL SOL S.L.
+================================================================
+
+  *** PROVISIONAL - datos parciales (0 facturas) ***
+
+  Facturas emitidas:    0
+  Facturas recibidas:   0
+
+  --------------------------------------------------
+  IVA DEVENGADO
+  --------------------------------------------------
+
+  Regimen general:
+    TOTAL  Base:         0.00 EUR   IVA:         0.00 EUR
+
+  TOTAL IVA DEVENGADO:                0.00 EUR
+
+  --------------------------------------------------
+  IVA DEDUCIBLE
+  --------------------------------------------------
+
+  Operaciones interiores:
+    TOTAL  Base:         0.00 EUR   IVA:         0.00 EUR
+
+  TOTAL IVA DEDUCIBLE:                0.00 EUR
+
+  ==================================================
+  RESULTADO (devengado - deducible):         0.00 EUR
+  ==================================================

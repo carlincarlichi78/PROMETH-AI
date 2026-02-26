@@ -1,0 +1,26 @@
+# Windows
+nul
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Archivos temporales
+*.tmp
+*.log
+
+# Datos sensibles
+ACCESOS.md
+*.env

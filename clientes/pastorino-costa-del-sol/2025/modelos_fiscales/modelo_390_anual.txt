@@ -1,0 +1,37 @@
+================================================================
+  MODELO 390 - RESUMEN ANUAL IVA (2025)
+  PASTORINO COSTA DEL SOL S.L.
+================================================================
+
+  DESGLOSE POR TRIMESTRES
+  --------------------------------------------------
+  Trim.     Repercutido      Soportado      Resultado
+  --------------------------------------------------
+  T1             0.00 EUR         0.00 EUR         0.00 EUR
+  T2             0.00 EUR         0.00 EUR         0.00 EUR
+  T3         5,559.07 EUR     2,128.71 EUR     3,430.36 EUR
+  T4             0.00 EUR       261.89 EUR      -261.89 EUR
+  --------------------------------------------------
+  TOTAL      5,559.07 EUR     2,390.60 EUR     3,168.47 EUR
+
+  ==================================================
+  DESGLOSE ANUAL POR TIPO DE IVA
+  --------------------------------------------------
+
+  IVA REPERCUTIDO:
+       4%  Base:   138,976.56 EUR   IVA:     5,559.06 EUR
+    TOTAL  Base:   138,976.56 EUR   IVA:     5,559.07 EUR
+
+  IVA SOPORTADO:
+       0%  Base:    84,393.80 EUR   IVA:         0.00 EUR
+      21%  Base:    11,383.80 EUR   IVA:     2,390.60 EUR
+    TOTAL  Base:    95,777.60 EUR   IVA:     2,390.60 EUR
+
+  OPERACIONES INTRACOMUNITARIAS:
+    Base:       19,058.42 EUR
+    IVA 21%:     4,002.27 EUR
+
+  ==================================================
+  RESULTADO ANUAL:      3,168.47 EUR
+  >> A INGRESAR:        3,168.47 EUR
+  ==================================================

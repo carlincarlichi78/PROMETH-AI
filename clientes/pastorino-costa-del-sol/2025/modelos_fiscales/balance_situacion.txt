@@ -1,0 +1,23 @@
+================================================================
+  BALANCE DE SITUACION PROVISIONAL (31/12/2025)
+  PASTORINO COSTA DEL SOL S.L.
+================================================================
+
+  A) ACTIVO NO CORRIENTE                       0.00 EUR
+  B) ACTIVO CORRIENTE                     156,424.86 EUR
+      II. Deudores comerciales                 144,535.63 EUR
+      III. HP deudora                           11,889.23 EUR
+    --------------------------------------------------
+    TOTAL ACTIVO                          156,424.86 EUR
+
+  A) PATRIMONIO NETO                       38,430.39 EUR
+      V. Resultado del ejercicio                38,430.39 EUR
+  B) PASIVO NO CORRIENTE                        0.00 EUR
+  C) PASIVO CORRIENTE                     105,184.34 EUR
+      I. Proveedores                            98,168.20 EUR
+      IV. HP acreedora                           7,016.14 EUR
+    --------------------------------------------------
+    TOTAL PN + PASIVO                     143,614.73 EUR
+
+  Verificacion: NO CUADRA - revisar asientos
+  Diferencia:    12,810.13 EUR
