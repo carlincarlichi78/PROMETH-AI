@@ -170,18 +170,34 @@ Plan: `docs/plans/2026-02-26-autoevaluacion-v2-implementation.md`
 
 **Checks F7-F9**: divisa sin conversion (F7), intracomunitaria sin ISP (F8), IRPF anomalo (F9).
 
+## Intake Multi-Tipo — IMPLEMENTADO (8/10 tareas)
+Design: `docs/plans/2026-02-26-intake-multi-tipo-design.md`
+Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
+
+**Tipos de documento soportados**: FC, FV, NC, ANT, REC (facturas) + NOM (nominas), SUM (suministros), BAN (bancarios), RLC (SS), IMP (impuestos/tasas)
+
+**Modulos nuevos/modificados**:
+- `scripts/core/prompts.py` — prompt GPT compartido multi-tipo (GPT+Mistral+Gemini)
+- `scripts/core/asientos_directos.py` — POST asientos + partidas directo (sin crearFactura*)
+- `reglas/subcuentas_tipos.yaml` — mapeo tipo_doc → subcuentas PGC
+- `scripts/phases/intake.py` — clasificacion NOM/SUM/BAN/RLC/IMP + identificacion entidades adaptada
+- `scripts/phases/registration.py` — flujo dual: facturas via crearFactura* + asientos directos
+- `scripts/phases/pre_validation.py` — checks N1-N3 (nominas), S1 (suministros), B1 (bancarios), R1 (RLC)
+- `scripts/phases/ocr_consensus.py` — campos dinamicos por tipo de documento
+- `scripts/phases/cross_validation.py` — check 13: subcuentas personal/servicios (640/642/476/626/625/631)
+- `scripts/phases/asientos.py` — soporte asientos directos
+- `scripts/phases/correction.py` — skip correcciones para asientos directos
+- `scripts/pipeline.py` — resumen por tipo, compatible con todos los tipos
+
+**Tests**: 67 unitarios pasando (29 asientos_directos + 17 pre_validation_tipos + 21 existentes)
+**Pendiente**: Task 9 (test E2E con PDFs chiringuito-sol-arena) + Task 10 (actualizar docs)
+
 ## Proximos pasos
 
 ### Prioritario
-1. **Ampliar intake para procesar TODOS los tipos de documento** — actualmente solo facturas (FC/FV/NC). Faltan:
-   - **Nominas**: critico, muy importantes para contabilidad. Extraer: empleado, bruto, IRPF, SS, neto
-   - **Recibos bancarios**: comisiones, transferencias, intereses. Investigar contabilizacion correcta
-   - **Suministros**: luz, agua, telefono. Son facturas de compra pero el intake no matchea el CIF
-   - **Seguros**: polizas anuales. Contabilizar como gasto anticipado
-   - **Impuestos/tasas**: licencias, canon concesion
-   - El pipeline actual manda 103/141 documentos a cuarentena (solo procesa 38 facturas)
+1. **Test E2E intake multi-tipo** — ejecutar pipeline contra chiringuito-sol-arena (141 PDFs, todos los tipos). Verificar clasificacion correcta y asientos en FS
+2. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs generados, 11 entidades)
 
 ### Otros
-- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados)
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts
