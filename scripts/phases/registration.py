@@ -19,8 +19,8 @@ from typing import Optional
 
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import (api_delete, api_get, api_post, api_put,
-                            convertir_a_eur, verificar_factura)
+from ..core.fs_api import (api_delete, api_get, api_get_one, api_post,
+                            api_put, convertir_a_eur, verificar_factura)
 from ..core.logger import crear_logger
 
 logger = crear_logger("registration")
@@ -131,15 +131,29 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
                else datos.get("receptor_cif")) or ""
         entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor
                    else config.buscar_cliente_por_cif(cif))
-        codimpuesto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
+        codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
+
+        # Obtener reglas_especiales para IVA por linea
+        reglas = (entidad.get("reglas_especiales", []) or []) if entidad else []
 
         lineas_fs = []
         for linea in lineas_gpt:
+            desc = linea.get("descripcion", "")
+            # Determinar codimpuesto por linea segun reglas_especiales
+            codimpuesto_linea = codimpuesto_defecto
+            for regla in reglas:
+                patron = regla.get("patron_linea", "")
+                if patron and patron.upper() in desc.upper():
+                    # Linea de suplido/IVA extranjero: aplicar IVA0
+                    codimpuesto_linea = "IVA0"
+                    logger.info(f"  Linea '{desc[:40]}' -> IVA0 (regla: {regla.get('tipo', '')})")
+                    break
+
             linea_fs = {
-                "descripcion": linea.get("descripcion", ""),
+                "descripcion": desc,
                 "cantidad": linea.get("cantidad", 1),
                 "pvpunitario": linea.get("precio_unitario", 0),
-                "codimpuesto": codimpuesto,
+                "codimpuesto": codimpuesto_linea,
             }
             lineas_fs.append(linea_fs)
         form["lineas"] = json.dumps(lineas_fs)
@@ -259,6 +273,72 @@ def _eliminar_factura(idfactura: int, tipo_doc: str) -> bool:
     }
     endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
     return api_delete(endpoint)
+
+
+def _corregir_asientos_proveedores(registrados: list) -> int:
+    """Corrige asientos de facturas proveedor: FS API genera debe/haber invertidos.
+
+    Bug FS: crearFacturaProveedor genera asientos con 400 DEBE / 600 HABER
+    cuando deberia ser 600 DEBE / 400 HABER (PGC estandar).
+
+    Obtiene todas las partidas, identifica las de asientos proveedor,
+    y swap debe/haber via PUT.
+
+    Returns:
+        Numero de partidas corregidas
+    """
+    # Filtrar solo facturas proveedor
+    proveedores = [r for r in registrados
+                   if r.get("tipo", "FC") in ("FC", "NC", "ANT")]
+    if not proveedores:
+        return 0
+
+    # Obtener idasiento de cada factura proveedor
+    ids_asientos = set()
+    for reg in proveedores:
+        idfactura = reg.get("idfactura")
+        if not idfactura:
+            continue
+        try:
+            factura = verificar_factura(idfactura, tipo="proveedor")
+            idasiento = factura.get("idasiento")
+            if idasiento:
+                ids_asientos.add(idasiento)
+        except Exception as e:
+            logger.warning(f"  No se pudo obtener asiento de factura {idfactura}: {e}")
+
+    if not ids_asientos:
+        return 0
+
+    logger.info(f"Corrigiendo asientos invertidos: {len(ids_asientos)} asientos")
+
+    # Obtener TODAS las partidas (filtro idasiento no funciona en API FS)
+    todas_partidas = api_get("partidas")
+
+    corregidas = 0
+    for partida in todas_partidas:
+        if partida["idasiento"] not in ids_asientos:
+            continue
+
+        debe_orig = float(partida.get("debe", 0))
+        haber_orig = float(partida.get("haber", 0))
+
+        # Solo corregir si hay movimiento y esta invertido
+        if debe_orig == 0 and haber_orig == 0:
+            continue
+
+        # Swap debe <-> haber
+        try:
+            api_put(
+                f"partidas/{partida['idpartida']}",
+                data={"debe": haber_orig, "haber": debe_orig}
+            )
+            corregidas += 1
+        except Exception as e:
+            logger.error(f"  Error corrigiendo partida {partida['idpartida']}: {e}")
+
+    logger.info(f"  {corregidas} partidas corregidas (debe/haber invertidos)")
+    return corregidas
 
 
 def ejecutar_registro(
@@ -421,6 +501,17 @@ def ejecutar_registro(
 
     if fallidos:
         resultado.aviso(f"{len(fallidos)} facturas no se pudieron registrar")
+
+    # Corregir asientos invertidos de facturas proveedor
+    # Bug FS: crearFacturaProveedor genera debe/haber al reves del PGC
+    if registrados:
+        try:
+            n_corregidas = _corregir_asientos_proveedores(registrados)
+            if n_corregidas > 0:
+                logger.info(f"Asientos proveedor corregidos: {n_corregidas} partidas")
+        except Exception as e:
+            logger.error(f"Error corrigiendo asientos: {e}")
+            resultado.aviso(f"Error corrigiendo asientos proveedor: {e}")
 
     logger.info(f"Registro completado: {len(registrados)} OK, "
                 f"{len(fallidos)} fallidos de {len(documentos)} total")

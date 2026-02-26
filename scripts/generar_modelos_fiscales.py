@@ -44,6 +44,7 @@ TRIMESTRES = {
 EMPRESAS = {
     1: {"nombre": "PASTORINO COSTA DEL SOL S.L.", "tipo": "sl", "cif": "B13995519"},
     2: {"nombre": "G. GONZALEZ (Gerardo Gonzalez Callejon)", "tipo": "autonomo", "cif": ""},
+    3: {"nombre": "EMPRESA PRUEBA S.L.", "tipo": "sl", "cif": "B99999999"},
 }
 
 # Umbral modelo 347
