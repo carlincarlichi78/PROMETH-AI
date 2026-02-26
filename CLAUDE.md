@@ -112,6 +112,18 @@ Enfoque: mismos importes que Pastorino, actores ficticios (nombres/CIFs cambiado
 
 **Proxima sesion**: resolver confianza baja → ejecutar pipeline completo → comparar con Pastorino.
 
+## Generador datos de prueba SFCE — COMPLETADO
+Diseno: `docs/plans/2026-02-26-datos-prueba-design.md`
+Plan: `docs/plans/2026-02-26-datos-prueba-implementation.md`
+
+Generador en `tests/datos_prueba/generador/`:
+- `motor.py` — CLI: `WEASYPRINT_DLL_DIRECTORIES="C:/msys64/mingw64/bin" python motor.py --todas --seed 42`
+- 11 entidades, 2.333 PDFs (seed 42): 2 S.L. + grupo 4 S.L. + 4 autonomos + 1 comunidad
+- 8 generadores: facturas, nominas, bancarios, suministros, seguros, impuestos, subvenciones, intercompany
+- 13 plantillas HTML + 5 CSS + 4 YAML datos
+- Errores inyectados (~5.5%), edge cases, ruido visual
+- Requiere: weasyprint 68.0 + MSYS2 (`pacman -S mingw-w64-x86_64-pango`)
+
 ## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
 - Configurar backups automaticos de la BD de FacturaScripts
