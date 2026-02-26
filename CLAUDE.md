@@ -90,7 +90,22 @@ Modulos implementados:
 - `scripts/onboarding.py` — alta interactiva de clientes
 - `clientes/*/pipeline.bat` + `onboarding.bat` — integracion Windows
 
-**Siguiente**: testing real con PDFs de Pastorino T1 2025
+**Siguiente**: generar datos de prueba (ver abajo)
+
+## Datos de prueba SFCE — En progreso
+Diseno: `docs/plans/2026-02-26-datos-prueba-design.md`
+
+**Estado**: diseno completo, pendiente plan de implementacion + codigo.
+
+Generador de ~1.100 PDFs realistas (HTML→PDF con weasyprint) para 11 entidades ficticias:
+- 2 S.L. (servicios IT, comercio alimentacion)
+- Grupo empresarial 4 S.L. (holding + 3 restaurantes Costa del Sol)
+- 4 autonomos (simple, dual, agrario REAGP, modulos)
+- 1 comunidad propietarios
+
+Incluye: facturas, nominas, SS, prestamos, leasing, renting, comisiones bancarias, subvenciones, operaciones intercompany, dividendos, saldos apertura 2024. ~20% con errores deliberados + edge cases.
+
+**Proxima sesion**: escribir plan implementacion (writing-plans) + empezar a implementar generador.
 
 ## Proximos pasos (no-SFCE)
 - Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
