@@ -18,20 +18,38 @@ def _obtener_api_key() -> str:
     return key
 
 
+def _crear_cliente():
+    """Crea y cachea cliente Mistral (singleton)."""
+    try:
+        from mistralai import Mistral
+    except ImportError:
+        logger.warning("SDK mistralai no instalado. Ejecutar: pip install mistralai")
+        return None
+    return Mistral(api_key=_obtener_api_key())
+
+
+_cliente_cache = None
+
+
+def _obtener_cliente():
+    """Obtiene cliente Mistral cacheado (thread-safe por GIL)."""
+    global _cliente_cache
+    if _cliente_cache is None:
+        _cliente_cache = _crear_cliente()
+    return _cliente_cache
+
+
 def extraer_factura_mistral(ruta_pdf: Path) -> Optional[dict]:
     """Extrae datos de documento usando Mistral OCR3.
 
     Soporta todos los tipos: facturas, nominas, suministros, bancarios, etc.
     Retorna dict con campos estandarizados o None si falla.
     """
-    try:
-        from mistralai import Mistral
-    except ImportError:
-        logger.warning("SDK mistralai no instalado. Ejecutar: pip install mistralai")
+    client = _obtener_cliente()
+    if not client:
         return None
 
     try:
-        client = Mistral(api_key=_obtener_api_key())
 
         # Subir PDF como base64
         with open(ruta_pdf, "rb") as f:

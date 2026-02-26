@@ -12,11 +12,13 @@ Flujo:
 9. Guardar intake_results.json
 """
 import base64
+import concurrent.futures
 import hashlib
 import json
 import os
 import re
 import shutil
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -24,12 +26,20 @@ import pdfplumber
 import yaml
 from openai import OpenAI
 
+from ..core.aritmetica import ejecutar_checks_aritmeticos
 from ..core.confidence import DocumentoConfianza, calcular_nivel
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
 from ..core.logger import crear_logger
 from ..core.ocr_mistral import extraer_factura_mistral
 from ..core.prompts import PROMPT_EXTRACCION
+
+# Import condicional Gemini (solo Tier 2)
+try:
+    from ..core.ocr_gemini import extraer_factura_gemini
+    _GEMINI_DISPONIBLE = True
+except ImportError:
+    _GEMINI_DISPONIBLE = False
 
 logger = crear_logger("intake")
 
@@ -547,20 +557,379 @@ def _construir_documento_confianza(
     return doc
 
 
+# --- Campos criticos por tipo para Tier 0 ---
+_CAMPOS_CRITICOS = {
+    "FC": ["emisor_cif", "fecha", "total", "base_imponible"],
+    "FV": ["receptor_cif", "fecha", "total", "base_imponible"],
+    "NC": ["emisor_cif", "fecha", "total"],
+    "ANT": ["emisor_cif", "fecha", "total"],
+    "REC": ["emisor_cif", "fecha", "total"],
+    "NOM": ["empleado_nombre", "fecha", "bruto", "neto"],
+    "SUM": ["emisor_nombre", "fecha", "total"],
+    "BAN": ["fecha", "importe"],
+    "RLC": ["fecha", "total"],
+    "IMP": ["fecha", "importe"],
+}
+
+# Campos numericos para comparacion entre motores
+_CAMPOS_NUMERICOS = {"total", "base_imponible", "iva_importe", "irpf_importe",
+                     "bruto", "neto", "importe"}
+_CAMPOS_TEXTO = {"emisor_cif", "receptor_cif", "emisor_nombre", "receptor_nombre",
+                 "fecha", "numero_factura", "empleado_nombre", "banco_nombre"}
+
+
+def _evaluar_tier_0(datos_mistral: dict, tipo_doc: str,
+                    doc_confianza: DocumentoConfianza,
+                    umbral: int = 85) -> dict:
+    """Evalua si la extraccion Mistral es suficiente (Tier 0).
+
+    Verifica:
+    1. Campos criticos presentes y no vacios
+    2. Checks aritmeticos OK
+    3. Confianza global >= umbral
+
+    Returns:
+        {"aceptado": bool, "motivo": str}
+    """
+    campos = _CAMPOS_CRITICOS.get(tipo_doc, ["fecha", "total"])
+
+    # 1. Campos criticos presentes
+    faltantes = []
+    for campo in campos:
+        valor = datos_mistral.get(campo)
+        if valor is None or valor == "" or valor == 0:
+            faltantes.append(campo)
+    if faltantes:
+        return {"aceptado": False,
+                "motivo": f"Campos criticos faltantes: {', '.join(faltantes)}"}
+
+    # 2. Checks aritmeticos
+    avisos_arit = ejecutar_checks_aritmeticos({"datos_extraidos": datos_mistral,
+                                                "tipo": tipo_doc})
+    if avisos_arit:
+        return {"aceptado": False,
+                "motivo": f"Errores aritmeticos: {avisos_arit[0]}"}
+
+    # 3. Confianza
+    confianza = doc_confianza.confianza_global()
+    if confianza < umbral:
+        return {"aceptado": False,
+                "motivo": f"Confianza {confianza}% < umbral {umbral}%"}
+
+    return {"aceptado": True, "motivo": "Tier 0: campos OK, aritmetica OK, confianza OK"}
+
+
+def _comparar_dos_extracciones(ext_a: dict, ext_b: dict,
+                                tipo_doc: str) -> dict:
+    """Compara dos extracciones OCR campo a campo.
+
+    Returns:
+        {"coinciden": bool, "campos_ok": list, "campos_discrepantes": list}
+    """
+    campos = _CAMPOS_CRITICOS.get(tipo_doc, ["fecha", "total"])
+    campos_ok = []
+    campos_disc = []
+
+    for campo in campos:
+        val_a = ext_a.get(campo)
+        val_b = ext_b.get(campo)
+
+        # Si ambos son None/vacios, consideramos OK
+        if (val_a is None or val_a == "") and (val_b is None or val_b == ""):
+            campos_ok.append(campo)
+            continue
+
+        if campo in _CAMPOS_NUMERICOS:
+            try:
+                num_a = float(val_a or 0)
+                num_b = float(val_b or 0)
+                if abs(num_a - num_b) <= 0.02:
+                    campos_ok.append(campo)
+                else:
+                    campos_disc.append(campo)
+            except (TypeError, ValueError):
+                campos_disc.append(campo)
+        elif campo in _CAMPOS_TEXTO:
+            str_a = str(val_a or "").strip().upper()
+            str_b = str(val_b or "").strip().upper()
+            if str_a == str_b:
+                campos_ok.append(campo)
+            else:
+                campos_disc.append(campo)
+        else:
+            # Comparacion generica
+            if str(val_a).strip() == str(val_b).strip():
+                campos_ok.append(campo)
+            else:
+                campos_disc.append(campo)
+
+    return {
+        "coinciden": len(campos_disc) == 0,
+        "campos_ok": campos_ok,
+        "campos_discrepantes": campos_disc
+    }
+
+
+def _votacion_tres_motores(ext_mistral: dict, ext_gpt: dict,
+                            ext_gemini: dict, tipo_doc: str) -> dict:
+    """Votacion 2-de-3 entre tres motores OCR.
+
+    Returns:
+        dict con los datos ganadores (consenso mayoría por campo).
+    """
+    campos = _CAMPOS_CRITICOS.get(tipo_doc, ["fecha", "total"])
+    resultado = dict(ext_mistral)  # base
+
+    for campo in campos:
+        vals = [ext_mistral.get(campo), ext_gpt.get(campo), ext_gemini.get(campo)]
+
+        if campo in _CAMPOS_NUMERICOS:
+            try:
+                nums = [float(v or 0) for v in vals]
+                # Si 2 de 3 coinciden (tolerancia 0.02)
+                for i in range(3):
+                    for j in range(i + 1, 3):
+                        if abs(nums[i] - nums[j]) <= 0.02:
+                            resultado[campo] = vals[i]
+                            break
+            except (TypeError, ValueError):
+                pass
+        else:
+            strs = [str(v or "").strip().upper() for v in vals]
+            for i in range(3):
+                for j in range(i + 1, 3):
+                    if strs[i] == strs[j] and strs[i]:
+                        resultado[campo] = vals[i]
+                        break
+
+    return resultado
+
+
+_gemini_lock = threading.Lock()
+
+
+def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
+                     gemini_disponible, ruta_cuarentena, interactivo):
+    """Procesa un solo PDF: pdfplumber + OCR tiers + clasificacion + confianza.
+
+    Thread-safe: cada PDF es independiente. Gemini serializado via _gemini_lock.
+
+    Returns:
+        dict con keys: doc (dict|None), hash, avisos (list), tier (int)
+    """
+    nombre_archivo = ruta_pdf.name
+    logger.info(f"Procesando: {nombre_archivo}")
+    avisos = []
+
+    # 1. Extraer texto con pdfplumber
+    try:
+        texto_raw = _extraer_texto_pdf(ruta_pdf)
+    except Exception as e:
+        logger.error(f"  Error extrayendo texto de {nombre_archivo}: {e}")
+        _mover_a_cuarentena(ruta_pdf, ruta_cuarentena, f"Error pdfplumber: {e}")
+        avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
+        return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+
+    # 2. Extraccion OCR con estrategia de Tiers
+    datos_gpt = None
+    ocr_tier = 0
+    tier_motivo = ""
+    motores_usados = []
+
+    # --- Paso 1: Siempre llamar Mistral primero ---
+    datos_mistral = None
+    if motor_primario == "mistral":
+        logger.info(f"  [{nombre_archivo}] Mistral OCR3...")
+        datos_mistral = extraer_factura_mistral(ruta_pdf)
+        if datos_mistral:
+            motores_usados.append("mistral")
+        else:
+            logger.warning(f"  [{nombre_archivo}] Mistral fallo")
+
+    # Si Mistral fallo, fallback GPT
+    if not datos_mistral:
+        if client:
+            logger.info(f"  [{nombre_archivo}] Fallback GPT-4o...")
+            if texto_raw.strip():
+                datos_gpt = _llamar_gpt_texto(client, texto_raw)
+            else:
+                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
+                if imagen_b64:
+                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
+            if datos_gpt:
+                motores_usados.append("gpt")
+                ocr_tier = 1
+                tier_motivo = "Mistral fallo, fallback GPT directo"
+        elif motor_primario != "mistral" and client:
+            if texto_raw.strip():
+                datos_gpt = _llamar_gpt_texto(client, texto_raw)
+            else:
+                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
+                if imagen_b64:
+                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
+            if datos_gpt:
+                motores_usados.append("gpt")
+                ocr_tier = 1
+                tier_motivo = "Solo GPT disponible"
+
+    # Si tenemos datos Mistral, evaluar Tier 0
+    if datos_mistral and not datos_gpt:
+        datos_gpt = datos_mistral
+
+        tipo_doc_prov = _clasificar_tipo_documento(datos_mistral, config)
+        entidad_prov = _identificar_entidad(datos_mistral, tipo_doc_prov, config)
+        doc_conf_prov = _construir_documento_confianza(
+            nombre_archivo, hash_pdf, texto_raw, datos_mistral,
+            tipo_doc_prov, entidad_prov, config
+        )
+
+        eval_t0 = _evaluar_tier_0(datos_mistral, tipo_doc_prov, doc_conf_prov)
+
+        if eval_t0["aceptado"]:
+            ocr_tier = 0
+            tier_motivo = eval_t0["motivo"]
+            logger.info(f"  [{nombre_archivo}] Tier 0 OK")
+        else:
+            logger.info(f"  [{nombre_archivo}] Tier 0 rechazado: {eval_t0['motivo']}")
+            if client:
+                datos_gpt_t1 = None
+                if texto_raw.strip():
+                    datos_gpt_t1 = _llamar_gpt_texto(client, texto_raw)
+                else:
+                    imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
+                    if imagen_b64:
+                        datos_gpt_t1 = _llamar_gpt_vision(client, imagen_b64)
+
+                if datos_gpt_t1:
+                    motores_usados.append("gpt")
+                    comp = _comparar_dos_extracciones(datos_mistral, datos_gpt_t1,
+                                                      tipo_doc_prov)
+                    if comp["coinciden"]:
+                        ocr_tier = 1
+                        tier_motivo = "Tier 1: Mistral+GPT coinciden"
+                        logger.info(f"  [{nombre_archivo}] Tier 1 OK: consenso")
+                    else:
+                        disc = ", ".join(comp["campos_discrepantes"])
+                        logger.warning(f"  [{nombre_archivo}] Tier 1 disc: {disc}")
+
+                        if gemini_disponible:
+                            with _gemini_lock:
+                                logger.info(f"  [{nombre_archivo}] Tier 2 Gemini...")
+                                datos_gemini = extraer_factura_gemini(ruta_pdf)
+                            if datos_gemini:
+                                motores_usados.append("gemini")
+                                datos_gpt = _votacion_tres_motores(
+                                    datos_mistral, datos_gpt_t1, datos_gemini,
+                                    tipo_doc_prov
+                                )
+                                ocr_tier = 2
+                                tier_motivo = f"Tier 2: votacion 2-de-3 (disc: {disc})"
+                            else:
+                                ocr_tier = 1
+                                tier_motivo = f"Tier 1: Gemini fallo (disc: {disc})"
+                        else:
+                            ocr_tier = 1
+                            tier_motivo = f"Tier 1: sin Gemini (disc: {disc})"
+                else:
+                    ocr_tier = 0
+                    tier_motivo = "Tier 0 forzado: GPT fallo"
+            else:
+                ocr_tier = 0
+                tier_motivo = "Tier 0 forzado: sin GPT"
+
+    if not datos_gpt:
+        _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
+                            "No se pudo extraer datos (sin texto ni vision)")
+        avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
+        return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+
+    # 3. Clasificar tipo documento
+    tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
+
+    # 4. Identificar entidad
+    entidad = _identificar_entidad(datos_gpt, tipo_doc, config)
+
+    if not entidad:
+        es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
+        cif_desc = (datos_gpt.get("emisor_cif") if es_proveedor
+                    else datos_gpt.get("receptor_cif")) or "?"
+        nombre_desc = (datos_gpt.get("emisor_nombre") if es_proveedor
+                       else datos_gpt.get("receptor_nombre")) or "?"
+
+        if interactivo:
+            entidad = _descubrimiento_interactivo(
+                datos_gpt, tipo_doc, nombre_archivo, config, config.ruta
+            )
+            if not entidad:
+                _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
+                                    f"Entidad desconocida: {cif_desc}")
+                avisos.append((f"Entidad desconocida saltada: {cif_desc}",
+                              {"archivo": nombre_archivo}))
+                return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+        else:
+            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
+                                f"CIF desconocido: {cif_desc}")
+            avisos.append((f"CIF desconocido: {cif_desc}",
+                          {"archivo": nombre_archivo, "cif": cif_desc,
+                           "nombre": nombre_desc}))
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+
+    # 5. Calcular confianza
+    doc_confianza = _construir_documento_confianza(
+        nombre_archivo, hash_pdf, texto_raw, datos_gpt,
+        tipo_doc, entidad, config
+    )
+    nivel = calcular_nivel(doc_confianza.confianza_global())
+    campos_bajos = doc_confianza.campos_bajo_umbral()
+
+    logger.info(f"  [{nombre_archivo}] {tipo_doc} | Tier {ocr_tier} | "
+                f"{doc_confianza.confianza_global()}% ({nivel})")
+
+    # 6. Construir resultado
+    doc_resultado = {
+        "archivo": nombre_archivo,
+        "hash_sha256": hash_pdf,
+        "tipo": tipo_doc,
+        "datos_extraidos": datos_gpt,
+        "entidad": entidad.get("_nombre_corto", "desconocido") if entidad else "desconocido",
+        "entidad_cif": entidad.get("cif", "") if entidad else "",
+        "confianza_global": doc_confianza.confianza_global(),
+        "nivel_confianza": nivel,
+        "campos_bajo_umbral": campos_bajos,
+        "confianza_detalle": {
+            campo: {
+                "valor": dato.valor,
+                "confianza": dato.confianza,
+                "fuentes": {k: str(v) for k, v in dato.fuentes.items()},
+                "pasa_umbral": dato.pasa_umbral()
+            }
+            for campo, dato in doc_confianza.datos.items()
+        },
+        "_ocr_tier": ocr_tier,
+        "_ocr_tier_motivo": tier_motivo,
+        "_ocr_motores_usados": motores_usados,
+    }
+
+    return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+
+
 def ejecutar_intake(
     config: ConfigCliente,
     ruta_cliente: Path,
     interactivo: bool = True,
     auditoria=None,
-    carpeta_inbox: str = "inbox"
+    carpeta_inbox: str = "inbox",
+    max_workers: int = 5
 ) -> ResultadoFase:
     """Ejecuta la fase 0 de intake.
 
     Args:
         config: configuracion del cliente
         ruta_cliente: ruta a la carpeta del cliente
-        interactivo: si True, pregunta por entidades desconocidas
+        interactivo: si True, pregunta por entidades desconocidas (secuencial)
         auditoria: AuditoriaLogger opcional
+        carpeta_inbox: nombre de la carpeta inbox
+        max_workers: threads paralelos para OCR (default 5, 1=secuencial)
 
     Returns:
         ResultadoFase con datos de extraccion
@@ -588,7 +957,7 @@ def ejecutar_intake(
     estado = _cargar_estado_pipeline(ruta_cliente)
     hashes_previos = set(estado.get("hashes_procesados", []))
 
-    # Determinar motor OCR disponible
+    # Determinar motores OCR disponibles
     mistral_disponible = bool(os.environ.get("MISTRAL_API_KEY"))
     openai_disponible = bool(os.environ.get("OPENAI_API_KEY"))
 
@@ -601,180 +970,109 @@ def ejecutar_intake(
         client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
     motor_primario = "mistral" if mistral_disponible else "openai"
-    logger.info(f"Motor OCR primario: {motor_primario}"
-                f"{' (fallback: openai)' if mistral_disponible and openai_disponible else ''}")
+    gemini_disponible = _GEMINI_DISPONIBLE and bool(os.environ.get("GEMINI_API_KEY"))
+
+    # --- Fase 1: Pre-filtrar duplicados (secuencial, rapido) ---
+    pdfs_a_procesar = []
+    for ruta_pdf in pdfs:
+        hash_pdf = _calcular_hash(ruta_pdf)
+        if hash_pdf in hashes_previos:
+            logger.info(f"  Duplicado, saltando: {ruta_pdf.name}")
+            resultado.aviso(f"PDF duplicado: {ruta_pdf.name}", {"hash": hash_pdf})
+            continue
+        pdfs_a_procesar.append((ruta_pdf, hash_pdf))
+
+    if not pdfs_a_procesar:
+        resultado.aviso("No hay PDFs nuevos por procesar")
+        resultado.datos["documentos"] = []
+        return resultado
+
+    # --- Fase 2: Procesar PDFs (paralelo o secuencial) ---
+    usar_paralelo = not interactivo and max_workers > 1 and len(pdfs_a_procesar) > 1
+    workers = min(max_workers, len(pdfs_a_procesar)) if usar_paralelo else 1
+
+    logger.info(f"Motor OCR: {motor_primario} | Workers: {workers}"
+                f"{' | Tier 1: GPT' if openai_disponible else ''}"
+                f"{' | Tier 2: Gemini' if gemini_disponible else ''}")
 
     documentos_extraidos = []
     hashes_nuevos = []
+    tier_stats = {0: 0, 1: 0, 2: 0}
 
-    for ruta_pdf in pdfs:
-        nombre_archivo = ruta_pdf.name
-        logger.info(f"Procesando: {nombre_archivo}")
-
-        # 1. Hash SHA256
-        hash_pdf = _calcular_hash(ruta_pdf)
-        if hash_pdf in hashes_previos:
-            logger.info(f"  Duplicado (hash conocido), saltando: {nombre_archivo}")
-            resultado.aviso(f"PDF duplicado: {nombre_archivo}", {"hash": hash_pdf})
-            continue
-
-        # 2. Extraer texto con pdfplumber
-        try:
-            texto_raw = _extraer_texto_pdf(ruta_pdf)
-        except Exception as e:
-            logger.error(f"  Error extrayendo texto de {nombre_archivo}: {e}")
-            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena, f"Error pdfplumber: {e}")
-            resultado.aviso(f"Error pdfplumber: {nombre_archivo}", {"error": str(e)})
-            continue
-
-        # 3. Extraer datos con Mistral (primario) o GPT-4o (fallback)
-        datos_gpt = None
-
-        if motor_primario == "mistral":
-            logger.info(f"  Texto extraido ({len(texto_raw)} chars), llamando Mistral OCR3...")
-            datos_gpt = extraer_factura_mistral(ruta_pdf)
-            if datos_gpt:
-                logger.info(f"  Mistral OK")
-            elif client:
-                logger.warning(f"  Mistral fallo, intentando GPT-4o fallback...")
-                if texto_raw.strip():
-                    datos_gpt = _llamar_gpt_texto(client, texto_raw)
-                else:
-                    imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-                    if imagen_b64:
-                        datos_gpt = _llamar_gpt_vision(client, imagen_b64)
-        else:
-            # Motor primario: OpenAI
-            if texto_raw.strip():
-                logger.info(f"  Texto extraido ({len(texto_raw)} chars), llamando GPT-4o...")
-                datos_gpt = _llamar_gpt_texto(client, texto_raw)
-            else:
-                logger.info(f"  Sin texto, intentando GPT-4o Vision...")
-                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-                if imagen_b64:
-                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
-                else:
-                    logger.warning(f"  No se pudo extraer texto ni imagen de {nombre_archivo}")
-
-        if not datos_gpt:
-            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
-                                "No se pudo extraer datos (sin texto ni vision)")
-            resultado.aviso(f"Sin datos extraibles: {nombre_archivo}")
-            if auditoria:
-                auditoria.registrar("intake", "error",
-                                    f"No se pudo extraer datos de {nombre_archivo}")
-            continue
-
-        # 4. Clasificar tipo documento
-        tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
-        logger.info(f"  Tipo documento: {tipo_doc}")
-
-        # 5. Identificar entidad
-        entidad = _identificar_entidad(datos_gpt, tipo_doc, config)
-
-        if entidad:
-            logger.info(f"  Entidad identificada: {entidad.get('_nombre_corto', '?')}")
-        else:
-            # FLUJO DE DESCUBRIMIENTO
-            es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
-            cif_desconocido = (datos_gpt.get("emisor_cif") if es_proveedor
-                               else datos_gpt.get("receptor_cif")) or "?"
-            nombre_desconocido = (datos_gpt.get("emisor_nombre") if es_proveedor
-                                  else datos_gpt.get("receptor_nombre")) or "?"
-
-            logger.warning(f"  CIF desconocido: {cif_desconocido} ({nombre_desconocido})")
-
-            if interactivo:
-                entidad = _descubrimiento_interactivo(
-                    datos_gpt, tipo_doc, nombre_archivo, config,
-                    config.ruta
-                )
-                if not entidad:
-                    _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
-                                        f"Entidad desconocida: {cif_desconocido}")
-                    resultado.aviso(
-                        f"Entidad desconocida saltada: {cif_desconocido}",
-                        {"archivo": nombre_archivo}
-                    )
-                    continue
-            else:
-                # Modo no interactivo: mover a cuarentena
-                _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
-                                    f"CIF desconocido: {cif_desconocido}")
-                resultado.aviso(
-                    f"CIF desconocido, requiere configuracion manual: {cif_desconocido}",
-                    {"archivo": nombre_archivo, "cif": cif_desconocido,
-                     "nombre": nombre_desconocido}
-                )
-                if auditoria:
-                    auditoria.registrar("intake", "info",
-                                        f"CIF desconocido movido a cuarentena: {cif_desconocido}")
-                continue
-
-        # 6. Calcular confianza
-        doc_confianza = _construir_documento_confianza(
-            nombre_archivo, hash_pdf, texto_raw, datos_gpt,
-            tipo_doc, entidad, config
+    def _submit_pdf(args):
+        ruta_pdf, hash_pdf = args
+        return _procesar_un_pdf(
+            ruta_pdf, hash_pdf, config, client, motor_primario,
+            gemini_disponible, ruta_cuarentena, interactivo
         )
 
-        nivel = calcular_nivel(doc_confianza.confianza_global())
-        campos_bajos = doc_confianza.campos_bajo_umbral()
+    if usar_paralelo:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            futuros = {executor.submit(_submit_pdf, item): item
+                       for item in pdfs_a_procesar}
+            for futuro in concurrent.futures.as_completed(futuros):
+                try:
+                    res = futuro.result()
+                except Exception as e:
+                    ruta, h = futuros[futuro]
+                    logger.error(f"Error procesando {ruta.name}: {e}")
+                    resultado.aviso(f"Error inesperado: {ruta.name}", {"error": str(e)})
+                    continue
+                # Recoger resultados
+                for msg, datos in res["avisos"]:
+                    resultado.aviso(msg, datos)
+                if res["doc"]:
+                    documentos_extraidos.append(res["doc"])
+                    hashes_nuevos.append(res["hash"])
+                    tier = res["tier"]
+                    tier_stats[tier] = tier_stats.get(tier, 0) + 1
+                    if auditoria:
+                        d = res["doc"]
+                        auditoria.registrar("intake", "info",
+                            f"Extraido: {d['archivo']} -> {d['tipo']} "
+                            f"(conf={d['confianza_global']}%, tier={tier})",
+                            {"entidad": d["entidad"], "ocr_tier": tier})
+    else:
+        for item in pdfs_a_procesar:
+            res = _submit_pdf(item)
+            for msg, datos in res["avisos"]:
+                resultado.aviso(msg, datos)
+            if res["doc"]:
+                documentos_extraidos.append(res["doc"])
+                hashes_nuevos.append(res["hash"])
+                tier = res["tier"]
+                tier_stats[tier] = tier_stats.get(tier, 0) + 1
+                if auditoria:
+                    d = res["doc"]
+                    auditoria.registrar("intake", "info",
+                        f"Extraido: {d['archivo']} -> {d['tipo']} "
+                        f"(conf={d['confianza_global']}%, tier={tier})",
+                        {"entidad": d["entidad"], "ocr_tier": tier})
 
-        logger.info(f"  Confianza: {doc_confianza.confianza_global()}% ({nivel})")
-        if campos_bajos:
-            logger.warning(f"  Campos bajo umbral: {campos_bajos}")
-
-        # 7. Construir resultado del documento
-        doc_resultado = {
-            "archivo": nombre_archivo,
-            "hash_sha256": hash_pdf,
-            "tipo": tipo_doc,
-            "datos_extraidos": datos_gpt,
-            "entidad": entidad.get("_nombre_corto", "desconocido") if entidad else "desconocido",
-            "entidad_cif": entidad.get("cif", "") if entidad else "",
-            "confianza_global": doc_confianza.confianza_global(),
-            "nivel_confianza": nivel,
-            "campos_bajo_umbral": campos_bajos,
-            "confianza_detalle": {
-                campo: {
-                    "valor": dato.valor,
-                    "confianza": dato.confianza,
-                    "fuentes": {k: str(v) for k, v in dato.fuentes.items()},
-                    "pasa_umbral": dato.pasa_umbral()
-                }
-                for campo, dato in doc_confianza.datos.items()
-            }
-        }
-
-        documentos_extraidos.append(doc_resultado)
-        hashes_nuevos.append(hash_pdf)
-
-        if auditoria:
-            auditoria.registrar("intake", "info",
-                                f"Extraido: {nombre_archivo} -> {tipo_doc} "
-                                f"({doc_confianza.confianza_global()}%)",
-                                {"entidad": doc_resultado["entidad"]})
-
-    # 8. Guardar intake_results.json
+    # --- Fase 3: Guardar resultados ---
     ruta_resultados = ruta_cliente / "intake_results.json"
     resultados_json = {
         "fecha_ejecucion": __import__("datetime").datetime.now().isoformat(),
         "total_pdfs_encontrados": len(pdfs),
         "total_procesados": len(documentos_extraidos),
-        "total_duplicados": len([h for h in [_calcular_hash(p) for p in pdfs]
-                                 if h in hashes_previos]) if hashes_previos else 0,
+        "total_duplicados": len(pdfs) - len(pdfs_a_procesar),
+        "ocr_tier_stats": tier_stats,
         "documentos": documentos_extraidos
     }
     with open(ruta_resultados, "w", encoding="utf-8") as f:
         json.dump(resultados_json, f, ensure_ascii=False, indent=2)
 
-    # 9. Actualizar estado con hashes nuevos
+    logger.info(f"OCR Tiers: T0={tier_stats.get(0, 0)}, "
+                f"T1={tier_stats.get(1, 0)}, T2={tier_stats.get(2, 0)}")
+
+    # Actualizar estado con hashes nuevos
     estado["hashes_procesados"] = list(hashes_previos | set(hashes_nuevos))
     _guardar_estado_pipeline(ruta_cliente, estado)
 
     # Resultado de la fase
     resultado.datos["documentos"] = documentos_extraidos
     resultado.datos["ruta_resultados"] = str(ruta_resultados)
+    resultado.datos["ocr_tier_stats"] = tier_stats
 
     if not documentos_extraidos:
         resultado.aviso("No se proceso ningun documento nuevo")

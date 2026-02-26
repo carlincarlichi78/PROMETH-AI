@@ -235,11 +235,34 @@ Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
 
 **Tests**: 21 unitarios (`tests/test_aprendizaje.py`). Total suite: 88 tests.
 
+## OCR por Tiers + Paralelizacion — IMPLEMENTADO
+
+**OCR Tiers** (en `scripts/phases/intake.py`):
+| Tier | Motores | Condicion | % est. |
+|------|---------|-----------|--------|
+| 0 | Mistral solo | Campos criticos OK + aritmetica OK + confianza >= 85% | ~70% |
+| 1 | Mistral + GPT | Tier 0 rechazado; si coinciden → aceptar | ~25% |
+| 2 | Mistral + GPT + Gemini | Discrepancia Tier 1; votacion 2-de-3 | ~5% |
+
+Funciones: `_evaluar_tier_0()`, `_comparar_dos_extracciones()`, `_votacion_tres_motores()`
+Campos nuevos en resultado: `_ocr_tier`, `_ocr_tier_motivo`, `_ocr_motores_usados`, `ocr_tier_stats`
+
+**Paralelizacion intake** (`ThreadPoolExecutor`):
+- `_procesar_un_pdf()` extraida como funcion independiente thread-safe
+- `ejecutar_intake(..., max_workers=5)` — 5 threads paralelos por defecto
+- Modo interactivo: secuencial automaticamente
+- Gemini serializado via `_gemini_lock` (rate limit free tier)
+- Cliente Mistral cacheado (singleton en `ocr_mistral.py`)
+- Speedup estimado: ~5x en intake (de ~8 min a ~1.5 min para 100 docs)
+
+**Registration NO paralelizado**: FS es Apache/PHP single-thread, numeracion facturas podria colisionar.
+
+**Tests**: 88/88 pasando.
+
 ## Proximos pasos
 
 ### Prioritario (proxima sesion)
-1. **Implementar OCR por Tiers** — Plan aprobado en `~/.claude/plans/frolicking-chasing-rivest.md`. Solo modifica `intake.py`. Tier 0 (Mistral solo, ~70%), Tier 1 (+GPT, ~25%), Tier 2 (+Gemini desempate, ~5%).
-2. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs, 11 entidades) — validar aprendizaje en produccion
+1. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs, 11 entidades) — validar tiers + paralelizacion en produccion
 
 ### Otros
 - Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
