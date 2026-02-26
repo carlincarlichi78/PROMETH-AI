@@ -193,31 +193,30 @@ Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
 **Tests**: 67 unitarios pasando (29 asientos_directos + 17 pre_validation_tipos + 21 existentes)
 **Pendiente**: Task 9 (test E2E con PDFs chiringuito-sol-arena) + Task 10 (actualizar docs)
 
-## Test E2E chiringuito-sol-arena — EN PROGRESO
+## Test E2E chiringuito-sol-arena — COMPLETADO
 
 **FS configurado**: empresa 4, ejercicio 0004, PGC importado, codejercicio="0004"
-**Dry-run OK**: 105/106 validados (1 duplicado excluido). BAN:28, FC:37, IMP:2, NOM:32, RLC:7. Score 100%
-**Pipeline completo FALLO en registro**: 0 OK, 105 fallidos. 3 errores a resolver:
+**Resultado final**: 104/105 registrados (99%), Balance cuadra 127,807.44 EUR, 10/13 checks PASS (92% ACEPTABLE)
 
-1. **"No se encontro entidad en FS"** (FC) — Proveedores (Makro, Renting, Gastro Holding, Ayto Marbella) no existen en FS para empresa 4. registration.py busca proveedor por CIF pero no lo encuentra. Solucion: crear proveedores via API antes del pipeline, o que registration.py los cree automaticamente
-2. **"Error creando asiento directo: 'idasiento'"** (NOM/BAN) — `crear_asiento_directo()` llama POST asientos pero la respuesta no contiene 'idasiento'. Posible causa: codejercicio incorrecto o empresa activa del usuario API afecta. **NOTA**: se crearon 62 asientos huerfanos en empresa 4 — limpiar antes de re-ejecutar
-3. **"object of type 'NoneType' has no len()"** (RLC) — partidas es None para documentos RLC. Falta generacion de partidas para tipo RLC en registration.py
+- 1 factura fallida: CIF OCR erroneo (A28054600 vs A28054609 real Makro)
+- 3 checks FAIL: diff 378 EUR de IVA en renting (OCR no desglosó base/IVA en 3 de 7 meses)
 
-**Cambios de esta sesion**:
-- `--inbox` flag en pipeline.py y intake.py para usar carpetas alternativas
-- Mistral OCR3 como motor primario (GPT-4o como fallback)
-- `config.codejercicio` property en config.py (separar codejercicio FS del ano)
-- registration.py y cross_validation.py usan `config.codejercicio` para API calls
-- pre_validation.py: CIF y fecha non-blocking para NOM/BAN/RLC/IMP
+**Bugs corregidos en esta sesion**:
+1. **POST asientos response**: `{"ok":"...","data":{"idasiento":"X"}}` — parsear `data.idasiento` en `asientos_directos.py`
+2. **RLC fecha null**: `_generar_concepto_asiento` usaba `len(None)`. Fix: `datos.get("fecha") or ""`
+3. **Auto-creacion proveedores**: nueva funcion `_asegurar_entidades_fs()` en registration.py. Crea proveedores/clientes faltantes en FS antes de registrar.
+4. **codsubcuenta proveedores**: config.yaml `subcuenta` es la cuenta de GASTO (600x), NO la de proveedor (400x). No pasar codsubcuenta al crear, FS auto-asigna 4000000xxx.
+5. **Renting base/IVA**: derivar `base_imponible`/`iva_importe` desde `importe`/`total` en `construir_partidas_bancario()`
+
+**Hallazgo critico**: el bug "asientos invertidos" de FS NO existe cuando el proveedor tiene codsubcuenta 400. Solo ocurría cuando codsubcuenta era 600 (gastos). `_corregir_asientos_proveedores()` sigue activo como safety net.
 
 ## Proximos pasos
 
-### Prioritario (proxima sesion)
-1. **Resolver 3 errores registro chiringuito** — crear proveedores en FS, debug asientos directos API, generar partidas RLC
-2. **Limpiar 62 asientos huerfanos** en empresa 4 antes de re-ejecutar
-3. **Re-ejecutar pipeline completo** contra chiringuito-sol-arena
+### Prioritario
+- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados, 11 entidades)
+- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario (posible eliminar si todos los proveedores tienen subcuenta 400)
 
 ### Otros
-- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados, 11 entidades)
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts
+- Mejorar OCR renting: desglosar base/IVA cuando no viene separado

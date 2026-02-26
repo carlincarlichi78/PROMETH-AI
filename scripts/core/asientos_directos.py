@@ -127,6 +127,17 @@ def construir_partidas_bancario(datos: dict, subtipo: str) -> list[dict]:
     if subtipo not in _SUBTIPOS_BANCARIOS:
         raise ValueError(f"Subtipo bancario no soportado: {subtipo}")
 
+    # Renting: OCR extrae importe=base y total=base+IVA,
+    # pero plantilla espera base_imponible, iva_importe, importe(=total)
+    if subtipo == "renting":
+        importe_raw = datos.get("importe", 0)
+        total_raw = datos.get("total", 0)
+        if not datos.get("base_imponible") and importe_raw and total_raw:
+            datos = {**datos}
+            datos["base_imponible"] = importe_raw
+            datos["iva_importe"] = round(total_raw - importe_raw, 2)
+            datos["importe"] = total_raw
+
     clave = f"bancario_{subtipo}"
     plantillas = _cargar_plantillas()
     return _construir_partidas_desde_plantilla(plantillas[clave]["partidas"], datos)
@@ -189,7 +200,15 @@ def crear_asiento_directo(
     }
     logger.info(f"Creando asiento: {concepto} ({fecha})")
     resp_asiento = api_post("asientos", datos_asiento)
-    idasiento = resp_asiento["idasiento"]
+
+    # FS API devuelve {"ok": "...", "data": {"idasiento": "456", ...}}
+    idasiento = (
+        resp_asiento.get("data", {}).get("idasiento")
+        or resp_asiento.get("idasiento")
+    )
+    if not idasiento:
+        raise ValueError(f"Respuesta sin idasiento: {resp_asiento}")
+    idasiento = int(idasiento)
     logger.info(f"Asiento creado: idasiento={idasiento}")
 
     # 2. Crear cada partida vinculada al asiento

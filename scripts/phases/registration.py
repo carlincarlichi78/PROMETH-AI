@@ -33,6 +33,116 @@ from ..core.logger import crear_logger
 logger = crear_logger("registration")
 
 
+def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
+    """Crea proveedores y clientes en FS si no existen.
+
+    Recorre config.proveedores y config.clientes, busca cada CIF en FS,
+    y crea los que faltan via POST + actualiza codpais en contactos.
+
+    Returns:
+        dict con {creados_prov, creados_cli, existentes, errores}
+    """
+    from ..core.config import _normalizar_cif
+
+    stats = {"creados_prov": 0, "creados_cli": 0, "existentes": 0, "errores": 0}
+    regimen_map = {
+        "general": "General",
+        "intracomunitario": "Intracomunitario",
+        "extracomunitario": "Exento",
+    }
+
+    # --- Proveedores ---
+    proveedores_fs = api_get("proveedores", limit=500)
+    cifs_existentes = {
+        _normalizar_cif(p.get("cifnif", "")): p.get("codproveedor")
+        for p in proveedores_fs
+    }
+
+    for nombre_corto, datos in config.proveedores.items():
+        cif_norm = _normalizar_cif(datos.get("cif", ""))
+        if cif_norm in cifs_existentes:
+            stats["existentes"] += 1
+            continue
+
+        pais = datos.get("pais", "ESP")
+        form = {
+            "nombre": datos.get("nombre_fs", ""),
+            "razonsocial": datos.get("nombre_fs", ""),
+            "cifnif": datos.get("cif", ""),
+            "regimeniva": regimen_map.get(datos.get("regimen", "general"), "General"),
+            # NO pasar codsubcuenta: FS auto-asigna 4000000xxx (acreedores).
+            # config.subcuenta es la cuenta de GASTO (600x), no la de proveedor.
+            "personafisica": 0,
+            "tipoidfiscal": "NIF" if pais == "ESP" else "",
+        }
+
+        try:
+            resp = api_post("proveedores", form)
+            codprov = resp.get("data", {}).get("codproveedor")
+            idcontacto = resp.get("data", {}).get("idcontacto")
+
+            if not codprov:
+                stats["errores"] += 1
+                logger.error(f"  Proveedor {nombre_corto}: sin codproveedor en respuesta")
+                continue
+
+            # Setear codpais en contacto (CRITICO para modelos fiscales)
+            if idcontacto:
+                api_put(f"contactos/{idcontacto}", data={"codpais": pais})
+
+            cifs_existentes[cif_norm] = codprov
+            stats["creados_prov"] += 1
+            logger.info(f"  Proveedor creado: {datos['nombre_fs']} (cod={codprov})")
+        except Exception as e:
+            stats["errores"] += 1
+            logger.error(f"  Error creando proveedor {nombre_corto}: {e}")
+
+    # --- Clientes ---
+    clientes_fs = api_get("clientes", limit=500)
+    cifs_cli_existentes = {
+        _normalizar_cif(c.get("cifnif", "")): c.get("codcliente")
+        for c in clientes_fs
+    }
+
+    for nombre_corto, datos in config.clientes.items():
+        cif_norm = _normalizar_cif(datos.get("cif", ""))
+        if cif_norm in cifs_cli_existentes:
+            stats["existentes"] += 1
+            continue
+
+        pais = datos.get("pais", "ESP")
+        form = {
+            "nombre": datos.get("nombre_fs", ""),
+            "razonsocial": datos.get("nombre_fs", ""),
+            "cifnif": datos.get("cif", ""),
+            "regimeniva": "General",
+            "personafisica": 0,
+            "tipoidfiscal": "NIF" if pais == "ESP" else "",
+        }
+
+        try:
+            resp = api_post("clientes", form)
+            codcli = resp.get("data", {}).get("codcliente")
+            idcontacto = resp.get("data", {}).get("idcontacto")
+
+            if not codcli:
+                stats["errores"] += 1
+                logger.error(f"  Cliente {nombre_corto}: sin codcliente en respuesta")
+                continue
+
+            if idcontacto:
+                api_put(f"contactos/{idcontacto}", data={"codpais": pais})
+
+            cifs_cli_existentes[cif_norm] = codcli
+            stats["creados_cli"] += 1
+            logger.info(f"  Cliente creado: {datos['nombre_fs']} (cod={codcli})")
+        except Exception as e:
+            stats["errores"] += 1
+            logger.error(f"  Error creando cliente {nombre_corto}: {e}")
+
+    return stats
+
+
 def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
                                tipo_doc: str) -> Optional[str]:
     """Busca el codigo del proveedor/cliente en FS via API.
@@ -431,7 +541,7 @@ def _corregir_divisas_asientos(registrados: list) -> int:
 
 def _generar_concepto_asiento(tipo_doc: str, datos: dict) -> str:
     """Genera concepto descriptivo para asiento directo."""
-    fecha = datos.get("fecha", "")
+    fecha = datos.get("fecha") or ""
     mes = fecha[5:7] if len(fecha) >= 7 else ""
     anio = fecha[:4] if len(fecha) >= 4 else ""
 
@@ -483,6 +593,18 @@ def ejecutar_registro(
         resultado.datos["registrados"] = []
         return resultado
 
+    # Asegurar que todos los proveedores/clientes del config existen en FS
+    logger.info("Verificando entidades en FS...")
+    stats_entidades = _asegurar_entidades_fs(config)
+    if stats_entidades["creados_prov"] or stats_entidades["creados_cli"]:
+        logger.info(
+            f"  Entidades creadas: {stats_entidades['creados_prov']} proveedores, "
+            f"{stats_entidades['creados_cli']} clientes "
+            f"({stats_entidades['existentes']} ya existian)"
+        )
+    if stats_entidades["errores"]:
+        logger.warning(f"  {stats_entidades['errores']} errores creando entidades")
+
     logger.info(f"Registrando {len(documentos)} facturas en FS...")
 
     registrados = []
@@ -497,7 +619,7 @@ def ejecutar_registro(
         TIPOS_ASIENTO_DIRECTO = ("NOM", "BAN", "RLC", "IMP")
         if tipo_doc in TIPOS_ASIENTO_DIRECTO:
             try:
-                datos = doc.get("datos_extraidos", {})
+                datos = doc.get("datos_extraidos") or {}
                 concepto = _generar_concepto_asiento(tipo_doc, datos)
 
                 # Construir partidas segun tipo
