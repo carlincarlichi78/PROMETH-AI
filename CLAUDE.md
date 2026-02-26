@@ -101,22 +101,30 @@ Modulos implementados:
 - `scripts/onboarding.py` — alta interactiva de clientes
 
 ## Testing SFCE — EMPRESA PRUEBA
-**Estado**: COMPLETADO. Pipeline 46/46 OK, cross-validation 9/9 PASS, score 100%.
+**Estado**: COMPLETADO. Pipeline 46/46 OK, cross-validation 9/9 PASS, modelos fiscales coinciden con Pastorino.
 
-Resultados:
-- Resultado explotacion: 30,920.80 EUR | Pastorino: 53,189.50 EUR
-- IVA anual: 651.58 EUR | Pastorino: 3,138.14 EUR
+Resultados finales (post-correcciones):
+- Resultado explotacion: 50,342.51 EUR | Pastorino: 53,189.50 EUR (diff 2,847 = desglose suplidos distinto en PDFs prueba, esperado)
+- IVA anual: 3,138.14 EUR | Pastorino: 3,138.14 EUR (IDENTICO)
+- IVA soportado: T3=2,128.71 T4=261.89 (IDENTICO a Pastorino)
+- Modelo 347 Cargaexpress: 25,650.34 EUR = Primatransit: 25,650.34 EUR (IDENTICO)
 - Modelo 349: Oceanline (DNK) + Lusitania (PRT) = 19,028.82 EUR
 
 ### Bugs corregidos (sesiones 26/02/2026)
 
-**Bug 1 — Asientos invertidos**: `_corregir_asientos_proveedores()` ahora detecta inversion (400 DEBE / 600 HABER) antes de swapear, no swap ciego. Corregidos 97 partidas Pastorino + 93 EMPRESA PRUEBA.
+**Bug 1 — Asientos invertidos**: `_corregir_asientos_proveedores()` detecta inversion antes de swapear. 97 partidas Pastorino + 93 EMPRESA PRUEBA.
 
-**Bug 2 — IVA mixto**: `_construir_form_data()` procesa `reglas_especiales` por linea.
+**Bug 2 — IVA mixto**: `_construir_form_data()` procesa `reglas_especiales` por linea (IVA0 para suplidos).
 
-**Bug 3 — codpais**: actualizar en tabla `contactos` (no solo `proveedores`). `generar_modelos_fiscales.py` lee de contactos.
+**Bug 3 — codpais**: actualizar en tabla `contactos` Y `proveedores`. `generar_modelos_fiscales.py` lee de contactos.
 
-**Bug 4 — Filtros API en verificacion**: `asientos.py` y `cross_validation.py` ahora post-filtran por `idasiento`/`idempresa` (la API ignora estos filtros).
+**Bug 4 — Filtros API en verificacion**: `asientos.py` y `cross_validation.py` post-filtran por `idasiento`/`idempresa`.
+
+**Bug 5 — IVA suplidos Cargaexpress**: 12 lineas de suplidos (IVA ADUANA, DERECHOS ARANCEL, CAUCION, CERTIFICADOS, COSTES NAVIERA) tenian IVA21 en vez de IVA0. Corregido codimpuesto en lineas FS + partidas 472/400. Total IVA indebido eliminado: 2,486.57 EUR.
+
+**Bug 6 — Reclasificacion 600→4709**: Suplidos aduaneros quedaban en 600 (gastos) en vez de 4709 (HP deudora). Nuevo handler `iva_extranjero` en correction.py. Config.yaml ampliado con 5 patrones de suplidos. 5,194.57 EUR reclasificados.
+
+**Bug 7 — Divisas en asientos**: `crearFacturaProveedor` genera partidas en divisa original (USD). `_corregir_divisas_asientos()` convierte a EUR via tasaconv.
 
 ## Generador datos de prueba SFCE — COMPLETADO
 Diseno: `docs/plans/2026-02-26-datos-prueba-design.md`
@@ -133,7 +141,22 @@ Generador en `tests/datos_prueba/generador/`:
 - **Proxima sesion**: ejecutar pipeline SFCE contra entidades de prueba, comparar detecciones vs manifiesto
 
 ## Proximos pasos
-- Ejecutar pipeline SFCE contra entidades de prueba (2.333 PDFs), comparar detecciones vs manifiesto
-- Considerar dominio propio para contabilidad (no depender de lemonfresh-tuc.com)
-- Configurar backups automaticos de la BD de FacturaScripts
-- Explorar plugin Modelo200 (Impuesto Sociedades) cuando este disponible
+
+### Prioritario: Mejorar autoevaluacion pipeline (analisis completado)
+Analisis de gaps realizado. Cobertura actual ~75-85% en validaciones basicas. Gaps criticos:
+1. **IVA por linea (20% cobertura)**: solo valida IVA global, no por linea. Depende de `reglas_especiales` en config
+2. **Suplidos automaticos (30%)**: reclasificacion 600→4709 solo si `iva_extranjero` en config. Otros suplidos = manual
+3. **Cruce por proveedor (0%)**: fase 5 cruza totales globales, no por proveedor individual (errores se compensan)
+4. **Documentacion aduanal (0%)**: sin validacion de DUAs, certificados origen
+
+Mejoras propuestas:
+- P1: Validacion IVA por linea en fase 4 (check nuevo)
+- P2: Deteccion automatica de suplidos sin config (heuristica por descripcion)
+- P3: Cruce de importes por proveedor individual (no solo global)
+- P4: Check de subcuentas validas por tipo contable (6xx gastos, 7xx ingresos, 472 IVA sop, 477 IVA rep)
+
+### Otros
+- Ejecutar pipeline contra entidades de prueba (2.333 PDFs)
+- Corregir Pastorino suplidos Primatransit (misma reclasificacion 600→4709 que se hizo en EMPRESA PRUEBA)
+- Considerar dominio propio para contabilidad
+- Configurar backups automaticos BD FacturaScripts
