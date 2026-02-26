@@ -210,11 +210,26 @@ Plan: `docs/plans/2026-02-26-intake-multi-tipo-implementation.md`
 
 **Hallazgo critico**: el bug "asientos invertidos" de FS NO existe cuando el proveedor tiene codsubcuenta 400. Solo ocurría cuando codsubcuenta era 600 (gastos). `_corregir_asientos_proveedores()` sigue activo como safety net.
 
+## Motor de Aprendizaje Evolutivo — IMPLEMENTADO
+
+**Principio**: el sistema SIEMPRE busca completar la contabilidad, resolviendo problemas y aprendiendo.
+
+**Componentes**:
+- `scripts/core/aprendizaje.py` — BaseConocimiento + Resolutor (6 estrategias)
+- `reglas/aprendizaje.yaml` — Base de conocimiento persistente (se auto-actualiza)
+- Integrado en `registration.py` — retry con resolucion automatica (3 intentos/doc)
+
+**Estrategias**: crear_entidad_desde_ocr, buscar_entidad_fuzzy, corregir_campo_null, adaptar_campos_ocr, derivar_importes, crear_subcuenta_auto
+
+**Flujo**: Error → patron conocido? → aplicar → exito? guardar. Si no, probar TODAS → si alguna funciona → APRENDER patron nuevo.
+
+**Tests**: 21 unitarios (`tests/test_aprendizaje.py`). Total suite: 88 tests.
+
 ## Proximos pasos
 
 ### Prioritario
-- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs generados, 11 entidades)
-- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario (posible eliminar si todos los proveedores tienen subcuenta 400)
+- Ejecutar pipeline contra mas entidades de prueba (2.333 PDFs, 11 entidades) — validar aprendizaje en produccion
+- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
 
 ### Otros
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)

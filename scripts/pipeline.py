@@ -412,6 +412,12 @@ def main():
     n_registrados = len(registro_data.get("registrados", []))
     n_fallidos = len(registro_data.get("fallidos", []))
 
+    # Estadisticas de aprendizaje
+    aprendizaje = registro_data.get("aprendizaje", {})
+    n_resueltos = aprendizaje.get("resueltos", 0)
+    n_aprendidos = aprendizaje.get("aprendidos", 0)
+    n_patrones = aprendizaje.get("patrones_conocidos", 0)
+
     logger.info("")
     logger.info("=" * 60)
     logger.info(f"  PIPELINE COMPLETADO")
@@ -419,6 +425,9 @@ def main():
     logger.info(f"  Documentos por tipo: {resumen_tipos}")
     if n_registrados or n_fallidos:
         logger.info(f"  Registrados: {n_registrados} OK, {n_fallidos} fallidos")
+    if n_resueltos or n_aprendidos:
+        logger.info(f"  Aprendizaje: {n_resueltos} problemas auto-resueltos, "
+                    f"{n_aprendidos} patrones nuevos, {n_patrones} en base conocimiento")
     logger.info("=" * 60)
 
     auditoria.registrar("pipeline", "info",

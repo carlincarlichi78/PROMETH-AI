@@ -1,0 +1,83 @@
+# Base de conocimiento del sistema contable
+# Se actualiza AUTOMATICAMENTE al resolver problemas
+# El sistema graba aqui cada solucion que descubre
+#
+# Cada patron tiene:
+#   regex: expresion regular que matchea el error
+#   estrategia: nombre de la funcion de resolucion
+#   exitos/fallos: contadores para priorizar estrategias
+#   tipo_doc: filtro opcional por tipo de documento
+
+version: 1
+ultima_actualizacion: "2026-02-26"
+
+patrones:
+  - id: "base_001"
+    regex: "No se encontro entidad.*en FS|Entidad no encontrada"
+    estrategia: "crear_entidad_desde_ocr"
+    tipo_doc: ["FC", "FV", "NC", "ANT"]
+    aprendido: "2026-02-26"
+    exitos: 4
+    fallos: 0
+    origen: "manual"
+    descripcion: "Proveedor/cliente no existe en FS — crear desde datos OCR"
+
+  - id: "base_002"
+    regex: "NoneType.*has no len|NoneType.*not subscriptable|NoneType.*no attribute"
+    estrategia: "corregir_campo_null"
+    tipo_doc: []
+    aprendido: "2026-02-26"
+    exitos: 7
+    fallos: 0
+    origen: "manual"
+    descripcion: "Campo con valor null en datos extraidos — rellenar con defaults"
+
+  - id: "base_003"
+    regex: "Nomina no cuadra|bruto.*!=.*irpf.*ss.*neto"
+    estrategia: "adaptar_campos_ocr"
+    tipo_doc: ["NOM"]
+    aprendido: "2026-02-26"
+    exitos: 0
+    fallos: 0
+    origen: "manual"
+    descripcion: "Campos de nomina con nombres alternativos del OCR"
+
+  - id: "base_004"
+    regex: "cifnif.*no encontrad|CIF.*no coincide|CIF.*no existe"
+    estrategia: "buscar_entidad_fuzzy"
+    tipo_doc: ["FC", "FV"]
+    aprendido: "2026-02-26"
+    exitos: 1
+    fallos: 0
+    origen: "manual"
+    descripcion: "CIF del OCR difiere en ultimo digito — busqueda aproximada"
+
+  - id: "base_005"
+    regex: "subcuenta.*no existe|codsubcuenta.*no encontrad"
+    estrategia: "crear_subcuenta_auto"
+    tipo_doc: []
+    aprendido: "2026-02-26"
+    exitos: 0
+    fallos: 0
+    origen: "manual"
+    descripcion: "Subcuenta no existe en el ejercicio — crearla automaticamente"
+
+  - id: "base_006"
+    regex: "Sin partidas|partidas.*None|partidas.*vaci"
+    estrategia: "adaptar_campos_ocr"
+    tipo_doc: ["NOM", "BAN", "RLC", "IMP"]
+    aprendido: "2026-02-26"
+    exitos: 0
+    fallos: 0
+    origen: "manual"
+    descripcion: "Partidas vacias porque campos OCR no matchean nombres esperados"
+
+  - id: "base_007"
+    regex: "base_imponible.*iva_importe|importe.*total.*derivar"
+    estrategia: "derivar_importes"
+    tipo_doc: ["BAN"]
+    aprendido: "2026-02-26"
+    exitos: 0
+    fallos: 0
+    origen: "manual"
+    descripcion: "Importes faltantes derivables desde otros campos"

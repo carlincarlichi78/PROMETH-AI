@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ..core.aprendizaje import Resolutor
 from ..core.asientos_directos import (
     crear_asiento_directo,
     construir_partidas_nomina,
@@ -593,6 +594,14 @@ def ejecutar_registro(
         resultado.datos["registrados"] = []
         return resultado
 
+    # Inicializar motor de aprendizaje
+    resolutor = Resolutor(config)
+    contexto_base = {
+        "config": config,
+        "codejercicio": config.codejercicio,
+        "idempresa": config.idempresa,
+    }
+
     # Asegurar que todos los proveedores/clientes del config existen en FS
     logger.info("Verificando entidades en FS...")
     stats_entidades = _asegurar_entidades_fs(config)
@@ -618,88 +627,123 @@ def ejecutar_registro(
         # === BIFURCACION: factura vs asiento directo ===
         TIPOS_ASIENTO_DIRECTO = ("NOM", "BAN", "RLC", "IMP")
         if tipo_doc in TIPOS_ASIENTO_DIRECTO:
-            try:
-                datos = doc.get("datos_extraidos") or {}
-                concepto = _generar_concepto_asiento(tipo_doc, datos)
+            doc_trabajo = {**doc}
+            ctx = {**contexto_base, "tipo": tipo_doc}
+            asiento_ok = False
 
-                # Construir partidas segun tipo
-                if tipo_doc == "NOM":
-                    partidas = construir_partidas_nomina(datos)
-                elif tipo_doc == "BAN":
-                    subtipo = datos.get("subtipo", "comision")
-                    partidas = construir_partidas_bancario(datos, subtipo)
-                elif tipo_doc == "RLC":
-                    partidas = construir_partidas_rlc(datos)
-                elif tipo_doc == "IMP":
-                    partidas = construir_partidas_impuesto(datos)
-                else:
-                    partidas = []
+            for intento in range(resolutor.max_reintentos):
+                try:
+                    datos = doc_trabajo.get("datos_extraidos") or {}
+                    concepto = _generar_concepto_asiento(tipo_doc, datos)
 
-                if not partidas:
-                    logger.warning(f"  Sin partidas para {archivo}, saltando")
-                    fallidos.append({**doc, "error_registro": "Sin partidas"})
-                    continue
+                    # Construir partidas segun tipo
+                    if tipo_doc == "NOM":
+                        partidas = construir_partidas_nomina(datos)
+                    elif tipo_doc == "BAN":
+                        subtipo = datos.get("subtipo", "comision")
+                        partidas = construir_partidas_bancario(datos, subtipo)
+                    elif tipo_doc == "RLC":
+                        partidas = construir_partidas_rlc(datos)
+                    elif tipo_doc == "IMP":
+                        partidas = construir_partidas_impuesto(datos)
+                    else:
+                        partidas = []
 
-                resultado_asiento = crear_asiento_directo(
-                    concepto=concepto,
-                    fecha=datos.get("fecha", ""),
-                    codejercicio=config.codejercicio,
-                    idempresa=config.idempresa,
-                    partidas=partidas,
-                )
+                    if not partidas:
+                        raise ValueError(f"Sin partidas para {archivo}")
 
-                registro = {
-                    **doc,
-                    "idasiento": resultado_asiento["idasiento"],
-                    "num_partidas": resultado_asiento["num_partidas"],
-                    "tipo_registro": "asiento_directo",
-                    "verificacion_ok": True,
-                }
-                registrados.append(registro)
-
-                if auditoria:
-                    auditoria.registrar(
-                        "registro", "info",
-                        f"Asiento directo: {archivo} -> ID {resultado_asiento['idasiento']}",
-                        {"idasiento": resultado_asiento["idasiento"], "tipo": tipo_doc}
+                    resultado_asiento = crear_asiento_directo(
+                        concepto=concepto,
+                        fecha=datos.get("fecha") or "",
+                        codejercicio=config.codejercicio,
+                        idempresa=config.idempresa,
+                        partidas=partidas,
                     )
-                continue  # Saltar flujo de facturas
-            except Exception as e:
-                logger.error(f"  Error creando asiento directo: {e}")
-                resultado.aviso(f"Error asiento directo: {archivo}", {"error": str(e)})
-                fallidos.append({**doc, "error_registro": str(e)})
-                continue
+
+                    registro = {
+                        **doc_trabajo,
+                        "idasiento": resultado_asiento["idasiento"],
+                        "num_partidas": resultado_asiento["num_partidas"],
+                        "tipo_registro": "asiento_directo",
+                        "verificacion_ok": True,
+                    }
+                    registrados.append(registro)
+                    asiento_ok = True
+
+                    if auditoria:
+                        auditoria.registrar(
+                            "registro", "info",
+                            f"Asiento directo: {archivo} -> ID {resultado_asiento['idasiento']}"
+                            + (f" (intento {intento+1})" if intento > 0 else ""),
+                            {"idasiento": resultado_asiento["idasiento"], "tipo": tipo_doc}
+                        )
+                    break  # Exito, salir del retry loop
+                except Exception as e:
+                    if intento < resolutor.max_reintentos - 1:
+                        solucion = resolutor.intentar_resolver(e, doc_trabajo, ctx)
+                        if solucion:
+                            doc_trabajo = solucion["datos_corregidos"]
+                            logger.info(f"  Reintentando ({intento+2}/{resolutor.max_reintentos})")
+                            continue
+                    # Sin solucion o ultimo intento
+                    logger.error(f"  Error asiento directo: {e}")
+                    resultado.aviso(f"Error asiento directo: {archivo}", {"error": str(e)})
+                    fallidos.append({**doc_trabajo, "error_registro": str(e)})
+                    break
+
+            if asiento_ok:
+                continue  # Siguiente documento
 
         # 1. Buscar codigo de entidad en FS
-        codigo_entidad = _buscar_codigo_entidad_fs(config, doc, tipo_doc)
+        doc_trabajo = {**doc}
+        ctx = {**contexto_base, "tipo": tipo_doc}
+        codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc)
+
         if not codigo_entidad:
-            logger.error(f"  No se encontro entidad en FS para {archivo}")
-            resultado.aviso(f"Entidad no encontrada en FS: {archivo}")
-            fallidos.append({**doc, "error_registro": "Entidad no encontrada en FS"})
-            continue
+            # Intentar resolver con aprendizaje (crear entidad, fuzzy CIF, etc.)
+            error_entidad = ValueError(f"No se encontro entidad en FS para {archivo}")
+            solucion = resolutor.intentar_resolver(error_entidad, doc_trabajo, ctx)
+            if solucion:
+                doc_trabajo = solucion["datos_corregidos"]
+                codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc)
+
+            if not codigo_entidad:
+                logger.error(f"  No se encontro entidad en FS para {archivo}")
+                resultado.aviso(f"Entidad no encontrada en FS: {archivo}")
+                fallidos.append({**doc_trabajo, "error_registro": "Entidad no encontrada en FS"})
+                continue
 
         # 2. Construir form-data
-        form_data = _construir_form_data(doc, tipo_doc, config, codigo_entidad)
+        form_data = _construir_form_data(doc_trabajo, tipo_doc, config, codigo_entidad)
 
-        # 3. POST crear factura
+        # 3. POST crear factura (con retry por aprendizaje)
         es_proveedor = tipo_doc in ("FC", "NC", "ANT")
         endpoint = "crearFacturaProveedor" if es_proveedor else "crearFacturaCliente"
+        idfactura = None
 
-        try:
-            respuesta = api_post(endpoint, data=form_data)
-            # La respuesta viene en {"doc": {"idfactura": X}, "lines": [...]}
-            idfactura = respuesta.get("doc", {}).get("idfactura")
-            if not idfactura:
-                # Fallback: buscar en raiz (por si cambia formato)
-                idfactura = respuesta.get("idfactura")
-            if not idfactura:
-                raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
-            logger.info(f"  Factura creada: ID {idfactura}")
-        except Exception as e:
-            logger.error(f"  Error creando factura: {e}")
-            resultado.aviso(f"Error creando factura: {archivo}",
-                            {"error": str(e)})
-            fallidos.append({**doc, "error_registro": str(e)})
+        for intento in range(resolutor.max_reintentos):
+            try:
+                respuesta = api_post(endpoint, data=form_data)
+                idfactura = respuesta.get("doc", {}).get("idfactura")
+                if not idfactura:
+                    idfactura = respuesta.get("idfactura")
+                if not idfactura:
+                    raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
+                logger.info(f"  Factura creada: ID {idfactura}")
+                break
+            except Exception as e:
+                if intento < resolutor.max_reintentos - 1:
+                    solucion = resolutor.intentar_resolver(e, doc_trabajo, ctx)
+                    if solucion:
+                        doc_trabajo = solucion["datos_corregidos"]
+                        form_data = _construir_form_data(doc_trabajo, tipo_doc, config, codigo_entidad)
+                        continue
+                logger.error(f"  Error creando factura: {e}")
+                resultado.aviso(f"Error creando factura: {archivo}", {"error": str(e)})
+                fallidos.append({**doc_trabajo, "error_registro": str(e)})
+                break
+
+        if not idfactura:
             continue
 
         # 4. VERIFICACION 2: GET y comparar
@@ -810,6 +854,17 @@ def ejecutar_registro(
         except Exception as e:
             logger.error(f"Error corrigiendo divisas: {e}")
             resultado.aviso(f"Error corrigiendo divisas asientos: {e}")
+
+    # Persistir conocimiento aprendido y mostrar estadisticas
+    resolutor.guardar_conocimiento()
+    stats_aprendizaje = resolutor.stats
+    if stats_aprendizaje["resueltos"] > 0 or stats_aprendizaje["aprendidos"] > 0:
+        logger.info(
+            f"Aprendizaje: {stats_aprendizaje['resueltos']} problemas resueltos, "
+            f"{stats_aprendizaje['aprendidos']} patrones nuevos aprendidos, "
+            f"{stats_aprendizaje['patrones_conocidos']} patrones en base de conocimiento"
+        )
+    resultado.datos["aprendizaje"] = stats_aprendizaje
 
     logger.info(f"Registro completado: {len(registrados)} OK, "
                 f"{len(fallidos)} fallidos de {len(documentos)} total")
