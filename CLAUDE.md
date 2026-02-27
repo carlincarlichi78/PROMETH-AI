@@ -58,10 +58,11 @@ source .env  # o: export $(cat .env | xargs)
 ## Clientes
 | Cliente | Carpeta | idempresa | Estado |
 |---------|---------|-----------|--------|
-| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa. Snapshot + modelos fiscales + Excel actualizados |
+| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa. Suplidos Primatransit corregidos (8.993,82 EUR 6000→4709) |
 | GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado (empresa+ejercicio+PGC), carpetas creadas |
 | EMPRESA PRUEBA S.L. (testing SFCE) | clientes/EMPRESA PRUEBA/ | 3 | FS creada (ejercicio 0003, PGC importado). 46 PDFs ficticios en inbox |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | FS creada (ejercicio 0004, PGC importado). 141 PDFs en inbox_prueba. Pipeline dry-run OK, completo FALLA en registro |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | FS limpiada (0 FP, 0 asientos). PDFs cuarentena eliminados. State reseteado. Lista para nuevo ciclo |
+| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | FS creada (empresa 5, ejercicio 0005, PGC importado). Pipeline 51/60 (97%) — 9 FV sin CIF fallidos (esperado) |
 
 ## Scripts
 | Script | Uso |
@@ -74,6 +75,8 @@ source .env  # o: export $(cat .env | xargs)
 | `scripts/validar_asientos.py` | Validacion automatica de asientos (5 checks + --fix para corregir DIVISA y NC) |
 | `scripts/renombrar_documentos.py` | Renombrado inteligente de PDFs (inbox+procesado). Usa OCR JSON + FS API + heuristicas. Reversible con --revertir |
 | `scripts/generar_pdfs_prueba.py` | Genera 46 PDFs ficticios desde snapshot Pastorino para testing SFCE |
+| `scripts/corregir_suplidos_pastorino.py` | Corrige suplidos Primatransit empresa 1 (asientos 65-68): 7 PUT + 1 POST partidas. One-shot ya ejecutado |
+| `scripts/limpiar_empresa_fs.py` | Limpia empresa FS: borra FP+asientos+PDFs cuarentena+state. `--empresa N --dry-run`. Paginacion 500 items/page |
 
 Uso pipeline: `export FS_API_TOKEN='...' OPENAI_API_KEY='...' && python scripts/pipeline.py --cliente pastorino-costa-del-sol --ejercicio 2025`
 Opciones: `--dry-run` (solo intake+validacion), `--resume`, `--fase N`, `--force`, `--no-interactivo`
@@ -432,17 +435,18 @@ Tasks completados:
 
 ## Proximos pasos — Roadmap
 
-### Prioridad 1: Conectar dashboard a API real
-- Dashboard actualmente con datos mock en todas las paginas
-- Arrancar API: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
-- Arrancar dashboard: `cd dashboard && npm run dev`
-- Conectar fetch() real en componentes React (empresas, documentos, modelos fiscales)
-
-### Prioridad 2: Pipeline E2E real (prod)
-- Ejecutar pipeline contra elena-navarro muestra completa (199 PDFs)
+### Prioridad 1: Pipeline E2E real (prod)
+- Ejecutar pipeline completo contra elena-navarro (199 PDFs en inbox/)
+- 9 FV fallidos (alumnos-pilates, pacientes-fisioterapia): clientes sin CIF → fallback "VARIOS CLIENTES" o cliente generico FS
 - Ejecutar pipeline contra entidades generador v2 (2343 PDFs)
+
+### Prioridad 2: Dashboard — arrancar y verificar
+- Arrancar API: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
+- Migrar datos FS a BD: `python scripts/migrar_fs_a_bd.py`
+- Arrancar dashboard: `cd dashboard && npm run dev`
+- 8 paginas conectadas a API real (mock eliminado en esta sesion)
 
 ### Prioridad 3: Operaciones pendientes
 - T9 Directorio: `python scripts/migrar_config_a_directorio.py --cliente pastorino-costa-del-sol`
-- Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
+- `git prune` para limpiar objetos loose (warning en git commit)
