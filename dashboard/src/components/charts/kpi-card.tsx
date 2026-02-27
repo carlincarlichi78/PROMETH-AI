@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 interface KPICardProps {
@@ -9,6 +10,9 @@ interface KPICardProps {
   descripcion?: string
   icono?: React.ElementType
   className?: string
+  cargando?: boolean
+  /** Si true, valores negativos se muestran en verde (ej: gastos bajos = bueno) */
+  invertirColor?: boolean
 }
 
 export function KPICard({
@@ -18,6 +22,8 @@ export function KPICard({
   descripcion,
   icono: Icono,
   className,
+  cargando,
+  invertirColor,
 }: KPICardProps) {
   const IconoVariacion =
     variacion != null && variacion > 0
@@ -28,10 +34,27 @@ export function KPICard({
 
   const colorVariacion =
     variacion != null && variacion > 0
-      ? 'text-green-600 dark:text-green-400'
-      : variacion != null && variacion < 0
+      ? invertirColor
         ? 'text-red-600 dark:text-red-400'
+        : 'text-green-600 dark:text-green-400'
+      : variacion != null && variacion < 0
+        ? invertirColor
+          ? 'text-green-600 dark:text-green-400'
+          : 'text-red-600 dark:text-red-400'
         : 'text-muted-foreground'
+
+  if (cargando) {
+    return (
+      <Card className={cn('', className)}>
+        <CardHeader className="pb-2">
+          <Skeleton className="h-4 w-24" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-7 w-28" />
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className={cn('', className)}>
