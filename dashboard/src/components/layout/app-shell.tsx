@@ -4,9 +4,11 @@ import { AppSidebar } from './app-sidebar'
 import { Header } from './header'
 import { Toaster } from '@/components/ui/sonner'
 import { useUIStore } from '@/stores/ui-store'
+import { useThemeEffect } from '@/hooks/use-theme'
 
 export function AppShell() {
   const sidebarColapsado = useUIStore((s) => s.sidebarColapsado)
+  useThemeEffect()
 
   return (
     <SidebarProvider defaultOpen={!sidebarColapsado}>
