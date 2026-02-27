@@ -1,0 +1,185 @@
+empresa:
+  nombre: "ELENA NAVARRO PRECIADOS"
+  nombre_comercial: "Centro Fisio & Pilates Elena Navarro"
+  cif: "24813607B"
+  tipo: autonomo
+  idempresa: 99
+  ejercicio_activo: "2025"
+  codejercicio: "0099"
+  regimen_iva: exento_parcial
+  prorrata: 35
+  direccion: "Calle Recogidas 44, Local, 18005 Granada"
+  email: "elena@elenafisiopilates.es"
+  banco:
+    - "ES63 2103 7125 7223 4567 8906"
+
+perfil:
+  descripcion: "Autonoma fisioterapeuta con clases de pilates en Granada"
+  modelo_negocio: |
+    Fisioterapia (exenta IVA art. 20.1.3 LIVA) + Pilates (IVA 21%).
+    Prorrata IVA 35%. Una empleada a media jornada.
+    Alquiler local con retencion 19% IRPF al arrendador.
+  actividades:
+    - codigo: "8690"
+      descripcion: "Actividades de fisioterapia"
+      iva_venta: 0
+      exenta: true
+      notas: "Exenta IVA art. 20.1.3 LIVA — servicios sanitarios"
+    - codigo: "9311"
+      descripcion: "Clases de pilates"
+      iva_venta: 21
+      exenta: false
+      notas: "Actividades deportivas — IVA 21%"
+  particularidades:
+    - "Prorrata IVA 35% (actividad exenta + no exenta)"
+    - "Retencion 19% IRPF en alquiler local"
+    - "Proveedor intracomunitario (Spotify AB, Suecia)"
+    - "Empleada a media jornada (reduccion jornada)"
+  empleados: true
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores:
+  quirumed:
+    cif: "B46011995"
+    nombre_fs: "QUIRUMED S.L."
+    aliases: ["QUIRUMED", "QUIRUMED SL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Equipamiento sanitario y material clinico"
+
+  farmacia-central:
+    cif: "14789456B"
+    nombre_fs: "FARMACIA CENTRAL DE GRANADA"
+    aliases: ["FARMACIA CENTRAL", "FARMACIA CENTRAL GRANADA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA4
+    regimen: general
+    notas: "Material sanitario fungible: vendas, esparadrapo, electrodos"
+
+  propietario-local:
+    cif: "24501386S"
+    nombre_fs: "ANTONIO FERNANDEZ GIMENEZ"
+    aliases: ["ANTONIO FERNANDEZ", "ARRENDADOR", "PROPIETARIO LOCAL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6210000000"
+    codimpuesto: IVA21
+    regimen: general
+    retencion: 19
+    notas: "Alquiler local comercial Calle Recogidas 44 — retencion 19% IRPF"
+
+  spotify-sweden:
+    cif: "SE556703748501"
+    nombre_fs: "SPOTIFY AB"
+    aliases: ["SPOTIFY", "SPOTIFY AB"]
+    pais: SWE
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    notas: "Spotify for Business — musica ambiente (inversion sujeto pasivo)"
+
+  colegio-fisioterapeutas:
+    cif: "G1805503H"
+    nombre_fs: "COLEGIO OFICIAL DE FISIOTERAPEUTAS DE ANDALUCIA"
+    aliases: ["COLEGIO FISIOTERAPEUTAS", "COFISIO ANDALUCIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6310000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota colegio profesional anual (exenta IVA)"
+
+  endesa:
+    cif: "A81948077"
+    nombre_fs: "ENDESA ENERGIA S.A.U."
+    aliases: ["ENDESA", "ENDESA ENERGIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro electricidad local comercial"
+
+  emasagra:
+    cif: "A18001694"
+    nombre_fs: "EMASAGRA GRANADA"
+    aliases: ["EMASAGRA", "EMPRESA MUNICIPAL AGUAS GRANADA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA10
+    regimen: general
+    notas: "Suministro agua local comercial"
+
+  movistar:
+    cif: "A78923125"
+    nombre_fs: "TELEFONICA MOVILES ESPANA S.A.U."
+    aliases: ["MOVISTAR", "TELEFONICA", "TELEFONICA MOVILES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Telefono e internet local"
+
+  mapfre:
+    cif: "A28141935"
+    nombre_fs: "SEGUROS MAPFRE S.A."
+    aliases: ["MAPFRE", "SEGUROS MAPFRE"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6250000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Seguro multirriesgo local comercial (exento IVA)"
+
+clientes:
+  pacientes-fisioterapia:
+    cif: ""
+    nombre_fs: "PACIENTES FISIOTERAPIA (EXENTO)"
+    aliases: ["PACIENTES", "FISIOTERAPIA"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Sesiones de fisioterapia — exentas IVA art. 20.1.3 LIVA"
+
+  alumnos-pilates:
+    cif: ""
+    nombre_fs: "ALUMNOS CLASES DE PILATES"
+    aliases: ["ALUMNOS", "PILATES", "CLASES PILATES"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Clases de pilates grupales e individuales"
+
+  club-deportivo-municipal:
+    cif: "G1802214E"
+    nombre_fs: "CLUB DEPORTIVO MUNICIPAL GRANADA"
+    aliases: ["CLUB DEPORTIVO", "CLUB MUNICIPAL", "CD GRANADA"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Servicio mixto fisioterapia deportiva + pilates colectivo"
+
+trabajadores:
+  - dni: "75812345R"
+    nombre: "Laura Suarez Vega"
+    bruto_mensual: 1000.00
+    pagas: 14
+    confirmado: true
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85

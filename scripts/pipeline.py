@@ -428,7 +428,16 @@ def main():
             except Exception as e:
                 logger.warning(f"Error analizando recurrentes: {e}")
 
-    estado.data["alertas_recurrentes"] = alertas_recurrentes
+    # Serializar PatronRecurrente (dataclass) a dict para JSON
+    from dataclasses import asdict
+    alertas_serializables = {
+        "patrones": [asdict(p) if hasattr(p, '__dataclass_fields__') else p
+                     for p in alertas_recurrentes.get("patrones", [])],
+        "faltantes": alertas_recurrentes.get("faltantes", []),
+        "total_patrones": alertas_recurrentes.get("total_patrones", 0),
+        "total_faltantes": alertas_recurrentes.get("total_faltantes", 0),
+    }
+    estado.data["alertas_recurrentes"] = alertas_serializables
     estado.guardar()
 
     # Resumen por tipo de documento
