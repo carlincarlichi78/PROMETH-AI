@@ -156,11 +156,15 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
     from ..core.config import _normalizar_cif
 
     datos = doc.get("datos_extraidos", {})
-    es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
 
     if es_proveedor:
-        cif = (datos.get("emisor_cif") or "").upper()
+        # Usar emisor_cif del OCR, con fallback a entidad_cif del intake
+        cif = (datos.get("emisor_cif") or doc.get("entidad_cif") or "").upper()
         entidad_config = config.buscar_proveedor_por_cif(cif)
+        # Si no se encuentra por CIF, buscar por nombre de entidad del intake
+        if not entidad_config and doc.get("entidad"):
+            entidad_config = config.buscar_proveedor_por_nombre(doc["entidad"])
         nombre_fs = entidad_config.get("nombre_fs", "") if entidad_config else ""
         cif_normalizado = _normalizar_cif(cif)
 
@@ -210,7 +214,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         dict con campos form-encoded
     """
     datos = doc.get("datos_extraidos", {})
-    es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
 
     # Datos base
     form = {
@@ -693,6 +697,11 @@ def ejecutar_registro(
 
             if asiento_ok:
                 continue  # Siguiente documento
+            else:
+                # Asiento directo fallo — NO caer al path de facturas
+                # Los tipos NOM/BAN/RLC/IMP no son facturas, no tiene sentido
+                # intentar crearFacturaProveedor/Cliente con ellos
+                continue
 
         # 1. Buscar codigo de entidad en FS
         doc_trabajo = {**doc}
@@ -717,7 +726,7 @@ def ejecutar_registro(
         form_data = _construir_form_data(doc_trabajo, tipo_doc, config, codigo_entidad)
 
         # 3. POST crear factura (con retry por aprendizaje)
-        es_proveedor = tipo_doc in ("FC", "NC", "ANT")
+        es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
         endpoint = "crearFacturaProveedor" if es_proveedor else "crearFacturaCliente"
         idfactura = None
 

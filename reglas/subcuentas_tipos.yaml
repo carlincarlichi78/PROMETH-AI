@@ -109,6 +109,54 @@ bancario_intereses:
       campo_importe: "importe"
       concepto: "Bancos"
 
+bancario_transferencia:
+  descripcion: "Transferencia bancaria generica (pago SS autonomos, impuestos, etc.)"
+  partidas:
+    - subcuenta: "6290000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros servicios / pagos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_impuesto_tasa:
+  descripcion: "Pago de impuesto o tasa via banco"
+  partidas:
+    - subcuenta: "6310000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros tributos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_tasa:
+  descripcion: "Tasa administrativa"
+  partidas:
+    - subcuenta: "6310000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros tributos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_cuota:
+  descripcion: "Cuota asociacion, colegio profesional u organismo"
+  partidas:
+    - subcuenta: "6290000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Cuotas y asociaciones"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
 impuesto_tasa:
   descripcion: "Impuesto, tasa o licencia"
   partidas:

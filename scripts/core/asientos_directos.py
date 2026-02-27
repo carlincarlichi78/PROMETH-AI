@@ -24,7 +24,8 @@ _TIPO_A_YAML = {
 }
 
 # Subtipos bancarios validos
-_SUBTIPOS_BANCARIOS = {"comision", "seguro", "renting", "intereses"}
+_SUBTIPOS_BANCARIOS = {"comision", "seguro", "renting", "intereses",
+                       "transferencia", "impuesto_tasa", "tasa", "cuota"}
 
 
 def _cargar_plantillas() -> dict:
