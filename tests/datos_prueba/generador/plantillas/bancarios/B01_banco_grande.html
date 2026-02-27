@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Recibo Bancario - {{ banco.nombre }} - {{ numero_recibo }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .banco-grande { padding: 0; }
+    .bg-header { background: var(--color-primario, #003366); color: #fff; padding: 24px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .bg-header .logo-box { width: 180px; height: 64px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; letter-spacing: 2px; border-radius: 4px; }
+    .bg-header .doc-info { text-align: right; font-size: 12px; }
+    .bg-header .doc-info h1 { font-size: 22px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .bg-cuerpo { padding: 20px 30px; }
+    .bg-ref-bar { background: var(--color-secundario, #e8edf2); padding: 8px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; font-size: 10px; color: #444; border-left: 4px solid var(--color-primario, #003366); }
+    .bg-ref-bar strong { color: var(--color-primario, #003366); }
+    .bg-grid { display: flex; gap: 30px; margin-bottom: 18px; }
+    .bg-grid .bloque { flex: 1; font-size: 11px; }
+    .bg-grid .bloque h3 { font-size: 9px; text-transform: uppercase; color: var(--color-primario, #003366); border-bottom: 2px solid var(--color-primario, #003366); padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .bg-grid .bloque p { margin: 2px 0; }
+    .bg-iban { background: #f0f4f8; border: 1px solid #c0cfe0; padding: 10px 16px; margin-bottom: 16px; font-family: monospace; font-size: 14px; font-weight: bold; letter-spacing: 2px; color: var(--color-primario, #003366); text-align: center; }
+    .bg-tabla { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11px; }
+    .bg-tabla thead { background: var(--color-primario, #003366); color: #fff; }
+    .bg-tabla th { padding: 6px 10px; text-align: left; font-size: 9px; text-transform: uppercase; }
+    .bg-tabla th:last-child { text-align: right; }
+    .bg-tabla td { padding: 5px 10px; border-bottom: 1px solid #e0e0e0; }
+    .bg-tabla td:last-child { text-align: right; font-weight: 500; }
+    .bg-tabla tbody tr:nth-child(even) { background: #f8f9fb; }
+    .bg-fiscal { width: 300px; margin-left: auto; margin-bottom: 14px; font-size: 11px; }
+    .bg-fiscal tr td { padding: 3px 10px; }
+    .bg-fiscal tr td:last-child { text-align: right; }
+    .bg-fiscal .fila-total { font-weight: bold; font-size: 15px; border-top: 2px solid var(--color-primario, #003366); color: var(--color-primario, #003366); }
+    .bg-pie { border-top: 3px solid var(--color-primario, #003366); padding: 10px 30px; font-size: 8px; color: #777; }
+    .bg-pie p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="banco-grande">
+
+  <div class="bg-header">
+    <div class="logo-box">{{ banco.nombre[:12] }}</div>
+    <div class="doc-info">
+      <h1>{{ etiquetas.get('recibo', 'Recibo Bancario') }}</h1>
+      <p>{{ etiquetas.get('numero', 'N. recibo') }}: <strong>{{ numero_recibo }}</strong></p>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="bg-cuerpo">
+
+    <div class="bg-ref-bar">
+      <span>{{ etiquetas.get('cod_operacion', 'Cod. operacion') }}: <strong>{{ numero_recibo }}</strong></span>
+      <span>{{ etiquetas.get('oficina', 'Oficina') }}: <strong>{{ banco.oficina }}</strong></span>
+      <span>{{ etiquetas.get('fecha_valor', 'Fecha valor') }}: <strong>{{ fecha }}</strong></span>
+    </div>
+
+    <div class="bg-grid">
+      <div class="bloque">
+        <h3>{{ etiquetas.get('titular', 'Titular') }}</h3>
+        <p><strong>{{ titular.nombre }}</strong></p>
+        <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ titular.nif }}</p>
+      </div>
+      <div class="bloque">
+        <h3>{{ etiquetas.get('concepto', 'Concepto') }}</h3>
+        <p><strong>{{ concepto }}</strong></p>
+        <p>{{ etiquetas.get('entidad', 'Entidad') }}: {{ banco.nombre }}</p>
+        <p>{{ banco.direccion }}</p>
+      </div>
+    </div>
+
+    <div class="bg-iban">{{ titular.cuenta_iban }}</div>
+
+    <table class="bg-tabla">
+      <thead>
+        <tr>
+          <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+          <th>{{ etiquetas.get('importe', 'Importe') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in desglose %}
+        <tr>
+          <td>{{ d.concepto }}</td>
+          <td>{{ d.importe | moneda }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if base_imponible %}
+    <table class="bg-fiscal">
+      <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</td><td>{{ base_imponible | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.get('iva', 'IVA') }}:</td><td>{{ iva_importe | moneda }}</td></tr>
+      <tr class="fila-total"><td>{{ etiquetas.get('total', 'Total cargo') }}:</td><td>{{ importe | moneda }}</td></tr>
+    </table>
+    {% else %}
+    <table class="bg-fiscal">
+      <tr class="fila-total"><td>{{ etiquetas.get('total', 'Total cargo') }}:</td><td>{{ importe | moneda }}</td></tr>
+    </table>
+    {% endif %}
+
+  </div>
+
+  <div class="bg-pie">
+    <p>{{ banco.nombre }} &mdash; Entidad supervisada por el Banco de Espana. Reg. Mercantil.</p>
+    <p>Conserve este recibo como justificante. En caso de discrepancia contacte con su oficina (art. 32 RD-Ley 19/2018).</p>
+  </div>
+
+</div>
+</body>
+</html>

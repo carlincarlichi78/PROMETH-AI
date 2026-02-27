@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Recibo Digital - {{ banco.nombre }} - {{ numero_recibo }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .banco-online { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #333; }
+    .bo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .bo-header .logo-digital { font-size: 26px; font-weight: 700; color: var(--color-primario, #ff6600); letter-spacing: -1px; }
+    .bo-header .logo-digital span { font-size: 10px; font-weight: 400; color: #999; display: block; }
+    .bo-header .badge-tipo { background: var(--color-primario, #ff6600); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .bo-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .bo-card h3 { font-size: 9px; text-transform: uppercase; color: #aaa; letter-spacing: 1px; margin: 0 0 8px; }
+    .bo-card p { margin: 3px 0; font-size: 11px; }
+    .bo-card .iban { font-family: monospace; font-size: 13px; font-weight: bold; color: var(--color-primario, #ff6600); letter-spacing: 1.5px; margin-top: 6px; }
+    .bo-cards-row { display: flex; gap: 14px; margin-bottom: 14px; }
+    .bo-cards-row .bo-card { flex: 1; }
+    .bo-divider { height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent); margin: 16px 0; }
+    .bo-desglose { border-radius: 12px; overflow: hidden; border: 1px solid #e5e5e5; margin-bottom: 14px; }
+    .bo-desglose .fila { display: flex; justify-content: space-between; padding: 10px 18px; font-size: 11px; border-bottom: 1px solid #f0f0f0; }
+    .bo-desglose .fila:nth-child(even) { background: #fafafa; }
+    .bo-desglose .fila:last-child { border-bottom: none; }
+    .bo-desglose .fila .valor { font-weight: 600; }
+    .bo-total-card { background: var(--color-primario, #ff6600); color: #fff; border-radius: 12px; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .bo-total-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+    .bo-total-card .valor-total { font-size: 22px; font-weight: 700; }
+    .bo-qr { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+    .bo-qr .qr-placeholder { width: 60px; height: 60px; border: 2px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #bbb; }
+    .bo-qr .qr-texto { font-size: 9px; color: #999; }
+    .bo-footer { font-size: 8px; color: #bbb; text-align: center; margin-top: 10px; }
+    .bo-footer p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="banco-online">
+
+  <div class="bo-header">
+    <div class="logo-digital">
+      {{ banco.nombre }}
+      <span>{{ etiquetas.get('banca_digital', 'Banca 100% digital') }}</span>
+    </div>
+    <div class="badge-tipo">{{ etiquetas.get('recibo', 'Recibo') }}</div>
+  </div>
+
+  <div class="bo-cards-row">
+    <div class="bo-card">
+      <h3>{{ etiquetas.get('titular', 'Titular') }}</h3>
+      <p><strong>{{ titular.nombre }}</strong></p>
+      <p>{{ titular.nif }}</p>
+      <div class="iban">{{ titular.cuenta_iban }}</div>
+    </div>
+    <div class="bo-card">
+      <h3>{{ etiquetas.get('operacion', 'Operacion') }}</h3>
+      <p><strong>{{ concepto }}</strong></p>
+      <p>{{ etiquetas.get('referencia', 'Ref.') }}: {{ numero_recibo }}</p>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="bo-desglose">
+    {% for d in desglose %}
+    <div class="fila">
+      <span>{{ d.concepto }}</span>
+      <span class="valor">{{ d.importe | moneda }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if base_imponible %}
+  <div class="bo-card" style="font-size: 11px;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+      <span>{{ etiquetas.get('base_imponible', 'Base imponible') }}</span>
+      <span>{{ base_imponible | moneda }}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <span>{{ etiquetas.get('iva', 'IVA') }}</span>
+      <span>{{ iva_importe | moneda }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bo-total-card">
+    <span class="label">{{ etiquetas.get('total', 'Total cargo') }}</span>
+    <span class="valor-total">{{ importe | moneda }}</span>
+  </div>
+
+  <div class="bo-qr">
+    <div class="qr-placeholder">QR</div>
+    <div class="qr-texto">
+      <p>Escanea para ver el detalle completo</p>
+      <p>de esta operacion en tu app.</p>
+    </div>
+  </div>
+
+  <div class="bo-footer">
+    <p>{{ banco.nombre }} &mdash; Documento generado electronicamente.</p>
+    <p>Este recibo no requiere firma. Entidad supervisada por el Banco de Espana.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Confirming - {{ banco.nombre }} - {{ numero_recibo }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .confirming { font-size: 11px; }
+    .cf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-primario, #002244); padding-bottom: 10px; margin-bottom: 14px; }
+    .cf-header .logo-entidad { font-size: 16px; font-weight: bold; color: var(--color-primario, #002244); }
+    .cf-header .logo-entidad span { font-size: 8px; font-weight: normal; display: block; color: #888; }
+    .cf-header .titulo-doc { text-align: right; }
+    .cf-header .titulo-doc h2 { font-size: 14px; margin: 0; color: var(--color-primario, #002244); text-transform: uppercase; letter-spacing: 1px; }
+    .cf-header .titulo-doc p { margin: 2px 0; font-size: 10px; }
+    .cf-ref { background: #f5f5f5; border: 1px solid #ddd; padding: 8px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; font-size: 10px; }
+    .cf-ref strong { color: var(--color-primario, #002244); }
+    .cf-seccion { margin-bottom: 14px; }
+    .cf-seccion h3 { font-size: 9px; text-transform: uppercase; color: var(--color-primario, #002244); border-bottom: 1px solid var(--color-primario, #002244); padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .cf-grid { display: flex; gap: 20px; }
+    .cf-grid .col { flex: 1; }
+    .cf-grid .col p { margin: 2px 0; font-size: 10px; }
+    .cf-factura-ref { background: #fff8e0; border: 1px solid #e6d27a; padding: 10px 14px; margin-bottom: 14px; }
+    .cf-factura-ref h3 { font-size: 9px; text-transform: uppercase; color: #8a6d00; margin: 0 0 6px; }
+    .cf-factura-ref p { margin: 2px 0; font-size: 10px; }
+    .cf-tabla { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .cf-tabla thead { background: var(--color-primario, #002244); color: #fff; }
+    .cf-tabla th { padding: 5px 10px; text-align: left; font-size: 8px; text-transform: uppercase; }
+    .cf-tabla th:last-child { text-align: right; }
+    .cf-tabla td { padding: 4px 10px; border-bottom: 1px solid #eee; font-size: 10px; }
+    .cf-tabla td:last-child { text-align: right; }
+    .cf-resumen { width: 280px; margin-left: auto; border: 1px solid #ccc; margin-bottom: 12px; font-size: 10px; }
+    .cf-resumen tr td { padding: 3px 8px; }
+    .cf-resumen tr td:last-child { text-align: right; }
+    .cf-resumen .neto { font-weight: bold; font-size: 13px; border-top: 2px solid var(--color-primario, #002244); color: var(--color-primario, #002244); }
+    .cf-legal { font-size: 7px; color: #aaa; border-top: 1px solid #ddd; padding-top: 8px; }
+    .cf-legal p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="confirming">
+
+  <div class="cf-header">
+    <div class="logo-entidad">
+      {{ banco.nombre }}
+      <span>{{ banco.direccion }}</span>
+    </div>
+    <div class="titulo-doc">
+      <h2>{{ etiquetas.get('confirming', 'Confirming / Anticipo') }}</h2>
+      <p>{{ etiquetas.get('numero', 'Referencia') }}: <strong>{{ numero_recibo }}</strong></p>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="cf-ref">
+    <span>{{ etiquetas.get('tipo_operacion', 'Tipo operacion') }}: <strong>{{ concepto }}</strong></span>
+    <span>{{ etiquetas.get('oficina', 'Oficina') }}: <strong>{{ banco.oficina }}</strong></span>
+  </div>
+
+  <div class="cf-seccion">
+    <h3>{{ etiquetas.get('titular', 'Titular / Cedente') }}</h3>
+    <div class="cf-grid">
+      <div class="col">
+        <p><strong>{{ titular.nombre }}</strong></p>
+        <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ titular.nif }}</p>
+      </div>
+      <div class="col">
+        <p>{{ etiquetas.get('cuenta', 'Cuenta abono') }}: {{ titular.cuenta_iban }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cf-factura-ref">
+    <h3>{{ etiquetas.get('factura_original', 'Referencia factura original') }}</h3>
+    <p><strong>{{ concepto }}</strong></p>
+    <p>{{ etiquetas.get('fecha_vencimiento', 'Fecha vencimiento') }}: {{ fecha }}</p>
+    <p>{{ etiquetas.get('importe_nominal', 'Importe nominal') }}: {{ importe | moneda }}</p>
+  </div>
+
+  <table class="cf-tabla">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+        <th>{{ etiquetas.get('importe', 'Importe') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in desglose %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td>{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="cf-resumen">
+    {% if base_imponible %}
+    <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</td><td>{{ base_imponible | moneda }}</td></tr>
+    <tr><td>{{ etiquetas.get('iva', 'IVA') }}:</td><td>{{ iva_importe | moneda }}</td></tr>
+    {% endif %}
+    <tr class="neto"><td>{{ etiquetas.get('total', 'Liquido a abonar') }}:</td><td>{{ importe | moneda }}</td></tr>
+  </table>
+
+  <div class="cf-legal">
+    <p>{{ banco.nombre }} &mdash; Operacion de confirming/factoring regulada por normativa bancaria vigente.</p>
+    <p>El anticipo genera intereses segun TAE pactada en contrato marco. Consulte condiciones con su oficina.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Poliza Seguro - {{ aseguradora.nombre }} - {{ poliza.numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .seguro-grande { font-size: 11px; }
+    .sg-header { background: var(--color-primario, #c8102e); color: #fff; padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .sg-header .logo-aseg { width: 160px; height: 56px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; letter-spacing: 1px; border-radius: 4px; }
+    .sg-header .doc-info { text-align: right; font-size: 11px; }
+    .sg-header .doc-info h1 { font-size: 20px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .sg-cuerpo { padding: 0 28px; }
+    .sg-poliza-bar { background: var(--color-secundario, #fbe9ec); border: 1px solid #e8a0aa; padding: 8px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; font-size: 10px; }
+    .sg-poliza-bar strong { color: var(--color-primario, #c8102e); }
+    .sg-grid { display: flex; gap: 24px; margin-bottom: 16px; }
+    .sg-grid .bloque { flex: 1; }
+    .sg-grid .bloque h3 { font-size: 9px; text-transform: uppercase; color: var(--color-primario, #c8102e); border-bottom: 2px solid var(--color-primario, #c8102e); padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .sg-grid .bloque p { margin: 2px 0; font-size: 10px; }
+    .sg-tabla-cob { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .sg-tabla-cob thead { background: var(--color-primario, #c8102e); color: #fff; }
+    .sg-tabla-cob th { padding: 6px 10px; text-align: left; font-size: 8px; text-transform: uppercase; }
+    .sg-tabla-cob th:nth-child(2), .sg-tabla-cob th:nth-child(3) { text-align: right; }
+    .sg-tabla-cob td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 10px; }
+    .sg-tabla-cob td:nth-child(2), .sg-tabla-cob td:nth-child(3) { text-align: right; }
+    .sg-tabla-cob tbody tr:nth-child(even) { background: #fdf5f6; }
+    .sg-primas { width: 300px; margin-left: auto; margin-bottom: 16px; font-size: 10px; border: 1px solid #ccc; }
+    .sg-primas tr td { padding: 4px 10px; }
+    .sg-primas tr td:last-child { text-align: right; }
+    .sg-primas .total { font-weight: bold; font-size: 14px; background: var(--color-primario, #c8102e); color: #fff; }
+    .sg-condiciones { background: #f9f9f9; border: 1px solid #e0e0e0; padding: 10px 14px; margin-bottom: 14px; font-size: 8px; color: #666; columns: 2; column-gap: 20px; }
+    .sg-condiciones h4 { font-size: 9px; text-transform: uppercase; color: #444; margin: 0 0 6px; column-span: all; }
+    .sg-condiciones p { margin: 2px 0; text-align: justify; }
+    .sg-pie { border-top: 3px solid var(--color-primario, #c8102e); padding: 10px 28px; font-size: 7px; color: #999; }
+    .sg-pie p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="seguro-grande">
+
+  <div class="sg-header">
+    <div class="logo-aseg">{{ aseguradora.nombre[:12] }}</div>
+    <div class="doc-info">
+      <h1>{{ etiquetas.get('poliza', 'Poliza de Seguro') }}</h1>
+      <p>{{ etiquetas.get('numero_poliza', 'N. poliza') }}: <strong>{{ poliza.numero }}</strong></p>
+      <p>{{ etiquetas.get('tipo', 'Ramo') }}: {{ poliza.tipo }}</p>
+    </div>
+  </div>
+
+  <div class="sg-cuerpo">
+
+    <div class="sg-poliza-bar">
+      <span>{{ etiquetas.get('vigencia', 'Vigencia') }}: <strong>{{ poliza.vigencia_desde }} - {{ poliza.vigencia_hasta }}</strong></span>
+      <span>{{ etiquetas.get('numero_poliza', 'Poliza') }}: <strong>{{ poliza.numero }}</strong></span>
+    </div>
+
+    <div class="sg-grid">
+      <div class="bloque">
+        <h3>{{ etiquetas.get('aseguradora', 'Aseguradora') }}</h3>
+        <p><strong>{{ aseguradora.nombre }}</strong></p>
+        <p>{{ etiquetas.get('nif', 'CIF') }}: {{ aseguradora.nif }}</p>
+        <p>{{ aseguradora.direccion }}</p>
+      </div>
+      <div class="bloque">
+        <h3>{{ etiquetas.get('tomador', 'Tomador del seguro') }}</h3>
+        <p><strong>{{ tomador.nombre }}</strong></p>
+        <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ tomador.nif }}</p>
+        <p>{{ tomador.direccion }}</p>
+      </div>
+    </div>
+
+    <table class="sg-tabla-cob">
+      <thead>
+        <tr>
+          <th>{{ etiquetas.get('cobertura', 'Cobertura') }}</th>
+          <th>{{ etiquetas.get('capital', 'Capital asegurado') }}</th>
+          <th>{{ etiquetas.get('prima', 'Prima') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in coberturas %}
+        <tr>
+          <td>{{ c.concepto }}</td>
+          <td>{{ c.capital | moneda }}</td>
+          <td>{{ c.prima | moneda }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="sg-primas">
+      <tr><td>{{ etiquetas.get('prima_neta', 'Prima neta') }}:</td><td>{{ prima_neta | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.get('consorcio', 'Recargo Consorcio') }}:</td><td>{{ recargo_consorcio | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.get('ips', 'IPS') }} ({{ (ips / prima_neta * 100) | round(1) if prima_neta else 8 }}%):</td><td>{{ ips | moneda }}</td></tr>
+      <tr class="total"><td>{{ etiquetas.get('total', 'Total recibo') }}:</td><td>{{ total | moneda }}</td></tr>
+    </table>
+
+    <div class="sg-condiciones">
+      <h4>{{ etiquetas.get('condiciones', 'Condiciones generales') }}</h4>
+      <p>El presente contrato se rige por la Ley 50/1980 de Contrato de Seguro y las condiciones particulares, especiales y generales de la poliza.</p>
+      <p>La obligacion del asegurador comienza a las cero horas del dia siguiente al pago de la primera prima. El tomador dispone de 14 dias para desistir del contrato sin penalizacion.</p>
+      <p>En caso de siniestro, el asegurado debera comunicarlo en un plazo maximo de 7 dias. Las indemnizaciones se abonaran en un plazo de 40 dias desde la recepcion de la documentacion completa.</p>
+      <p>Entidad inscrita en la DGSFP con clave {{ aseguradora.nif }}. Sujeta a supervision por la Direccion General de Seguros y Fondos de Pensiones.</p>
+    </div>
+
+  </div>
+
+  <div class="sg-pie">
+    <p>{{ aseguradora.nombre }} &mdash; {{ aseguradora.nif }} &mdash; {{ aseguradora.direccion }}</p>
+    <p>Documento contractual. Conserve este documento junto con las condiciones particulares de su poliza.</p>
+  </div>
+
+</div>
+</body>
+</html>

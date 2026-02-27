@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Extracto Mensual - {{ banco.nombre }} - {{ fecha }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .extracto { font-size: 10px; }
+    .ex-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--color-primario, #333); padding-bottom: 10px; margin-bottom: 14px; }
+    .ex-header .banco-logo { font-size: 16px; font-weight: bold; color: var(--color-primario, #333); }
+    .ex-header .banco-logo span { font-size: 8px; font-weight: normal; color: #888; display: block; }
+    .ex-header .doc-info { text-align: right; }
+    .ex-header .doc-info h2 { font-size: 13px; margin: 0; text-transform: uppercase; color: var(--color-primario, #333); }
+    .ex-header .doc-info p { margin: 2px 0; font-size: 9px; color: #666; }
+    .ex-datos { display: flex; justify-content: space-between; margin-bottom: 14px; padding: 8px 12px; background: #f5f5f5; border: 1px solid #e0e0e0; font-size: 10px; }
+    .ex-datos .col p { margin: 2px 0; }
+    .ex-datos .col strong { color: var(--color-primario, #333); }
+    .ex-saldo-inicio { display: flex; justify-content: space-between; align-items: center; background: var(--color-secundario, #eef0f3); border: 1px solid #ccc; padding: 6px 14px; margin-bottom: 2px; font-size: 10px; }
+    .ex-saldo-inicio strong { color: var(--color-primario, #333); font-size: 12px; }
+    .ex-tabla { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
+    .ex-tabla thead { background: var(--color-primario, #333); color: #fff; }
+    .ex-tabla th { padding: 4px 8px; text-align: left; font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ex-tabla th.col-cargo, .ex-tabla th.col-abono, .ex-tabla th.col-saldo { text-align: right; }
+    .ex-tabla td { padding: 3px 8px; border-bottom: 1px solid #f0f0f0; font-size: 9px; }
+    .ex-tabla td.num { text-align: right; font-family: monospace; font-size: 9px; }
+    .ex-tabla td.cargo { color: #c0392b; }
+    .ex-tabla td.abono { color: #27ae60; }
+    .ex-tabla tbody tr:nth-child(even) { background: #fafafa; }
+    .ex-saldo-fin { display: flex; justify-content: space-between; align-items: center; background: var(--color-primario, #333); color: #fff; padding: 8px 14px; margin-bottom: 14px; font-size: 11px; }
+    .ex-saldo-fin .valor { font-size: 15px; font-weight: bold; }
+    .ex-resumen { display: flex; gap: 14px; margin-bottom: 12px; }
+    .ex-resumen .caja { flex: 1; border: 1px solid #ddd; padding: 8px 12px; text-align: center; }
+    .ex-resumen .caja .label { font-size: 7px; text-transform: uppercase; color: #888; display: block; margin-bottom: 3px; }
+    .ex-resumen .caja .valor { font-size: 13px; font-weight: bold; color: var(--color-primario, #333); }
+    .ex-pie { font-size: 7px; color: #aaa; border-top: 1px solid #ddd; padding-top: 6px; }
+    .ex-pie p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="extracto">
+
+  <div class="ex-header">
+    <div class="banco-logo">
+      {{ banco.nombre }}
+      <span>{{ banco.direccion }}</span>
+    </div>
+    <div class="doc-info">
+      <h2>{{ etiquetas.get('extracto', 'Extracto de Movimientos') }}</h2>
+      <p>{{ etiquetas.get('periodo', 'Periodo') }}: {{ fecha }}</p>
+      <p>{{ etiquetas.get('oficina', 'Oficina') }}: {{ banco.oficina }}</p>
+    </div>
+  </div>
+
+  <div class="ex-datos">
+    <div class="col">
+      <p><strong>{{ titular.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ titular.nif }}</p>
+    </div>
+    <div class="col" style="text-align: right;">
+      <p>{{ etiquetas.get('cuenta', 'Cuenta') }}:</p>
+      <p><strong>{{ titular.cuenta_iban }}</strong></p>
+    </div>
+  </div>
+
+  <div class="ex-saldo-inicio">
+    <span>{{ etiquetas.get('saldo_anterior', 'Saldo anterior') }}</span>
+    <strong>{{ saldo_anterior | moneda }}</strong>
+  </div>
+
+  <table class="ex-tabla">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.get('fecha', 'Fecha') }}</th>
+        <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+        <th class="col-cargo">{{ etiquetas.get('cargo', 'Cargo') }}</th>
+        <th class="col-abono">{{ etiquetas.get('abono', 'Abono') }}</th>
+        <th class="col-saldo">{{ etiquetas.get('saldo', 'Saldo') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in movimientos %}
+      <tr>
+        <td>{{ m.fecha }}</td>
+        <td>{{ m.concepto }}</td>
+        <td class="num cargo">{% if m.importe < 0 %}{{ (m.importe | abs) | moneda }}{% endif %}</td>
+        <td class="num abono">{% if m.importe >= 0 %}{{ m.importe | moneda }}{% endif %}</td>
+        <td class="num">{{ m.saldo | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="ex-saldo-fin">
+    <span>{{ etiquetas.get('saldo_posterior', 'Saldo al cierre') }}</span>
+    <span class="valor">{{ saldo_posterior | moneda }}</span>
+  </div>
+
+  <div class="ex-resumen">
+    <div class="caja">
+      <span class="label">{{ etiquetas.get('total_cargos', 'Total cargos') }}</span>
+      <span class="valor" style="color: #c0392b;">{{ movimientos | selectattr('importe', 'lt', 0) | map(attribute='importe') | sum | abs | moneda }}</span>
+    </div>
+    <div class="caja">
+      <span class="label">{{ etiquetas.get('total_abonos', 'Total abonos') }}</span>
+      <span class="valor" style="color: #27ae60;">{{ movimientos | selectattr('importe', 'ge', 0) | map(attribute='importe') | sum | moneda }}</span>
+    </div>
+    <div class="caja">
+      <span class="label">{{ etiquetas.get('num_movimientos', 'Movimientos') }}</span>
+      <span class="valor">{{ movimientos | length }}</span>
+    </div>
+  </div>
+
+  <div class="ex-pie">
+    <p>{{ banco.nombre }} &mdash; Extracto informativo generado automaticamente.</p>
+    <p>En caso de discrepancia, dispone de 13 meses para reclamar (art. 32 RD-Ley 19/2018).</p>
+  </div>
+
+</div>
+</body>
+</html>

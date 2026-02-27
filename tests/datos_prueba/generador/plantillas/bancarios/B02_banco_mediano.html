@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Recibo - {{ banco.nombre }} - {{ numero_recibo }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .banco-mediano { font-size: 11px; }
+    .bm-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--color-primario, #5a5a5a); padding-bottom: 10px; margin-bottom: 14px; }
+    .bm-header .nombre-banco { font-size: 16px; font-weight: bold; color: var(--color-primario, #5a5a5a); letter-spacing: -0.5px; }
+    .bm-header .nombre-banco span { font-size: 9px; font-weight: normal; color: #777; display: block; letter-spacing: 0; margin-top: 2px; }
+    .bm-header .recibo-datos { text-align: right; font-size: 10px; }
+    .bm-header .recibo-datos h2 { font-size: 13px; margin: 0; color: var(--color-primario, #5a5a5a); text-transform: uppercase; }
+    .bm-header .recibo-datos p { margin: 2px 0; }
+    .bm-fila { display: flex; gap: 20px; margin-bottom: 12px; }
+    .bm-fila .caja { flex: 1; background: #f7f7f7; border: 1px solid #ddd; padding: 8px 12px; }
+    .bm-fila .caja h3 { font-size: 8px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin: 0 0 5px; }
+    .bm-fila .caja p { margin: 2px 0; font-size: 10px; }
+    .bm-tabla { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .bm-tabla thead { background: #e8e8e8; }
+    .bm-tabla th { padding: 5px 8px; text-align: left; font-size: 8px; text-transform: uppercase; color: #555; }
+    .bm-tabla th:last-child { text-align: right; }
+    .bm-tabla td { padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 10px; }
+    .bm-tabla td:last-child { text-align: right; }
+    .bm-totales { width: 240px; margin-left: auto; border: 1px solid #ccc; font-size: 10px; margin-bottom: 12px; }
+    .bm-totales tr td { padding: 3px 8px; }
+    .bm-totales tr td:last-child { text-align: right; }
+    .bm-totales .total { font-weight: bold; font-size: 13px; background: #f0f0f0; border-top: 1px solid #999; }
+    .bm-oficina { font-size: 8px; color: #999; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 10px; }
+    .bm-oficina p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="banco-mediano">
+
+  <div class="bm-header">
+    <div class="nombre-banco">
+      {{ banco.nombre }}
+      <span>{{ etiquetas.get('oficina', 'Oficina') }}: {{ banco.oficina }}</span>
+    </div>
+    <div class="recibo-datos">
+      <h2>{{ etiquetas.get('recibo', 'Recibo') }}</h2>
+      <p>{{ etiquetas.get('referencia', 'Ref.') }}: <strong>{{ numero_recibo }}</strong></p>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="bm-fila">
+    <div class="caja">
+      <h3>{{ etiquetas.get('titular', 'Titular') }}</h3>
+      <p><strong>{{ titular.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ titular.nif }}</p>
+      <p>{{ etiquetas.get('cuenta', 'Cuenta') }}: {{ titular.cuenta_iban }}</p>
+    </div>
+    <div class="caja">
+      <h3>{{ etiquetas.get('operacion', 'Datos operacion') }}</h3>
+      <p><strong>{{ concepto }}</strong></p>
+      <p>{{ etiquetas.get('sucursal', 'Sucursal') }}: {{ banco.oficina }}</p>
+    </div>
+  </div>
+
+  <table class="bm-tabla">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+        <th>{{ etiquetas.get('importe', 'Importe') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in desglose %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td>{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="bm-totales">
+    {% if base_imponible %}
+    <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</td><td>{{ base_imponible | moneda }}</td></tr>
+    <tr><td>{{ etiquetas.get('iva', 'IVA') }}:</td><td>{{ iva_importe | moneda }}</td></tr>
+    {% endif %}
+    <tr class="total"><td>{{ etiquetas.get('total', 'Total') }}:</td><td>{{ importe | moneda }}</td></tr>
+  </table>
+
+  <div class="bm-oficina">
+    <p>{{ banco.nombre }} &mdash; {{ banco.direccion }}</p>
+    <p>Entidad supervisada por Banco de Espana. Consulte su extracto para verificar el cargo.</p>
+  </div>
+
+</div>
+</body>
+</html>
