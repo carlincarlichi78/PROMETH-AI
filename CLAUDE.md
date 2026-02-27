@@ -268,31 +268,53 @@ Campos nuevos en resultado: `_ocr_tier`, `_ocr_tier_motivo`, `_ocr_motores_usado
 
 **Solucion**: 43 familias de plantillas (18 facturas + 6 suministros + 10 nominas + 6 bancarios + 3 seguros) + degradacion agresiva (13 capas) + randomizacion etiquetas + provocacion aprendizaje (10 escenarios) + documentos compuestos.
 
-**Estado**: Tasks 1-8 COMPLETADOS. 43 plantillas + infraestructura creadas.
+**Estado**: Tasks 1-14 COMPLETADOS. Generador v2 cableado completo.
 Tasks completados:
-- T1: 4 YAMLs (`sinonimos_etiquetas`, `convenios_nominas`, `provocaciones`, `formatos`)
-- T2: 3 utils (`etiquetas.py`, `variaciones.py`, `compuestos.py`) + pikepdf instalado
-- T3: `ruido.py` v2 — 13 capas degradacion (D01-D13) + 6 perfiles calidad + `generar_html_degradacion()`
-- T4: `base_v2.css` — CSS reset + custom properties + clases utilitarias
-- T5: 18 plantillas facturas (F01-F18) — todas con layout radicalmente diferente
-- T6: 6 plantillas suministros (S01-S06) — electrica, gas, agua, telefonia, hosting, multi
-- T7: 10 plantillas nominas (N01-N10) — A3Nom, Sage, Meta4, Factorial, gestoria, sectores
-- T8: 9 plantillas bancarios/seguros (B01-B06, G01-G03)
+- T1-T4: Infraestructura (4 YAMLs, 4 utils, ruido v2, base_v2.css)
+- T5-T8: 43 plantillas HTML (18 facturas, 6 suministros, 10 nominas, 6 bancarios, 3 seguros)
+- T9: gen_facturas.py — familias + variaciones CSS + etiquetas + formatos + perfiles
+- T10: gen_nominas.py — convenios + familias nomina
+- T11: gen_suministros/bancarios/seguros.py — familias asignadas
+- T12: gen_provocaciones.py (10 tipos P01-P10) + gen_compuestos.py (6 tipos M01-M06)
+- T13: motor.py v2 (seed, provocaciones, compuestos, degradacion, manifiesto v2) + pdf_renderer.py (base_v2.css, html_a_pdf_bytes)
+- T14: empresas.yaml — familia_factura en 39 proveedores, familia_nomina en 11 entidades
 
-### Proxima sesion: Tasks 9-14 (integrar generadores + motor.py)
-- T9: Modificar gen_facturas.py — familias + variaciones + etiquetas
-- T10: Modificar gen_nominas.py — convenios + familias
-- T11: Modificar gen_suministros/bancarios/seguros.py — familias
-- T12: Crear gen_provocaciones.py + gen_compuestos.py
-- T13: Modificar motor.py + pdf_renderer.py — integrar todo
-- T14: Actualizar empresas.yaml — asignar familias a proveedores
+**Validacion** (elena-navarro, seed 42): 199 docs, 90% familia v2, 43 provocaciones (9 tipos), 12 compuestos (5 tipos), 15 familias, 4 perfiles calidad
 
-### Sesion final: Tasks 15-16 (tests + ejecucion)
+### Proxima sesion: Tasks 15-16 (tests + ejecucion)
 - T15: Tests unitarios generador v2
-- T16: Ejecucion completa + validacion + deploy
+- T16: Ejecucion completa con weasyprint + validacion + deploy
+
+## SFCE Evolucion Arquitectonica — EN DISENO
+
+**Design doc**: `docs/plans/2026-02-27-sfce-evolucion-arquitectura-design.md`
+**Estado**: Design doc escrito y aprobado. Pendiente plan de implementacion (writing-plans).
+
+**Objetivo**: SFCE pasa de soportar solo SL+autonomo a cubrir TODOS los casos fiscales espanoles.
+
+**Decisiones clave**:
+- Enfoque B: Motor de reglas contables centralizado
+- FS se mantiene con capa abstraccion (backend.py)
+- BD local SQLite + dashboard React para tiempo real
+- Normativa fiscal versionada por ano (sfce/normativa/)
+- Perfil fiscal como modelo de datos central
+- Jerarquia 6 niveles: normativa > PGC > perfil > negocio > cliente > aprendizaje
+- Importador libro diario + exportador CSV universal
+- Proteccion producto: Nuitka + OCR proxy
+- File watcher para automatizacion inbox
+
+**Componentes nuevos** (por prioridad):
+- P0: Reorganizar sfce/, perfil_fiscal.py, normativa/
+- P1: motor_reglas.py, clasificador.py, backend.py
+- P2: db/, refactorizar registration+correction, importador, exportador
+- P3: api/ FastAPI, dashboard/ React, watcher.py
+- P4: licencia.py, conciliacion bancaria
+
+**Proxima sesion**: crear plan de implementacion (writing-plans skill)
 
 ## Proximos pasos (otros)
 
+- Generador v2: Tasks 9-16 pendientes
 - Ejecutar pipeline SFCE contra entidades de prueba (post-generador v2)
 - Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)

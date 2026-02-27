@@ -14,8 +14,11 @@ from typing import List, Optional
 DIR_GENERADOR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DIR_GENERADOR))
 
+from utils.etiquetas import etiquetas_para_proveedor, formato_para_proveedor
 from utils.fechas import fechas_mensuales, _ultimo_dia_mes
 from utils.importes import CuotaSS, calcular_irpf_nomina, _redondear
+from utils.ruido import perfil_para_proveedor
+from utils.variaciones import css_custom_properties_str, generar_variaciones_css
 
 # ---------------------------------------------------------------------------
 # DocGenerado importado desde gen_facturas cuando exista; definido aqui como
@@ -37,6 +40,23 @@ except ImportError:
         error_inyectado: Optional[str] = None
         edge_case: Optional[str] = None
 
+
+# ---------------------------------------------------------------------------
+# Familias de plantillas v2 para nominas
+# ---------------------------------------------------------------------------
+
+_FAMILIAS_NOMINA: dict[str, str] = {
+    "a3nom": "nominas/N01_a3nom.html",
+    "sage": "nominas/N02_sage.html",
+    "meta4": "nominas/N03_meta4.html",
+    "factorial": "nominas/N04_factorial.html",
+    "gestoria_clasica": "nominas/N05_gestoria_clasica.html",
+    "gestoria_pro": "nominas/N06_gestoria_pro.html",
+    "sector_publico": "nominas/N07_sector_publico.html",
+    "construccion": "nominas/N08_construccion.html",
+    "hosteleria_nomina": "nominas/N09_hosteleria_nomina.html",
+    "comercio": "nominas/N10_comercio.html",
+}
 
 # ---------------------------------------------------------------------------
 # Constantes normativas 2025
@@ -246,7 +266,7 @@ def _calcular_nomina_mensual(
 # API publica
 # ---------------------------------------------------------------------------
 
-def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGenerado]:
+def generar_nominas(entidad: dict, anio: int, rng: random.Random, seed: int = 42) -> List[DocGenerado]:
     """
     Genera nominas mensuales (y pagas extra) para todos los empleados de la entidad.
 
@@ -264,6 +284,15 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
     meses_activos_entidad: List[int] = entidad.get("meses_activos", list(range(1, 13)))
     css_variante = entidad.get("css_variante", "corporativo")
     slug_entidad = _slug(entidad.get("nombre", "entidad"))
+    nombre_entidad = entidad.get("nombre", "entidad")
+
+    # --- Integracion v2: familia, etiquetas, variaciones, perfil ---
+    familia = entidad.get("familia_nomina", "gestoria_clasica")
+    plantilla_v2 = _FAMILIAS_NOMINA.get(familia, "nominas/N05_gestoria_clasica.html")
+    etiquetas = etiquetas_para_proveedor(nombre_entidad, seed=seed)
+    variaciones = generar_variaciones_css(nombre_entidad, familia, seed=seed)
+    formato = formato_para_proveedor(nombre_entidad, seed=seed)
+    perfil = perfil_para_proveedor(nombre_entidad, seed=seed)
 
     empresa_datos = {
         "nombre": entidad.get("nombre", ""),
@@ -306,7 +335,7 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                 archivo=f"{anio}-{mes:02d}_nomina_{slug_emp}.pdf",
                 tipo="nomina",
                 subtipo="mensual",
-                plantilla="nomina.html",
+                plantilla=plantilla_v2,
                 css_variante=css_variante,
                 datos_plantilla={
                     "empresa": empresa_datos,
@@ -324,6 +353,10 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                     "ss_empresa": calculo["ss_empresa"],
                     "paga_extra": False,
                     "especie": None,
+                    # campos v2
+                    "etiquetas": etiquetas,
+                    "variaciones_css_str": css_custom_properties_str(variaciones),
+                    "formato_numero_id": formato["numero"]["id"],
                 },
                 metadatos={
                     "fecha": date(anio, mes, min(28, ultimo_dia)).isoformat(),
@@ -332,6 +365,13 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                     "liquido": calculo["liquido"],
                     "bruto_anual": empleado.get("bruto_anual", 0),
                 },
+                # campos v2 en DocGenerado
+                familia=familia,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas,
+                formato_fecha=formato["fecha"]["id"],
+                formato_numero=formato["numero"]["id"],
+                perfil_calidad=perfil,
             )
             documentos.append(doc)
 
@@ -347,7 +387,7 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                     archivo=f"{anio}-{mes_extra:02d}_nomina_paga_extra_{slug_emp}.pdf",
                     tipo="nomina",
                     subtipo="paga_extra",
-                    plantilla="nomina.html",
+                    plantilla=plantilla_v2,
                     css_variante=css_variante,
                     datos_plantilla={
                         "empresa": empresa_datos,
@@ -365,6 +405,10 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                         "ss_empresa": calculo_extra["ss_empresa"],
                         "paga_extra": True,
                         "especie": None,
+                        # campos v2
+                        "etiquetas": etiquetas,
+                        "variaciones_css_str": css_custom_properties_str(variaciones),
+                        "formato_numero_id": formato["numero"]["id"],
                     },
                     metadatos={
                         "fecha": date(anio, mes_extra, 28).isoformat(),
@@ -373,13 +417,20 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random) -> List[DocGen
                         "liquido": calculo_extra["liquido"],
                         "bruto_anual": empleado.get("bruto_anual", 0),
                     },
+                    # campos v2 en DocGenerado
+                    familia=familia,
+                    variaciones_css=variaciones,
+                    etiquetas_usadas=etiquetas,
+                    formato_fecha=formato["fecha"]["id"],
+                    formato_numero=formato["numero"]["id"],
+                    perfil_calidad=perfil,
                 )
                 documentos.append(doc_extra)
 
     return documentos
 
 
-def generar_ss(entidad: dict, anio: int, rng: random.Random) -> List[DocGenerado]:
+def generar_ss(entidad: dict, anio: int, rng: random.Random, seed: int = 42) -> List[DocGenerado]:
     """
     Genera un RLC (Relacion de Liquidacion de Cotizaciones) mensual por cada mes
     en que haya al menos un empleado activo.

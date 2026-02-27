@@ -117,32 +117,22 @@ def renderizar_html(plantilla: str, datos: dict) -> str:
     return html
 
 
-def html_a_pdf(html: str, ruta_salida: Path, css_variante: str = "corporativo") -> Path:
-    """
-    Convierte un string HTML a PDF usando WeasyPrint.
-
-    Carga el CSS base (base.css) y la variante indicada (ej: corporativo.css)
-    si existen en DIR_CSS. Los archivos CSS que no existan se omiten con aviso.
+def _construir_hojas_css(css_variante: str = "corporativo", css_base: str = None) -> list:
+    """Construye la lista de hojas de estilo CSS para WeasyPrint.
 
     Args:
-        html: Contenido HTML como string.
-        ruta_salida: Ruta donde guardar el PDF resultante.
-        css_variante: Nombre (sin extension) del CSS de variante a cargar.
+        css_variante: Nombre (sin extension) del CSS de variante.
+        css_base: Nombre del CSS base (sin extension). None="base", "base_v2" para v2.
 
     Returns:
-        Ruta al PDF generado.
+        Lista de objetos weasyprint.CSS.
     """
     import weasyprint
 
-    # Crear directorios padres si no existen
-    ruta_salida = Path(ruta_salida)
-    ruta_salida.parent.mkdir(parents=True, exist_ok=True)
-
-    # Construir lista de hojas de estilo
+    nombre_base = css_base or "base"
     hojas_css = []
-    # base.css esta en css/, variantes en css/variantes/
     rutas_css = [
-        DIR_CSS / "base.css",
+        DIR_CSS / f"{nombre_base}.css",
         DIR_CSS / "variantes" / f"{css_variante}.css",
     ]
     for ruta_css in rutas_css:
@@ -150,9 +140,38 @@ def html_a_pdf(html: str, ruta_salida: Path, css_variante: str = "corporativo") 
             hojas_css.append(weasyprint.CSS(filename=str(ruta_css)))
             logger.debug(f"CSS cargado: {ruta_css.name}")
         else:
-            logger.warning(f"CSS no encontrado, se omite: {ruta_css}")
+            if "variantes" not in str(ruta_css) or css_variante != "corporativo":
+                logger.warning(f"CSS no encontrado, se omite: {ruta_css}")
+    return hojas_css
 
-    # Renderizar PDF
+
+def html_a_pdf(
+    html: str,
+    ruta_salida: Path,
+    css_variante: str = "corporativo",
+    css_base: str = None,
+) -> Path:
+    """
+    Convierte un string HTML a PDF usando WeasyPrint.
+
+    Carga el CSS base y la variante indicada si existen en DIR_CSS.
+
+    Args:
+        html: Contenido HTML como string.
+        ruta_salida: Ruta donde guardar el PDF resultante.
+        css_variante: Nombre (sin extension) del CSS de variante a cargar.
+        css_base: Nombre del CSS base (sin extension). None="base", "base_v2" para v2.
+
+    Returns:
+        Ruta al PDF generado.
+    """
+    import weasyprint
+
+    ruta_salida = Path(ruta_salida)
+    ruta_salida.parent.mkdir(parents=True, exist_ok=True)
+
+    hojas_css = _construir_hojas_css(css_variante, css_base)
+
     doc = weasyprint.HTML(string=html)
     doc.write_pdf(str(ruta_salida), stylesheets=hojas_css if hojas_css else None)
 
@@ -162,11 +181,37 @@ def html_a_pdf(html: str, ruta_salida: Path, css_variante: str = "corporativo") 
     return ruta_salida
 
 
+def html_a_pdf_bytes(
+    html: str,
+    css_variante: str = "corporativo",
+    css_base: str = None,
+) -> bytes:
+    """
+    Renderiza HTML a PDF y devuelve los bytes (sin guardar a archivo).
+
+    Util para documentos compuestos que necesitan concatenarse.
+
+    Args:
+        html: Contenido HTML como string.
+        css_variante: Nombre (sin extension) del CSS de variante.
+        css_base: Nombre del CSS base. None="base", "base_v2" para v2.
+
+    Returns:
+        PDF como bytes.
+    """
+    import weasyprint
+
+    hojas_css = _construir_hojas_css(css_variante, css_base)
+    doc = weasyprint.HTML(string=html)
+    return doc.write_pdf(stylesheets=hojas_css if hojas_css else None)
+
+
 def generar_pdf(
     plantilla: str,
     datos: dict,
     ruta_salida: Path,
     css_variante: str = "corporativo",
+    css_base: str = None,
 ) -> Path:
     """
     Shortcut que combina renderizar_html + html_a_pdf en un solo paso.
@@ -176,9 +221,10 @@ def generar_pdf(
         datos: Variables para la plantilla.
         ruta_salida: Ruta de destino del PDF.
         css_variante: Nombre del CSS de variante (sin extension).
+        css_base: Nombre del CSS base. None="base", "base_v2" para v2.
 
     Returns:
         Ruta al PDF generado.
     """
     html = renderizar_html(plantilla, datos)
-    return html_a_pdf(html, ruta_salida, css_variante)
+    return html_a_pdf(html, ruta_salida, css_variante, css_base=css_base)
