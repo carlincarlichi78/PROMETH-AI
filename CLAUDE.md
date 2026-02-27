@@ -259,12 +259,31 @@ Campos nuevos en resultado: `_ocr_tier`, `_ocr_tier_motivo`, `_ocr_motores_usado
 
 **Tests**: 88/88 pasando.
 
-## Proximos pasos
+## Generador v2 — Diversidad Visual Realista (EN CURSO)
 
-### Prioritario (proxima sesion)
-1. **Ejecutar pipeline contra mas entidades de prueba** (2.333 PDFs, 11 entidades) — validar tiers + paralelizacion en produccion
+**Design doc**: `docs/plans/2026-02-27-generador-v2-design.md`
+**Plan implementacion**: `docs/plans/2026-02-27-generador-v2-implementation.md`
 
-### Otros
+**Problema**: generador v1 usa 13 plantillas HTML homogeneas. Todas las facturas salen iguales → OCR no se estresa → SFCE no aprende.
+
+**Solucion**: 43 familias de plantillas (18 facturas + 6 suministros + 10 nominas + 6 bancarios + 3 seguros) + degradacion agresiva (13 capas) + randomizacion etiquetas + provocacion aprendizaje (10 escenarios) + documentos compuestos.
+
+**Estado**: Design + Plan completados. Implementacion pendiente (16 tasks).
+
+### Proxima sesion: Tasks 1-4 (infraestructura)
+1. **Task 1**: Crear 4 YAMLs datos (`sinonimos_etiquetas`, `convenios_nominas`, `provocaciones`, `formatos`)
+2. **Task 2**: Crear 3 utils (`etiquetas.py`, `variaciones.py`, `compuestos.py`)
+3. **Task 3**: Ampliar `ruido.py` con 13 capas degradacion + 6 perfiles calidad
+4. **Task 4**: Crear `base_v2.css` con custom properties
+
+### Sesiones siguientes
+- **Sesion 3**: Tasks 5-8 — 43 plantillas HTML (la mas pesada)
+- **Sesion 4**: Tasks 9-14 — integrar generadores + motor.py
+- **Sesion 5**: Tasks 15-16 — tests + validacion + ejecucion completa
+
+## Proximos pasos (otros)
+
+- Ejecutar pipeline SFCE contra entidades de prueba (post-generador v2)
 - Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
 - Configurar backups automaticos BD FacturaScripts
