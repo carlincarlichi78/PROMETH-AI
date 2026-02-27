@@ -1461,6 +1461,124 @@ Token por cliente para OCR proxy.
 
 ---
 
+## FASE E: INGESTA INTELIGENTE Y NOTIFICACIONES (Tasks 33-38)
+
+### Task 33: Convencion de nombres carpetas y documentos
+
+**Files:**
+- Create: `sfce/core/nombres.py`
+- Modify: `sfce/core/config.py` (rutas con nuevo formato)
+- Modify: `scripts/onboarding.py` (crear carpetas con CIF)
+- Test: `tests/test_nombres.py`
+
+Implementar:
+- `generar_slug_cliente(cif, nombre) -> str` → `"B13995519-pastorino-costa-del-sol"`
+- `renombrar_documento(datos_ocr) -> str` → `"FC_2025-06-15_B99999999_acme-sl_1210.00.pdf"`
+- Crear carpeta `clientes/_sin_clasificar/` con `pendientes.json`
+- Estructura estandar: inbox/, procesado/, cuarentena/, exportaciones/
+
+Tests: verificar slugs, renombrado, caracteres especiales, duplicados de nombre.
+
+---
+
+### Task 34: Cache OCR reutilizable
+
+**Files:**
+- Create: `sfce/core/cache_ocr.py`
+- Modify: `sfce/phases/intake.py` (verificar cache antes de OCR)
+- Test: `tests/test_cache_ocr.py`
+
+Implementar:
+- `guardar_cache(ruta_pdf, datos_ocr)` → crea `.ocr.json` junto al PDF
+- `cargar_cache(ruta_pdf) -> dict | None` → lee cache si existe y hash coincide
+- Hash SHA256 del PDF para invalidar cache si cambia
+- Intake verifica cache antes de llamar a Mistral/GPT
+
+Tests: guardar/cargar cache, invalidacion por hash, reutilizacion en pipeline.
+
+---
+
+### Task 35: Deteccion de duplicados
+
+**Files:**
+- Create: `sfce/core/duplicados.py`
+- Modify: `sfce/phases/pre_validation.py` (check duplicados)
+- Test: `tests/test_duplicados.py`
+
+Implementar:
+- Duplicado seguro: mismo CIF + numero factura + fecha → rechazar
+- Posible duplicado: mismo CIF + importe + fecha cercana (±5 dias) → cuarentena
+- Consulta BD local para historico
+
+Tests: duplicado exacto, duplicado parcial, falso positivo (mismo proveedor distinta factura).
+
+---
+
+### Task 36: Ingesta por email (IMAP)
+
+**Files:**
+- Create: `sfce/core/ingesta_email.py`
+- Create: `scripts/leer_correo.py` (CLI/demonio)
+- Test: `tests/test_ingesta_email.py`
+
+Implementar:
+- Conexion IMAP a buzon configurable
+- Descargar adjuntos PDF de emails no leidos
+- OCR rapido (Mistral tier 0) para clasificar
+- Enrutar a carpeta cliente (por CIF en BD o por email remitente en config)
+- Si no se identifica → `_sin_clasificar/`
+- Marcar email como leido
+- Guardar `.ocr.json` (cache reutilizable)
+
+Config en `sfce/config_global.yaml`:
+```yaml
+ingesta_email:
+  servidor: imap.gmail.com
+  puerto: 993
+  usuario: facturas@tudominio.com
+  password_env: SFCE_EMAIL_PASSWORD
+  carpeta: INBOX
+  intervalo_minutos: 5
+```
+
+Tests: mock IMAP, verificar enrutamiento por CIF, por email, a sin_clasificar.
+
+---
+
+### Task 37: Sistema de notificaciones
+
+**Files:**
+- Create: `sfce/core/notificaciones.py`
+- Modify: `sfce/api/websocket.py` (emitir eventos)
+- Test: `tests/test_notificaciones.py`
+
+Implementar:
+- Canal email: `enviar_email(destinatario, asunto, cuerpo, adjuntos)`
+- Canal dashboard: evento WebSocket
+- Plantillas email: documento_ilegible, proveedor_nuevo, plazo_fiscal, informe_mensual
+- Configuracion por cliente: `emails_autorizados` en config.yaml
+- Registro de notificaciones enviadas en BD (no repetir)
+
+Tests: mock SMTP, verificar plantillas, verificar no-repeticion.
+
+---
+
+### Task 38: Deteccion facturas recurrentes faltantes
+
+**Files:**
+- Create: `sfce/core/recurrentes.py`
+- Test: `tests/test_recurrentes.py`
+
+Implementar:
+- Analizar historico BD: proveedores con patron mensual/trimestral
+- Detectar patron: "Telefonica ~80€ cada mes"
+- Si falta factura esperada → generar alerta
+- Requiere minimo 3 ocurrencias para detectar patron
+
+Tests: patron mensual detectado, patron trimestral, falso positivo descartado.
+
+---
+
 ## Resumen de esfuerzo estimado
 
 | Fase | Tasks | Tests nuevos | Sesiones estimadas |
@@ -1469,7 +1587,8 @@ Token por cliente para OCR proxy.
 | B — Motor central | 9-16 | ~40 | 4-5 |
 | C — Datos | 17-23 | ~30 | 3-4 |
 | D — Interfaz | 24-32 | ~20 | 5-6 |
-| **Total** | **32 tasks** | **~140 tests** | **15-19 sesiones** |
+| E — Ingesta inteligente | 33-38 | ~25 | 3-4 |
+| **Total** | **38 tasks** | **~165 tests** | **18-23 sesiones** |
 
 ## Orden de ejecucion recomendado
 
@@ -1478,7 +1597,25 @@ Fase A (fundamentos) → OBLIGATORIO primero
     ↓
 Fase B (motor) → OBLIGATORIO segundo
     ↓
-Fase C (datos) ←→ Fase D (interfaz) → PUEDEN ir en paralelo
+Fase C (datos) ←→ Fase D (interfaz) ←→ Fase E (ingesta) → PUEDEN ir en paralelo
 ```
 
-Despues de Fase B, el pipeline ya soporta todos los regimenes fiscales. Fases C y D anaden persistencia e interfaz, que son independientes entre si.
+Despues de Fase B, el pipeline ya soporta todos los regimenes fiscales. Fases C, D y E anaden persistencia, interfaz e ingesta inteligente, que son independientes entre si.
+
+## Backlog post-implementacion (futuro)
+
+| Feature | Prioridad | Dependencia |
+|---------|-----------|-------------|
+| WhatsApp/Telegram bot | Alta | Fase E (ingesta) |
+| Open Banking PSD2 (extractos auto) | Muy alta | Fase C (BD) |
+| Verifactu (antifraude) | Obligatorio (2026) | Fase B (motor) |
+| QR pre-OCR en facturas | Media | Fase B (intake) |
+| Portal web cliente (upload+consulta) | Alta | Fase D (dashboard) |
+| Informe mensual automatico | Alta | Fase E (notificaciones) |
+| Validacion CIF contra AEAT | Media | Fase B |
+| Prevision tesoreria 3-6 meses | Alta | Fase C (BD) |
+| Comparativa interanual | Media | Fase C (BD) |
+| Facturacion automatica al cliente | Media | Fase D |
+| KPIs de la gestoria | Media | Fase D |
+| Acceso lectura dashboard clientes | Alta | Fase D |
+| Tracking certificados/seguros | Media | Fase C (BD) |

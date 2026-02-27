@@ -869,3 +869,198 @@ No se implementa en la primera fase. Se disena la BD para soportarlo (tabla `mov
 **P2** = integracion con existente + datos
 **P3** = interfaz de usuario
 **P4** = features de producto
+
+---
+
+## 17. Convencion de nombres (carpetas y documentos)
+
+### Carpetas de clientes
+
+Formato estandar: `{CIF}-{nombre-slug}/`
+
+```
+clientes/
+├── B13995519-pastorino-costa-del-sol/
+├── 12345678A-gerardo-gonzalez-callejon/
+├── B87654321-chiringuito-sol-arena/
+└── _sin_clasificar/              ← documentos sin cliente asignado
+```
+
+### Documentos renombrados post-OCR
+
+Formato: `{TIPO}_{FECHA}_{CIF-EMISOR}_{nombre-proveedor}_{importe}.pdf`
+
+```
+FC_2025-06-15_B99999999_acme-sl_1210.00.pdf
+NOM_2025-01-31_trabajador-garcia_1850.00.pdf
+BAN_2025-03-31_extracto-bankinter.pdf
+NC_2025-04-10_B99999999_acme-sl_-242.00.pdf
+SUM_2025-05-01_endesa_87.50.pdf
+```
+
+### Bandeja sin clasificar
+
+Documentos que llegan (por email o manualmente) y no se puede determinar a que cliente pertenecen:
+
+```
+clientes/_sin_clasificar/
+├── 2025-06-15_B99999999_documento-no-identificado.pdf
+├── 2025-06-15_B99999999_documento-no-identificado.ocr.json
+└── pendientes.json    ← motivo de cada uno, para resolver en dashboard
+```
+
+---
+
+## 18. Cache OCR reutilizable
+
+El OCR se hace UNA sola vez. El resultado se guarda como JSON junto al PDF:
+
+```
+clientes/B13995519-pastorino/inbox/
+├── FC_2025-06-15_B99999999_acme_1210.00.pdf
+└── FC_2025-06-15_B99999999_acme_1210.00.ocr.json
+```
+
+Contenido del `.ocr.json`:
+```json
+{
+  "motor": "mistral",
+  "tier": 0,
+  "fecha_ocr": "2025-06-15T10:30:00",
+  "confianza": 92,
+  "datos_extraidos": { ... },
+  "hash_pdf": "sha256:abc123..."
+}
+```
+
+El pipeline verifica: si existe `.ocr.json` y el hash del PDF coincide → reutilizar. Si no → hacer OCR nuevo.
+
+---
+
+## 19. Ingesta por email
+
+### Flujo
+
+```
+Cliente manda email con PDF adjunto a facturas@tudominio.com
+       ↓
+Servicio IMAP lee buzon periodicamente (cada 5 min)
+       ↓
+Descarga adjuntos (PDF, imagenes)
+       ↓
+OCR rapido (Mistral tier 0): identifica CIF, tipo, fecha, importe
+       ↓
+¿CIF del documento pertenece a algun cliente en BD?
+  SI → enrutar a clientes/{CIF-cliente}/inbox/
+  NO → ¿Email remitente asignado a algun cliente?
+    SI → enrutar a ese cliente + marcar proveedor NUEVO
+    NO → clientes/_sin_clasificar/ + notificar gestor
+       ↓
+Renombrar documento segun convencion
+       ↓
+Guardar .ocr.json (cache reutilizable)
+       ↓
+Pipeline continua con OCR ya hecho
+```
+
+### Asignacion email→cliente
+
+En config.yaml de cada cliente:
+```yaml
+emails_autorizados:
+  - admin@pastorino.com
+  - facturas@pastorino.com
+  - contabilidad@pastorino.com
+```
+
+Si el remitente coincide con un email autorizado, el documento va a ese cliente aunque el CIF del proveedor sea desconocido.
+
+---
+
+## 20. Sistema de notificaciones
+
+### Canales
+
+| Canal | Para quien | Cuando |
+|-------|-----------|--------|
+| Dashboard (WebSocket) | Gestor | Siempre, tiempo real |
+| Email | Gestor + cliente | Eventos importantes |
+| WhatsApp/Telegram (futuro) | Cliente | Alertas urgentes |
+
+### Eventos y destinatarios
+
+| Evento | Gestor | Cliente |
+|--------|--------|--------|
+| Documento procesado OK | Dashboard | — |
+| Proveedor nuevo detectado | Dashboard + email | — |
+| Documento ilegible | Dashboard + email | Email ("reenvie en mejor calidad") |
+| Documento sin clasificar | Dashboard + email | — |
+| Plazo fiscal en 5 dias | Dashboard + email | — |
+| Cuarentena contable | Dashboard | — |
+| Factura recurrente faltante | Dashboard | Email ("no hemos recibido factura de X este mes") |
+| Duplicado detectado | Dashboard | — |
+| IVA acumulado alto | Dashboard | Email ("llevas X€ de IVA este trimestre") |
+| Informe mensual | — | Email (automatico fin de mes) |
+
+### Email al cliente por documento ilegible
+
+```
+De: contabilidad@tudominio.com
+Para: admin@pastorino.com
+Asunto: Documento recibido no legible — accion requerida
+
+Hemos recibido un documento adjunto a su email del 15/06/2025
+pero no hemos podido procesarlo correctamente.
+
+Motivo: Imagen borrosa / texto no legible (confianza OCR: 28%)
+
+Por favor reenvie el documento en mejor calidad:
+- Escaneo a 300 DPI minimo
+- PDF directo (no foto del documento)
+- Sin recortes ni sombras
+
+[Vista previa del documento recibido]
+```
+
+---
+
+## 21. Deteccion de duplicados
+
+Antes de registrar un documento, verificar si ya existe otro con:
+- Mismo CIF emisor + mismo numero factura + misma fecha → DUPLICADO SEGURO
+- Mismo CIF emisor + mismo importe + fecha cercana (±5 dias) → POSIBLE DUPLICADO
+
+Duplicados seguros se rechazan automaticamente.
+Posibles duplicados van a cuarentena con ambos documentos para comparacion visual.
+
+---
+
+## 22. Deteccion de facturas recurrentes faltantes
+
+El motor analiza patrones historicos por proveedor:
+- "Telefonica manda factura de ~80€ cada mes"
+- "El alquiler llega el dia 1 de cada mes"
+
+Si un mes no llega la factura esperada → alerta al gestor y opcionalmente al cliente.
+
+Requiere: BD local con historico de al menos 3 meses por proveedor.
+
+---
+
+## 23. Backlog post-Fase D (futuro)
+
+| Feature | Impacto | Dificultad |
+|---------|---------|-----------|
+| WhatsApp bot (foto→OCR→enrutar) | Alto | Media |
+| Open Banking PSD2 (extractos automaticos) | Muy alto | Alta |
+| Verifactu (antifraude facturacion) | Obligatorio | Alta |
+| QR en facturas (lectura pre-OCR) | Medio | Baja |
+| Portal web cliente (upload + consulta) | Alto | Media |
+| Informe mensual automatico al cliente | Alto | Media |
+| Validacion CIF contra AEAT | Medio | Baja |
+| Prevision de tesoreria a 3-6 meses | Alto | Media |
+| Comparativa interanual por subcuenta | Medio | Baja |
+| Facturacion automatica al cliente del gestor | Medio | Baja |
+| KPIs de la gestoria (docs/mes, clientes, revenue) | Medio | Baja |
+| Acceso lectura dashboard para clientes | Alto | Media |
+| Tracking certificados/seguros que caducan | Medio | Baja |
