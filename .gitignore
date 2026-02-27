@@ -2,6 +2,7 @@
 nul
 Thumbs.db
 desktop.ini
+~$*
 
 # Python
 __pycache__/
@@ -9,6 +10,7 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+*.egg-info/
 
 # IDE
 .vscode/
@@ -27,3 +29,28 @@ tests/datos_prueba/generador/salida/
 # Datos sensibles
 ACCESOS.md
 *.env
+
+# Binarios y documentos de clientes (no trackear en git)
+clientes/*/inbox/
+clientes/*/inbox_prueba/
+clientes/*/procesado/
+clientes/*/cuarentena/
+clientes/**/procesado/
+clientes/**/*.pdf
+clientes/**/*.PDF
+clientes/**/*.xlsx
+clientes/**/*.xls
+clientes/**/*.json
+!clientes/*/config.yaml
+!clientes/*/manifiesto_prueba.json
+
+# Build artifacts
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Preview / landing
+preview/
+spice-landing/dist/
+sfce.egg-info/
