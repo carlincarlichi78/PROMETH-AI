@@ -26,9 +26,9 @@
   --------------------------------------------------
 
   Operaciones interiores:
-       0%  Base:    83,565.80 EUR   IVA:         0.00 EUR
+       0%  Base:   127,813.00 EUR   IVA:         0.00 EUR
       21%  Base:    10,136.70 EUR   IVA:     2,128.71 EUR
-    TOTAL  Base:    93,702.50 EUR   IVA:     2,128.71 EUR
+    TOTAL  Base:   137,949.70 EUR   IVA:     2,128.71 EUR
 
   Adquisiciones intracomunitarias (casillas 36-37):
     Base:       6,938.42 EUR

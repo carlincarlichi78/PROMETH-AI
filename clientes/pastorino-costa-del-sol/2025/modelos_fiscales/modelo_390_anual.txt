@@ -24,9 +24,9 @@
     TOTAL  Base:   172,778.40 EUR   IVA:     5,528.74 EUR
 
   IVA SOPORTADO:
-       0%  Base:   130,473.80 EUR   IVA:         0.00 EUR
+       0%  Base:   174,721.00 EUR   IVA:         0.00 EUR
       21%  Base:    11,383.80 EUR   IVA:     2,390.60 EUR
-    TOTAL  Base:   141,857.60 EUR   IVA:     2,390.60 EUR
+    TOTAL  Base:   186,104.80 EUR   IVA:     2,390.60 EUR
 
   OPERACIONES INTRACOMUNITARIAS:
     Base:        6,938.42 EUR

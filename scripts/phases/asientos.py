@@ -29,7 +29,7 @@ def _obtener_asiento_factura(idfactura: int, tipo_doc: str,
     Returns:
         dict con datos del asiento, o None si no existe
     """
-    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT") else "cliente"
+    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "REC", "SUM") else "cliente"
 
     try:
         factura = verificar_factura(idfactura, tipo=tipo_fs)

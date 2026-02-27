@@ -286,6 +286,23 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
         entidad = config.buscar_proveedor_por_cif(cif) if cif else None
         if not entidad and nombre:
             entidad = config.buscar_proveedor_por_nombre(nombre)
+
+        # Si no se encontro, verificar si OCR invirtio emisor/receptor
+        # (emisor_cif es nuestro CIF → swap y buscar en receptor)
+        if not entidad:
+            from scripts.core.config import _normalizar_cif
+            cif_norm = _normalizar_cif(cif) if cif else ""
+            cif_empresa = _normalizar_cif(config.cif) if config.cif else ""
+            if cif_norm and cif_norm == cif_empresa:
+                # OCR puso nuestro CIF como emisor; el proveedor real esta en receptor
+                cif_alt = (datos_gpt.get("receptor_cif") or "").upper()
+                nombre_alt = datos_gpt.get("receptor_nombre") or ""
+                entidad = config.buscar_proveedor_por_cif(cif_alt) if cif_alt else None
+                if not entidad and nombre_alt:
+                    entidad = config.buscar_proveedor_por_nombre(nombre_alt)
+                if entidad:
+                    logger.info(f"OCR invirtio emisor/receptor, proveedor encontrado via receptor: {entidad.get('_nombre_corto')}")
+
         return entidad
 
     elif tipo_doc == "FV":

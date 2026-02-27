@@ -10,14 +10,14 @@
     --------------------------------------------------
     TOTAL ACTIVO                          190,196.37 EUR
 
-  A) PATRIMONIO NETO                       39,892.12 EUR
-      V. Resultado del ejercicio                39,892.12 EUR
+  A) PATRIMONIO NETO                       11,709.19 EUR
+      V. Resultado del ejercicio                11,709.19 EUR
   B) PASIVO NO CORRIENTE                        0.00 EUR
-  C) PASIVO CORRIENTE                     137,006.87 EUR
-      I. Proveedores                           130,021.06 EUR
+  C) PASIVO CORRIENTE                     174,584.11 EUR
+      I. Proveedores                           167,598.30 EUR
       IV. HP acreedora                           6,985.81 EUR
     --------------------------------------------------
-    TOTAL PN + PASIVO                     176,899.00 EUR
+    TOTAL PN + PASIVO                     186,293.30 EUR
 
   Verificacion: NO CUADRA - revisar asientos
-  Diferencia:    13,297.37 EUR
+  Diferencia:     3,903.07 EUR

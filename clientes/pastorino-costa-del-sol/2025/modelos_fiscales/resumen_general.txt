@@ -1,7 +1,7 @@
 ################################################################
   RESUMEN GENERAL DE MODELOS FISCALES (2025)
   PASTORINO COSTA DEL SOL S.L.
-  Generado: 26/02/2026 14:19
+  Generado: 26/02/2026 19:08
 ################################################################
 
 ================================================================
@@ -30,7 +30,7 @@
 ================================================================
   Terceros que superan 3,005.06 EUR: 7
     B93159044            MALAGA NATURAL 2012 S.L.       A   143,747.14 EUR
-    30-70793648-3        CAUQUEN ARGENTINA S.A.U.       B    74,880.00 EUR
+    30-70793648-3        CAUQUEN ARGENTINA S.A.U.       B   119,127.20 EUR
     B16815003            PRIMATRANSIT S.L.              B    25,650.34 EUR
     30-71035801-6        LNET S.A.                      B    19,500.00 EUR
     DK53139655           MAERSK A/S                     B    12,120.00 EUR
@@ -41,10 +41,10 @@
   BALANCE Y PyG (resumen)
 ================================================================
   Total Activo:             190,196.37 EUR
-  Total PN + Pasivo:        176,899.00 EUR
+  Total PN + Pasivo:        186,293.30 EUR
   Cuadra: NO
-  Resultado explotacion:     53,189.50 EUR
-  Resultado neto:            39,892.12 EUR
+  Resultado explotacion:     15,612.26 EUR
+  Resultado neto:            11,709.19 EUR
   (Imp. Sociedades estimado al 25%)
 
 ################################################################

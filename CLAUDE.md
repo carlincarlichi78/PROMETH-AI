@@ -285,43 +285,77 @@ Tasks completados:
 **T16 COMPLETADO**: 2343 docs (11 entidades), 0 errores estructurales, 280s generacion
 - Fixes: _datos_plantilla_nomina() helper, _normalizar_datos_bancario(), _CallableDict, aliases suministros/seguros
 
-## SFCE Evolucion v2 — LISTO PARA IMPLEMENTAR
+## SFCE Evolucion v2 — EN IMPLEMENTACION
 
 **Design doc v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-design.md`
 **Plan implementacion v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-implementation.md` (46 tasks, 5 fases)
-**Sustituye a**: v1 (`sfce-evolucion-arquitectura-design.md` + `sfce-evolucion-implementation.md`)
-**Estado**: Design + Plan v2 COMPLETOS. Listo para implementar Fase A.
-
-**Objetivo**: SFCE universal — todos los casos fiscales espanoles (5 territorios), ciclo contable completo (cierre, amortizaciones, provisiones), dashboard tiempo real, trazabilidad de decisiones.
-
-**Cambios v2 vs v1**:
-- Ciclo contable completo: cierre ejercicio (10 pasos), amortizaciones, provisiones pagas extras, regularizacion IVA, periodificaciones, IVA no deducible
-- 5 territorios fiscales: peninsula, canarias (IGIC), ceuta_melilla (IPSI), navarra, pais_vasco
-- BD ampliada: 13 tablas (+ audit_log, pagos, movimientos_bancarios, activos_fijos, operaciones_periodicas, trabajadores)
-- Doble motor BD: SQLite (desktop) + PostgreSQL (SaaS) via SQLAlchemy
-- Modelos fiscales 3 categorias: automaticos (303,111,130...), semi-auto (200 IS), asistidos (100 IRPF)
-- Trazabilidad: log razonamiento completo por cada asiento
-- Cuarentena estructurada: 7 tipos con preguntas tipadas
-- Deteccion trabajadores nuevos: DNI no conocido en nomina -> cuarentena
-- Autenticacion JWT: admin/gestor/readonly
-- Proteccion: OCR proxy + token + SaaS (sin Nuitka)
-- Claude Code siempre en la ecuacion (dashboard complementa, no reemplaza)
+**Estado**: Fases A+B+C+D COMPLETADAS (37/46 tasks, 80%). 645 tests PASS.
 
 **Fases**:
-- A (T1-10): Fundamentos — sfce/, normativa multi-territorio, perfil fiscal, backend, decision con trazabilidad, operaciones periodicas, cierre ejercicio
-- B (T11-19): Motor central — clasificador, motor reglas, refactorizar phases, modelos 3 categorias, notas credito
-- C (T20-27): Datos — BD dual SQLite/PostgreSQL, 13 tablas, repositorio, importador/exportador
-- D (T28-37): Interfaz — FastAPI + JWT, WebSocket, React dashboard, watcher, licencia
-- E (T38-46): Ingesta — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones, recurrentes, periodicas auto
+- A (T1-10): COMPLETADA — sfce/, normativa 5 territorios, perfil fiscal, decision con trazabilidad, cierre ejercicio
+- B (T11-19): COMPLETADA — clasificador (cascada 6 niveles), MotorReglas (OBLIGATORIO en pipeline), calculador modelos 3 categorias, notas credito. 392 tests
+- C (T20-27): COMPLETADA — BD dual SQLite/PostgreSQL (14 tablas SQLAlchemy), repositorio (PyG, balance, saldos), backend doble destino (FS+local), importador CSV/Excel, exportador universal, migrador FS→BD. 479 tests
+- D (T28-37): COMPLETADA — FastAPI + JWT + WebSocket, React dashboard (15 paginas), file watcher, licencias. 645 tests
+- E (T38-46): PENDIENTE — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 
-**Estimacion**: ~210 tests nuevos, 21-26 sesiones
+**Modulos Fase B** (sfce/core/):
+- `clasificador.py` — cascada 6 niveles: regla_cliente → aprendizaje → tipo_doc → palabras_clave → libro_diario → cuarentena
+- `motor_reglas.py` — orquesta clasificador+normativa+perfil, retorna DecisionContable con log_razonamiento
+- `calculador_modelos.py` — automaticos (303,390,111,130,347), semi-auto (borrador 200), asistido (informe IRPF)
+- `notas_credito.py` — busca factura original, genera asiento inverso proporcional
 
-**Proxima sesion**: implementar Fase A (Tasks 1-10)
+**Modulos Fase C** (sfce/db/ + sfce/core/):
+- `sfce/db/base.py` — motor dual SQLite(WAL)/PostgreSQL, crear_sesion, inicializar_bd
+- `sfce/db/modelos.py` — 14 tablas: empresas, proveedores_clientes, trabajadores, documentos, asientos, partidas, facturas, pagos, movimientos_bancarios, activos_fijos, operaciones_periodicas, cuarentena, audit_log, aprendizaje_log
+- `sfce/db/repositorio.py` — CRUD + queries: saldo_subcuenta, pyg, balance, facturas_pendientes, activos_amortizables, cuarentena
+- `sfce/core/backend.py` — doble destino FS+BD local, fallback si FS falla, audit log
+- `sfce/core/importador.py` — CSV/Excel, auto-deteccion separador, formato europeo, genera config.yaml
+- `sfce/core/exportador.py` — libro diario CSV/Excel, facturas CSV, Excel multi-hoja
+- `scripts/migrar_fs_a_bd.py` — one-time: lee FS via API → carga en SQLite
+
+## SPICE Landing Page — DESPLEGADA
+
+**URL**: https://spice.carloscanetegomez.dev
+**Stack**: React 19 + Vite 7 + Tailwind v4 + TypeScript
+**Codigo**: `spice-landing/` (39 archivos, 7487 lineas)
+**Servidor**: `/opt/apps/spice-landing/`, Nginx + SSL Let's Encrypt
+**Commit**: 7f109e0 en `feat/sfce-v2-fase-b`
+
+17 secciones: Hero, Problema, Vision, Pipeline (7 fases), OCR (3 niveles), TiposDocumento (10), Jerarquia (6 niveles), Clasificador, Trazabilidad, Territorios (5), Ciclo contable, Modelos fiscales (15), Aprendizaje, Formas juridicas (12), Resultados + caso Pastorino, Footer con roadmap.
+
+**Deploy**: DNS Porkbun (A record spice→65.108.60.69) + certbot SSL + Nginx conf
+
+**Modulos Fase D** (sfce/api/ + dashboard/ + scripts/):
+- `sfce/api/app.py` — FastAPI app, lifespan BD, CORS, routers
+- `sfce/api/schemas.py` — 15 modelos Pydantic (request/response)
+- `sfce/api/auth.py` — JWT auth con bcrypt, 3 roles (admin/gestor/readonly), admin por defecto
+- `sfce/api/websocket.py` — GestorWebSocket, canales por empresa, 6 tipos de evento
+- `sfce/api/rutas/` — 5 routers: empresas, documentos, contabilidad, auth, websocket
+- `sfce/db/modelos_auth.py` — modelo Usuario (15a tabla)
+- `sfce/core/licencia.py` — licencias JWT firmadas, modulos, max_empresas, verificacion
+- `scripts/watcher.py` — watchdog inbox 3 modos (manual/semi/auto), debounce
+- `dashboard/` — React 18 + TypeScript + Tailwind v4 + Vite, 15 paginas:
+  - Home (grid empresas), Login, Empresa (detalle + stats)
+  - PyG, Balance, Diario (paginado), Facturas (filtros), Activos (amortizacion)
+  - Inbox, Pipeline (WebSocket real-time), Cuarentena (resolucion interactiva)
+  - Importar (wizard 3 pasos), Exportar, Calendario fiscal, Cierre ejercicio (10 pasos)
+
+**API arranque**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
+**Dashboard dev**: `cd dashboard && npm run dev` (proxy a localhost:8000)
+
+## GitHub
+
+- **Repo**: `carlincarlichi78/SPICE` (privado)
+- **Remote**: `https://github.com/carlincarlichi78/SPICE.git`
+- **Branch activa**: `feat/sfce-v2-fase-d`
+- **PR abierta**: #1 (feat/sfce-v2-fase-d → main)
+- **Cuenta**: carlincarlichi78 (autenticada via `gh`)
+- **Binarios excluidos**: PDFs, Excel, JSONs de clientes NO se trackean (ver .gitignore)
 
 ## Proximos pasos
 
-- **Implementar Fase A evolucion SFCE v2** (Tasks 1-10)
+- **Mergear PR #1** y empezar Fase E (Tasks 38-46): naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 - Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
-- Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
+- Conectar dashboard a API real (actualmente con datos mock)

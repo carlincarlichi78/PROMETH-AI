@@ -1,0 +1,143 @@
+"""SFCE API — Autenticacion JWT con 3 roles (admin, gestor, readonly)."""
+
+import os
+from datetime import datetime, timedelta, timezone
+from functools import wraps
+from typing import Callable
+
+import bcrypt
+import jwt
+from fastapi import HTTPException, Request, status
+
+from sfce.db.modelos_auth import Usuario
+
+
+# --- Hashing de passwords ---
+
+JWT_SECRET = os.environ.get("SFCE_JWT_SECRET", "dev-secret-cambiar-en-produccion")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_MINUTOS = 60 * 24  # 24 horas por defecto
+
+
+def hashear_password(password: str) -> str:
+    """Genera hash bcrypt de un password."""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+
+def verificar_password(password: str, hash_pw: str) -> bool:
+    """Verifica password contra hash bcrypt."""
+    return bcrypt.checkpw(password.encode("utf-8"), hash_pw.encode("utf-8"))
+
+
+# --- Tokens JWT ---
+
+def crear_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """Crea token JWT firmado con HS256.
+
+    data debe incluir al menos 'sub' (email del usuario).
+    """
+    payload = data.copy()
+    if expires_delta:
+        expiracion = datetime.now(timezone.utc) + expires_delta
+    else:
+        expiracion = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRATION_MINUTOS)
+    payload["exp"] = expiracion
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def decodificar_token(token: str) -> dict:
+    """Decodifica y valida token JWT. Lanza HTTPException 401 si invalido."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expirado",
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido",
+        )
+
+
+# --- Dependencias FastAPI ---
+
+def obtener_usuario_actual(request: Request, sesion_factory=None) -> Usuario:
+    """Extrae usuario del token Bearer en Authorization header.
+
+    Usa sesion_factory del parametro o de app.state.
+    """
+    # Extraer token del header
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de autenticacion requerido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = auth_header.split(" ", 1)[1]
+    payload = decodificar_token(token)
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido: sin campo sub",
+        )
+
+    # Buscar usuario en BD
+    sf = sesion_factory or request.app.state.sesion_factory
+    with sf() as sesion:
+        usuario = sesion.query(Usuario).filter(
+            Usuario.email == email,
+            Usuario.activo == True,
+        ).first()
+
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no encontrado o inactivo",
+        )
+
+    return usuario
+
+
+def requiere_rol(*roles_permitidos: str) -> Callable:
+    """Factory de dependencia que verifica que el usuario tenga uno de los roles permitidos.
+
+    Uso:
+        @router.post("/admin-only", dependencies=[Depends(requiere_rol("admin"))])
+        def endpoint_admin(...):
+            ...
+    """
+    def _verificar_rol(request: Request):
+        usuario = obtener_usuario_actual(request)
+        if usuario.rol not in roles_permitidos:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Rol '{usuario.rol}' no tiene permiso. Roles requeridos: {list(roles_permitidos)}",
+            )
+        return usuario
+    return _verificar_rol
+
+
+def crear_admin_por_defecto(sesion_factory) -> None:
+    """Crea usuario admin por defecto si no existe ninguno."""
+    with sesion_factory() as sesion:
+        admin_existente = sesion.query(Usuario).filter(
+            Usuario.rol == "admin"
+        ).first()
+        if not admin_existente:
+            admin = Usuario(
+                email="admin@sfce.local",
+                nombre="Administrador SFCE",
+                hash_password=hashear_password("admin"),
+                rol="admin",
+                activo=True,
+                empresas_ids=[],
+            )
+            sesion.add(admin)
+            sesion.commit()
