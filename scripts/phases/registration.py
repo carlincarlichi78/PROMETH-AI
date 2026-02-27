@@ -308,7 +308,7 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
     """
     discrepancias = []
     datos = doc.get("datos_extraidos", {})
-    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT") else "cliente"
+    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
 
     try:
         factura_fs = verificar_factura(idfactura, tipo=tipo_fs)
@@ -367,7 +367,7 @@ def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
     Returns:
         True si se marco correctamente
     """
-    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT") else "cliente"
+    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
     endpoint_map = {
         "proveedor": "facturaproveedores",
         "cliente": "facturaclientes"
@@ -388,7 +388,7 @@ def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
 
 def _eliminar_factura(idfactura: int, tipo_doc: str) -> bool:
     """Elimina factura de FS (rollback)."""
-    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT") else "cliente"
+    tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
     endpoint_map = {
         "proveedor": "facturaproveedores",
         "cliente": "facturaclientes"
@@ -411,7 +411,7 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
     """
     # Filtrar solo facturas proveedor
     proveedores = [r for r in registrados
-                   if r.get("tipo", "FC") in ("FC", "NC", "ANT")]
+                   if r.get("tipo", "FC") in ("FC", "NC", "ANT", "SUM")]
     if not proveedores:
         return 0
 
@@ -485,7 +485,7 @@ def _corregir_divisas_asientos(registrados: list) -> int:
         Numero de partidas corregidas
     """
     proveedores = [r for r in registrados
-                   if r.get("tipo", "FC") in ("FC", "NC", "ANT")]
+                   if r.get("tipo", "FC") in ("FC", "NC", "ANT", "SUM")]
     if not proveedores:
         return 0
 
