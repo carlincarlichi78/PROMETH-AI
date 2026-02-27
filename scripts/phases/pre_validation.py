@@ -97,6 +97,10 @@ def _validar_entidad_existe(doc: dict, tipo_doc: str,
             nombre = datos.get("receptor_nombre", "")
             entidad = config.buscar_cliente_por_nombre(nombre) if nombre else None
         if not entidad:
+            # Verificar si hay fallback CLIENTES VARIOS (RD 1619/2012)
+            fallback = config.buscar_cliente_fallback_sin_cif()
+            if fallback:
+                return None  # No bloquear: se usara fallback en registration
             return f"Cliente CIF '{cif}' / nombre '{datos.get('receptor_nombre', '')}' no encontrado en config.yaml"
 
     return None
@@ -666,6 +670,50 @@ def ejecutar_pre_validacion(
             aviso = _check_rlc_cuota(datos)
             if aviso:
                 avisos_doc.append(aviso)
+
+        # CHECK 14: FV sin CIF receptor — clasificacion fiscal RD 1619/2012
+        if tipo_doc == "FV":
+            cif_receptor = (datos.get("receptor_cif") or "").strip()
+            if not cif_receptor:
+                fallback = config.buscar_cliente_fallback_sin_cif()
+                total = float(datos.get("total") or datos.get("base_imponible") or 0)
+                # Sectores donde se admite factura simplificada hasta 3.000 EUR
+                # (hosteleria, transporte, aparcamientos, peajes — RD 1619/2012 art.4)
+                desc_lineas = " ".join(
+                    l.get("descripcion", "") for l in datos.get("lineas", [])
+                ).lower()
+                sectores_simplificada = [
+                    "pilates", "fisioterapi", "sesion", "clase", "tratamiento",
+                    "consulta", "terapia", "rehabilit",
+                ]
+                es_sector_simplificada = any(s in desc_lineas for s in sectores_simplificada)
+
+                if total <= 400 or (total <= 3000 and es_sector_simplificada):
+                    tipo_factura = "SIMPLIFICADA"
+                    razon = f"<= {total:.0f} EUR"
+                    if es_sector_simplificada:
+                        razon = f"sector servicios personales, {total:.0f} EUR"
+                    avisos_doc.append(
+                        f"[CHECK 14] FV sin CIF receptor: FACTURA {tipo_factura} "
+                        f"({razon}) — valida sin NIF receptor (RD 1619/2012 art.4)"
+                        + (f", se usara '{fallback.get('nombre_fs', 'CLIENTES VARIOS')}'" if fallback else "")
+                    )
+                else:
+                    razon_legal = (
+                        "factura completa requiere NIF receptor (RD 1619/2012 art.6)"
+                    )
+                    if fallback:
+                        avisos_doc.append(
+                            f"[CHECK 14] FV sin CIF receptor ({total:.2f} EUR): "
+                            f"{razon_legal} — se usara '{fallback.get('nombre_fs', 'CLIENTES VARIOS')}' "
+                            f"(receptor no podra deducir IVA soportado)"
+                        )
+                    else:
+                        avisos_doc.append(
+                            f"[CHECK 14] FV sin CIF receptor ({total:.2f} EUR): "
+                            f"{razon_legal} — considera anadir 'clientes-varios' con "
+                            f"fallback_sin_cif: true en config.yaml"
+                        )
 
         # Evaluar resultado
         if errores_doc:

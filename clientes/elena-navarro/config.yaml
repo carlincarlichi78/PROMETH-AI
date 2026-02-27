@@ -172,6 +172,18 @@ clientes:
     regimen: general
     notas: "Servicio mixto fisioterapia deportiva + pilates colectivo"
 
+  clientes-varios:
+    cif: ""
+    nombre_fs: "CLIENTES VARIOS"
+    aliases: ["VARIOS", "CLIENTES VARIOS", "PARTICULAR", "PARTICULARES",
+              "PACIENTES", "ALUMNOS", "FISIOTERAPIA", "PILATES"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    fallback_sin_cif: true
+    notas: "Clientes particulares sin NIF (RD 1619/2012 art.6). Facturas simplificadas <=400 EUR y operaciones sin identificacion fiscal del receptor"
+
 trabajadores:
   - dni: "75812345R"
     nombre: "Laura Suarez Vega"

@@ -27,6 +27,13 @@ import yaml
 from openai import OpenAI
 
 from ..core.aritmetica import ejecutar_checks_aritmeticos
+try:
+    from sfce.core.cache_ocr import guardar_cache_ocr, obtener_cache_ocr
+    _CACHE_OCR_DISPONIBLE = True
+except ImportError:
+    _CACHE_OCR_DISPONIBLE = False
+    def obtener_cache_ocr(_ruta): return None  # noqa: E731
+    def guardar_cache_ocr(_ruta, _datos): return ""  # noqa: E731
 from ..core.confidence import DocumentoConfianza, calcular_nivel
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
@@ -782,6 +789,17 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     logger.info(f"Procesando: {nombre_archivo}")
     avisos = []
 
+    # 0. Verificar cache OCR (evita llamadas costosas a APIs si el PDF no cambio)
+    try:
+        cached = obtener_cache_ocr(str(ruta_pdf))
+        if cached and isinstance(cached, dict) and cached.get("archivo"):
+            cached["_ruta_completa"] = str(ruta_pdf)
+            tier_cached = cached.get("_ocr_tier", 0)
+            logger.info(f"  [{nombre_archivo}] Cache OCR hit (Tier {tier_cached}) — sin costo API")
+            return {"doc": cached, "hash": hash_pdf, "avisos": [], "tier": tier_cached}
+    except Exception as e_cache:
+        logger.debug(f"  [{nombre_archivo}] Cache check fallido (ignorado): {e_cache}")
+
     # 1. Extraer texto con pdfplumber
     try:
         texto_raw = _extraer_texto_pdf(ruta_pdf)
@@ -972,6 +990,15 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_carpeta_origen": carpeta_origen,
         "_ruta_completa": str(ruta_pdf),
     }
+
+    # Guardar en cache OCR para reutilizar en futuras ejecuciones
+    try:
+        doc_resultado["motor_ocr"] = ",".join(motores_usados)
+        doc_resultado["tier_ocr"] = ocr_tier
+        guardar_cache_ocr(str(ruta_pdf), doc_resultado)
+        logger.debug(f"  [{nombre_archivo}] Cache OCR guardado")
+    except Exception as e_save:
+        logger.debug(f"  [{nombre_archivo}] No se pudo guardar cache OCR: {e_save}")
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
 

@@ -149,9 +149,15 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
 
     for nombre_corto, datos in config.clientes.items():
         cif_norm = _normalizar_cif(datos.get("cif", ""))
-        if cif_norm in cifs_cli_existentes:
+        if cif_norm and cif_norm in cifs_cli_existentes:
             stats["existentes"] += 1
             continue
+        # Para clientes sin CIF (ej: CLIENTES VARIOS), verificar existencia por nombre
+        if not cif_norm:
+            nombre_fs_buscar = datos.get("nombre_fs", "").upper()
+            if any(c.get("nombre", "").upper() == nombre_fs_buscar for c in clientes_fs):
+                stats["existentes"] += 1
+                continue
 
         pais = datos.get("pais", "ESP")
         form = {
@@ -304,6 +310,24 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
                 }, limit=50)
                 for c in clientes:
                     if c.get("nombre", "").upper() == nombre_fs.upper():
+                        return c.get("codcliente")
+            except Exception:
+                pass
+
+        # Fallback: usar CLIENTES VARIOS si existe (RD 1619/2012 — FV sin NIF receptor)
+        fallback = config.buscar_cliente_fallback_sin_cif()
+        if fallback:
+            nombre_fallback = fallback.get("nombre_fs", "CLIENTES VARIOS")
+            try:
+                clientes = api_get("clientes", params={
+                    "nombre": nombre_fallback
+                }, limit=10)
+                for c in clientes:
+                    if c.get("nombre", "").upper() == nombre_fallback.upper():
+                        logger.info(
+                            f"  FV sin CIF receptor: usando cliente fallback "
+                            f"'{nombre_fallback}' (RD 1619/2012)"
+                        )
                         return c.get("codcliente")
             except Exception:
                 pass

@@ -45,6 +45,31 @@ def obtener_todas_facturas_proveedor() -> List[Dict]:
         return []
 
 
+def obtener_todas_facturas_cliente() -> List[Dict]:
+    """Obtiene todas las facturas cliente de la API (con paginacion)."""
+    todas = []
+    offset = 0
+    try:
+        while True:
+            resp = requests.get(
+                f"{API_BASE}/facturaclientes",
+                headers=HEADERS,
+                params={"limit": 500, "offset": offset}
+            )
+            resp.raise_for_status()
+            lote = resp.json()
+            if not lote:
+                break
+            todas.extend(lote)
+            if len(lote) < 500:
+                break
+            offset += 500
+        return todas
+    except requests.RequestException as e:
+        print(f"ERROR al obtener facturas cliente: {e}")
+        return []
+
+
 def obtener_todos_asientos() -> List[Dict]:
     """Obtiene todos los asientos de la API (con paginacion)."""
     todos = []
@@ -73,6 +98,27 @@ def obtener_todos_asientos() -> List[Dict]:
 def filtrar_por_empresa(items: List[Dict], idempresa: int) -> List[Dict]:
     """Filtra items por idempresa (post-filtrado manual)."""
     return [item for item in items if item.get("idempresa") == idempresa]
+
+
+def eliminar_factura_cliente(idfactura: int, dry_run: bool = False) -> bool:
+    """Elimina una factura cliente."""
+    try:
+        url = f"{API_BASE}/facturaclientes/{idfactura}"
+        if dry_run:
+            print(f"  [DRY-RUN] DELETE {url}")
+            return True
+
+        resp = requests.delete(url, headers=HEADERS)
+
+        if resp.status_code in [200, 201, 204]:
+            print(f"  OK FacturaCli {idfactura} eliminada")
+            return True
+        else:
+            print(f"  FAIL FacturaCli {idfactura}: {resp.status_code}")
+            return False
+    except requests.RequestException as e:
+        print(f"  ERROR FacturaCli {idfactura}: {e}")
+        return False
 
 
 def eliminar_factura_proveedor(idfactura: int, dry_run: bool = False) -> bool:
@@ -175,6 +221,7 @@ def obtener_nombre_empresa(idempresa: int) -> str:
         2: "gerardo-gonzalez-callejon",
         3: "EMPRESA PRUEBA",
         4: "chiringuito-sol-arena",
+        5: "elena-navarro",
     }
     return mapping.get(idempresa, f"empresa_{idempresa}")
 
@@ -209,6 +256,18 @@ def main():
         if eliminar_factura_proveedor(factura.get("idfactura"), dry_run=dry_run):
             facturas_eliminadas += 1
 
+    # 1b. Obtener y filtrar facturas cliente
+    print(f"\n[1b] Eliminando facturas cliente de empresa {idempresa}...")
+    todas_facturas_cli = obtener_todas_facturas_cliente()
+    print(f"  Total en FS: {len(todas_facturas_cli)} facturas cliente")
+    facturas_cli = filtrar_por_empresa(todas_facturas_cli, idempresa)
+    print(f"  Empresa {idempresa}: {len(facturas_cli)} facturas cliente")
+
+    facturas_cli_eliminadas = 0
+    for factura in facturas_cli:
+        if eliminar_factura_cliente(factura.get("idfactura"), dry_run=dry_run):
+            facturas_cli_eliminadas += 1
+
     # 2. Obtener y filtrar asientos
     print(f"\n[2] Eliminando asientos de empresa {idempresa}...")
     todos_asientos = obtener_todos_asientos()
@@ -234,6 +293,7 @@ def main():
     print("\n" + "=" * 85)
     print("RESUMEN:")
     print(f"  Facturas proveedor eliminadas: {facturas_eliminadas}/{len(facturas)}")
+    print(f"  Facturas cliente eliminadas: {facturas_cli_eliminadas}/{len(facturas_cli)}")
     print(f"  Asientos eliminados: {asientos_eliminados}/{len(asientos)}")
     print(f"  Archivos PDFs eliminados: {pdfs_eliminados}")
     print(f"  pipeline_state.json: reseteado")

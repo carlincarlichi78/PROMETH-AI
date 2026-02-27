@@ -205,6 +205,17 @@ class ConfigCliente:
                     return {**datos, "_nombre_corto": clave}
         return None
 
+    def buscar_cliente_fallback_sin_cif(self) -> Optional[dict]:
+        """Devuelve el cliente marcado como fallback_sin_cif (ej: CLIENTES VARIOS).
+
+        Se usa cuando una FV no tiene receptor CIF identificable.
+        Criterio RD 1619/2012: facturas simplificadas y operaciones sin NIF receptor.
+        """
+        for clave, datos in self.clientes.items():
+            if datos.get("fallback_sin_cif"):
+                return {**datos, "_nombre_corto": clave}
+        return None
+
     def es_intracomunitario(self, nombre_prov: str) -> bool:
         """Verifica si proveedor es intracomunitario."""
         for clave, datos in self.proveedores.items():
