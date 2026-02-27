@@ -1,0 +1,69 @@
+# Mapeo palabras clave OCR -> subcuenta de gasto
+# Nivel 4 del clasificador: confianza 60%
+# Busqueda case-insensitive en concepto/descripcion OCR
+
+# Grupo 60 - Compras
+compras:
+  palabras: ["compra", "mercaderia", "materia prima", "aprovisionamiento"]
+  subcuenta: "6000000000"
+
+# Grupo 61 - Variacion existencias (raro en facturas, no mapear)
+
+# Grupo 62 - Servicios exteriores
+alquiler:
+  palabras: ["alquiler", "arrendamiento", "renta", "leasing"]
+  subcuenta: "6210000000"
+
+reparaciones:
+  palabras: ["reparacion", "mantenimiento", "averia", "taller"]
+  subcuenta: "6220000000"
+
+profesionales:
+  palabras: ["asesoria", "consultoria", "abogado", "notario", "gestor", "auditoria", "honorarios"]
+  subcuenta: "6230000000"
+
+transporte:
+  palabras: ["transporte", "mensajeria", "envio", "courier", "logistica", "flete", "porte"]
+  subcuenta: "6240000000"
+
+seguros:
+  palabras: ["seguro", "poliza", "prima seguro", "aseguradora"]
+  subcuenta: "6250000000"
+
+bancarios:
+  palabras: ["comision bancaria", "gastos bancarios", "mantenimiento cuenta", "transferencia"]
+  subcuenta: "6260000000"
+
+publicidad:
+  palabras: ["publicidad", "marketing", "propaganda", "anuncio", "campana"]
+  subcuenta: "6270000000"
+
+suministros:
+  palabras: ["electricidad", "agua", "gas", "telefono", "internet", "luz", "energia"]
+  subcuenta: "6280000000"
+
+otros_servicios:
+  palabras: ["limpieza", "vigilancia", "seguridad", "formacion", "suscripcion"]
+  subcuenta: "6290000000"
+
+# Grupo 63 - Tributos
+tributos:
+  palabras: ["impuesto", "tasa", "tributo", "ibi", "iae", "basura", "vado"]
+  subcuenta: "6310000000"
+
+# Grupo 64 - Gastos personal (normalmente via nomina, no facturas)
+sueldos:
+  palabras: ["nomina", "salario", "sueldo", "paga"]
+  subcuenta: "6400000000"
+
+# Grupo 65 - Otros gastos
+amortizacion_financiera:
+  palabras: ["intereses", "prestamo", "financiacion", "hipoteca"]
+  subcuenta: "6620000000"
+
+# Grupo 68 - Amortizaciones (no via factura, operacion periodica)
+
+# Grupo 7 - Ingresos (para facturas emitidas)
+ventas:
+  palabras: ["venta", "prestacion servicio", "facturacion", "honorario"]
+  subcuenta: "7000000000"
