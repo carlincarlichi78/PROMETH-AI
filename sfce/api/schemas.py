@@ -305,3 +305,118 @@ class ExportarOut(BaseModel):
     """Metadatos de la exportacion generada."""
     archivo: str
     total_registros: int
+
+
+# --- Economico-Financiero ---
+
+class RatioOut(BaseModel):
+    """Ratio financiero calculado."""
+    nombre: str
+    categoria: str  # liquidez | solvencia | rentabilidad | eficiencia | estructura
+    valor: float
+    unidad: str  # ratio | porcentaje | dias | euros | veces
+    semaforo: str  # verde | amarillo | rojo
+    benchmark: Optional[float] = None
+    evolucion: list[dict] = []  # [{mes, valor}]
+    explicacion: str = ""
+
+
+class RatiosEmpresaOut(BaseModel):
+    """Todos los ratios de una empresa."""
+    empresa_id: int
+    fecha_calculo: str
+    ratios: list[RatioOut]
+
+
+class KPIOut(BaseModel):
+    """KPI sectorial."""
+    nombre: str
+    valor: float
+    objetivo: Optional[float] = None
+    unidad: str
+    semaforo: str
+    evolucion: list[dict] = []
+
+
+class TesoreriaOut(BaseModel):
+    """Estado de tesoreria."""
+    saldo_actual: float
+    flujo_operativo: float
+    flujo_inversion: float
+    flujo_financiacion: float
+    prevision_30d: float
+    prevision_60d: float
+    prevision_90d: float
+    movimientos_recientes: list[dict] = []
+
+
+class ScoringOut(BaseModel):
+    """Credit scoring de entidad."""
+    entidad_id: int
+    nombre: str
+    tipo: str
+    puntuacion: int
+    factores: dict = {}
+    limite_sugerido: Optional[float] = None
+
+
+class PresupuestoLineaOut(BaseModel):
+    """Linea de presupuesto vs real."""
+    subcuenta: str
+    descripcion: str
+    presupuestado: float
+    real: float
+    desviacion: float
+    desviacion_pct: float
+    semaforo: str
+
+
+class ComparativaOut(BaseModel):
+    """Comparativa interanual."""
+    concepto: str
+    valores: dict  # {"2023": 1000, "2024": 1200, ...}
+    variacion: Optional[float] = None
+    cagr: Optional[float] = None
+
+
+# --- Copilot ---
+
+class CopilotMensajeIn(BaseModel):
+    """Mensaje del usuario al copiloto."""
+    mensaje: str
+    conversacion_id: Optional[int] = None
+
+
+class CopilotRespuestaOut(BaseModel):
+    """Respuesta del copiloto."""
+    conversacion_id: int
+    respuesta: str
+    datos_enriquecidos: Optional[dict] = None  # tablas, charts, links
+    funciones_invocadas: list[str] = []
+
+
+class CopilotFeedbackIn(BaseModel):
+    """Feedback sobre respuesta del copiloto."""
+    conversacion_id: int
+    mensaje_idx: int
+    valoracion: int  # 1 o 5
+    correccion: Optional[str] = None
+
+
+# --- Configuracion ---
+
+class ConfigAparienciaIn(BaseModel):
+    """Configuracion de apariencia."""
+    tema: str = "system"  # light | dark | system
+    densidad: str = "comoda"
+    idioma: str = "es"
+    formato_fecha: str = "dd/MM/yyyy"
+    formato_numero: str = "es-ES"
+
+
+class BackupOut(BaseModel):
+    """Informacion de backup."""
+    id: str
+    fecha: str
+    tamano: str
+    tipo: str  # manual | automatico
