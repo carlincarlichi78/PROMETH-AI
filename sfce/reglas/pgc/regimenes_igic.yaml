@@ -1,0 +1,61 @@
+# Catalogo de regimenes IGIC — Canarias
+# Referencia: Ley 20/1991 + RD 2538/1994
+
+general:
+  descripcion: "Regimen general IGIC"
+  tipos:
+    general: 7
+    reducido: 3
+    tipo_cero: 0
+    incrementado_1: 9.5
+    incrementado_2: 15
+    especial: 20
+  subcuentas:
+    igic_soportado: "4720000000"
+    igic_repercutido: "4770000000"
+    hp_deudora_igic: "4700000000"
+    hp_acreedora_igic: "4750000000"
+  modelos: ["420"]
+  igic_deducible: true
+  contabilizacion: "devengo"
+
+simplificado:
+  descripcion: "Regimen simplificado IGIC"
+  tipos:
+    general: 7
+    reducido: 3
+    tipo_cero: 0
+  subcuentas:
+    igic_soportado: "4720000000"
+    igic_repercutido: "4770000000"
+  modelos: ["420"]
+  igic_deducible: true
+  contabilizacion: "modulos"
+
+comerciante_minorista:
+  descripcion: "Regimen especial comerciante minorista IGIC"
+  tipos:
+    general: 7
+    reducido: 3
+  subcuentas:
+    igic_soportado: "4720000000"
+    igic_repercutido: "4770000000"
+  modelos: ["420"]
+  igic_deducible: false
+  contabilizacion: "devengo"
+  notas: "Equivalente al recargo equivalencia peninsular"
+
+exento:
+  descripcion: "Actividades exentas de IGIC"
+  subcuentas: {}
+  modelos: []
+  igic_deducible: false
+  contabilizacion: "N/A"
+
+agricultura_pesca:
+  descripcion: "Regimen especial agricultura y pesca canario"
+  subcuentas:
+    compensacion_igic: "4729000000"
+  modelos: ["420"]
+  igic_deducible: false
+  contabilizacion: "compensacion"

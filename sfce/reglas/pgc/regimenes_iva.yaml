@@ -1,0 +1,95 @@
+# Catalogo de regimenes IVA — subcuentas y comportamiento contable
+# Referencia: LIVA (Ley 37/1992) + RD 1624/1992
+
+general:
+  descripcion: "Regimen general IVA"
+  subcuentas:
+    iva_soportado: "4720000000"
+    iva_repercutido: "4770000000"
+    iva_soportado_no_deducible: "6340000000"
+    hp_deudora_iva: "4700000000"
+    hp_acreedora_iva: "4750000000"
+  modelos: ["303", "390"]
+  iva_deducible: true
+  contabilizacion: "devengo"
+
+simplificado:
+  descripcion: "Regimen simplificado IVA (estimacion modulos)"
+  subcuentas:
+    iva_soportado: "4720000000"
+    iva_repercutido: "4770000000"
+    cuotas_soportadas_ops_corrientes: "4721000000"
+    hp_deudora_iva: "4700000000"
+    hp_acreedora_iva: "4750000000"
+  modelos: ["303", "390"]
+  iva_deducible: true
+  contabilizacion: "modulos"
+  notas: "Solo deducible IVA en activos fijos e importaciones"
+
+recargo_equivalencia:
+  descripcion: "Regimen recargo equivalencia (comerciantes minoristas)"
+  subcuentas:
+    iva_soportado: "4720000000"
+    recargo_equivalencia: "4720100000"
+    iva_repercutido: "4770000000"
+  modelos: ["303", "390"]
+  iva_deducible: false
+  contabilizacion: "devengo"
+  recargos:
+    general: 5.2
+    reducido: 1.4
+    superreducido: 0.5
+  notas: "No emite facturas (tickets). IVA+RE son mayor coste de compra"
+
+criterio_caja:
+  descripcion: "Regimen especial criterio de caja (RECC)"
+  subcuentas:
+    iva_soportado_pendiente: "4727000000"
+    iva_soportado: "4720000000"
+    iva_repercutido_pendiente: "4777000000"
+    iva_repercutido: "4770000000"
+    hp_deudora_iva: "4700000000"
+    hp_acreedora_iva: "4750000000"
+  modelos: ["303", "390"]
+  iva_deducible: true
+  contabilizacion: "cobro_pago"
+  notas: "IVA se devenga al cobro/pago, no al emitir factura. Limite 2M EUR"
+
+exento:
+  descripcion: "Actividades exentas de IVA (art. 20 LIVA)"
+  subcuentas: {}
+  modelos: []
+  iva_deducible: false
+  contabilizacion: "N/A"
+  notas: "Sanitarios, educacion, seguros, financieros. Sin 303/390"
+
+reagyp:
+  descripcion: "Regimen especial agricultura, ganaderia y pesca"
+  subcuentas:
+    compensacion_reagyp: "4729000000"
+  modelos: ["303", "390"]
+  iva_deducible: false
+  contabilizacion: "compensacion"
+  compensaciones:
+    agricultura_ganaderia: 12.0
+    forestal: 10.5
+
+agencias_viaje:
+  descripcion: "Regimen especial agencias de viaje (REAV)"
+  subcuentas:
+    iva_soportado: "4720000000"
+    iva_repercutido: "4770000000"
+  modelos: ["303", "390"]
+  iva_deducible: false
+  contabilizacion: "margen"
+  notas: "IVA sobre margen bruto, no sobre facturacion total"
+
+bienes_usados:
+  descripcion: "Regimen especial bienes usados, objetos de arte"
+  subcuentas:
+    iva_soportado: "4720000000"
+    iva_repercutido: "4770000000"
+  modelos: ["303", "390"]
+  iva_deducible: false
+  contabilizacion: "margen"
+  notas: "IVA sobre margen de beneficio"

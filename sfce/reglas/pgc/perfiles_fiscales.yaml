@@ -1,0 +1,113 @@
+# Plantillas de perfiles fiscales por forma juridica
+# Al dar de alta un cliente, se carga el perfil base y se personaliza
+
+sl:
+  tipo_persona: juridica
+  forma_juridica: sl
+  tipo_is: 25
+  deposita_cuentas: true
+  tipo_cuentas: abreviadas
+  plan_contable: pgc_pymes
+  retiene_profesionales: true
+  defaults:
+    regimen_iva: general
+    pagos_fraccionados_is: false
+
+slu:
+  tipo_persona: juridica
+  forma_juridica: slu
+  tipo_is: 25
+  deposita_cuentas: true
+  tipo_cuentas: abreviadas
+  plan_contable: pgc_pymes
+  retiene_profesionales: true
+  defaults:
+    regimen_iva: general
+
+sa:
+  tipo_persona: juridica
+  forma_juridica: sa
+  tipo_is: 25
+  deposita_cuentas: true
+  tipo_cuentas: normales
+  plan_contable: pgc_pymes
+  retiene_profesionales: true
+  defaults:
+    regimen_iva: general
+    pagos_fraccionados_is: true
+
+sll:
+  tipo_persona: juridica
+  forma_juridica: sll
+  tipo_is: 25
+  deposita_cuentas: true
+  tipo_cuentas: abreviadas
+  plan_contable: pgc_pymes
+  retiene_profesionales: true
+  defaults:
+    regimen_iva: general
+
+cb:
+  tipo_persona: juridica
+  forma_juridica: cb
+  tipo_is: 25
+  deposita_cuentas: false
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: general
+
+scp:
+  tipo_persona: juridica
+  forma_juridica: scp
+  tipo_is: 25
+  deposita_cuentas: false
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: general
+
+cooperativa:
+  tipo_persona: juridica
+  forma_juridica: cooperativa
+  tipo_is: 20
+  deposita_cuentas: true
+  tipo_cuentas: abreviadas
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: general
+
+asociacion:
+  tipo_persona: juridica
+  forma_juridica: asociacion
+  deposita_cuentas: false
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: exento
+  notas: "IS solo si tiene actividad economica (10%)"
+
+comunidad_propietarios:
+  tipo_persona: juridica
+  forma_juridica: comunidad_propietarios
+  deposita_cuentas: false
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: exento
+  notas: "Sin IS. Solo retencion alquileres si tiene locales arrendados"
+
+autonomo:
+  tipo_persona: fisica
+  forma_juridica: autonomo
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: general
+    regimen_irpf: directa_simplificada
+    retencion_emitidas: false
+
+profesional:
+  tipo_persona: fisica
+  forma_juridica: profesional
+  plan_contable: pgc_pymes
+  defaults:
+    regimen_iva: general
+    regimen_irpf: directa_simplificada
+    retencion_emitidas: true
+    pct_retencion_emitidas: 15
