@@ -1,0 +1,94 @@
+errores:
+- id: ERR001
+  descubierto: '2026-02-25'
+  tipo: divisa_sin_convertir
+  descripcion: FS genera asientos con importes en divisa original (USD) en vez de
+    EUR
+  deteccion:
+    fase: post_asiento
+    condicion: factura.divisa != EUR AND partida.importe ~= factura.total_original
+  correccion:
+    automatica: true
+    accion: PUT partida con importe = total / tasaconv
+  verificacion: abs(sum_debe - sum_haber) < 0.01 AND partida.importe ~= total_eur
+  aplicable_a: todos
+  ocurrencias: 10
+- id: ERR002
+  descubierto: '2026-02-26'
+  tipo: nc_sin_invertir
+  descripcion: FS genera asientos de NC serie R sin invertir DEBE/HABER
+  deteccion:
+    fase: post_asiento
+    condicion: factura.serie == R AND subcuenta_400.haber > 0
+  correccion:
+    automatica: true
+    accion: swap(partida.debe, partida.haber) para todas las partidas del asiento
+  verificacion: subcuenta_400.debe > 0 AND subcuenta_600.haber > 0
+  aplicable_a: todos
+  ocurrencias: 191
+  ultima_ocurrencia: '2026-02-26T12:11:01.742877'
+- id: ERR003
+  descubierto: '2026-02-25'
+  tipo: iva_extranjero_cuenta_incorrecta
+  descripcion: IVA portugues en cuenta 600 (gasto) en vez de 4709 (HP deudora)
+  deteccion:
+    fase: post_asiento
+    condicion: linea.descripcion CONTAINS patron_linea AND partida.subcuenta == 600
+  correccion:
+    automatica: true
+    accion: reclasificar partida de subcuenta 600 a 4709
+  verificacion: no existe partida 600 con concepto IVA ADUANA
+  aplicable_a: todos
+  ocurrencias: 3
+- id: ERR004
+  descubierto: '2026-02-25'
+  tipo: autoliq_intracom_faltante
+  descripcion: FS no genera autoliquidacion para facturas intracomunitarias
+  deteccion:
+    fase: post_asiento
+    condicion: proveedor.regimen == intracomunitario AND (no existe 472 o no existe
+      477)
+  correccion:
+    automatica: true
+    accion: crear partida 472 DEBE y 477 HABER con base * iva%
+  verificacion: existe 472.debe == base*iva% AND existe 477.haber == base*iva%
+  aplicable_a: todos
+  ocurrencias: 3
+- id: ERR005
+  descubierto: '2026-02-25'
+  tipo: api_form_encoded
+  descripcion: Endpoints crear* requieren form-encoded, no JSON
+  deteccion:
+    fase: registro
+    condicion: API devuelve 400 con content-type application/json
+  correccion:
+    automatica: true
+    accion: usar data= en vez de json= en requests.post
+  aplicable_a: todos
+  ocurrencias: 0
+- id: ERR006
+  descubierto: '2026-02-25'
+  tipo: lineas_json_string
+  descripcion: Campo lineas debe ser JSON string, no array Python
+  deteccion:
+    fase: registro
+    condicion: API ignora lineas pasadas como array
+  correccion:
+    automatica: true
+    accion: envolver lineas con json.dumps()
+  aplicable_a: todos
+  ocurrencias: 0
+- id: ERR007
+  descubierto: '2026-02-27'
+  cliente: todos
+  tipo: subcuenta_incorrecta
+  descripcion: Subcuenta gasto 6000000000 -> 6020000000 para skinclinic
+  deteccion:
+    fase: correccion
+    check: 6
+  correccion:
+    automatica: false
+  aplicable_a: todos
+  ocurrencias: 236
+  ultima_ocurrencia: '2026-02-27T10:59:46.046703'
+actualizado: '2026-02-27T10:59:46.046703'

@@ -1,0 +1,80 @@
+# Patrones heuristicos para detectar suplidos aduaneros
+# Busqueda case-insensitive, parcial (contiene)
+# Si una linea de factura matchea → IVA0 + subcuenta 4709
+
+patrones:
+  - patron: "IVA ADUANA"
+    subcuenta: "4709000000"
+    descripcion: "IVA aduanero no deducible"
+
+  - patron: "ADUANA"
+    subcuenta: "4709000000"
+    descripcion: "Gastos aduaneros genericos"
+
+  - patron: "ADUANERO"
+    subcuenta: "4709000000"
+    descripcion: "Gastos aduaneros"
+
+  - patron: "DERECHOS ARANCEL"
+    subcuenta: "4709000000"
+    descripcion: "Derechos arancelarios"
+
+  - patron: "ARANCELARIO"
+    subcuenta: "4709000000"
+    descripcion: "Gastos arancelarios"
+
+  - patron: "ARANCEL"
+    subcuenta: "4709000000"
+    descripcion: "Arancel"
+
+  - patron: "CAUCION"
+    subcuenta: "4709000000"
+    descripcion: "Caucion aduanal"
+
+  - patron: "CERTIFICADO ORIGEN"
+    subcuenta: "4709000000"
+    descripcion: "Certificado de origen"
+
+  - patron: "CERTIFICADO"
+    subcuenta: "4709000000"
+    descripcion: "Certificados varios"
+
+  - patron: "COSTES NAVIERA"
+    subcuenta: "4709000000"
+    descripcion: "Costes de naviera"
+
+  - patron: "NAVIERA"
+    subcuenta: "4709000000"
+    descripcion: "Gastos naviera"
+
+  - patron: "DESPACHO ADUANA"
+    subcuenta: "4709000000"
+    descripcion: "Despacho de aduanas"
+
+  - patron: "DESPACHO"
+    subcuenta: "4709000000"
+    descripcion: "Despacho (generico)"
+
+  - patron: "DUA"
+    subcuenta: "4709000000"
+    descripcion: "Documento Unico Administrativo"
+
+  - patron: "DOCUMENTO UNICO"
+    subcuenta: "4709000000"
+    descripcion: "DUA"
+
+  - patron: "TASA PORTUARIA"
+    subcuenta: "4709000000"
+    descripcion: "Tasa portuaria"
+
+  - patron: "INSPECCION SANITARIA"
+    subcuenta: "4709000000"
+    descripcion: "Inspeccion sanitaria aduanera"
+
+  - patron: "ALMACENAJE PUERTO"
+    subcuenta: "4709000000"
+    descripcion: "Almacenaje portuario"
+
+  - patron: "DEMORA CONTENEDOR"
+    subcuenta: "4709000000"
+    descripcion: "Demora de contenedor"

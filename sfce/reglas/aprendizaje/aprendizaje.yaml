@@ -1,0 +1,447 @@
+version: 1
+ultima_actualizacion: '2026-02-27T10:53:49.655094'
+patrones:
+- id: base_001
+  regex: No se encontro entidad.*en FS|Entidad no encontrada
+  estrategia: crear_entidad_desde_ocr
+  tipo_doc:
+  - FC
+  - FV
+  - NC
+  - ANT
+  aprendido: '2026-02-26'
+  exitos: 4
+  fallos: 10
+  origen: manual
+  descripcion: Proveedor/cliente no existe en FS — crear desde datos OCR
+- id: base_002
+  regex: NoneType.*has no len|NoneType.*not subscriptable|NoneType.*no attribute
+  estrategia: corregir_campo_null
+  tipo_doc: []
+  aprendido: '2026-02-26'
+  exitos: 7
+  fallos: 0
+  origen: manual
+  descripcion: Campo con valor null en datos extraidos — rellenar con defaults
+- id: base_003
+  regex: Nomina no cuadra|bruto.*!=.*irpf.*ss.*neto
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - NOM
+  aprendido: '2026-02-26'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: Campos de nomina con nombres alternativos del OCR
+- id: base_004
+  regex: cifnif.*no encontrad|CIF.*no coincide|CIF.*no existe
+  estrategia: buscar_entidad_fuzzy
+  tipo_doc:
+  - FC
+  - FV
+  aprendido: '2026-02-26'
+  exitos: 1
+  fallos: 0
+  origen: manual
+  descripcion: CIF del OCR difiere en ultimo digito — busqueda aproximada
+- id: base_005
+  regex: subcuenta.*no existe|codsubcuenta.*no encontrad
+  estrategia: crear_subcuenta_auto
+  tipo_doc: []
+  aprendido: '2026-02-26'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: Subcuenta no existe en el ejercicio — crearla automaticamente
+- id: base_006
+  regex: Sin partidas|partidas.*None|partidas.*vaci
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - NOM
+  - BAN
+  - RLC
+  - IMP
+  aprendido: '2026-02-26'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: Partidas vacias porque campos OCR no matchean nombres esperados
+- id: base_007
+  regex: base_imponible.*iva_importe|importe.*total.*derivar
+  estrategia: derivar_importes
+  tipo_doc:
+  - BAN
+  aprendido: '2026-02-26'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: Importes faltantes derivables desde otros campos
+- id: evol_001
+  regex: Discrepancias.*Total.*esperado.*FS.*intracomunitario|regimen.*intracomunitario.*IVA
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: 'Factura intracomunitaria (Google, Meta, etc.) — OCR extrae total sin
+    IVA pero FS aplica IVA21 encima. Fix: usar codimpuesto=IVA0 y añadir autorepercusion
+    post-registro (472 DEBE + 477 HABER). Implementado en _construir_form_data + _aplicar_autorepercusion_intracom.
+
+    '
+- id: evol_002
+  regex: Discrepancias.*Total.*lineas.*IVA.*incluido|sum.*precio_unitario.*total
+  estrategia: derivar_importes
+  tipo_doc:
+  - SUM
+  - FC
+  aprendido: '2026-02-27'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: 'Lineas OCR con precio_unitario que incluye IVA. sum(precios) ≈ total,
+    no base. Fix: detectar y dividir por (1+IVA/100) antes de enviar a FS. Implementado
+    en _construir_form_data (precios_incluyen_iva).
+
+    '
+- id: evol_003
+  regex: No se encontro entidad.*CIF.*vacio|entidad.*nombre.*alias.*fallback
+  estrategia: buscar_entidad_fuzzy
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: 'CIF vacio en config pero OCR tiene nombre emisor. Fix: buscar por
+    nombre_ocr en aliases del config como tercer fallback. Implementado en _buscar_codigo_entidad_fs
+    + _construir_form_data.
+
+    '
+- id: evol_004
+  regex: precio_unitario.*0|pvpunitario.*0.*base_imponible
+  estrategia: derivar_importes
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: 'OCR extrae precio_unitario=0 en linea unica pero base_imponible es
+    correcta. Fix: usar base_imponible como pvpunitario cuando hay 1 linea. Implementado
+    en _construir_form_data.
+
+    '
+- id: auto_20260227_004424
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250101\ Gerardo\ Alarma\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:44:24.411383'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250101 Gerardo Alarma.pdf
+- id: auto_20260227_004447
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250101\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:44:47.202291'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250101 Gerardo Internet.pdf
+- id: auto_20260227_004448
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250301\ Gerardo\ Alarma\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:44:48.480501'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250301 Gerardo Alarma.pdf
+- id: auto_20260227_004502
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250211\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:45:02.139109'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250211 Gerardo Internet.pdf
+- id: auto_20260227_004511
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250301\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:45:11.316891'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250301 Gerardo Internet.pdf
+- id: auto_20260227_004531
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250718\ Gerardo\ SkinClinic\ ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T00:45:31.923715'
+  exitos: 7
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250718 Gerardo SkinClinic ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T06:14:45.210489'
+- id: auto_20260227_004615
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250401\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:15.283507'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250401 Gerardo Internet.pdf
+- id: auto_20260227_004622
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250501\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:22.352997'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250501 Gerardo Internet.pdf
+- id: auto_20260227_004626
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250522\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:26.611199'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250522 Gerardo Internet.pdf
+- id: auto_20260227_004636
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250801\ Gerardo\ Alarma\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:36.559483'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250801 Gerardo Alarma.pdf
+- id: auto_20260227_004641
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250622\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:41.861916'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250622 Gerardo Internet.pdf
+- id: auto_20260227_004645
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250901\ Gerardo\ Alarma\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:45.575267'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250901 Gerardo Alarma.pdf
+- id: auto_20260227_004649
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250731\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:49.806842'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250731 Gerardo Internet.pdf
+- id: auto_20260227_004655
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250822\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:46:55.636365'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250822 Gerardo Internet.pdf
+- id: auto_20260227_004704
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250922\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:47:04.862907'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250922 Gerardo Internet.pdf
+- id: auto_20260227_004716
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251022\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:47:16.173169'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251022 Gerardo Internet.pdf
+- id: auto_20260227_004719
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251122\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:47:19.127300'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251122 Gerardo Internet.pdf
+- id: auto_20260227_004720
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251222\ Gerardo\ Internet\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:47:20.356049'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251222 Gerardo Internet.pdf
+- id: auto_20260227_005806
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://contabilidad\.lemonfresh\-tuc\.com/api/3/crearFacturaCliente
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - SUM
+  aprendido: '2026-02-27T00:58:06.100869'
+  exitos: 17
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://contabilidad.lemonfresh-tuc.com/api/3/crearFacturaCliente'
+  ultimo_exito: '2026-02-27T01:00:57.092044'
+- id: evol_005
+  regex: Subcuenta gasto.*6000000000.*esperada|subcuenta_incorrecta.*6000
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  - SUM
+  aprendido: '2026-02-27'
+  exitos: 0
+  fallos: 0
+  origen: manual
+  descripcion: 'FS asigna subcuenta generica 6000000000 cuando el proveedor no tiene
+    subcuenta especifica mapeada. Fix: correccion automatica via PUT partidas/{id}
+    con codsubcuenta del config.yaml del cliente. Implementado en _check_subcuenta
+    + _aplicar_correccion (correction.py).
+
+    '
+- id: auto_20260227_082247
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250122\ Gerardo\ Metacrilato\
+    ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:22:47.182816'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250122 Gerardo Metacrilato ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T09:07:34.310136'
+- id: auto_20260227_082249
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250122\ Gerardo\ Luces,\ Letras\
+    Fachada\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:22:49.560069'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250122 Gerardo Luces, Letras
+    Fachada.pdf
+  ultimo_exito: '2026-02-27T09:07:37.844337'
+- id: auto_20260227_082255
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250618\ Gerardo\ Fisaude\ 609,23\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:22:55.523580'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250618 Gerardo Fisaude 609,23.pdf
+  ultimo_exito: '2026-02-27T09:08:58.831144'
+- id: auto_20260227_082257
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250630\ Gerardo\ DRA\ ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:22:57.824480'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250630 Gerardo DRA ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T09:09:09.837428'
+- id: auto_20260227_082300
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250731\ Gerardo\ DRA\ ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:23:00.225640'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250731 Gerardo DRA ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T09:09:42.983749'
+- id: auto_20260227_082302
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20250930\ Gerardo\ DRA\ ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:23:02.590184'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20250930 Gerardo DRA ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T09:10:01.311107'
+- id: auto_20260227_082304
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251030\ Gerardo\ Nanosat\ revisión\
+    Laser\ ESTÉTICA\.Pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:23:04.945405'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251030 Gerardo Nanosat revisión
+    Laser ESTÉTICA.Pdf
+- id: auto_20260227_082313
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251231\ Gerardo\ DRA\ ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T08:23:13.318220'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251231 Gerardo DRA ESTÉTICA.pdf
+  ultimo_exito: '2026-02-27T09:11:07.533235'
+- id: auto_20260227_091022
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 20251103\ Gerardo\ Evocare\ Electrodos\
+    ESTÉTICA\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-02-27T09:10:22.578674'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 20251103 Gerardo Evocare Electrodos
+    ESTÉTICA.pdf

@@ -1,0 +1,174 @@
+# Catalogo de tipos de entidad — define obligaciones contables y fiscales por tipo
+
+tipos:
+  autonomo:
+    nombre: "Trabajador autonomo (persona fisica)"
+    pgc: pymes
+    sujeto_iva: true
+    sujeto_is: false
+    sujeto_irpf: true
+    tipo_impositivo_is: 0
+    modelos_trimestrales: [303, 130, 111]
+    modelos_anuales: [390, 100, 347]
+    libros_obligatorios:
+      - ingresos
+      - gastos
+      - bienes_inversion
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: []
+    cuentas_anuales: false
+    notas: "IRPF via modelo 100 anual. Pago fraccionado trimestral via 130."
+
+  sl:
+    nombre: "Sociedad Limitada (S.L.)"
+    pgc: pymes
+    sujeto_iva: true
+    sujeto_is: true
+    sujeto_irpf: false
+    tipo_impositivo_is: 25
+    modelos_trimestrales: [303, 111]
+    modelos_anuales: [390, 200, 347]
+    libros_obligatorios:
+      - diario
+      - mayor
+      - inventarios
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: [balance, pyg, memoria]
+    cuentas_anuales: true
+    deposito_registro_mercantil: true
+
+  sa:
+    nombre: "Sociedad Anonima (S.A.)"
+    pgc: completo
+    sujeto_iva: true
+    sujeto_is: true
+    sujeto_irpf: false
+    tipo_impositivo_is: 25
+    modelos_trimestrales: [303, 111]
+    modelos_anuales: [390, 200, 347]
+    libros_obligatorios:
+      - diario
+      - mayor
+      - inventarios
+      - actas
+      - acciones_nominativas
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: [balance, pyg, memoria, ecpn, efe]
+    cuentas_anuales: true
+    deposito_registro_mercantil: true
+
+  comunidad_propietarios:
+    nombre: "Comunidad de propietarios"
+    pgc: sectorial_fincas
+    sujeto_iva: false
+    sujeto_iva_excepciones: "Solo si tiene locales comerciales alquilados"
+    sujeto_is: false
+    sujeto_irpf: false
+    tipo_impositivo_is: 0
+    modelos_trimestrales: []
+    modelos_anuales: [184, 347]
+    libros_obligatorios:
+      - ingresos_gastos
+      - actas
+    estados_financieros: [cuenta_explotacion]
+    cuentas_anuales: false
+    notas: "Modelo 184 atribucion de rentas. IVA solo si alquila locales."
+
+  asociacion:
+    nombre: "Asociacion sin animo de lucro"
+    pgc: sectorial_enl
+    sujeto_iva: parcial
+    sujeto_iva_excepciones: "Exenta en actividad propia, sujeta en actividad economica"
+    sujeto_is: true
+    sujeto_irpf: false
+    tipo_impositivo_is: 10
+    modelos_trimestrales: [303]
+    modelos_anuales: [200, 347]
+    libros_obligatorios:
+      - diario
+      - inventarios
+      - socios
+    estados_financieros: [balance, pyg, memoria]
+    cuentas_anuales: true
+    notas: "IS al 10% (tipo reducido ENL). 303 solo si actividad economica."
+
+  comunidad_bienes:
+    nombre: "Comunidad de bienes (C.B.)"
+    pgc: pymes
+    sujeto_iva: true
+    sujeto_is: false
+    sujeto_irpf: false
+    tipo_impositivo_is: 0
+    modelos_trimestrales: [303]
+    modelos_anuales: [184, 347]
+    libros_obligatorios:
+      - ingresos
+      - gastos
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: []
+    cuentas_anuales: false
+    notas: "Regimen atribucion rentas. Cada comunero declara su % en IRPF/IS."
+
+  cooperativa:
+    nombre: "Sociedad cooperativa"
+    pgc: adaptado_coop
+    sujeto_iva: true
+    sujeto_is: true
+    sujeto_irpf: false
+    tipo_impositivo_is: 20
+    modelos_trimestrales: [303, 111]
+    modelos_anuales: [200, 347]
+    libros_obligatorios:
+      - diario
+      - mayor
+      - inventarios
+      - socios
+      - actas
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: [balance, pyg, memoria]
+    cuentas_anuales: true
+    notas: "IS al 20% (tipo reducido cooperativas). Fondo educacion y promocion obligatorio."
+
+  fundacion:
+    nombre: "Fundacion"
+    pgc: sectorial_enl
+    sujeto_iva: parcial
+    sujeto_is: true
+    sujeto_irpf: false
+    tipo_impositivo_is: 10
+    modelos_trimestrales: [303]
+    modelos_anuales: [200, 347]
+    libros_obligatorios:
+      - diario
+      - inventarios
+      - patronos
+    estados_financieros: [balance, pyg, memoria]
+    cuentas_anuales: true
+    notas: "Obligacion de destinar >= 70% rentas a fines fundacionales."
+
+  sociedad_civil:
+    nombre: "Sociedad civil"
+    pgc: pymes
+    sujeto_iva: true
+    sujeto_is: false
+    sujeto_irpf: false
+    tipo_impositivo_is: 0
+    modelos_trimestrales: [303]
+    modelos_anuales: [184, 347]
+    libros_obligatorios:
+      - ingresos
+      - gastos
+      - facturas_emitidas
+      - facturas_recibidas
+    estados_financieros: []
+    cuentas_anuales: false
+    notas: "Si tiene personalidad juridica y objeto mercantil: IS 25% y modelo 200."
+    variante_con_pj:
+      sujeto_is: true
+      tipo_impositivo_is: 25
+      modelos_anuales: [200, 347]

@@ -1,0 +1,212 @@
+# Mapeo CIF prefix -> pais -> regimen -> IVA esperado
+# Usado en check F1
+
+prefijos_cif:
+  # Espana
+  - prefijos: ["A", "B", "C", "D", "E", "F", "G", "H", "J", "N", "P", "Q", "R", "S", "U", "V", "W"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "CIF espanol (letra + 7dig + control)"
+
+  - prefijos: ["ES"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "NIF con prefijo pais"
+
+  # NIE espanol
+  - prefijos: ["X", "Y", "Z"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "NIE (extranjero residente)"
+
+  # UE intracomunitario
+  - prefijos: ["PT"]
+    pais: PRT
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Portugal — extracomunitario (no aplica intracom para servicios tipicos)"
+
+  - prefijos: ["DE"]
+    pais: DEU
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Alemania"
+
+  - prefijos: ["FR"]
+    pais: FRA
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Francia"
+
+  - prefijos: ["IT"]
+    pais: ITA
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Italia"
+
+  - prefijos: ["NL"]
+    pais: NLD
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Paises Bajos"
+
+  - prefijos: ["BE"]
+    pais: BEL
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Belgica"
+
+  - prefijos: ["AT"]
+    pais: AUT
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Austria"
+
+  - prefijos: ["IE"]
+    pais: IRL
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Irlanda"
+
+  - prefijos: ["LU"]
+    pais: LUX
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Luxemburgo"
+
+  - prefijos: ["DK"]
+    pais: DNK
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Dinamarca"
+
+  - prefijos: ["SE"]
+    pais: SWE
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Suecia"
+
+  - prefijos: ["FI"]
+    pais: FIN
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Finlandia"
+
+  - prefijos: ["PL"]
+    pais: POL
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Polonia"
+
+  - prefijos: ["CZ"]
+    pais: CZE
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Republica Checa"
+
+  - prefijos: ["GR", "EL"]
+    pais: GRC
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Grecia"
+
+  - prefijos: ["RO"]
+    pais: ROU
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Rumania"
+
+  - prefijos: ["BG"]
+    pais: BGR
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Bulgaria"
+
+  - prefijos: ["HR"]
+    pais: HRV
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Croacia"
+
+  - prefijos: ["HU"]
+    pais: HUN
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Hungria"
+
+  - prefijos: ["SK"]
+    pais: SVK
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Eslovaquia"
+
+  - prefijos: ["SI"]
+    pais: SVN
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Eslovenia"
+
+  - prefijos: ["EE"]
+    pais: EST
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Estonia"
+
+  - prefijos: ["LT"]
+    pais: LTU
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Lituania"
+
+  - prefijos: ["LV"]
+    pais: LVA
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Letonia"
+
+  - prefijos: ["MT"]
+    pais: MLT
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Malta"
+
+  - prefijos: ["CY"]
+    pais: CYP
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Chipre"
+
+  # Post-Brexit
+  - prefijos: ["GB"]
+    pais: GBR
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Reino Unido (post-Brexit)"
+
+  # Extracomunitarios comunes
+  - prefijos: ["US"]
+    pais: USA
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Estados Unidos"
+
+  - prefijos: ["CN"]
+    pais: CHN
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "China"
+
+  - prefijos: ["CL"]
+    pais: CHL
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Chile"
+
+# Regla por defecto para prefijos no reconocidos
+default:
+  regimen: extracomunitario
+  iva_factura: [0]
+  nota: "Prefijo no reconocido — asumir extracomunitario"

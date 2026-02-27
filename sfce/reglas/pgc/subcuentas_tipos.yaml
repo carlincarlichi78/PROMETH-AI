@@ -1,0 +1,170 @@
+# Mapeo tipo documento → subcuentas contables por defecto
+# Usado por asientos_directos.py para crear partidas
+
+nomina_devengo:
+  descripcion: "Devengo de nomina mensual"
+  partidas:
+    - subcuenta: "6400000000"
+      lado: "debe"
+      campo_importe: "bruto"
+      concepto: "Sueldos y salarios"
+    - subcuenta: "4751000000"
+      lado: "haber"
+      campo_importe: "retenciones_irpf"
+      concepto: "HP acreedora retenciones IRPF"
+    - subcuenta: "4760000000"
+      lado: "haber"
+      campo_importe: "aportaciones_ss_trabajador"
+      concepto: "Organismos SS acreedores (trabajador)"
+    - subcuenta: "4650000000"
+      lado: "haber"
+      campo_importe: "neto"
+      concepto: "Remuneraciones pendientes de pago"
+
+nomina_pago:
+  descripcion: "Pago de nomina"
+  partidas:
+    - subcuenta: "4650000000"
+      lado: "debe"
+      campo_importe: "neto"
+      concepto: "Remuneraciones pendientes de pago"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "neto"
+      concepto: "Bancos"
+
+rlc_devengo:
+  descripcion: "Devengo SS a cargo empresa"
+  partidas:
+    - subcuenta: "6420000000"
+      lado: "debe"
+      campo_importe: "cuota_empresarial"
+      concepto: "SS a cargo de la empresa"
+    - subcuenta: "4760000000"
+      lado: "haber"
+      campo_importe: "cuota_empresarial"
+      concepto: "Organismos SS acreedores"
+
+rlc_pago:
+  descripcion: "Pago cuota SS"
+  partidas:
+    - subcuenta: "4760000000"
+      lado: "debe"
+      campo_importe: "total_liquidado"
+      concepto: "Organismos SS acreedores"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "total_liquidado"
+      concepto: "Bancos"
+
+bancario_comision:
+  descripcion: "Comision bancaria"
+  partidas:
+    - subcuenta: "6260000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Servicios bancarios y similares"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_seguro:
+  descripcion: "Prima de seguro"
+  partidas:
+    - subcuenta: "6250000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Primas de seguros"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_renting:
+  descripcion: "Cuota de renting/leasing"
+  partidas:
+    - subcuenta: "6210000000"
+      lado: "debe"
+      campo_importe: "base_imponible"
+      concepto: "Arrendamientos y canones"
+    - subcuenta: "4720000000"
+      lado: "debe"
+      campo_importe: "iva_importe"
+      concepto: "IVA soportado"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_intereses:
+  descripcion: "Intereses de deudas"
+  partidas:
+    - subcuenta: "6620000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Intereses de deudas"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_transferencia:
+  descripcion: "Transferencia bancaria generica (pago SS autonomos, impuestos, etc.)"
+  partidas:
+    - subcuenta: "6290000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros servicios / pagos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_impuesto_tasa:
+  descripcion: "Pago de impuesto o tasa via banco"
+  partidas:
+    - subcuenta: "6310000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros tributos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_tasa:
+  descripcion: "Tasa administrativa"
+  partidas:
+    - subcuenta: "6310000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros tributos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+bancario_cuota:
+  descripcion: "Cuota asociacion, colegio profesional u organismo"
+  partidas:
+    - subcuenta: "6290000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Cuotas y asociaciones"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"
+
+impuesto_tasa:
+  descripcion: "Impuesto, tasa o licencia"
+  partidas:
+    - subcuenta: "6310000000"
+      lado: "debe"
+      campo_importe: "importe"
+      concepto: "Otros tributos"
+    - subcuenta: "5720000000"
+      lado: "haber"
+      campo_importe: "importe"
+      concepto: "Bancos"

@@ -1,0 +1,88 @@
+# Reglas de validacion para TODOS los clientes SFCE
+
+validaciones_pre_fs:
+  - nombre: "CIF formato valido"
+    campo: cif
+    severidad: error
+    descripcion: "CIF/NIF debe tener formato valido (letra+8digitos o 8digitos+letra)"
+
+  - nombre: "Fecha en ejercicio"
+    campo: fecha
+    severidad: error
+    descripcion: "Fecha de factura debe estar dentro del ejercicio activo"
+
+  - nombre: "Base + IVA = Total"
+    severidad: error
+    tolerancia: 0.02
+    descripcion: "La suma de base imponible + cuota IVA debe igualar el total"
+
+  - nombre: "Importe positivo"
+    campo: importe
+    severidad: error
+    excepciones: ["NC"]
+    descripcion: "El importe total debe ser positivo (excepto notas de credito)"
+
+  - nombre: "No duplicado"
+    severidad: error
+    descripcion: "No puede existir otra factura con mismo numero+proveedor+fecha"
+
+validaciones_post_asiento:
+  - nombre: "Cuadre DEBE=HABER"
+    severidad: error
+    auto_fix: false
+    descripcion: "La suma de DEBE debe igualar la suma de HABER en cada asiento"
+
+  - nombre: "Importes en EUR"
+    severidad: error
+    auto_fix: true
+    descripcion: "Partidas de asientos USD deben convertirse a EUR"
+
+  - nombre: "NC invertida"
+    severidad: error
+    auto_fix: true
+    descripcion: "Notas de credito serie R deben tener DEBE/HABER invertidos"
+
+  - nombre: "Autoliquidacion intracomunitaria"
+    severidad: error
+    auto_fix: true
+    descripcion: "Facturas intracomunitarias necesitan partidas 472/477"
+
+  - nombre: "Reglas especiales proveedor"
+    severidad: error
+    auto_fix: true
+    descripcion: "Aplicar reglas de reclasificacion definidas en config (ej: IVA PT)"
+
+validaciones_cruce:
+  - nombre: "Facturas == Asientos"
+    severidad: error
+    descripcion: "Numero de facturas debe igualar numero de asientos"
+
+  - nombre: "Gastos vs subcuenta 600"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "Total base facturas proveedor = 600 neto + 4709"
+
+  - nombre: "Ingresos vs subcuenta 700"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "Total base facturas cliente = subcuenta 700 HABER"
+
+  - nombre: "IVA repercutido vs 477"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "IVA repercutido facturas + autoliq = subcuenta 477 HABER"
+
+  - nombre: "IVA soportado vs 472"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "IVA soportado facturas + autoliq = subcuenta 472 DEBE"
+
+  - nombre: "Autoliquidacion equilibrada"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "Autoliquidacion en 472 debe igualar autoliquidacion en 477"
+
+  - nombre: "Libro diario cuadra"
+    severidad: error
+    tolerancia: 0.01
+    descripcion: "Suma global DEBE == suma global HABER en libro diario"
