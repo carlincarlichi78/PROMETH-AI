@@ -380,12 +380,35 @@ Tasks completados:
 **Bug fix**: PatronRecurrente no serializable a JSON en pipeline.py (dataclasses.asdict)
 **Archivos**: config.yaml (10 prov, 3 cli, 1 trab), inbox_muestra/ (60 PDFs), manifiesto_muestra.json
 
+## Modelos Fiscales Completos — DISEÑADO
+
+**Design doc**: `docs/plans/2026-02-27-modelos-fiscales-completos-design.md`
+**Plan implementacion**: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md` (26 tasks, 5 fases)
+**Estado**: Diseño aprobado, plan escrito. Pendiente implementacion.
+
+**Arquitectura**: 3 capas independientes:
+1. **CalculadorModelos** (expandir existente) — datos contables → casillas
+2. **MotorBOE** (nuevo) — casillas + YAML spec → fichero posicional AEAT
+3. **GeneradorPDF** (nuevo) — casillas + PDF template → PDF visual
+
+**Catalogo**: ~28 modelos (303, 390, 349, 347, 340, 420, 111, 190, 115, 180, 123, 193, 130, 131, 200, 202, 220, 100, 036, 037, 210, 211, 216, 296, 184, 345, 720, 360)
+
+**Fases**:
+- A (T1-T8): Motor generico + 28 YAMLs diseno registro
+- B (T9-T13): Calculadores expandidos + queries repositorio + ServicioFiscal
+- C (T14-T15): GeneradorPDF (rellenar PDF AEAT + fallback HTML)
+- D (T16-T22): API endpoints + 3 paginas dashboard nuevas
+- E (T23-T26): Conversor Excel AEAT→YAML, golden files, persistencia BD
+
+**Decision clave**: Dashboard SFCE como interfaz del gestor (no FS). Fichero BOE fase 1, telematica AEAT fase futura.
+
 ## Proximos pasos
 
-1. **Directorio empresas** — BD compartida proveedores/clientes (CIF→nombre, CNAE), auto-resolve desde OCR, enriquecer via APIs comerciales (Axesor/Infocif) o cache compartido entre clientes
-2. Re-ejecutar elena-navarro dry-run con config completo (suministros anadidos)
-3. Fix facturas venta cuarentena (clientes sin CIF → reconocer ventas propias)
-4. Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
-5. Conectar dashboard a API real (actualmente con datos mock)
-6. Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
-7. Configurar backups automaticos BD FacturaScripts
+1. **Modelos fiscales completos** — implementar plan (26 tasks, 5 fases). Empezar por Fase A (motor generico)
+2. **Directorio empresas** — BD compartida proveedores/clientes (CIF→nombre, CNAE), auto-resolve desde OCR
+3. Re-ejecutar elena-navarro dry-run con config completo (suministros anadidos)
+4. Fix facturas venta cuarentena (clientes sin CIF → reconocer ventas propias)
+5. Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
+6. Conectar dashboard a API real (actualmente con datos mock)
+7. Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
+8. Configurar backups automaticos BD FacturaScripts
