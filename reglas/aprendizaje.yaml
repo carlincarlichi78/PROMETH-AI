@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-02-27T20:54:50.501640'
+ultima_actualizacion: '2026-02-27T22:06:54.511547'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -531,8 +531,8 @@ patrones:
   tipo_doc:
   - RLC
   aprendido: '2026-02-27T19:58:42.241732'
-  exitos: 7
+  exitos: 11
   fallos: 0
   origen: auto
   error_original: '400 Client Error: Bad Request for url: https://contabilidad.lemonfresh-tuc.com/api/3/asientos'
-  ultimo_exito: '2026-02-27T20:54:29.505875'
+  ultimo_exito: '2026-02-27T21:15:14.647035'

@@ -176,6 +176,7 @@ def crear_asiento_directo(
     codejercicio: str,
     idempresa: int,
     partidas: list[dict],
+    backend=None,
 ) -> dict:
     """Crea un asiento contable directo via API (POST asientos + POST partidas).
 
@@ -200,7 +201,7 @@ def crear_asiento_directo(
         "idempresa": idempresa,
     }
     logger.info(f"Creando asiento: {concepto} ({fecha})")
-    resp_asiento = api_post("asientos", datos_asiento)
+    resp_asiento = backend.crear_asiento(datos_asiento) if backend else api_post("asientos", datos_asiento)
 
     # FS API devuelve {"ok": "...", "data": {"idasiento": "456", ...}}
     idasiento = (
@@ -210,6 +211,7 @@ def crear_asiento_directo(
     if not idasiento:
         raise ValueError(f"Respuesta sin idasiento: {resp_asiento}")
     idasiento = int(idasiento)
+    asiento_local_id = resp_asiento.get("_asiento_local_id")
     logger.info(f"Asiento creado: idasiento={idasiento}")
 
     # 2. Crear cada partida vinculada al asiento
@@ -222,7 +224,10 @@ def crear_asiento_directo(
             "haber": partida["haber"],
             "concepto": partida.get("concepto", concepto),
         }
-        api_post("partidas", datos_partida)
+        if backend:
+            backend.crear_partida(datos_partida, asiento_local_id=asiento_local_id)
+        else:
+            api_post("partidas", datos_partida)
         num_partidas += 1
         logger.debug(f"  Partida: {partida['codsubcuenta']} D={partida['debe']} H={partida['haber']}")
 

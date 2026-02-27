@@ -34,7 +34,7 @@ from ..core.logger import crear_logger
 logger = crear_logger("registration")
 
 
-def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
+def _asegurar_entidades_fs(config: ConfigCliente, backend=None) -> dict:
     """Crea proveedores y clientes en FS si no existen.
 
     Recorre config.proveedores y config.clientes, busca cada CIF en FS,
@@ -88,7 +88,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
         }
 
         try:
-            resp = api_post("proveedores", form)
+            resp = backend.crear_proveedor(form) if backend else api_post("proveedores", form)
             codprov = resp.get("data", {}).get("codproveedor")
             idcontacto = resp.get("data", {}).get("idcontacto")
 
@@ -170,7 +170,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
         }
 
         try:
-            resp = api_post("clientes", form)
+            resp = backend.crear_cliente(form) if backend else api_post("clientes", form)
             codcli = resp.get("data", {}).get("codcliente")
             idcontacto = resp.get("data", {}).get("idcontacto")
 
@@ -541,7 +541,7 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
     return discrepancias
 
 
-def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
+def _marcar_pagada(idfactura: int, tipo_doc: str, backend=None) -> bool:
     """Marca factura como pagada via PUT y verifica.
 
     Returns:
@@ -555,7 +555,10 @@ def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
     endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
 
     try:
-        api_put(endpoint, data={"pagada": 1})
+        if backend:
+            backend.actualizar_factura(endpoint, {"pagada": 1})
+        else:
+            api_put(endpoint, data={"pagada": 1})
 
         # Verificar
         factura = verificar_factura(idfactura, tipo=tipo_fs)
@@ -792,11 +795,108 @@ def _generar_concepto_asiento(tipo_doc: str, datos: dict) -> str:
     return f"Asiento {tipo_doc} {fecha}"
 
 
+def _sincronizar_asientos_factura_a_bd(registrados: list, backend) -> int:
+    """Sincroniza asientos de facturas (generados por FS) a BD local.
+
+    Despues de crear facturas via crearFactura* y aplicar correcciones,
+    lee los asientos finales de FS y los guarda en BD local.
+    Esto permite que el dashboard muestre PyG/Balance/Diario actualizados.
+
+    Returns:
+        Numero de asientos sincronizados
+    """
+    from decimal import Decimal
+
+    sincronizados = 0
+
+    # Recopilar idfactura + tipo para obtener idasiento
+    facturas_info = []
+    for reg in registrados:
+        idfactura = reg.get("idfactura")
+        tipo_doc = reg.get("tipo", "FC")
+        if idfactura:
+            facturas_info.append((idfactura, tipo_doc))
+
+    if not facturas_info:
+        return 0
+
+    # Obtener asientos de cada factura
+    ids_asientos = {}
+    for idfactura, tipo_doc in facturas_info:
+        try:
+            tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
+            factura = verificar_factura(idfactura, tipo=tipo_fs)
+            idasiento = factura.get("idasiento")
+            if idasiento:
+                ids_asientos[idasiento] = factura
+        except Exception as e:
+            logger.warning(f"  Sync BD: no se pudo leer factura {idfactura}: {e}")
+
+    if not ids_asientos:
+        return 0
+
+    # Obtener partidas de FS (post-correcciones)
+    todas_partidas = api_get("partidas")
+
+    for idasiento, factura in ids_asientos.items():
+        try:
+            # Obtener datos del asiento de FS
+            asiento_fs = None
+            try:
+                asiento_fs = api_get_one(f"asientos/{idasiento}")
+            except Exception:
+                pass
+
+            concepto = ""
+            fecha_str = ""
+            codejercicio = ""
+            if asiento_fs:
+                concepto = asiento_fs.get("concepto", "")
+                fecha_str = asiento_fs.get("fecha", "")
+                codejercicio = asiento_fs.get("codejercicio", "")
+
+            # Crear asiento en BD local via backend (solo_local: ya existe en FS)
+            data_asiento = {
+                "concepto": concepto,
+                "fecha": fecha_str,
+                "codejercicio": codejercicio,
+                "_idasiento_fs": idasiento,
+            }
+            resultado_asiento = backend.crear_asiento(data_asiento, solo_local=True)
+            asiento_local_id = resultado_asiento.get("_asiento_local_id")
+
+            if not asiento_local_id:
+                continue
+
+            # Guardar partidas de este asiento
+            partidas_asiento = [p for p in todas_partidas if p.get("idasiento") == idasiento]
+            for partida in partidas_asiento:
+                data_partida = {
+                    "codsubcuenta": partida.get("codsubcuenta", ""),
+                    "debe": float(partida.get("debe", 0)),
+                    "haber": float(partida.get("haber", 0)),
+                    "concepto": partida.get("concepto", ""),
+                    "codimpuesto": partida.get("codimpuesto", ""),
+                }
+                backend.crear_partida(
+                    data_partida,
+                    asiento_local_id=asiento_local_id,
+                    solo_local=True
+                )
+
+            sincronizados += 1
+        except Exception as e:
+            logger.warning(f"  Sync BD: error sincronizando asiento {idasiento}: {e}")
+
+    return sincronizados
+
+
 def ejecutar_registro(
     config: ConfigCliente,
     ruta_cliente: Path,
     auditoria=None,
-    motor=None
+    motor=None,
+    backend=None
 ) -> ResultadoFase:
     """Ejecuta la fase 2 de registro en FacturaScripts.
 
@@ -835,7 +935,7 @@ def ejecutar_registro(
 
     # Asegurar que todos los proveedores/clientes del config existen en FS
     logger.info("Verificando entidades en FS...")
-    stats_entidades = _asegurar_entidades_fs(config)
+    stats_entidades = _asegurar_entidades_fs(config, backend=backend)
     if stats_entidades["creados_prov"] or stats_entidades["creados_cli"]:
         logger.info(
             f"  Entidades creadas: {stats_entidades['creados_prov']} proveedores, "
@@ -889,6 +989,7 @@ def ejecutar_registro(
                         codejercicio=config.codejercicio,
                         idempresa=config.idempresa,
                         partidas=partidas,
+                        backend=backend,
                     )
 
                     registro = {
@@ -959,7 +1060,7 @@ def ejecutar_registro(
 
         for intento in range(resolutor.max_reintentos):
             try:
-                respuesta = api_post(endpoint, data=form_data)
+                respuesta = backend.crear_factura(endpoint, form_data) if backend else api_post(endpoint, data=form_data)
                 idfactura = respuesta.get("doc", {}).get("idfactura")
                 if not idfactura:
                     idfactura = respuesta.get("idfactura")
@@ -1009,7 +1110,7 @@ def ejecutar_registro(
             continue
 
         # 5. Marcar pagada
-        pagada_ok = _marcar_pagada(idfactura, tipo_doc)
+        pagada_ok = _marcar_pagada(idfactura, tipo_doc, backend=backend)
         if not pagada_ok:
             logger.warning(f"  No se pudo marcar como pagada (ID {idfactura})")
             resultado.aviso(f"Factura {idfactura} no marcada como pagada")
@@ -1094,6 +1195,15 @@ def ejecutar_registro(
         except Exception as e:
             logger.error(f"Error corrigiendo divisas: {e}")
             resultado.aviso(f"Error corrigiendo divisas asientos: {e}")
+
+    # Sincronizar asientos de facturas a BD local (despues de correcciones)
+    if backend and registrados_facturas:
+        try:
+            n_sync = _sincronizar_asientos_factura_a_bd(registrados_facturas, backend)
+            if n_sync > 0:
+                logger.info(f"Asientos de facturas sincronizados a BD local: {n_sync}")
+        except Exception as e:
+            logger.error(f"Error sincronizando asientos a BD: {e}")
 
     # Persistir conocimiento aprendido y mostrar estadisticas
     resolutor.guardar_conocimiento()

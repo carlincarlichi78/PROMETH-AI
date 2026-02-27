@@ -271,6 +271,15 @@ def main():
     config._repo = repo
     config._empresa_bd_id = empresa_bd_id
 
+    # Inicializar Backend doble destino (FS + BD local)
+    from sfce.core.backend import Backend
+    backend = Backend(
+        modo="dual" if repo and empresa_bd_id else "fs",
+        repo=repo,
+        empresa_id=empresa_bd_id
+    )
+    logger.info(f"Backend modo={backend.modo}")
+
     ejercicio = config.ejercicio
     interactivo = not args.no_interactivo
 
@@ -328,7 +337,8 @@ def main():
             "descripcion": "Fase 2: Registro en FacturaScripts",
             "ejecutar": lambda: ejecutar_registro(config, ruta_cliente,
                                                     auditoria=auditoria,
-                                                    motor=motor),
+                                                    motor=motor,
+                                                    backend=backend),
             "dry_run_skip": True,
         },
         {
@@ -346,7 +356,8 @@ def main():
             "ejecutar": lambda: ejecutar_correccion(config, ruta_cliente,
                                                       catalogo=catalogo,
                                                       auditoria=auditoria,
-                                                      motor=motor),
+                                                      motor=motor,
+                                                      backend=backend),
             "dry_run_skip": True,
         },
         {
