@@ -17,6 +17,7 @@ EVENTO_CUARENTENA_NUEVO = "cuarentena_nuevo"
 EVENTO_CUARENTENA_RESUELTA = "cuarentena_resuelta"
 EVENTO_SALDO_ACTUALIZADO = "saldo_actualizado"
 EVENTO_ERROR = "error"
+EVENTO_WATCHER_NUEVO_PDF = "watcher_nuevo_pdf"
 
 
 # ---------------------------------------------------------------------------
