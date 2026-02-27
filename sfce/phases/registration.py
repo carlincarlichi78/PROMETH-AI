@@ -282,14 +282,14 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         entidad = (config.buscar_proveedor_por_nombre(doc["entidad"]) if es_proveedor
                    else config.buscar_cliente_por_nombre(doc.get("entidad", "")))
 
+    # Usar MotorReglas para decision con trazabilidad
+    doc_motor = {
+        "emisor_cif": cif,
+        "tipo_doc": tipo_doc,
+        "concepto": datos.get("numero_factura", ""),
+        "base_imponible": datos.get("base_imponible", 0),
+    }
     if motor:
-        # Usar MotorReglas para decision con trazabilidad
-        doc_motor = {
-            "emisor_cif": cif,
-            "tipo_doc": tipo_doc,
-            "concepto": datos.get("numero_factura", ""),
-            "base_imponible": datos.get("base_imponible", 0),
-        }
         decision = motor.decidir_asiento(doc_motor)
         codimpuesto_defecto = decision.codimpuesto
         regimen = decision.regimen
@@ -299,7 +299,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         if es_intracomunitario:
             logger.info(f"  Motor: regimen intracomunitario, ISP activo")
     else:
-        # Legacy: resolver codimpuesto y regimen desde entidad
+        # Fallback sin motor (solo para tests unitarios aislados)
         codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
         regimen = (entidad.get("regimen", "general") if entidad else "general").lower()
         es_intracomunitario = regimen == "intracomunitario"

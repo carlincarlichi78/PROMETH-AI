@@ -239,14 +239,10 @@ def main():
     ejercicio = config.ejercicio
     interactivo = not args.no_interactivo
 
-    # Crear MotorReglas (v2) si disponible
-    motor = None
-    try:
-        from sfce.core.motor_reglas import MotorReglas
-        motor = MotorReglas(config)
-        logger.info("MotorReglas v2 activo")
-    except ImportError:
-        pass
+    # Crear MotorReglas (v2) — OBLIGATORIO
+    from sfce.core.motor_reglas import MotorReglas
+    motor = MotorReglas(config)
+    logger.info("MotorReglas v2 activo")
 
     logger.info("=" * 60)
     logger.info(f"SFCE Pipeline — {config.nombre}")
