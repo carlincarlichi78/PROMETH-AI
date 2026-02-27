@@ -1,0 +1,255 @@
+modelo: "180"
+version: "2025"
+descripcion: "Resumen anual retenciones e ingresos a cuenta — Arrendamientos de inmuebles urbanos"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: declarante
+    repetible: false
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro declarante"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "180"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: tipo_soporte
+        posicion: [58, 58]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte"
+
+      - nombre: telefono_contacto
+        posicion: [59, 67]
+        tipo: telefono
+        longitud: 9
+        fuente: "empresa.telefono"
+        descripcion: "Telefono de contacto"
+
+      - nombre: nombre_contacto
+        posicion: [68, 102]
+        tipo: alfanumerico
+        longitud: 35
+        fuente: "empresa.nombre_contacto"
+        descripcion: "Nombre persona de contacto"
+
+      - nombre: num_total_registros
+        posicion: [103, 111]
+        tipo: numerico
+        longitud: 9
+        fuente: "casillas.num_registros"
+        descripcion: "Numero total de registros de arrendadores"
+
+      - nombre: casilla_01
+        posicion: [112, 118]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.01"
+        descripcion: "Total numero de arrendadores"
+
+      - nombre: casilla_02
+        posicion: [119, 135]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Total bases de retenciones"
+
+      - nombre: casilla_03
+        posicion: [136, 152]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Total retenciones e ingresos a cuenta"
+
+      - nombre: blancos_153_500
+        posicion: [153, 500]
+        tipo: alfanumerico
+        longitud: 348
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: arrendador
+    repetible: true
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro arrendador"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "180"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nif_arrendador
+        posicion: [18, 26]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "declarado.nif"
+        descripcion: "NIF del arrendador (propietario del inmueble)"
+
+      - nombre: nombre_arrendador
+        posicion: [27, 66]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "declarado.nombre"
+        descripcion: "Apellidos y nombre o razon social del arrendador"
+
+      - nombre: clave_provincia
+        posicion: [67, 68]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "declarado.clave_provincia"
+        descripcion: "Clave de provincia (01-52)"
+
+      - nombre: referencia_catastral
+        posicion: [69, 88]
+        tipo: alfanumerico
+        longitud: 20
+        fuente: "declarado.referencia_catastral"
+        descripcion: "Referencia catastral del inmueble"
+
+      - nombre: tipo_via
+        posicion: [89, 91]
+        tipo: alfanumerico
+        longitud: 3
+        fuente: "declarado.tipo_via"
+        descripcion: "Tipo de via (CL, AV, PL, CR, ...)"
+
+      - nombre: nombre_via
+        posicion: [92, 121]
+        tipo: alfanumerico
+        longitud: 30
+        fuente: "declarado.nombre_via"
+        descripcion: "Nombre de la via"
+
+      - nombre: numero_via
+        posicion: [122, 126]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "declarado.numero_via"
+        descripcion: "Numero de la via"
+
+      - nombre: piso
+        posicion: [127, 129]
+        tipo: alfanumerico
+        longitud: 3
+        fuente: "declarado.piso"
+        descripcion: "Piso"
+
+      - nombre: puerta
+        posicion: [130, 132]
+        tipo: alfanumerico
+        longitud: 3
+        fuente: "declarado.puerta"
+        descripcion: "Puerta"
+
+      - nombre: codigo_postal
+        posicion: [133, 137]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "declarado.codigo_postal"
+        descripcion: "Codigo postal del inmueble"
+
+      - nombre: municipio
+        posicion: [138, 167]
+        tipo: alfanumerico
+        longitud: 30
+        fuente: "declarado.municipio"
+        descripcion: "Municipio del inmueble"
+
+      - nombre: importe_percepciones
+        posicion: [168, 184]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.importe"
+        descripcion: "Importe de las percepciones satisfechas (base)"
+
+      - nombre: retencion_practicada
+        posicion: [185, 201]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.retencion"
+        descripcion: "Retenciones e ingresos a cuenta practicados"
+
+      - nombre: naturaleza_arrendador
+        posicion: [202, 202]
+        tipo: alfanumerico
+        longitud: 1
+        fuente: "declarado.naturaleza"
+        descripcion: "Naturaleza arrendador: F=fisica, J=juridica"
+        valores_validos: ["F", "J"]
+
+      - nombre: blancos_203_500
+        posicion: [203, 500]
+        tipo: alfanumerico
+        longitud: 298
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "sum(arrendador.retencion_practicada) == declarante.casilla_03"
+    nivel: error
+    mensaje: "La suma de retenciones de arrendadores debe igualar el total declarante"
+
+  - regla: "sum(arrendador.importe_percepciones) == declarante.casilla_02"
+    nivel: error
+    mensaje: "La suma de bases de arrendadores debe igualar casilla 02"
+
+  - regla: "count(arrendadores) == declarante.num_total_registros"
+    nivel: error
+    mensaje: "El numero de registros de arrendadores debe coincidir con el declarado"
+
+  - regla: "arrendador.referencia_catastral != ''"
+    nivel: advertencia
+    mensaje: "Se recomienda informar la referencia catastral del inmueble"

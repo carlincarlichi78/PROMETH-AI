@@ -1,0 +1,191 @@
+modelo: "037"
+version: "2025"
+descripcion: "Censo simplificado — declaracion censal reducida para autonomos y personas fisicas"
+periodicidad: aperiodico
+tipo_formato: posicional
+longitud_registro: 1000
+
+registros:
+  - tipo: identificacion
+    repetible: false
+    campos:
+      # --- Cabecera ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "037"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio de presentacion (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante (DNI o NIE)"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "00"
+        descripcion: "Periodo (00 = aperiodico)"
+
+      # --- Tipo de declaracion ---
+      - nombre: tipo_declaracion
+        posicion: [60, 60]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_declaracion"
+        descripcion: "A=alta, M=modificacion, B=baja"
+
+      - nombre: causa_presentacion
+        posicion: [61, 62]
+        tipo: alfanumerico
+        fuente: "casillas.causa_presentacion"
+        descripcion: "01=inicio actividad, 02=modificacion, 03=cese"
+
+      # --- Datos identificativos (persona fisica) ---
+      - nombre: fecha_nacimiento
+        posicion: [63, 70]
+        tipo: fecha
+        fuente: "casillas.fecha_nacimiento"
+        descripcion: "Fecha de nacimiento AAAAMMDD"
+
+      - nombre: codigo_pais_residencia
+        posicion: [71, 72]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_pais_residencia"
+        descripcion: "Codigo pais de residencia (ES)"
+
+      # --- Domicilio fiscal (simplificado) ---
+      - nombre: tipo_via_fiscal
+        posicion: [73, 74]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_via_fiscal"
+        descripcion: "Tipo de via (CL, AV, PL, etc.)"
+
+      - nombre: nombre_via_fiscal
+        posicion: [75, 114]
+        tipo: alfanumerico
+        fuente: "casillas.nombre_via_fiscal"
+        descripcion: "Nombre de la via (40 chars)"
+
+      - nombre: numero_via_fiscal
+        posicion: [115, 119]
+        tipo: alfanumerico
+        fuente: "casillas.numero_via_fiscal"
+        descripcion: "Numero en la via"
+
+      - nombre: codigo_postal_fiscal
+        posicion: [120, 124]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_postal_fiscal"
+        descripcion: "Codigo postal"
+
+      - nombre: municipio_fiscal
+        posicion: [125, 164]
+        tipo: alfanumerico
+        fuente: "casillas.municipio_fiscal"
+        descripcion: "Municipio (40 chars)"
+
+      - nombre: provincia_fiscal
+        posicion: [165, 166]
+        tipo: alfanumerico
+        fuente: "casillas.provincia_fiscal"
+        descripcion: "Codigo de provincia (01-52)"
+
+      # --- Actividad economica ---
+      - nombre: codigo_iae_principal
+        posicion: [167, 170]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_iae_principal"
+        descripcion: "Codigo IAE actividad principal"
+
+      - nombre: fecha_inicio_actividad
+        posicion: [171, 178]
+        tipo: fecha
+        fuente: "casillas.fecha_inicio_actividad"
+        descripcion: "Fecha inicio actividad AAAAMMDD"
+
+      - nombre: fecha_cese_actividad
+        posicion: [179, 186]
+        tipo: fecha
+        fuente: "casillas.fecha_cese_actividad"
+        descripcion: "Fecha cese actividad AAAAMMDD (si aplica)"
+
+      # --- Regimen IVA ---
+      - nombre: regimen_iva_general
+        posicion: [187, 187]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_iva_general"
+        descripcion: "S=regimen general IVA"
+
+      - nombre: regimen_iva_simplificado
+        posicion: [188, 188]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_iva_simplificado"
+        descripcion: "S=regimen simplificado IVA (modulos)"
+
+      - nombre: regimen_recargo_equivalencia
+        posicion: [189, 189]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_recargo_equivalencia"
+        descripcion: "S=recargo de equivalencia"
+
+      # --- Obligaciones ---
+      - nombre: obligado_303
+        posicion: [190, 190]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_303"
+        descripcion: "S=obligado Mod. 303"
+
+      - nombre: obligado_130
+        posicion: [191, 191]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_130"
+        descripcion: "S=obligado Mod. 130 (pago fraccionado IRPF)"
+
+      - nombre: obligado_111
+        posicion: [192, 192]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_111"
+        descripcion: "S=obligado Mod. 111 (retenciones)"
+
+      # --- Contacto ---
+      - nombre: telefono
+        posicion: [193, 201]
+        tipo: telefono
+        fuente: "casillas.telefono"
+        descripcion: "Telefono (9 digits)"
+
+      - nombre: email
+        posicion: [202, 261]
+        tipo: alfanumerico
+        fuente: "casillas.email"
+        descripcion: "Email de contacto (60 chars)"
+
+      - nombre: blancos_262_1000
+        posicion: [262, 1000]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "tipo_declaracion in ['A', 'M', 'B']"
+    nivel: error
+    mensaje: "Tipo declaracion debe ser A (alta), M (modificacion) o B (baja)"

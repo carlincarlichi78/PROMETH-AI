@@ -1,0 +1,254 @@
+modelo: "190"
+version: "2025"
+descripcion: "Resumen anual retenciones e ingresos a cuenta — Rendimientos trabajo y actividades"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: declarante
+    repetible: false
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro declarante"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "190"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: tipo_soporte
+        posicion: [58, 58]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte"
+
+      - nombre: indicador_contacto
+        posicion: [59, 59]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: " "
+        descripcion: "Indicador persona de contacto"
+
+      - nombre: telefono_contacto
+        posicion: [60, 68]
+        tipo: telefono
+        longitud: 9
+        fuente: "empresa.telefono"
+        descripcion: "Telefono de contacto"
+
+      - nombre: nombre_contacto
+        posicion: [69, 103]
+        tipo: alfanumerico
+        longitud: 35
+        fuente: "empresa.nombre_contacto"
+        descripcion: "Nombre persona de contacto"
+
+      - nombre: num_total_registros
+        posicion: [104, 112]
+        tipo: numerico
+        longitud: 9
+        fuente: "casillas.num_registros"
+        descripcion: "Numero total de registros de perceptores"
+
+      - nombre: casilla_16
+        posicion: [113, 129]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.16"
+        descripcion: "Total percepciones dinerarias"
+
+      - nombre: casilla_17
+        posicion: [130, 146]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.17"
+        descripcion: "Total percepciones en especie (valor)"
+
+      - nombre: casilla_18
+        posicion: [147, 163]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.18"
+        descripcion: "Total retenciones e ingresos a cuenta"
+
+      - nombre: casilla_19
+        posicion: [164, 180]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.19"
+        descripcion: "Total ingresos a cuenta percepciones en especie"
+
+      - nombre: blancos_181_500
+        posicion: [181, 500]
+        tipo: alfanumerico
+        longitud: 320
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: perceptor
+    repetible: true
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro perceptor"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "190"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nif_perceptor
+        posicion: [18, 26]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "declarado.nif"
+        descripcion: "NIF del perceptor"
+
+      - nombre: nombre_perceptor
+        posicion: [27, 66]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "declarado.nombre"
+        descripcion: "Apellidos y nombre del perceptor"
+
+      - nombre: clave_percepcion
+        posicion: [67, 67]
+        tipo: alfanumerico
+        longitud: 1
+        fuente: "declarado.clave_percepcion"
+        descripcion: "Clave percepcion: A=trabajo dinerario, B=trabajo especie, C=premios, E=actividades economicas, F=agricolas, G=cesion imagen"
+        valores_validos: ["A", "B", "C", "E", "F", "G", "H", "I", "K"]
+
+      - nombre: subclave
+        posicion: [68, 69]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "declarado.subclave"
+        descripcion: "Subclave de percepcion (01, 02, ...)"
+
+      - nombre: ejercicio_devengo
+        posicion: [70, 73]
+        tipo: numerico
+        longitud: 4
+        fuente: "declarado.ejercicio_devengo"
+        descripcion: "Ejercicio de devengo"
+
+      - nombre: percepcion_dineraria
+        posicion: [74, 90]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.percepcion_dineraria"
+        descripcion: "Importe percepciones dinerarias"
+
+      - nombre: retencion_dineraria
+        posicion: [91, 107]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.retencion_dineraria"
+        descripcion: "Retenciones sobre percepciones dinerarias"
+
+      - nombre: percepcion_especie_valor
+        posicion: [108, 124]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.percepcion_especie_valor"
+        descripcion: "Valor percepciones en especie"
+
+      - nombre: ingreso_cuenta_especie
+        posicion: [125, 141]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "declarado.ingreso_cuenta_especie"
+        descripcion: "Ingresos a cuenta percepciones en especie"
+
+      - nombre: porcentaje_retencion
+        posicion: [142, 145]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "declarado.porcentaje_retencion"
+        descripcion: "Porcentaje de retencion aplicado (formato NNDD)"
+
+      - nombre: naturaleza_perceptor
+        posicion: [146, 146]
+        tipo: alfanumerico
+        longitud: 1
+        fuente: "declarado.naturaleza"
+        descripcion: "Naturaleza: F=persona fisica, J=persona juridica"
+        valores_validos: ["F", "J", " "]
+
+      - nombre: blancos_147_500
+        posicion: [147, 500]
+        tipo: alfanumerico
+        longitud: 354
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "sum(perceptor.retencion_dineraria) + sum(perceptor.ingreso_cuenta_especie) == declarante.casilla_18"
+    nivel: error
+    mensaje: "La suma de retenciones de perceptores debe igualar el total declarante (casilla 18)"
+
+  - regla: "sum(perceptor.percepcion_dineraria) == declarante.casilla_16"
+    nivel: error
+    mensaje: "La suma de percepciones dinerarias de perceptores debe igualar casilla 16"
+
+  - regla: "count(perceptores) == declarante.num_total_registros"
+    nivel: error
+    mensaje: "El numero de registros de perceptores debe coincidir con el declarado"
+
+  - regla: "perceptor.clave_percepcion in ['A','B','C','E','F','G','H','I','K']"
+    nivel: error
+    mensaje: "Clave de percepcion invalida"

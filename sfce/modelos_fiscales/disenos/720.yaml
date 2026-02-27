@@ -1,0 +1,169 @@
+modelo: "720"
+version: "2025"
+descripcion: "Declaracion informativa sobre bienes y derechos situados en el extranjero"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion registro tipo 1 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "720"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del obligado tributario declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "0A"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: tipo_declaracion
+        posicion: [61, 61]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_declaracion"
+        descripcion: "I=inicial del ejercicio, C=complementaria, S=sustitutiva"
+
+      - nombre: num_bienes_declarados
+        posicion: [62, 67]
+        tipo: numerico
+        fuente: "casillas.num_bienes_declarados"
+        descripcion: "Total de bienes o derechos declarados"
+
+      - nombre: valor_total_bienes
+        posicion: [68, 84]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.valor_total_bienes"
+        descripcion: "Valor total de todos los bienes declarados"
+
+      - nombre: blancos_85_500
+        posicion: [85, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: bien
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=bien o derecho)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "720"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: clave_tipo_bien
+        posicion: [18, 19]
+        tipo: alfanumerico
+        fuente: "declarado.clave_tipo_bien"
+        descripcion: "Tipo de bien: C=cuenta, V=valor mobiliario, I=inmueble, S=seguro/renta, O=otros"
+
+      - nombre: codigo_pais
+        posicion: [20, 21]
+        tipo: alfanumerico
+        fuente: "declarado.codigo_pais"
+        descripcion: "Codigo ISO del pais donde radica el bien"
+
+      - nombre: identificacion_bien
+        posicion: [22, 71]
+        tipo: alfanumerico
+        fuente: "declarado.identificacion_bien"
+        descripcion: "Identificacion del bien (IBAN, ISIN, ref catastral, etc.) (50 chars)"
+
+      - nombre: nombre_entidad_titular
+        posicion: [72, 111]
+        tipo: alfanumerico
+        fuente: "declarado.nombre_entidad"
+        descripcion: "Nombre de la entidad extranjera donde radica el bien (40 chars)"
+
+      - nombre: valor_bien_31dic
+        posicion: [112, 128]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.valor_bien"
+        descripcion: "Valor del bien a 31 de diciembre del ejercicio"
+
+      - nombre: porcentaje_titularidad
+        posicion: [129, 134]
+        tipo: numerico
+        decimales: 2
+        fuente: "declarado.porcentaje_titularidad"
+        descripcion: "Porcentaje de titularidad sobre el bien (hasta 100.00)"
+
+      - nombre: clave_representacion
+        posicion: [135, 135]
+        tipo: alfanumerico
+        fuente: "declarado.clave_representacion"
+        descripcion: "T=titular, A=autorizado, B=beneficiario, R=representante, P=persona con poder"
+
+      - nombre: blancos_136_500
+        posicion: [136, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "num_bienes_declarados >= 1"
+    nivel: error
+    mensaje: "Debe declararse al menos un bien o derecho en el extranjero"
+
+  - regla: "tipo_declaracion in ['I', 'C', 'S']"
+    nivel: error
+    mensaje: "Tipo declaracion debe ser I (inicial), C (complementaria) o S (sustitutiva)"
+
+  - regla: "valor_total_bienes > 50000"
+    nivel: advertencia
+    mensaje: "Solo existe obligacion de declarar si el valor total supera 50.000 EUR"

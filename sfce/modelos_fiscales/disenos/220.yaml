@@ -1,0 +1,179 @@
+modelo: "220"
+version: "2025"
+descripcion: "Impuesto sobre Sociedades — regimen de consolidacion fiscal (grupos)"
+periodicidad: anual
+tipo_formato: xml
+longitud_registro: 0
+
+registros:
+  - tipo: identificacion_grupo
+    repetible: false
+    campos:
+      - nombre: nif_entidad_representante
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF de la entidad representante del grupo"
+
+      - nombre: nombre_grupo
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Denominacion del grupo fiscal"
+
+      - nombre: ejercicio
+        posicion: [0, 0]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: periodo
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: numero_grupo
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "empresa.numero_grupo_fiscal"
+        descripcion: "Numero de identificacion del grupo fiscal (asignado por AEAT)"
+
+      - nombre: num_entidades_grupo
+        posicion: [0, 0]
+        tipo: numerico
+        fuente: "casillas.num_entidades_grupo"
+        descripcion: "Numero de entidades integrantes del grupo"
+
+  - tipo: entidad_grupo
+    repetible: true
+    campos:
+      - nombre: nif_entidad
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF de la entidad integrante"
+
+      - nombre: nombre_entidad
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre o razon social de la entidad"
+
+      - nombre: porcentaje_participacion
+        posicion: [0, 0]
+        tipo: numerico
+        decimales: 4
+        fuente: "declarado.porcentaje_participacion"
+        descripcion: "Porcentaje de participacion de la dominante"
+
+      - nombre: base_imponible_individual
+        posicion: [0, 0]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.base_imponible"
+        descripcion: "Base imponible individual de la entidad"
+
+  - tipo: liquidacion_consolidada
+    repetible: false
+    campos:
+      - nombre: casilla_500
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.500"
+        decimales: 2
+        descripcion: "Resultado contable consolidado del grupo"
+
+      - nombre: casilla_501
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.501"
+        decimales: 2
+        descripcion: "Aumentos al resultado contable (ajustes consolidacion)"
+
+      - nombre: casilla_502
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.502"
+        decimales: 2
+        descripcion: "Disminuciones al resultado contable (ajustes consolidacion)"
+
+      - nombre: casilla_540
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.540"
+        decimales: 2
+        descripcion: "Eliminaciones entre entidades del grupo"
+
+      - nombre: casilla_547
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.547"
+        decimales: 2
+        descripcion: "Compensacion bases imponibles negativas ejercicios anteriores"
+
+      - nombre: casilla_550
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.550"
+        decimales: 2
+        descripcion: "Base imponible consolidada"
+
+      - nombre: casilla_552
+        posicion: [0, 0]
+        tipo: numerico
+        fuente: "casillas.552"
+        decimales: 2
+        descripcion: "Tipo de gravamen (%)"
+
+      - nombre: casilla_560
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.560"
+        decimales: 2
+        descripcion: "Cuota integra consolidada"
+
+      - nombre: casilla_562
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.562"
+        decimales: 2
+        descripcion: "Deducciones por doble imposicion y bonificaciones"
+
+      - nombre: casilla_580
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.580"
+        decimales: 2
+        descripcion: "Retenciones e ingresos a cuenta consolidados"
+
+      - nombre: casilla_595
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.595"
+        decimales: 2
+        descripcion: "Cuota liquida consolidada"
+
+      - nombre: casilla_599
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.599"
+        decimales: 2
+        descripcion: "Resultado de la declaracion consolidada"
+
+validaciones:
+  - regla: "casilla_550 == casilla_500 + casilla_501 - casilla_502 - casilla_540 - casilla_547"
+    nivel: error
+    mensaje: "Base imponible consolidada (550) no cuadra con ajustes sobre resultado contable"
+
+  - regla: "casilla_560 == casilla_550 * casilla_552 / 100"
+    nivel: error
+    mensaje: "Cuota integra consolidada (560) no coincide con base por tipo"
+
+  - regla: "casilla_595 == casilla_560 - casilla_562"
+    nivel: error
+    mensaje: "Cuota liquida consolidada (595) debe ser cuota integra menos deducciones"
+
+  - regla: "casilla_599 == casilla_595 - casilla_580"
+    nivel: error
+    mensaje: "Resultado (599) debe ser cuota liquida menos retenciones"

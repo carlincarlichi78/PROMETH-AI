@@ -1,0 +1,332 @@
+modelo: "303"
+version: "2025"
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion del registro ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "303"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante (9 caracteres)"
+
+      - nombre: apellidos_nombre
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 caracteres)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T, 2T, 3T, 4T"
+
+      # --- IVA devengado: tipo general 21% ---
+      - nombre: casilla_01
+        posicion: [60, 73]
+        tipo: numerico_signo
+        fuente: "casillas.01"
+        decimales: 2
+        descripcion: "Base imponible tipo general (21%)"
+
+      - nombre: casilla_02
+        posicion: [74, 76]
+        tipo: numerico
+        valor_fijo: "210"
+        decimales: 2
+        descripcion: "Tipo impositivo general (21,00 → almacenado como 210)"
+
+      - nombre: casilla_03
+        posicion: [77, 90]
+        tipo: numerico_signo
+        fuente: "casillas.03"
+        decimales: 2
+        descripcion: "Cuota tipo general"
+
+      # --- IVA devengado: tipo reducido 10% ---
+      - nombre: casilla_04
+        posicion: [91, 104]
+        tipo: numerico_signo
+        fuente: "casillas.04"
+        decimales: 2
+        descripcion: "Base imponible tipo reducido (10%)"
+
+      - nombre: casilla_05
+        posicion: [105, 107]
+        tipo: numerico
+        valor_fijo: "100"
+        decimales: 2
+        descripcion: "Tipo impositivo reducido (10,00 → 100)"
+
+      - nombre: casilla_06
+        posicion: [108, 121]
+        tipo: numerico_signo
+        fuente: "casillas.06"
+        decimales: 2
+        descripcion: "Cuota tipo reducido"
+
+      # --- IVA devengado: tipo superreducido 4% ---
+      - nombre: casilla_07
+        posicion: [122, 135]
+        tipo: numerico_signo
+        fuente: "casillas.07"
+        decimales: 2
+        descripcion: "Base imponible tipo superreducido (4%)"
+
+      - nombre: casilla_08
+        posicion: [136, 138]
+        tipo: numerico
+        valor_fijo: "40"
+        decimales: 2
+        descripcion: "Tipo impositivo superreducido (4,00 → 40)"
+
+      - nombre: casilla_09
+        posicion: [139, 152]
+        tipo: numerico_signo
+        fuente: "casillas.09"
+        decimales: 2
+        descripcion: "Cuota tipo superreducido"
+
+      # --- Adquisiciones intracomunitarias bienes ---
+      - nombre: casilla_10
+        posicion: [153, 166]
+        tipo: numerico_signo
+        fuente: "casillas.10"
+        decimales: 2
+        descripcion: "Base adquisiciones intracomunitarias bienes"
+
+      - nombre: casilla_11
+        posicion: [167, 169]
+        tipo: numerico
+        fuente: "casillas.11"
+        decimales: 2
+        descripcion: "Tipo % adquisiciones intracomunitarias bienes"
+
+      - nombre: casilla_12
+        posicion: [170, 183]
+        tipo: numerico_signo
+        fuente: "casillas.12"
+        decimales: 2
+        descripcion: "Cuota adquisiciones intracomunitarias bienes"
+
+      # --- Adquisiciones intracomunitarias servicios ---
+      - nombre: casilla_13
+        posicion: [184, 197]
+        tipo: numerico_signo
+        fuente: "casillas.13"
+        decimales: 2
+        descripcion: "Base adquisiciones intracomunitarias servicios"
+
+      - nombre: casilla_14
+        posicion: [198, 200]
+        tipo: numerico
+        fuente: "casillas.14"
+        decimales: 2
+        descripcion: "Tipo % adquisiciones intracomunitarias servicios"
+
+      - nombre: casilla_15
+        posicion: [201, 214]
+        tipo: numerico_signo
+        fuente: "casillas.15"
+        decimales: 2
+        descripcion: "Cuota adquisiciones intracomunitarias servicios"
+
+      # --- IVA diferido importaciones (casilla 77) ---
+      - nombre: casilla_77
+        posicion: [215, 228]
+        tipo: numerico_signo
+        fuente: "casillas.77"
+        decimales: 2
+        descripcion: "Cuotas devengadas por IVA diferido importaciones"
+
+      # --- Modificacion de bases y cuotas ---
+      - nombre: casilla_25
+        posicion: [229, 242]
+        tipo: numerico_signo
+        fuente: "casillas.25"
+        decimales: 2
+        descripcion: "Modificacion bases y cuotas (concurso acreedores, BAI)"
+
+      - nombre: casilla_26
+        posicion: [243, 256]
+        tipo: numerico_signo
+        fuente: "casillas.26"
+        decimales: 2
+        descripcion: "Modificacion cuotas correspondiente"
+
+      # --- Total cuotas devengadas ---
+      - nombre: casilla_27
+        posicion: [257, 270]
+        tipo: numerico_signo
+        fuente: "casillas.27"
+        decimales: 2
+        descripcion: "Total cuotas IVA devengado"
+
+      # --- IVA deducible: bienes y servicios corrientes ---
+      - nombre: casilla_28
+        posicion: [271, 284]
+        tipo: numerico_signo
+        fuente: "casillas.28"
+        decimales: 2
+        descripcion: "Base IVA soportado deducible bienes y servicios corrientes"
+
+      - nombre: casilla_29
+        posicion: [285, 298]
+        tipo: numerico_signo
+        fuente: "casillas.29"
+        decimales: 2
+        descripcion: "Cuota IVA soportado deducible bienes y servicios corrientes"
+
+      # --- IVA deducible: bienes de inversion ---
+      - nombre: casilla_30
+        posicion: [299, 312]
+        tipo: numerico_signo
+        fuente: "casillas.30"
+        decimales: 2
+        descripcion: "Base IVA soportado deducible bienes de inversion"
+
+      - nombre: casilla_31
+        posicion: [313, 326]
+        tipo: numerico_signo
+        fuente: "casillas.31"
+        decimales: 2
+        descripcion: "Cuota IVA soportado deducible bienes de inversion"
+
+      # --- IVA deducible: importaciones bienes corrientes ---
+      - nombre: casilla_32
+        posicion: [327, 340]
+        tipo: numerico_signo
+        fuente: "casillas.32"
+        decimales: 2
+        descripcion: "Base importaciones bienes corrientes deducible"
+
+      - nombre: casilla_33
+        posicion: [341, 354]
+        tipo: numerico_signo
+        fuente: "casillas.33"
+        decimales: 2
+        descripcion: "Cuota importaciones bienes corrientes deducible"
+
+      # --- IVA deducible: importaciones bienes inversion ---
+      - nombre: casilla_34
+        posicion: [355, 368]
+        tipo: numerico_signo
+        fuente: "casillas.34"
+        decimales: 2
+        descripcion: "Base importaciones bienes de inversion"
+
+      - nombre: casilla_35
+        posicion: [369, 382]
+        tipo: numerico_signo
+        fuente: "casillas.35"
+        decimales: 2
+        descripcion: "Cuota importaciones bienes de inversion"
+
+      # --- IVA deducible: adquisiciones intracomunitarias bienes corrientes ---
+      - nombre: casilla_36
+        posicion: [383, 396]
+        tipo: numerico_signo
+        fuente: "casillas.36"
+        decimales: 2
+        descripcion: "Cuota adquisiciones intracomunitarias bienes corrientes deducible"
+
+      # --- Total a deducir ---
+      - nombre: casilla_37
+        posicion: [397, 410]
+        tipo: numerico_signo
+        fuente: "casillas.37"
+        decimales: 2
+        descripcion: "Total a deducir (suma cuotas soportadas)"
+
+      # --- Diferencia y resultado ---
+      - nombre: casilla_45
+        posicion: [411, 424]
+        tipo: numerico_signo
+        fuente: "casillas.45"
+        decimales: 2
+        descripcion: "Diferencia: casilla_27 - casilla_37"
+
+      - nombre: casilla_46
+        posicion: [425, 438]
+        tipo: numerico_signo
+        fuente: "casillas.46"
+        decimales: 2
+        descripcion: "Cuotas a compensar de periodos anteriores"
+
+      - nombre: casilla_64
+        posicion: [439, 452]
+        tipo: numerico_signo
+        fuente: "casillas.64"
+        decimales: 2
+        descripcion: "Resultado de la liquidacion (casilla_45 - casilla_46)"
+
+      - nombre: casilla_69
+        posicion: [453, 466]
+        tipo: numerico_signo
+        fuente: "casillas.69"
+        decimales: 2
+        descripcion: "Resultado: a ingresar o a devolver"
+
+      - nombre: casilla_71
+        posicion: [467, 480]
+        tipo: numerico_signo
+        fuente: "casillas.71"
+        decimales: 2
+        descripcion: "Importe a devolver (solo ultimo trimestre)"
+
+      - nombre: casilla_78
+        posicion: [481, 494]
+        tipo: numerico_signo
+        fuente: "casillas.78"
+        decimales: 2
+        descripcion: "Compensacion cuotas a devolver ejercicios anteriores"
+
+      - nombre: relleno
+        posicion: [495, 500]
+        tipo: alfanumerico
+        valor_fijo: "      "
+        descripcion: "Relleno hasta longitud 500"
+
+validaciones:
+  - regla: "casilla_27 == casilla_03 + casilla_06 + casilla_09 + casilla_12 + casilla_15 + casilla_77 + casilla_26"
+    nivel: error
+    mensaje: "Total cuotas devengadas (casilla 27) no cuadra con la suma de cuotas por tipo"
+
+  - regla: "casilla_37 == casilla_29 + casilla_31 + casilla_33 + casilla_35 + casilla_36"
+    nivel: error
+    mensaje: "Total a deducir (casilla 37) no coincide con la suma de cuotas soportadas"
+
+  - regla: "casilla_45 == casilla_27 - casilla_37"
+    nivel: error
+    mensaje: "Diferencia (casilla 45) no es igual a casilla_27 menos casilla_37"
+
+  - regla: "casilla_64 == casilla_45 - casilla_46"
+    nivel: error
+    mensaje: "Resultado liquidacion (casilla 64) no cuadra: debe ser casilla_45 - casilla_46"
+
+  - regla: "casilla_69 == casilla_64"
+    nivel: advertencia
+    mensaje: "Resultado final (casilla 69) difiere del resultado de liquidacion (casilla 64)"

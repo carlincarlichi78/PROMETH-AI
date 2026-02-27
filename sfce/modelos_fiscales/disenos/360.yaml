@@ -1,0 +1,197 @@
+modelo: "360"
+version: "2025"
+descripcion: "Solicitud de devolucion IVA cuotas soportadas por empresarios no establecidos en TAI"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "360"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF o VAT number del solicitante extranjero"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Nombre o razon social del solicitante (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T, 2T, 3T, 4T o 0A (anual)"
+
+      - nombre: pais_establecimiento
+        posicion: [60, 61]
+        tipo: alfanumerico
+        fuente: "casillas.pais_establecimiento"
+        descripcion: "Codigo pais donde esta establecido el solicitante"
+
+      - nombre: numero_iva_pais_establecimiento
+        posicion: [62, 81]
+        tipo: alfanumerico
+        fuente: "casillas.numero_iva_extranjero"
+        descripcion: "Numero de operador IVA en el pais de establecimiento (20 chars)"
+
+      - nombre: actividad_principal
+        posicion: [82, 181]
+        tipo: alfanumerico
+        fuente: "casillas.descripcion_actividad"
+        descripcion: "Descripcion de la actividad principal del solicitante (100 chars)"
+
+      # --- Totales de la solicitud ---
+      - nombre: num_facturas
+        posicion: [182, 186]
+        tipo: numerico
+        fuente: "casillas.num_facturas"
+        descripcion: "Numero total de facturas incluidas en la solicitud"
+
+      - nombre: total_base_iva
+        posicion: [187, 203]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_base_iva"
+        descripcion: "Total de bases imponibles de las facturas"
+
+      - nombre: total_cuotas_iva
+        posicion: [204, 220]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_cuotas_iva"
+        descripcion: "Total de cuotas IVA soportadas solicitadas devolucion"
+
+      - nombre: porcentaje_prorrata
+        posicion: [221, 225]
+        tipo: numerico
+        decimales: 2
+        fuente: "casillas.porcentaje_prorrata"
+        descripcion: "Porcentaje de deduccion por prorrata (0-100 con 2 decimales)"
+
+      - nombre: importe_devolucion_solicitado
+        posicion: [226, 242]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.importe_devolucion_solicitado"
+        descripcion: "Importe total solicitado (cuotas * prorrata / 100)"
+
+      - nombre: blancos_243_500
+        posicion: [243, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: factura
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=factura)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "360"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del solicitante"
+
+      - nombre: nif_proveedor_espanol
+        posicion: [18, 26]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF del proveedor espanol emisor de la factura"
+
+      - nombre: nombre_proveedor
+        posicion: [27, 66]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre del proveedor espanol (40 chars)"
+
+      - nombre: numero_factura
+        posicion: [67, 86]
+        tipo: alfanumerico
+        fuente: "declarado.numero_factura"
+        descripcion: "Numero de factura (20 chars)"
+
+      - nombre: fecha_factura
+        posicion: [87, 94]
+        tipo: fecha
+        fuente: "declarado.fecha_factura"
+        descripcion: "Fecha de emision de la factura AAAAMMDD"
+
+      - nombre: base_imponible
+        posicion: [95, 111]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.base_imponible"
+        descripcion: "Base imponible de la factura"
+
+      - nombre: tipo_iva
+        posicion: [112, 114]
+        tipo: numerico
+        fuente: "declarado.tipo_iva"
+        descripcion: "Tipo IVA aplicado (210=21%, 100=10%, 40=4%)"
+
+      - nombre: cuota_iva
+        posicion: [115, 131]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.cuota_iva"
+        descripcion: "Cuota de IVA soportada"
+
+      - nombre: blancos_132_500
+        posicion: [132, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "num_facturas >= 1"
+    nivel: error
+    mensaje: "Debe incluirse al menos una factura en la solicitud"
+
+  - regla: "importe_devolucion_solicitado == total_cuotas_iva * porcentaje_prorrata / 100"
+    nivel: error
+    mensaje: "Importe solicitud debe ser cuotas totales por porcentaje de prorrata"
+
+  - regla: "porcentaje_prorrata > 0"
+    nivel: error
+    mensaje: "El porcentaje de prorrata debe ser mayor que 0"

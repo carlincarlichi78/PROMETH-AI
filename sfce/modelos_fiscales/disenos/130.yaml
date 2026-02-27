@@ -1,0 +1,247 @@
+modelo: "130"
+version: "2025"
+descripcion: "Pago fraccionado IRPF — Estimacion directa (actividades economicas)"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "130"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "periodo"
+        descripcion: "Periodo (1T/2T/3T/4T)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte (T=telematico)"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        longitud: 7
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Actividades en estimacion directa (normal y simplificada) ---
+      - nombre: casilla_01
+        posicion: [68, 84]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.01"
+        descripcion: "Ingresos computables de la actividad (acumulados desde 1 enero)"
+
+      - nombre: casilla_02
+        posicion: [85, 101]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Gastos deducibles de la actividad (acumulados desde 1 enero)"
+
+      - nombre: casilla_03
+        posicion: [102, 118]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Rendimiento neto (01 - 02); si negativo = 0 para calculo"
+
+      - nombre: casilla_04
+        posicion: [119, 122]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        valor_fijo: "2000"
+        descripcion: "Porcentaje de pago (20% — formato NNDD, ej: 2000)"
+
+      - nombre: casilla_05
+        posicion: [123, 139]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.05"
+        descripcion: "Importe (03 x 20% = 03 * 0.20)"
+
+      - nombre: casilla_06
+        posicion: [140, 156]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.06"
+        descripcion: "Minoración por incentivos actividad (nueva empresa, I+D, etc.)"
+
+      - nombre: casilla_07
+        posicion: [157, 173]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.07"
+        descripcion: "Pagos fraccionados ingresados en periodos anteriores del mismo ejercicio"
+
+      - nombre: casilla_08
+        posicion: [174, 190]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.08"
+        descripcion: "Cuota imputada por AGE (transparencia fiscal interna, si aplica)"
+
+      # Actividades agricolas, ganaderas o forestales (si aplica ademas de ED)
+      - nombre: casilla_09
+        posicion: [191, 207]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.09"
+        descripcion: "Ingresos actividades agricolas/ganaderas/forestales"
+
+      - nombre: casilla_10
+        posicion: [208, 224]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.10"
+        descripcion: "Porcentaje aplicable actividades agricolas (2%)"
+
+      - nombre: casilla_11
+        posicion: [225, 241]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.11"
+        descripcion: "Importe actividades agricolas (09 * 2%)"
+
+      - nombre: casilla_12
+        posicion: [242, 258]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.12"
+        descripcion: "Pagos fraccionados anteriores actividades agricolas"
+
+      # Liquidacion global
+      - nombre: casilla_13
+        posicion: [259, 275]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.13"
+        descripcion: "Total pago fraccionado a ingresar antes de retenciones (05-06-07+11-12)"
+
+      - nombre: casilla_14
+        posicion: [276, 292]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.14"
+        descripcion: "Cuotas satisfechas por rentas obtenidas en Ceuta y Melilla"
+
+      - nombre: casilla_15
+        posicion: [293, 309]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.15"
+        descripcion: "Deduccion de cuotas Ceuta/Melilla sobre 13"
+
+      - nombre: casilla_16
+        posicion: [310, 326]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.16"
+        descripcion: "Retenciones e ingresos a cuenta soportados del trimestre"
+
+      - nombre: casilla_17
+        posicion: [327, 343]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.17"
+        descripcion: "Retenciones de periodos anteriores del mismo ejercicio"
+
+      - nombre: casilla_18
+        posicion: [344, 360]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.18"
+        descripcion: "Resultado (13 - 15 - 16 - 17). Si negativo = 0 a ingresar"
+
+      - nombre: casilla_19
+        posicion: [361, 377]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.19"
+        descripcion: "Resultado liquidacion (= 18 si > 0, sino 0)"
+
+      - nombre: blancos_378_500
+        posicion: [378, 500]
+        tipo: alfanumerico
+        longitud: 123
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_03 == casilla_01 - casilla_02"
+    nivel: error
+    mensaje: "Casilla 03 (rendimiento neto) debe ser 01 menos 02"
+
+  - regla: "casilla_05 == round(max(casilla_03, 0) * 0.20, 2)"
+    nivel: error
+    mensaje: "Casilla 05 debe ser el 20% del rendimiento neto (casilla 03)"
+
+  - regla: "casilla_13 == casilla_05 - casilla_06 - casilla_07"
+    nivel: advertencia
+    mensaje: "Casilla 13 debe ser 05 menos 06 y 07 (sin actividades agricolas)"
+
+  - regla: "casilla_18 == casilla_13 - casilla_15 - casilla_16 - casilla_17"
+    nivel: error
+    mensaje: "Casilla 18 (resultado) debe ser 13 menos retenciones y pagos previos"
+
+  - regla: "casilla_19 == max(casilla_18, 0)"
+    nivel: error
+    mensaje: "Casilla 19 es el resultado de liquidacion: 18 si positivo, 0 si negativo"

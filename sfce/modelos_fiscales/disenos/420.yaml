@@ -1,0 +1,233 @@
+modelo: "420"
+version: "2025"
+descripcion: "IGIC — Impuesto General Indirecto Canario, autoliquidacion trimestral"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "420"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del sujeto pasivo"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T, 2T, 3T, 4T"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- IGIC devengado: tipo reducido (3%) ---
+      - nombre: casilla_01
+        posicion: [68, 81]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.01"
+        descripcion: "Base imponible tipo reducido IGIC (3%)"
+
+      - nombre: casilla_02
+        posicion: [82, 84]
+        tipo: numerico
+        valor_fijo: "30"
+        descripcion: "Tipo IGIC reducido (3,00% → 030)"
+
+      - nombre: casilla_03
+        posicion: [85, 98]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Cuota IGIC tipo reducido"
+
+      # --- IGIC devengado: tipo general (7%) ---
+      - nombre: casilla_04
+        posicion: [99, 112]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Base imponible tipo general IGIC (7%)"
+
+      - nombre: casilla_05
+        posicion: [113, 115]
+        tipo: numerico
+        valor_fijo: "70"
+        descripcion: "Tipo IGIC general (7,00% → 070)"
+
+      - nombre: casilla_06
+        posicion: [116, 129]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.06"
+        descripcion: "Cuota IGIC tipo general"
+
+      # --- IGIC devengado: tipo incrementado (9.5%) ---
+      - nombre: casilla_07
+        posicion: [130, 143]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.07"
+        descripcion: "Base imponible tipo incrementado IGIC (9,5%)"
+
+      - nombre: casilla_08
+        posicion: [144, 146]
+        tipo: numerico
+        valor_fijo: "95"
+        descripcion: "Tipo IGIC incrementado (9,5% → 095)"
+
+      - nombre: casilla_09
+        posicion: [147, 160]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.09"
+        descripcion: "Cuota IGIC tipo incrementado"
+
+      # --- IGIC devengado: tipo especial tabaco (35%) ---
+      - nombre: casilla_10
+        posicion: [161, 174]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.10"
+        descripcion: "Base imponible tipo especial tabaco IGIC (35%)"
+
+      - nombre: casilla_11
+        posicion: [175, 177]
+        tipo: numerico
+        valor_fijo: "350"
+        descripcion: "Tipo IGIC tabaco (35,0% → 350)"
+
+      - nombre: casilla_12
+        posicion: [178, 191]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.12"
+        descripcion: "Cuota IGIC tipo tabaco"
+
+      # --- Total IGIC devengado ---
+      - nombre: casilla_22
+        posicion: [192, 205]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.22"
+        descripcion: "Total cuotas IGIC devengadas"
+
+      # --- IGIC soportado deducible ---
+      - nombre: casilla_23
+        posicion: [206, 219]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.23"
+        descripcion: "Base IGIC soportado deducible bienes y servicios corrientes"
+
+      - nombre: casilla_24
+        posicion: [220, 233]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.24"
+        descripcion: "Cuota IGIC soportado deducible bienes y servicios corrientes"
+
+      - nombre: casilla_25
+        posicion: [234, 247]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.25"
+        descripcion: "Base IGIC soportado deducible bienes de inversion"
+
+      - nombre: casilla_26
+        posicion: [248, 261]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.26"
+        descripcion: "Cuota IGIC soportado deducible bienes de inversion"
+
+      # --- Total IGIC deducible ---
+      - nombre: casilla_35
+        posicion: [262, 275]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.35"
+        descripcion: "Total cuotas IGIC a deducir"
+
+      # --- Resultado ---
+      - nombre: casilla_40
+        posicion: [276, 289]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.40"
+        descripcion: "Diferencia: casilla_22 - casilla_35"
+
+      - nombre: casilla_44
+        posicion: [290, 303]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.44"
+        descripcion: "Cuotas IGIC a compensar de periodos anteriores"
+
+      - nombre: casilla_46
+        posicion: [304, 317]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.46"
+        descripcion: "Resultado de la liquidacion IGIC (40 - 44)"
+
+      - nombre: blancos_318_500
+        posicion: [318, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_22 == casilla_03 + casilla_06 + casilla_09 + casilla_12"
+    nivel: error
+    mensaje: "Total IGIC devengado (22) no coincide con la suma de cuotas por tipo"
+
+  - regla: "casilla_35 == casilla_24 + casilla_26"
+    nivel: error
+    mensaje: "Total IGIC deducible (35) no coincide con suma de cuotas soportadas"
+
+  - regla: "casilla_40 == casilla_22 - casilla_35"
+    nivel: error
+    mensaje: "Diferencia IGIC (40) debe ser devengado menos deducible"
+
+  - regla: "casilla_46 == casilla_40 - casilla_44"
+    nivel: error
+    mensaje: "Resultado IGIC (46) debe ser diferencia menos compensacion periodos anteriores"
