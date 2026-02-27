@@ -288,29 +288,30 @@ Tasks completados:
 ## SFCE Evolucion Arquitectonica — EN DISENO
 
 **Design doc**: `docs/plans/2026-02-27-sfce-evolucion-arquitectura-design.md`
-**Estado**: Design doc escrito y aprobado. Pendiente plan de implementacion (writing-plans).
+**Plan implementacion**: `docs/plans/2026-02-27-sfce-evolucion-implementation.md` (38 tasks, 5 fases)
+**Estado**: Design + Plan COMPLETOS. Listo para implementar Fase A.
 
-**Objetivo**: SFCE pasa de soportar solo SL+autonomo a cubrir TODOS los casos fiscales espanoles.
+**Objetivo**: SFCE universal — todos los casos fiscales espanoles + dashboard tiempo real + ingesta automatica.
 
 **Decisiones clave**:
-- Enfoque B: Motor de reglas contables centralizado
+- Motor de reglas centralizado con jerarquia 6 niveles
 - FS se mantiene con capa abstraccion (backend.py)
-- BD local SQLite + dashboard React para tiempo real
-- Normativa fiscal versionada por ano (sfce/normativa/)
-- Perfil fiscal como modelo de datos central
-- Jerarquia 6 niveles: normativa > PGC > perfil > negocio > cliente > aprendizaje
-- Importador libro diario + exportador CSV universal
+- BD local SQLite + dashboard React (herramienta central universal)
+- Normativa fiscal versionada por ano
+- Dashboard = informes + KPIs + impuestos tiempo real (sin modulos separados)
+- Ingesta email IMAP + file watcher
 - Proteccion producto: Nuitka + OCR proxy
-- File watcher para automatizacion inbox
 
-**Componentes nuevos** (por prioridad):
-- P0: Reorganizar sfce/, perfil_fiscal.py, normativa/
-- P1: motor_reglas.py, clasificador.py, backend.py
-- P2: db/, refactorizar registration+correction, importador, exportador
-- P3: api/ FastAPI, dashboard/ React, watcher.py
-- P4: licencia.py, conciliacion bancaria
+**Fases**:
+- A (T1-8): Fundamentos — sfce/, normativa, perfil fiscal, backend, decision contable
+- B (T9-16): Motor central — clasificador, motor reglas, refactorizar phases, modelos fiscales
+- C (T17-23): Datos — SQLite, repositorio, importador/exportador, migracion FS
+- D (T24-32): Interfaz — FastAPI, WebSocket, React dashboard, file watcher, licencia
+- E (T33-38): Ingesta — naming, cache OCR, duplicados, IMAP, notificaciones, recurrentes
 
-**Proxima sesion**: crear plan de implementacion (writing-plans skill)
+**Backlog futuro**: Open Banking PSD2 (disenar interfaces preparadas, implementar cuando se necesite)
+
+**Proxima sesion**: implementar Fase A (Tasks 1-8)
 
 ## Proximos pasos (otros)
 

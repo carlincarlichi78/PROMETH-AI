@@ -1000,7 +1000,7 @@ Si el remitente coincide con un email autorizado, el documento va a ese cliente 
 | Factura recurrente faltante | Dashboard | Email ("no hemos recibido factura de X este mes") |
 | Duplicado detectado | Dashboard | — |
 | IVA acumulado alto | Dashboard | Email ("llevas X€ de IVA este trimestre") |
-| Informe mensual | — | Email (automatico fin de mes) |
+| Resumen fiscal trimestral | Dashboard | Email (opcional, antes plazo AEAT) |
 
 ### Email al cliente por documento ilegible
 
@@ -1049,18 +1049,10 @@ Requiere: BD local con historico de al menos 3 meses por proveedor.
 
 ## 23. Backlog post-Fase D (futuro)
 
-| Feature | Impacto | Dificultad |
-|---------|---------|-----------|
-| WhatsApp bot (foto→OCR→enrutar) | Alto | Media |
-| Open Banking PSD2 (extractos automaticos) | Muy alto | Alta |
-| Verifactu (antifraude facturacion) | Obligatorio | Alta |
-| QR en facturas (lectura pre-OCR) | Medio | Baja |
-| Portal web cliente (upload + consulta) | Alto | Media |
-| Informe mensual automatico al cliente | Alto | Media |
-| Validacion CIF contra AEAT | Medio | Baja |
-| Prevision de tesoreria a 3-6 meses | Alto | Media |
-| Comparativa interanual por subcuenta | Medio | Baja |
-| Facturacion automatica al cliente del gestor | Medio | Baja |
-| KPIs de la gestoria (docs/mes, clientes, revenue) | Medio | Baja |
-| Acceso lectura dashboard para clientes | Alto | Media |
-| Tracking certificados/seguros que caducan | Medio | Baja |
+> **Nota**: El dashboard es la herramienta central y universal. Informes, KPIs, impuestos
+> en tiempo real, generacion de reportes — TODO se hace desde el dashboard. No se necesitan
+> modulos separados para informes mensuales ni KPIs: son funcionalidades nativas del dashboard.
+
+| Feature | Impacto | Dificultad | Notas |
+|---------|---------|-----------|-------|
+| Open Banking PSD2 (extractos automaticos) | Muy alto | Alta | Previsto para futuro. Disenar interfaces preparadas |

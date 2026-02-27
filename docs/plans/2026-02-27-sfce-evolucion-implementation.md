@@ -1555,7 +1555,7 @@ Tests: mock IMAP, verificar enrutamiento por CIF, por email, a sin_clasificar.
 Implementar:
 - Canal email: `enviar_email(destinatario, asunto, cuerpo, adjuntos)`
 - Canal dashboard: evento WebSocket
-- Plantillas email: documento_ilegible, proveedor_nuevo, plazo_fiscal, informe_mensual
+- Plantillas email: documento_ilegible, proveedor_nuevo, plazo_fiscal, factura_recurrente_faltante
 - Configuracion por cliente: `emails_autorizados` en config.yaml
 - Registro de notificaciones enviadas en BD (no repetir)
 
@@ -1604,18 +1604,9 @@ Despues de Fase B, el pipeline ya soporta todos los regimenes fiscales. Fases C,
 
 ## Backlog post-implementacion (futuro)
 
+> **Nota**: El dashboard cubre informes, KPIs e impuestos en tiempo real de forma nativa.
+> No se necesitan modulos separados para esas funcionalidades.
+
 | Feature | Prioridad | Dependencia |
 |---------|-----------|-------------|
-| WhatsApp/Telegram bot | Alta | Fase E (ingesta) |
-| Open Banking PSD2 (extractos auto) | Muy alta | Fase C (BD) |
-| Verifactu (antifraude) | Obligatorio (2026) | Fase B (motor) |
-| QR pre-OCR en facturas | Media | Fase B (intake) |
-| Portal web cliente (upload+consulta) | Alta | Fase D (dashboard) |
-| Informe mensual automatico | Alta | Fase E (notificaciones) |
-| Validacion CIF contra AEAT | Media | Fase B |
-| Prevision tesoreria 3-6 meses | Alta | Fase C (BD) |
-| Comparativa interanual | Media | Fase C (BD) |
-| Facturacion automatica al cliente | Media | Fase D |
-| KPIs de la gestoria | Media | Fase D |
-| Acceso lectura dashboard clientes | Alta | Fase D |
-| Tracking certificados/seguros | Media | Fase C (BD) |
+| Open Banking PSD2 (extractos auto) | Futura | Fase C (BD). Disenar interfaces preparadas para integracion |
