@@ -1,17 +1,31 @@
 """Tests para sfce.core.backend — capa abstraccion sobre FacturaScripts."""
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from sfce.core.backend import Backend
 
 
+def _backend_fs_mock():
+    """Crea Backend modo FS con API mockeada."""
+    b = Backend.__new__(Backend)
+    b.modo = "fs"
+    b.repo = None
+    b.empresa_id = None
+    b._api_get = MagicMock()
+    b._api_post = MagicMock()
+    b._api_put = MagicMock()
+    b._api_delete = MagicMock()
+    b._api_get_one = MagicMock()
+    return b
+
+
 class TestBackendInterfaz:
-    def test_crear_backend_fs(self):
-        b = Backend(modo="fs")
-        assert b.modo == "fs"
+    def test_crear_backend_local(self):
+        b = Backend(modo="local")
+        assert b.modo == "local"
 
     def test_interfaz_completa(self):
         """Todos los metodos de la interfaz existen."""
-        b = Backend(modo="fs")
+        b = Backend(modo="local")
         metodos = [
             "crear_factura", "crear_asiento", "crear_partida",
             "obtener_subcuentas", "crear_proveedor", "crear_cliente",
@@ -24,83 +38,72 @@ class TestBackendInterfaz:
 
 
 class TestBackendDelegaFS:
-    @patch("sfce.core.backend.api_post")
-    def test_crear_factura_delega(self, mock_post):
-        mock_post.return_value = {"doc": {"idfactura": 42}, "lines": []}
-        b = Backend(modo="fs")
+    def test_crear_factura_delega(self):
+        b = _backend_fs_mock()
+        b._api_post.return_value = {"doc": {"idfactura": 42}, "lines": []}
         resultado = b.crear_factura("crearFacturaProveedor", {"observaciones": "test"})
-        mock_post.assert_called_once_with("crearFacturaProveedor", {"observaciones": "test"})
+        b._api_post.assert_called_once_with("crearFacturaProveedor", {"observaciones": "test"})
         assert resultado["doc"]["idfactura"] == 42
 
-    @patch("sfce.core.backend.api_post")
-    def test_crear_asiento_delega(self, mock_post):
-        mock_post.return_value = {"ok": "OK", "data": {"idasiento": "99"}}
-        b = Backend(modo="fs")
+    def test_crear_asiento_delega(self):
+        b = _backend_fs_mock()
+        b._api_post.return_value = {"ok": "OK", "data": {"idasiento": "99"}}
         resultado = b.crear_asiento({"concepto": "nomina enero"})
-        mock_post.assert_called_once_with("asientos", {"concepto": "nomina enero"})
+        b._api_post.assert_called_once_with("asientos", {"concepto": "nomina enero"})
         assert resultado["data"]["idasiento"] == "99"
 
-    @patch("sfce.core.backend.api_post")
-    def test_crear_partida_delega(self, mock_post):
-        mock_post.return_value = {"idpartida": 1}
-        b = Backend(modo="fs")
+    def test_crear_partida_delega(self):
+        b = _backend_fs_mock()
+        b._api_post.return_value = {"idpartida": 1}
         resultado = b.crear_partida({"codsubcuenta": "6000000000", "debe": 100})
-        mock_post.assert_called_once()
+        b._api_post.assert_called_once()
         assert resultado["idpartida"] == 1
 
-    @patch("sfce.core.backend.api_get")
-    def test_obtener_subcuentas_delega(self, mock_get):
-        mock_get.return_value = [{"codsubcuenta": "6000000000"}]
-        b = Backend(modo="fs")
+    def test_obtener_subcuentas_delega(self):
+        b = _backend_fs_mock()
+        b._api_get.return_value = [{"codsubcuenta": "6000000000"}]
         resultado = b.obtener_subcuentas()
-        mock_get.assert_called_once_with("subcuentas", {})
+        b._api_get.assert_called_once_with("subcuentas", {})
         assert len(resultado) == 1
 
-    @patch("sfce.core.backend.api_put")
-    def test_actualizar_factura_delega(self, mock_put):
-        mock_put.return_value = {"idfactura": 1, "pagada": True}
-        b = Backend(modo="fs")
+    def test_actualizar_factura_delega(self):
+        b = _backend_fs_mock()
+        b._api_put.return_value = {"idfactura": 1, "pagada": True}
         resultado = b.actualizar_factura("facturaproveedores/1", {"pagada": 1})
-        mock_put.assert_called_once()
+        b._api_put.assert_called_once()
 
-    @patch("sfce.core.backend.api_put")
-    def test_actualizar_partida_delega(self, mock_put):
-        mock_put.return_value = {"idpartida": 5}
-        b = Backend(modo="fs")
+    def test_actualizar_partida_delega(self):
+        b = _backend_fs_mock()
+        b._api_put.return_value = {"idpartida": 5}
         resultado = b.actualizar_partida(5, {"debe": 200})
-        mock_put.assert_called_once_with("partidas/5", {"debe": 200})
+        b._api_put.assert_called_once_with("partidas/5", {"debe": 200})
 
-    @patch("sfce.core.backend.api_get")
-    def test_obtener_asientos_delega(self, mock_get):
-        mock_get.return_value = [{"idasiento": 1}]
-        b = Backend(modo="fs")
+    def test_obtener_asientos_delega(self):
+        b = _backend_fs_mock()
+        b._api_get.return_value = [{"idasiento": 1}]
         resultado = b.obtener_asientos({"codejercicio": "2025"})
-        mock_get.assert_called_once_with("asientos", {"codejercicio": "2025"})
+        b._api_get.assert_called_once_with("asientos", {"codejercicio": "2025"})
 
-    @patch("sfce.core.backend.api_get")
-    def test_obtener_partidas_delega(self, mock_get):
-        mock_get.return_value = [{"idpartida": 1}]
-        b = Backend(modo="fs")
+    def test_obtener_partidas_delega(self):
+        b = _backend_fs_mock()
+        b._api_get.return_value = [{"idpartida": 1}]
         resultado = b.obtener_partidas()
-        mock_get.assert_called_once_with("partidas", {})
+        b._api_get.assert_called_once_with("partidas", {})
 
-    @patch("sfce.core.backend.api_get")
-    def test_obtener_facturas_delega(self, mock_get):
-        mock_get.return_value = [{"idfactura": 1}]
-        b = Backend(modo="fs")
+    def test_obtener_facturas_delega(self):
+        b = _backend_fs_mock()
+        b._api_get.return_value = [{"idfactura": 1}]
         resultado = b.obtener_facturas("proveedores")
-        mock_get.assert_called_once_with("facturaproveedores", {})
+        b._api_get.assert_called_once_with("facturaproveedores", {})
 
-    @patch("sfce.core.backend.api_post")
-    def test_crear_proveedor_delega(self, mock_post):
-        mock_post.return_value = {"codproveedor": "001"}
-        b = Backend(modo="fs")
+    def test_crear_proveedor_delega(self):
+        b = _backend_fs_mock()
+        b._api_post.return_value = {"codproveedor": "001"}
         resultado = b.crear_proveedor({"nombre": "Test"})
-        mock_post.assert_called_once_with("proveedores", {"nombre": "Test"})
+        b._api_post.assert_called_once_with("proveedores", {"nombre": "Test"})
 
-    @patch("sfce.core.backend.api_post")
-    def test_crear_cliente_delega(self, mock_post):
-        mock_post.return_value = {"codcliente": "001"}
-        b = Backend(modo="fs")
+    def test_crear_cliente_delega(self):
+        b = _backend_fs_mock()
+        b._api_post.return_value = {"codcliente": "001"}
         resultado = b.crear_cliente({"nombre": "Test"})
-        mock_post.assert_called_once_with("clientes", {"nombre": "Test"})
+        b._api_post.assert_called_once_with("clientes", {"nombre": "Test"})
