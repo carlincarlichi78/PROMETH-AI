@@ -216,3 +216,60 @@ class DirectorioOverlayOut(BaseModel):
     codimpuesto: Optional[str] = None
     regimen: Optional[str] = None
     pais: Optional[str] = None
+
+
+# --- Modelos Fiscales ---
+
+class CasillaOut(BaseModel):
+    """Casilla de un modelo fiscal."""
+    numero: str
+    descripcion: str
+    valor: float
+    editable: bool = False
+
+
+class ResultadoValidacionOut(BaseModel):
+    """Resultado de validacion de casillas AEAT."""
+    valido: bool
+    errores: list[str]
+    advertencias: list[str]
+
+
+class ModeloFiscalCalcOut(BaseModel):
+    """Casillas calculadas de un modelo fiscal."""
+    modelo: str
+    ejercicio: str
+    periodo: str
+    casillas: list[CasillaOut]
+    validacion: ResultadoValidacionOut
+
+
+class GenerarModeloIn(BaseModel):
+    """Request para calcular/generar un modelo fiscal."""
+    empresa_id: int
+    modelo: str
+    ejercicio: str
+    periodo: str
+    casillas_override: Optional[dict[str, float]] = None
+
+
+class CalendarioFiscalOut(BaseModel):
+    """Entrada del calendario de obligaciones fiscales."""
+    modelo: str
+    nombre: str
+    periodo: str
+    ejercicio: str
+    fecha_limite: str
+    estado: str  # "pendiente" | "generado" | "presentado"
+
+
+class HistoricoModeloOut(BaseModel):
+    """Modelo fiscal generado anteriormente."""
+    id: int
+    modelo: str
+    ejercicio: str
+    periodo: str
+    fecha_generacion: str
+    ruta_boe: Optional[str] = None
+    ruta_pdf: Optional[str] = None
+    valido: bool = True

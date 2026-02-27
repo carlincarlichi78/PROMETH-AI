@@ -185,7 +185,7 @@ class ServicioFiscal:
                 "validacion": {"valido": False, "errores": [str(e)], "advertencias": []},
             }
 
-        return {
+        resultado = {
             "casillas": casillas,
             "contenido_boe": resultado_boe.contenido,
             "nombre_fichero": resultado_boe.nombre_fichero,
@@ -195,6 +195,21 @@ class ServicioFiscal:
                 "advertencias": validacion.advertencias,
             },
         }
+
+        # Persistir en BD (no-critico: si falla, el resultado ya esta calculado)
+        try:
+            self.repo.guardar_modelo_generado(
+                empresa_id=empresa_id,
+                modelo=modelo,
+                ejercicio=ejercicio,
+                periodo=periodo,
+                casillas=casillas,
+                valido=validacion.valido,
+            )
+        except Exception:
+            pass  # Persistencia opcional — no bloquea generacion
+
+        return resultado
 
     def calendario_fiscal(self, empresa_id: int, ejercicio: str,
                           tipo_empresa: str = "sl") -> list[dict]:

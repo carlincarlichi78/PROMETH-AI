@@ -60,6 +60,7 @@ def crear_app(sesion_factory=None) -> FastAPI:
     from sfce.api.rutas.auth_rutas import router as auth_router
     from sfce.api.rutas.ws_rutas import router as ws_router
     from sfce.api.rutas.directorio import router as directorio_router
+    from sfce.api.rutas.modelos import router as modelos_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -68,6 +69,7 @@ def crear_app(sesion_factory=None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(ws_router)
     app.include_router(directorio_router)
+    app.include_router(modelos_router)
 
     # Referencia global al gestor WebSocket para acceso desde otros modulos
     app.state.gestor_ws = gestor_ws

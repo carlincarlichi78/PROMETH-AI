@@ -354,3 +354,28 @@ class AprendizajeLog(Base):
     __table_args__ = (
         Index("ix_aprend_clave", "patron_tipo", "clave"),
     )
+
+
+class ModeloFiscalGenerado(Base):
+    """Registro de modelos fiscales generados."""
+    __tablename__ = "modelos_fiscales_generados"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    modelo = Column(String(10), nullable=False)
+    ejercicio = Column(String(4), nullable=False)
+    periodo = Column(String(10), nullable=False)
+    casillas_json = Column(Text)  # JSON con todas las casillas
+    ruta_boe = Column(String(500))
+    ruta_pdf = Column(String(500))
+    estado = Column(String(20), default="generado")  # generado | presentado
+    fecha_generacion = Column(DateTime, default=datetime.now)
+    fecha_presentacion = Column(DateTime, nullable=True)
+    valido = Column(Boolean, default=True)
+    notas = Column(Text, nullable=True)
+
+    empresa = relationship("Empresa")
+
+    __table_args__ = (
+        Index("ix_mfg_empresa_ejercicio", "empresa_id", "ejercicio"),
+    )

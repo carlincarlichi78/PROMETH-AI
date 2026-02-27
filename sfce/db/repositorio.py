@@ -11,6 +11,7 @@ from sfce.db.modelos import (
     DirectorioEntidad, Empresa, ProveedorCliente, Trabajador, Documento,
     Asiento, Partida, Factura, Pago, MovimientoBancario, ActivoFijo,
     OperacionPeriodica, Cuarentena, AuditLog, AprendizajeLog,
+    ModeloFiscalGenerado,
 )
 
 
@@ -1008,3 +1009,51 @@ class Repositorio:
             if pais:
                 q = q.where(DirectorioEntidad.pais == pais)
             return list(s.scalars(q.order_by(DirectorioEntidad.nombre)).all())
+
+    # --- Modelos Fiscales Generados ---
+
+    def guardar_modelo_generado(
+        self,
+        empresa_id: int,
+        modelo: str,
+        ejercicio: str,
+        periodo: str,
+        casillas: dict,
+        ruta_boe: str | None = None,
+        ruta_pdf: str | None = None,
+        valido: bool = True,
+        notas: str | None = None,
+    ) -> ModeloFiscalGenerado:
+        """Persiste un modelo fiscal generado en BD."""
+        import json
+        registro = ModeloFiscalGenerado(
+            empresa_id=empresa_id,
+            modelo=modelo,
+            ejercicio=ejercicio,
+            periodo=periodo,
+            casillas_json=json.dumps(casillas),
+            ruta_boe=ruta_boe,
+            ruta_pdf=ruta_pdf,
+            valido=valido,
+            notas=notas,
+        )
+        return self.crear(registro)
+
+    def listar_modelos_generados(
+        self,
+        empresa_id: int,
+        ejercicio: str | None = None,
+        modelo: str | None = None,
+    ) -> list[ModeloFiscalGenerado]:
+        """Lista modelos fiscales generados para una empresa."""
+        with self._sesion() as s:
+            q = select(ModeloFiscalGenerado).where(
+                ModeloFiscalGenerado.empresa_id == empresa_id
+            )
+            if ejercicio:
+                q = q.where(ModeloFiscalGenerado.ejercicio == ejercicio)
+            if modelo:
+                q = q.where(ModeloFiscalGenerado.modelo == modelo)
+            return list(s.scalars(
+                q.order_by(ModeloFiscalGenerado.fecha_generacion.desc())
+            ).all())
