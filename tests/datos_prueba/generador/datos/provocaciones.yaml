@@ -1,0 +1,80 @@
+# Escenarios que fuerzan al motor de aprendizaje
+provocaciones:
+  P01:
+    nombre: "Proveedor desconocido"
+    descripcion: "Proveedor no está en config.yaml"
+    estrategia_target: "crear_entidad_desde_ocr"
+    frecuencia: 0.08
+    tipos_doc: [factura_compra]
+
+  P02:
+    nombre: "CIF variante"
+    descripcion: "CIF del proveedor difiere ligeramente del conocido"
+    estrategia_target: "buscar_entidad_fuzzy"
+    frecuencia: 0.05
+    tipos_doc: [factura_compra, factura_venta]
+
+  P03:
+    nombre: "Nombre proveedor variante"
+    descripcion: "Nombre comercial vs razón social"
+    estrategia_target: "buscar_entidad_fuzzy"
+    frecuencia: 0.10
+    tipos_doc: [factura_compra]
+    variaciones:
+      abreviatura: ["S.L.", "SL", "S.L.U.", "SOCIEDAD LIMITADA"]
+      prefijo_omitido: true  # "DISTRIBUCIONES LEVANTE" -> "Dist. Levante"
+      razon_vs_comercial: true  # "AMAZON WEB SERVICES EMEA SARL" -> "AWS"
+
+  P04:
+    nombre: "Campo con nombre inesperado"
+    descripcion: "Etiqueta no estándar para campo crítico"
+    estrategia_target: "adaptar_campos_ocr"
+    frecuencia: 0.15
+    tipos_doc: [factura_compra, factura_venta, recibo_suministro]
+
+  P05:
+    nombre: "Base imponible ausente"
+    descripcion: "Solo total e IVA, hay que derivar base"
+    estrategia_target: "derivar_importes"
+    frecuencia: 0.08
+    tipos_doc: [factura_compra]
+
+  P06:
+    nombre: "Subcuenta inexistente"
+    descripcion: "Tipo de gasto sin subcuenta configurada"
+    estrategia_target: "crear_subcuenta_auto"
+    frecuencia: 0.03
+    tipos_doc: [factura_compra]
+
+  P07:
+    nombre: "Fecha formato inesperado"
+    descripcion: "Fecha en formato no español"
+    estrategia_target: "adaptar_campos_ocr"
+    frecuencia: 0.05
+    tipos_doc: [factura_compra, factura_venta]
+
+  P08:
+    nombre: "IVA no desglosado"
+    descripcion: "Solo total con IVA incluido"
+    estrategia_target: "derivar_importes"
+    frecuencia: 0.05
+    tipos_doc: [factura_compra, recibo_suministro]
+
+  P09:
+    nombre: "Múltiples CIFs"
+    descripcion: "Emisor + sucursal + matriz en mismo doc"
+    estrategia_target: "buscar_entidad_fuzzy"
+    frecuencia: 0.03
+    tipos_doc: [factura_compra]
+
+  P10:
+    nombre: "Tipo documento ambiguo"
+    descripcion: "¿Factura? ¿Presupuesto? ¿Proforma?"
+    estrategia_target: "clasificacion"
+    frecuencia: 0.05
+    tipos_doc: [factura_compra]
+    textos_ambiguos:
+      - "PRESUPUESTO / FACTURA"
+      - "PROFORMA"
+      - "FACTURA PROFORMA - NO VÁLIDA COMO FACTURA"
+      - "PEDIDO / FACTURA"

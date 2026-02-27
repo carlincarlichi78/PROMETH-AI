@@ -1,0 +1,116 @@
+# Sinonimos por campo — cada proveedor elige un set fijo (determinista por seed)
+numero_factura:
+  - "Nº Factura"
+  - "Factura nº"
+  - "Número"
+  - "Nº Fra."
+  - "Invoice #"
+  - "Invoice Number"
+  - "Ref."
+  - "Documento"
+  - "Nº Doc."
+  - "FA-"
+
+fecha:
+  - "Fecha"
+  - "Fecha factura"
+  - "Fecha emisión"
+  - "Date"
+  - "Invoice Date"
+  - "Fch."
+  - "Emitida el"
+  - "Fecha de expedición"
+
+nif_emisor:
+  - "NIF"
+  - "CIF"
+  - "NIF/CIF"
+  - "Tax ID"
+  - "VAT Number"
+  - "Nº Identificación Fiscal"
+  - "Identificación fiscal"
+  - "C.I.F."
+  - "N.I.F."
+  - "VAT Reg. No."
+  - "USt-IdNr."
+
+base_imponible:
+  - "Base imponible"
+  - "Base"
+  - "Subtotal"
+  - "Importe neto"
+  - "Net amount"
+  - "Neto"
+  - "Taxable amount"
+  - "Importe sin IVA"
+  - "Base IVA"
+
+iva:
+  - "IVA"
+  - "I.V.A."
+  - "VAT"
+  - "Impuesto"
+  - "Tax"
+  - "MwSt."
+  - "TVA"
+  - "Cuota IVA"
+  - "Cuota tributaria"
+
+total:
+  - "Total"
+  - "Total factura"
+  - "Importe total"
+  - "Total a pagar"
+  - "Amount due"
+  - "Total EUR"
+  - "TOTAL"
+  - "Importe"
+
+retencion:
+  - "Retención IRPF"
+  - "IRPF"
+  - "Retención"
+  - "Withholding tax"
+  - "Ret. %"
+  - "Retención a cuenta"
+
+forma_pago:
+  - "Forma de pago"
+  - "Payment method"
+  - "Pago"
+  - "Método de pago"
+  - "Condiciones de pago"
+  - "Vencimiento"
+
+datos_bancarios:
+  - "IBAN"
+  - "Cuenta bancaria"
+  - "Bank account"
+  - "Datos bancarios"
+  - "Domiciliación"
+  - "Cuenta corriente"
+
+# Nominas
+salario_base:
+  - "Salario base"
+  - "Sueldo base"
+  - "Base salarial"
+  - "Retribución base"
+
+liquido:
+  - "Líquido a percibir"
+  - "Neto a percibir"
+  - "Total a percibir"
+  - "Líquido"
+  - "A PERCIBIR"
+
+devengos:
+  - "Devengos"
+  - "Percepciones"
+  - "Haberes"
+  - "Retribuciones"
+
+deducciones:
+  - "Deducciones"
+  - "Descuentos"
+  - "Retenciones y deducciones"

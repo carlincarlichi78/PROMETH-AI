@@ -1,0 +1,168 @@
+hosteleria:
+  nombre: "Convenio Colectivo de Hostelería"
+  categorias:
+    - camarero
+    - cocinero
+    - jefe_sala
+    - ayudante_cocina
+    - friegaplatos
+    - recepcionista
+  complementos:
+    - {nombre: "Plus nocturnidad", min: 80, max: 200, prob: 0.15}
+    - {nombre: "Plus festivos", min: 30, max: 80, prob: 0.20}
+    - {nombre: "Plus domingos", min: 25, max: 60, prob: 0.15}
+    - {nombre: "Manutención", min: 100, max: 200, prob: 0.40}
+    - {nombre: "Plus transporte", min: 50, max: 120, prob: 0.30}
+    - {nombre: "Plus temporada alta", min: 100, max: 300, prob: 0.10}
+    - {nombre: "Propinas declaradas", min: 50, max: 400, prob: 0.05}
+    - {nombre: "Horas extra", min: 10, max: 25, por_hora: true, prob: 0.20}
+  pagas_extra: 14  # junio y diciembre
+  salarios_base:
+    camarero: {min: 1200, max: 1500}
+    cocinero: {min: 1400, max: 1800}
+    jefe_sala: {min: 1600, max: 2200}
+    ayudante_cocina: {min: 1100, max: 1400}
+    friegaplatos: {min: 1080, max: 1200}
+    recepcionista: {min: 1200, max: 1500}
+
+oficinas:
+  nombre: "Convenio Colectivo de Oficinas y Despachos"
+  categorias:
+    - programador
+    - administrativo
+    - tecnico_superior
+    - director_proyecto
+    - becario
+  complementos:
+    - {nombre: "Plus productividad", min: 100, max: 500, prob: 0.25}
+    - {nombre: "Teletrabajo", min: 50, max: 150, prob: 0.40}
+    - {nombre: "Plus idiomas", min: 80, max: 200, prob: 0.15}
+    - {nombre: "Formación", min: 30, max: 100, prob: 0.10}
+    - {nombre: "Plus disponibilidad", min: 100, max: 300, prob: 0.10}
+    - {nombre: "Horas extra", min: 15, max: 35, por_hora: true, prob: 0.15}
+  pagas_extra: prorrateada
+  salarios_base:
+    programador: {min: 1800, max: 2800}
+    administrativo: {min: 1300, max: 1700}
+    tecnico_superior: {min: 2200, max: 3200}
+    director_proyecto: {min: 2800, max: 4000}
+    becario: {min: 600, max: 900}
+
+comercio:
+  nombre: "Convenio Colectivo de Comercio"
+  categorias:
+    - dependiente
+    - cajero
+    - encargado
+    - mozo_almacen
+    - repartidor
+  complementos:
+    - {nombre: "Comisiones ventas", min: 50, max: 800, prob: 0.30}
+    - {nombre: "Incentivo objetivos", min: 100, max: 500, prob: 0.15}
+    - {nombre: "Plus apertura festivos", min: 40, max: 100, prob: 0.10}
+    - {nombre: "Plus idiomas", min: 60, max: 150, prob: 0.10}
+    - {nombre: "Plus transporte", min: 40, max: 100, prob: 0.25}
+    - {nombre: "Horas extra", min: 10, max: 20, por_hora: true, prob: 0.20}
+  pagas_extra: 14
+  salarios_base:
+    dependiente: {min: 1100, max: 1400}
+    cajero: {min: 1080, max: 1300}
+    encargado: {min: 1500, max: 2000}
+    mozo_almacen: {min: 1100, max: 1350}
+    repartidor: {min: 1150, max: 1450}
+
+construccion:
+  nombre: "Convenio General de la Construcción"
+  categorias:
+    - oficial_primera
+    - oficial_segunda
+    - peon
+    - encargado_obra
+    - gruista
+  complementos:
+    - {nombre: "Plus peligrosidad", min: 100, max: 300, prob: 0.30}
+    - {nombre: "Plus altura", min: 80, max: 250, prob: 0.15}
+    - {nombre: "Plus obra", min: 50, max: 200, prob: 0.40}
+    - {nombre: "Dieta completa", min: 30, max: 50, por_dia: true, prob: 0.20}
+    - {nombre: "Media dieta", min: 15, max: 25, por_dia: true, prob: 0.15}
+    - {nombre: "Desgaste herramientas", min: 30, max: 80, prob: 0.25}
+    - {nombre: "Plus desplazamiento", min: 60, max: 200, prob: 0.20}
+    - {nombre: "Horas extra", min: 12, max: 22, por_hora: true, prob: 0.25}
+  pagas_extra: 14  # junio y navidad
+  salarios_base:
+    oficial_primera: {min: 1400, max: 1800}
+    oficial_segunda: {min: 1250, max: 1550}
+    peon: {min: 1080, max: 1300}
+    encargado_obra: {min: 1800, max: 2500}
+    gruista: {min: 1600, max: 2200}
+
+agricultura:
+  nombre: "Convenio Colectivo del Campo"
+  categorias:
+    - jornalero
+    - tractorista
+    - capataz
+    - peon_fijo
+  complementos:
+    - {nombre: "Plus cosecha", min: 5, max: 15, por_dia: true, prob: 0.30}
+    - {nombre: "Plus riego", min: 30, max: 80, prob: 0.15}
+    - {nombre: "Desgaste herramientas", min: 20, max: 50, prob: 0.20}
+    - {nombre: "Plus transporte", min: 30, max: 80, prob: 0.25}
+  pagas_extra: 14
+  salarios_base:
+    jornalero: {min: 50, max: 75, por_dia: true}
+    tractorista: {min: 1200, max: 1600}
+    capataz: {min: 1500, max: 2000}
+    peon_fijo: {min: 1080, max: 1300}
+
+sanitario:
+  nombre: "Convenio de Clínicas Privadas"
+  categorias:
+    - medico
+    - enfermero
+    - auxiliar
+    - fisioterapeuta
+    - podologo
+    - recepcionista
+  complementos:
+    - {nombre: "Plus nocturnidad", min: 150, max: 400, prob: 0.10}
+    - {nombre: "Plus guardia", min: 200, max: 600, prob: 0.15}
+    - {nombre: "Plus festivos", min: 80, max: 200, prob: 0.10}
+    - {nombre: "Plus responsabilidad", min: 100, max: 300, prob: 0.20}
+    - {nombre: "Formación continuada", min: 50, max: 150, prob: 0.15}
+  pagas_extra: prorrateada
+  salarios_base:
+    medico: {min: 2500, max: 4500}
+    enfermero: {min: 1600, max: 2200}
+    auxiliar: {min: 1200, max: 1500}
+    fisioterapeuta: {min: 1500, max: 2200}
+    podologo: {min: 1400, max: 2000}
+    recepcionista: {min: 1100, max: 1400}
+
+# Deducciones comunes a todos los convenios
+deducciones_estandar:
+  ss_contingencias_comunes: 0.0470
+  ss_desempleo_indefinido: 0.0155
+  ss_desempleo_temporal: 0.0160
+  ss_formacion: 0.0010
+  ss_mei: 0.0013
+
+deducciones_opcionales:
+  - {nombre: "Anticipo nómina", min: 100, max: 1000, prob: 0.03}
+  - {nombre: "Embargo judicial", min: 100, max: 500, prob: 0.02}
+  - {nombre: "Cuota sindical", min: 10, max: 30, prob: 0.08}
+  - {nombre: "Plan pensiones empresa", min: 50, max: 200, prob: 0.05}
+  - {nombre: "Seguro médico (parte trabajador)", min: 30, max: 80, prob: 0.04}
+  - {nombre: "Préstamo empresa", min: 50, max: 300, prob: 0.02}
+
+# Situaciones especiales
+situaciones_especiales:
+  paga_extra_14: {prob: 0.30, meses: [6, 12]}
+  finiquito: {prob: 0.05}
+  baja_it: {prob: 0.08, duracion_dias: {min: 5, max: 90}}
+  maternidad_paternidad: {prob: 0.03, duracion_semanas: 16}
+  jornada_parcial: {prob: 0.15, coeficiente: {min: 0.25, max: 0.75}}
+  contrato_formacion: {prob: 0.05}
+  horas_extra: {prob: 0.20, max_horas_mes: 20}
+  atrasos_convenio: {prob: 0.02, meses_retroactivos: {min: 3, max: 12}}
+  fijo_discontinuo: {prob: 0.08, meses_activo: {min: 4, max: 8}}
