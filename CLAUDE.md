@@ -281,43 +281,47 @@ Tasks completados:
 
 **Validacion** (elena-navarro, seed 42): 199 docs, 90% familia v2, 43 provocaciones (9 tipos), 12 compuestos (5 tipos), 15 familias, 4 perfiles calidad
 
-### Proxima sesion: Tasks 15-16 (tests + ejecucion)
-- T15: Tests unitarios generador v2
-- T16: Ejecucion completa con weasyprint + validacion + deploy
+**T15 COMPLETADO**: 189 tests unitarios pasando (101 nuevos generador v2)
+**T16 COMPLETADO**: 2343 docs (11 entidades), 0 errores estructurales, 280s generacion
+- Fixes: _datos_plantilla_nomina() helper, _normalizar_datos_bancario(), _CallableDict, aliases suministros/seguros
 
-## SFCE Evolucion Arquitectonica — EN DISENO
+## SFCE Evolucion v2 — LISTO PARA IMPLEMENTAR
 
-**Design doc**: `docs/plans/2026-02-27-sfce-evolucion-arquitectura-design.md`
-**Plan implementacion**: `docs/plans/2026-02-27-sfce-evolucion-implementation.md` (38 tasks, 5 fases)
-**Estado**: Design + Plan COMPLETOS. Listo para implementar Fase A.
+**Design doc v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-design.md`
+**Plan implementacion v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-implementation.md` (46 tasks, 5 fases)
+**Sustituye a**: v1 (`sfce-evolucion-arquitectura-design.md` + `sfce-evolucion-implementation.md`)
+**Estado**: Design + Plan v2 COMPLETOS. Listo para implementar Fase A.
 
-**Objetivo**: SFCE universal — todos los casos fiscales espanoles + dashboard tiempo real + ingesta automatica.
+**Objetivo**: SFCE universal — todos los casos fiscales espanoles (5 territorios), ciclo contable completo (cierre, amortizaciones, provisiones), dashboard tiempo real, trazabilidad de decisiones.
 
-**Decisiones clave**:
-- Motor de reglas centralizado con jerarquia 6 niveles
-- FS se mantiene con capa abstraccion (backend.py)
-- BD local SQLite + dashboard React (herramienta central universal)
-- Normativa fiscal versionada por ano
-- Dashboard = informes + KPIs + impuestos tiempo real (sin modulos separados)
-- Ingesta email IMAP + file watcher
-- Proteccion producto: Nuitka + OCR proxy
+**Cambios v2 vs v1**:
+- Ciclo contable completo: cierre ejercicio (10 pasos), amortizaciones, provisiones pagas extras, regularizacion IVA, periodificaciones, IVA no deducible
+- 5 territorios fiscales: peninsula, canarias (IGIC), ceuta_melilla (IPSI), navarra, pais_vasco
+- BD ampliada: 13 tablas (+ audit_log, pagos, movimientos_bancarios, activos_fijos, operaciones_periodicas, trabajadores)
+- Doble motor BD: SQLite (desktop) + PostgreSQL (SaaS) via SQLAlchemy
+- Modelos fiscales 3 categorias: automaticos (303,111,130...), semi-auto (200 IS), asistidos (100 IRPF)
+- Trazabilidad: log razonamiento completo por cada asiento
+- Cuarentena estructurada: 7 tipos con preguntas tipadas
+- Deteccion trabajadores nuevos: DNI no conocido en nomina -> cuarentena
+- Autenticacion JWT: admin/gestor/readonly
+- Proteccion: OCR proxy + token + SaaS (sin Nuitka)
+- Claude Code siempre en la ecuacion (dashboard complementa, no reemplaza)
 
 **Fases**:
-- A (T1-8): Fundamentos — sfce/, normativa, perfil fiscal, backend, decision contable
-- B (T9-16): Motor central — clasificador, motor reglas, refactorizar phases, modelos fiscales
-- C (T17-23): Datos — SQLite, repositorio, importador/exportador, migracion FS
-- D (T24-32): Interfaz — FastAPI, WebSocket, React dashboard, file watcher, licencia
-- E (T33-38): Ingesta — naming, cache OCR, duplicados, IMAP, notificaciones, recurrentes
+- A (T1-10): Fundamentos — sfce/, normativa multi-territorio, perfil fiscal, backend, decision con trazabilidad, operaciones periodicas, cierre ejercicio
+- B (T11-19): Motor central — clasificador, motor reglas, refactorizar phases, modelos 3 categorias, notas credito
+- C (T20-27): Datos — BD dual SQLite/PostgreSQL, 13 tablas, repositorio, importador/exportador
+- D (T28-37): Interfaz — FastAPI + JWT, WebSocket, React dashboard, watcher, licencia
+- E (T38-46): Ingesta — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones, recurrentes, periodicas auto
 
-**Backlog futuro**: Open Banking PSD2 (disenar interfaces preparadas, implementar cuando se necesite)
+**Estimacion**: ~210 tests nuevos, 21-26 sesiones
 
-**Proxima sesion**: implementar Fase A (Tasks 1-8)
+**Proxima sesion**: implementar Fase A (Tasks 1-10)
 
-## Proximos pasos (otros)
+## Proximos pasos
 
-- Generador v2: Tasks 9-16 pendientes
-- Ejecutar pipeline SFCE contra entidades de prueba (post-generador v2)
+- **Implementar Fase A evolucion SFCE v2** (Tasks 1-10)
+- Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
 - Evaluar si `_corregir_asientos_proveedores()` sigue siendo necesario
-- Corregir Pastorino suplidos Primatransit (reclasificacion 600→4709)
+- Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
-- Mejorar OCR renting: desglosar base/IVA cuando no viene separado
