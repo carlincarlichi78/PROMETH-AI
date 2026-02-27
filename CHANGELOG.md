@@ -1,5 +1,31 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-27 — Sesion: E2E dry-run elena-navarro + pipeline fix
+
+**Objetivo**: Ejecutar pipeline SFCE contra elena-navarro (generador v2) para validar ingesta multi-tipo.
+
+**Trabajo realizado**:
+- Creado config.yaml elena-navarro desde empresas.yaml (10 proveedores, 3 clientes, 1 trabajador)
+- Creado .env con API keys (FS, Mistral, OpenAI, Gemini) — anadido a .gitignore
+- Muestra estratificada 30% (60/199 PDFs) en inbox_muestra/ para controlar costes OCR
+- Dry-run exitoso: 41 procesados, 19 cuarentena, score 100%
+
+**Bug fix**:
+- `PatronRecurrente` (dataclass) no serializable a JSON en pipeline.py → `dataclasses.asdict()`
+
+**Hallazgos**:
+- FC/BAN/NOM/RLC/IMP: 100% deteccion
+- FV: 27% — clientes sin CIF van a cuarentena (problema sistemico)
+- SUM: 0% → proveedores faltaban en config (Endesa, Emasagra, Movistar, Mapfre anadidos post-test)
+- GPT-4o rate limited (30K TPM) → Tier 1 degradado frecuentemente
+- OCR Tiers: T0=10 (24%), T1=30 (73%), T2=1 (2%)
+
+**Propuesta proxima sesion**: Directorio empresas — BD compartida proveedores/clientes con auto-resolve CIF
+
+**Commit**: d6bca4e en `feat/sfce-v2-fase-e`
+
+---
+
 ## 2026-02-27 — Sesion: SFCE v2 Fase E (Ingesta Inteligente)
 
 **Objetivo**: Implementar Fase E del plan SFCE Evolucion v2 (Tasks 38-46).

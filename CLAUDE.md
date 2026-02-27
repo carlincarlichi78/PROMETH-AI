@@ -27,7 +27,10 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 | `OPENAI_API_KEY` | GPT-4o | OCR fallback + extraccion datos |
 | `GEMINI_API_KEY` | Gemini Flash | Triple consenso OCR + auditor IA (capa 5) |
 
-Uso: `export FS_API_TOKEN='...' MISTRAL_API_KEY='...' OPENAI_API_KEY='...' GEMINI_API_KEY='...'`
+Uso: cargar desde `.env` en raiz del proyecto (NO trackeado en git):
+```bash
+source .env  # o: export $(cat .env | xargs)
+```
 
 ## API REST - Endpoints clave
 | Operacion | Endpoint | Metodo |
@@ -364,10 +367,25 @@ Tasks completados:
 - **Cuenta**: carlincarlichi78 (autenticada via `gh`)
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes NO se trackean (ver .gitignore)
 
+## E2E Testing elena-navarro (dry-run)
+
+**Estado**: Completado parcialmente con muestra 30% (60/199 PDFs)
+**Resultados**: 41 procesados, 19 cuarentena. Score 100% (FIABLE)
+- FC: 12/12 (100%), BAN: 17/17 (100%), NOM: 4/4 (100%), RLC: 4/4 (100%), IMP: 1/1 (100%)
+- FV: 3/11 (27%) — clientes sin CIF van a cuarentena
+- SUM: 0/11 (0%) → proveedores anadidos post-test (Endesa, Emasagra, Movistar, Mapfre)
+- OCR Tiers: T0=10, T1=30, T2=1
+- GPT-4o rate limiting frecuente (429, 30K TPM)
+
+**Bug fix**: PatronRecurrente no serializable a JSON en pipeline.py (dataclasses.asdict)
+**Archivos**: config.yaml (10 prov, 3 cli, 1 trab), inbox_muestra/ (60 PDFs), manifiesto_muestra.json
+
 ## Proximos pasos
 
-- Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
-- Conectar dashboard a API real (actualmente con datos mock)
-- Integrar cache_ocr + duplicados + recurrentes en pipeline.py
-- Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
-- Configurar backups automaticos BD FacturaScripts
+1. **Directorio empresas** — BD compartida proveedores/clientes (CIF→nombre, CNAE), auto-resolve desde OCR, enriquecer via APIs comerciales (Axesor/Infocif) o cache compartido entre clientes
+2. Re-ejecutar elena-navarro dry-run con config completo (suministros anadidos)
+3. Fix facturas venta cuarentena (clientes sin CIF → reconocer ventas propias)
+4. Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
+5. Conectar dashboard a API real (actualmente con datos mock)
+6. Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
+7. Configurar backups automaticos BD FacturaScripts
