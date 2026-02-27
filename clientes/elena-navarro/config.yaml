@@ -3,9 +3,9 @@ empresa:
   nombre_comercial: "Centro Fisio & Pilates Elena Navarro"
   cif: "24813607B"
   tipo: autonomo
-  idempresa: 99
+  idempresa: 5
   ejercicio_activo: "2025"
-  codejercicio: "0099"
+  codejercicio: "0005"
   regimen_iva: exento_parcial
   prorrata: 35
   direccion: "Calle Recogidas 44, Local, 18005 Granada"

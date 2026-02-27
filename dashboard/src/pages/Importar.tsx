@@ -1,17 +1,18 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 /** Pasos del wizard de importacion */
 type PasoImportar = 1 | 2 | 3
 
-/** Datos de ejemplo para la vista previa */
-const DATOS_PREVIEW = [
-  { fecha: '15/01/2025', concepto: 'Factura proveedor ABC', subcuenta: '6000000001', debe: 1200.0, haber: 0 },
-  { fecha: '15/01/2025', concepto: 'Factura proveedor ABC', subcuenta: '4720000000', debe: 252.0, haber: 0 },
-  { fecha: '15/01/2025', concepto: 'Factura proveedor ABC', subcuenta: '4000000001', debe: 0, haber: 1452.0 },
-  { fecha: '20/01/2025', concepto: 'Venta cliente XYZ', subcuenta: '4300000001', debe: 2420.0, haber: 0 },
-  { fecha: '20/01/2025', concepto: 'Venta cliente XYZ', subcuenta: '7000000001', debe: 0, haber: 2000.0 },
-  { fecha: '20/01/2025', concepto: 'Venta cliente XYZ', subcuenta: '4770000000', debe: 0, haber: 420.0 },
-]
+/** Fila de asiento en la vista previa */
+interface FilaPreview {
+  fecha?: string
+  concepto?: string
+  subcuenta?: string
+  debe?: number
+  haber?: number
+  [key: string]: unknown
+}
 
 /**
  * Importar Libro Diario — wizard de 3 pasos.
@@ -20,19 +21,50 @@ const DATOS_PREVIEW = [
  * Paso 3: Confirmacion e importacion
  */
 export function Importar() {
+  const { empresaId } = useParams<{ empresaId: string }>()
+
   const [paso, setPaso] = useState<PasoImportar>(1)
   const [archivoNombre, setArchivoNombre] = useState<string | null>(null)
   const [arrastrando, setArrastrando] = useState(false)
+  const [importarId, setImportarId] = useState<string | null>(null)
+  const [preview, setPreview] = useState<FilaPreview[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [cargando, setCargando] = useState(false)
+  const [importado, setImportado] = useState(false)
 
   /** Nombres de los pasos */
   const nombresPasos = ['Subir archivo', 'Vista previa', 'Confirmar']
 
-  /** Simula seleccion de archivo */
-  const simularSeleccion = (nombre: string) => {
-    setArchivoNombre(nombre)
+  /** Sube el archivo y obtiene la vista previa */
+  const manejarArchivo = async (file: File) => {
+    setArchivoNombre(file.name)
+    setCargando(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem('sfce_token') ?? ''
+      const fd = new FormData()
+      fd.append('archivo', file)
+      const resp = await fetch(`/api/contabilidad/${empresaId ?? ''}/importar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      })
+      if (!resp.ok) {
+        const detalle = await resp.json().catch(() => ({ detail: 'Error al procesar archivo' }))
+        throw new Error((detalle as { detail?: string }).detail ?? `Error HTTP ${resp.status}`)
+      }
+      const datos = (await resp.json()) as { importar_id: string; total: number; asientos_preview: FilaPreview[] }
+      setImportarId(datos.importar_id)
+      setPreview(datos.asientos_preview)
+      setPaso(2)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al procesar archivo')
+    } finally {
+      setCargando(false)
+    }
   }
 
-  /** Manejo de drag and drop (solo UI) */
+  /** Manejo de drag and drop */
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     setArrastrando(true)
@@ -47,28 +79,70 @@ export function Importar() {
     setArrastrando(false)
     const archivos = e.dataTransfer.files
     if (archivos.length > 0 && archivos[0]) {
-      simularSeleccion(archivos[0].name)
+      void manejarArchivo(archivos[0])
     }
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivos = e.target.files
     if (archivos && archivos.length > 0 && archivos[0]) {
-      simularSeleccion(archivos[0].name)
+      void manejarArchivo(archivos[0])
     }
   }
 
-  /** Confirmar importacion (placeholder) */
-  const confirmarImportacion = () => {
-    alert(
-      `Se importaria el archivo "${archivoNombre}".\n` +
-      'Esta funcionalidad se conectara al backend en una version futura.'
-    )
+  /** Confirmar importacion via API */
+  const confirmarImportacion = async () => {
+    if (!importarId) return
+    setCargando(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem('sfce_token') ?? ''
+      const resp = await fetch(`/api/contabilidad/${empresaId ?? ''}/importar/${importarId}/confirmar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!resp.ok) {
+        const detalle = await resp.json().catch(() => ({ detail: 'Error al confirmar importacion' }))
+        throw new Error((detalle as { detail?: string }).detail ?? `Error HTTP ${resp.status}`)
+      }
+      setImportado(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al confirmar importacion')
+    } finally {
+      setCargando(false)
+    }
   }
 
   /** Formatear numero como moneda */
   const formatearImporte = (valor: number): string => {
     return valor.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
+  if (importado) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Importar Libro Diario</h1>
+        <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="text-green-500 text-5xl mb-4">✓</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Importacion completada</h2>
+          <p className="text-gray-500 mb-6">
+            El archivo <span className="font-medium">{archivoNombre}</span> se ha importado correctamente.
+          </p>
+          <button
+            onClick={() => {
+              setImportado(false)
+              setPaso(1)
+              setArchivoNombre(null)
+              setImportarId(null)
+              setPreview([])
+            }}
+            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Importar otro archivo
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -116,6 +190,13 @@ export function Importar() {
         })}
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Contenido del paso actual */}
       <div className="bg-white rounded-lg shadow p-6">
         {/* Paso 1: Subir archivo */}
@@ -140,12 +221,16 @@ export function Importar() {
                     : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              {archivoNombre ? (
+              {cargando ? (
+                <div>
+                  <p className="text-gray-500 animate-pulse">Procesando archivo...</p>
+                </div>
+              ) : archivoNombre ? (
                 <div>
                   <p className="text-green-700 font-medium">{archivoNombre}</p>
                   <p className="text-sm text-green-600 mt-1">Archivo seleccionado</p>
                   <button
-                    onClick={() => setArchivoNombre(null)}
+                    onClick={() => { setArchivoNombre(null); setError(null) }}
                     className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline"
                   >
                     Cambiar archivo
@@ -183,37 +268,41 @@ export function Importar() {
               Revisa los primeros registros antes de importar. Archivo: <span className="font-medium">{archivoNombre}</span>
             </p>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Concepto</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Subcuenta</th>
-                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase">Debe</th>
-                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase">Haber</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {DATOS_PREVIEW.map((fila, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 text-gray-700">{fila.fecha}</td>
-                      <td className="px-4 py-2 text-gray-700">{fila.concepto}</td>
-                      <td className="px-4 py-2 font-mono text-gray-600">{fila.subcuenta}</td>
-                      <td className="px-4 py-2 text-right text-gray-700">
-                        {fila.debe > 0 ? formatearImporte(fila.debe) : ''}
-                      </td>
-                      <td className="px-4 py-2 text-right text-gray-700">
-                        {fila.haber > 0 ? formatearImporte(fila.haber) : ''}
-                      </td>
+            {preview.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Concepto</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Subcuenta</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase">Debe</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase">Haber</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {preview.map((fila, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-gray-700">{String(fila.fecha ?? '')}</td>
+                        <td className="px-4 py-2 text-gray-700">{String(fila.concepto ?? '')}</td>
+                        <td className="px-4 py-2 font-mono text-gray-600">{String(fila.subcuenta ?? '')}</td>
+                        <td className="px-4 py-2 text-right text-gray-700">
+                          {Number(fila.debe ?? 0) > 0 ? formatearImporte(Number(fila.debe)) : ''}
+                        </td>
+                        <td className="px-4 py-2 text-right text-gray-700">
+                          {Number(fila.haber ?? 0) > 0 ? formatearImporte(Number(fila.haber)) : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 italic">Sin datos de vista previa disponibles</p>
+            )}
 
             <p className="text-xs text-gray-400 mt-4">
-              Mostrando 6 de 6 registros de ejemplo
+              Mostrando {preview.length} registros de vista previa
             </p>
           </div>
         )}
@@ -232,7 +321,7 @@ export function Importar() {
                 </div>
                 <div className="flex gap-4">
                   <dt className="text-gray-500 w-24">Registros:</dt>
-                  <dd className="text-gray-800 font-medium">6 partidas (2 asientos)</dd>
+                  <dd className="text-gray-800 font-medium">{preview.length} partidas en vista previa</dd>
                 </div>
                 <div className="flex gap-4">
                   <dt className="text-gray-500 w-24">Formato:</dt>
@@ -246,10 +335,11 @@ export function Importar() {
             </p>
 
             <button
-              onClick={confirmarImportacion}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              onClick={() => void confirmarImportacion()}
+              disabled={cargando}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
             >
-              Importar
+              {cargando ? 'Importando...' : 'Importar'}
             </button>
           </div>
         )}
@@ -259,14 +349,14 @@ export function Importar() {
       <div className="flex justify-between mt-6">
         <button
           onClick={() => setPaso((prev) => (prev > 1 ? ((prev - 1) as PasoImportar) : prev))}
-          disabled={paso === 1}
+          disabled={paso === 1 || cargando}
           className="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Anterior
         </button>
         <button
           onClick={() => setPaso((prev) => (prev < 3 ? ((prev + 1) as PasoImportar) : prev))}
-          disabled={paso === 3 || (paso === 1 && !archivoNombre)}
+          disabled={paso === 3 || (paso === 1 && !archivoNombre) || cargando}
           className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Siguiente

@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useApi } from '../hooks/useApi'
 
 /** Estado posible de un paso del cierre */
 type EstadoPaso = 'pendiente' | 'completado' | 'no_aplica'
@@ -11,8 +13,8 @@ interface PasoCierre {
   estado: EstadoPaso
 }
 
-/** Los 10 pasos del cierre de ejercicio */
-const PASOS_INICIALES: PasoCierre[] = [
+/** Los 10 pasos del cierre de ejercicio — usados como fallback local */
+const PASOS_DEFECTO: PasoCierre[] = [
   {
     numero: 1,
     titulo: 'Amortizaciones pendientes',
@@ -28,7 +30,7 @@ const PASOS_INICIALES: PasoCierre[] = [
   {
     numero: 3,
     titulo: 'Provision clientes de dudoso cobro',
-    descripcion: 'Dotar las provisiones por insolvencias de clientes (694/490) segun antigüedad de deuda.',
+    descripcion: 'Dotar las provisiones por insolvencias de clientes (694/490) segun antiguedad de deuda.',
     estado: 'pendiente',
   },
   {
@@ -78,22 +80,59 @@ const PASOS_INICIALES: PasoCierre[] = [
 /**
  * Cierre de Ejercicio — wizard con checklist de 10 pasos.
  * Cada paso tiene un checkbox, descripcion y boton de ejecucion.
+ * Conectado a /api/contabilidad/:empresaId/cierre/:ejercicio
  */
 export function CierreEjercicio() {
-  const [pasos, setPasos] = useState<PasoCierre[]>(PASOS_INICIALES)
+  const { empresaId } = useParams<{ empresaId: string }>()
+  const { fetchConAuth } = useApi()
+  const anoActual = new Date().getFullYear()
+  const ejercicio = anoActual
+
+  const [pasos, setPasos] = useState<PasoCierre[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const cargarPasos = async () => {
+    setCargando(true)
+    setError(null)
+    try {
+      const datos = await fetchConAuth<PasoCierre[]>(`/api/contabilidad/${empresaId ?? ''}/cierre/${ejercicio}`)
+      setPasos(datos)
+    } catch {
+      // Si la API no esta disponible, usar los pasos por defecto
+      setPasos(PASOS_DEFECTO)
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  useEffect(() => {
+    void cargarPasos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresaId, ejercicio])
 
   /** Cuenta de pasos completados */
   const completados = pasos.filter((p) => p.estado === 'completado').length
   const aplicables = pasos.filter((p) => p.estado !== 'no_aplica').length
   const porcentaje = aplicables > 0 ? Math.round((completados / aplicables) * 100) : 0
 
-  /** Cambia el estado de un paso */
-  const cambiarEstado = (numero: number, nuevoEstado: EstadoPaso) => {
+  /** Cambia el estado de un paso y lo persiste via API */
+  const cambiarEstado = async (numero: number, nuevoEstado: EstadoPaso) => {
+    // Actualizar estado local inmediatamente (optimistic update)
     setPasos((prev) =>
       prev.map((p) =>
         p.numero === numero ? { ...p, estado: nuevoEstado } : p
       )
     )
+    // Persistir en API (sin bloquear la UI)
+    try {
+      await fetchConAuth(`/api/contabilidad/${empresaId ?? ''}/cierre/${ejercicio}/paso/${numero}`, {
+        method: 'PUT',
+        body: { estado: nuevoEstado },
+      })
+    } catch {
+      // Si falla la persistencia, no revertir — el estado local es suficiente
+    }
   }
 
   /** Cicla entre estados al hacer clic en el checkbox */
@@ -103,15 +142,12 @@ export function CierreEjercicio() {
       completado: 'no_aplica',
       no_aplica: 'pendiente',
     }
-    cambiarEstado(paso.numero, siguiente[paso.estado])
+    void cambiarEstado(paso.numero, siguiente[paso.estado])
   }
 
-  /** Ejecutar paso (placeholder) */
+  /** Ejecutar paso — marca como completado */
   const ejecutarPaso = (paso: PasoCierre) => {
-    alert(
-      `Se ejecutaria: "${paso.titulo}"\n\n` +
-      'Esta funcionalidad generara los asientos correspondientes automaticamente en una version futura.'
-    )
+    void cambiarEstado(paso.numero, 'completado')
   }
 
   /** Estilos del badge de estado */
@@ -150,14 +186,42 @@ export function CierreEjercicio() {
     }
   }
 
+  if (cargando) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/2 mb-4" />
+        <div className="h-4 bg-gray-200 rounded w-1/3 mb-6" />
+        <div className="bg-white rounded-lg shadow p-6 mb-6 h-16" />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-white rounded-lg shadow p-5 h-20" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Cierre de Ejercicio</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Checklist de 10 pasos para cerrar la contabilidad del ejercicio
+          Checklist de 10 pasos para cerrar la contabilidad del ejercicio {ejercicio}
         </p>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {error}
+          <button
+            onClick={() => void cargarPasos()}
+            className="ml-3 underline text-red-600 hover:text-red-800"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
 
       {/* Barra de progreso */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">

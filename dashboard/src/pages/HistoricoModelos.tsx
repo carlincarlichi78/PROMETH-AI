@@ -20,21 +20,6 @@ interface RespuestaHistorico {
   registros: RegistroHistorico[]
 }
 
-/** Datos mock para desarrollo */
-const MOCK_HISTORICO: RegistroHistorico[] = [
-  { id: 1, modelo: '303', nombre_modelo: 'IVA trimestral', ejercicio: 2025, periodo: 'T1', fecha_generacion: '2025-04-15T10:30:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 2, modelo: '111', nombre_modelo: 'Retenciones IRPF', ejercicio: 2025, periodo: 'T1', fecha_generacion: '2025-04-15T11:00:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 3, modelo: '130', nombre_modelo: 'Pago fraccionado IRPF', ejercicio: 2025, periodo: 'T1', fecha_generacion: '2025-04-16T09:15:00', estado: 'presentado', tiene_boe: true, tiene_pdf: false },
-  { id: 4, modelo: '303', nombre_modelo: 'IVA trimestral', ejercicio: 2025, periodo: 'T2', fecha_generacion: '2025-07-18T14:20:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 5, modelo: '111', nombre_modelo: 'Retenciones IRPF', ejercicio: 2025, periodo: 'T2', fecha_generacion: '2025-07-18T14:45:00', estado: 'generado', tiene_boe: true, tiene_pdf: true },
-  { id: 6, modelo: '303', nombre_modelo: 'IVA trimestral', ejercicio: 2024, periodo: 'T4', fecha_generacion: '2025-01-22T16:00:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 7, modelo: '390', nombre_modelo: 'Resumen anual IVA', ejercicio: 2024, periodo: '0A', fecha_generacion: '2025-01-25T10:00:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 8, modelo: '190', nombre_modelo: 'Resumen anual retenciones', ejercicio: 2024, periodo: '0A', fecha_generacion: '2025-01-25T11:30:00', estado: 'presentado', tiene_boe: true, tiene_pdf: false },
-  { id: 9, modelo: '347', nombre_modelo: 'Operaciones con terceros', ejercicio: 2024, periodo: '0A', fecha_generacion: '2025-02-20T09:00:00', estado: 'presentado', tiene_boe: true, tiene_pdf: false },
-  { id: 10, modelo: '115', nombre_modelo: 'Retenciones alquileres', ejercicio: 2025, periodo: 'T1', fecha_generacion: '2025-04-16T10:00:00', estado: 'presentado', tiene_boe: true, tiene_pdf: true },
-  { id: 11, modelo: '115', nombre_modelo: 'Retenciones alquileres', ejercicio: 2025, periodo: 'T2', fecha_generacion: '2025-07-19T09:30:00', estado: 'generado', tiene_boe: false, tiene_pdf: false },
-]
-
 /** Modelos disponibles para filtrar */
 const MODELOS_FILTRO = [
   { valor: 'todos', etiqueta: 'Todos los modelos' },
@@ -88,15 +73,18 @@ export function HistoricoModelos() {
   const [registros, setRegistros] = useState<RegistroHistorico[]>([])
   const [total, setTotal] = useState(0)
   const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filtroEjercicio, setFiltroEjercicio] = useState('todos')
   const [filtroModelo, setFiltroModelo] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [descargando, setDescargando] = useState<{ id: number; tipo: 'boe' | 'pdf' } | null>(null)
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
 
-  /** Carga el historico desde la API o mock */
+  /** Carga el historico desde la API */
   useEffect(() => {
     const cargar = async () => {
       setCargando(true)
+      setError(null)
       setPagina(1)
       try {
         const params = new URLSearchParams()
@@ -106,21 +94,14 @@ export function HistoricoModelos() {
         const resp = await fetch(url, {
           headers: { Authorization: `Bearer ${localStorage.getItem('sfce_token') ?? ''}` },
         })
-        if (!resp.ok) throw new Error('API no disponible')
+        if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`)
         const datos = (await resp.json()) as RespuestaHistorico
         setRegistros(datos.registros)
         setTotal(datos.total)
-      } catch {
-        // Fallback mock con filtrado local
-        let filtrados = [...MOCK_HISTORICO]
-        if (filtroEjercicio !== 'todos') {
-          filtrados = filtrados.filter((r) => r.ejercicio === Number(filtroEjercicio))
-        }
-        if (filtroModelo !== 'todos') {
-          filtrados = filtrados.filter((r) => r.modelo === filtroModelo)
-        }
-        setRegistros(filtrados)
-        setTotal(filtrados.length)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al cargar historico')
+        setRegistros([])
+        setTotal(0)
       } finally {
         setCargando(false)
       }
@@ -140,12 +121,13 @@ export function HistoricoModelos() {
   /** Descarga un archivo de un registro especifico */
   const descargar = async (registro: RegistroHistorico, tipo: 'boe' | 'pdf') => {
     setDescargando({ id: registro.id, tipo })
+    setErrorDescarga(null)
     try {
       const endpoint = tipo === 'boe' ? `/api/modelos/${registro.id}/descargar-boe` : `/api/modelos/${registro.id}/descargar-pdf`
       const resp = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${localStorage.getItem('sfce_token') ?? ''}` },
       })
-      if (!resp.ok) throw new Error('API no disponible')
+      if (!resp.ok) throw new Error(`Error al descargar ${tipo.toUpperCase()}`)
       const blob = await resp.blob()
       const extension = tipo === 'boe' ? 'txt' : 'pdf'
       const nombreArchivo = `Mod${registro.modelo}_${registro.periodo}_${registro.ejercicio}.${extension}`
@@ -155,8 +137,8 @@ export function HistoricoModelos() {
       a.download = nombreArchivo
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      alert(`[MOCK] Descarga ${tipo.toUpperCase()} simulada — API no disponible`)
+    } catch (err) {
+      setErrorDescarga(err instanceof Error ? err.message : `Error al descargar ${tipo.toUpperCase()}`)
     } finally {
       setDescargando(null)
     }
@@ -221,6 +203,20 @@ export function HistoricoModelos() {
           </select>
         </div>
       </div>
+
+      {/* Error de carga */}
+      {error && !cargando && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Error de descarga */}
+      {errorDescarga && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {errorDescarga}
+        </div>
+      )}
 
       {/* Tabla */}
       {cargando ? (

@@ -1,6 +1,8 @@
 """SFCE API — Aplicacion FastAPI principal."""
 
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +15,13 @@ from sfce.api.auth import crear_admin_por_defecto
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicializa BD SQLite en memoria al arrancar, limpia al cerrar."""
-    engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": ":memory:"})
+    """Inicializa BD SQLite persistente al arrancar, limpia al cerrar.
+
+    Usa la variable de entorno SFCE_DB_PATH para la ruta de la BD.
+    Si no esta definida, usa sfce.db en el directorio de trabajo actual.
+    """
+    db_path = os.environ.get("SFCE_DB_PATH", str(Path.cwd() / "sfce.db"))
+    engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": db_path})
     Base.metadata.create_all(engine)
     sesion_factory = crear_sesion(engine)
     app.state.engine = engine

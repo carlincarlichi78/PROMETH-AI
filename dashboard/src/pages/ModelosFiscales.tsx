@@ -22,33 +22,6 @@ interface RespuestaCalendario {
   entradas: EntradaCalendario[]
 }
 
-/** Datos mock cuando la API no esta disponible */
-const generarMock = (ejercicio: number): RespuestaCalendario => ({
-  empresa_id: 1,
-  ejercicio,
-  entradas: [
-    // T1
-    { modelo: '303', nombre: 'IVA trimestral', periodo: 'T1', trimestre: 1, anual: false, fecha_limite: `${ejercicio}-04-20`, estado: 'presentado' },
-    { modelo: '111', nombre: 'Retenciones IRPF', periodo: 'T1', trimestre: 1, anual: false, fecha_limite: `${ejercicio}-04-20`, estado: 'presentado' },
-    { modelo: '130', nombre: 'Pago fraccionado IRPF', periodo: 'T1', trimestre: 1, anual: false, fecha_limite: `${ejercicio}-04-20`, estado: 'presentado' },
-    // T2
-    { modelo: '303', nombre: 'IVA trimestral', periodo: 'T2', trimestre: 2, anual: false, fecha_limite: `${ejercicio}-07-20`, estado: 'presentado' },
-    { modelo: '111', nombre: 'Retenciones IRPF', periodo: 'T2', trimestre: 2, anual: false, fecha_limite: `${ejercicio}-07-20`, estado: 'generado' },
-    { modelo: '130', nombre: 'Pago fraccionado IRPF', periodo: 'T2', trimestre: 2, anual: false, fecha_limite: `${ejercicio}-07-20`, estado: 'pendiente' },
-    // T3
-    { modelo: '303', nombre: 'IVA trimestral', periodo: 'T3', trimestre: 3, anual: false, fecha_limite: `${ejercicio}-10-20`, estado: 'pendiente' },
-    { modelo: '111', nombre: 'Retenciones IRPF', periodo: 'T3', trimestre: 3, anual: false, fecha_limite: `${ejercicio}-10-20`, estado: 'pendiente' },
-    { modelo: '115', nombre: 'Retenciones alquileres', periodo: 'T3', trimestre: 3, anual: false, fecha_limite: `${ejercicio}-10-20`, estado: 'pendiente' },
-    // T4
-    { modelo: '303', nombre: 'IVA trimestral', periodo: 'T4', trimestre: 4, anual: false, fecha_limite: `${ejercicio + 1}-01-30`, estado: 'pendiente' },
-    { modelo: '111', nombre: 'Retenciones IRPF', periodo: 'T4', trimestre: 4, anual: false, fecha_limite: `${ejercicio + 1}-01-30`, estado: 'pendiente' },
-    // Anuales
-    { modelo: '390', nombre: 'Resumen anual IVA', periodo: '0A', trimestre: null, anual: true, fecha_limite: `${ejercicio + 1}-01-30`, estado: 'pendiente' },
-    { modelo: '190', nombre: 'Resumen anual retenciones', periodo: '0A', trimestre: null, anual: true, fecha_limite: `${ejercicio + 1}-01-30`, estado: 'pendiente' },
-    { modelo: '347', nombre: 'Operaciones con terceros', periodo: '0A', trimestre: null, anual: true, fecha_limite: `${ejercicio + 1}-02-28`, estado: 'pendiente' },
-    { modelo: '200', nombre: 'Impuesto Sociedades', periodo: '0A', trimestre: null, anual: true, fecha_limite: `${ejercicio}-07-25`, estado: 'pendiente' },
-  ],
-})
 
 /** Determina el color de la tarjeta segun estado y fecha limite */
 function calcularEstadoEfectivo(entrada: EntradaCalendario, hoy: Date): EstadoModelo {
@@ -171,20 +144,22 @@ export function ModelosFiscales() {
   const [ejercicio, setEjercicio] = useState(anoActual)
   const [calendario, setCalendario] = useState<RespuestaCalendario | null>(null)
   const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const cargar = async () => {
       setCargando(true)
+      setError(null)
       try {
         const resp = await fetch(`/api/modelos/calendario/${empresaId}/${ejercicio}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('sfce_token') ?? ''}` },
         })
-        if (!resp.ok) throw new Error('API no disponible')
+        if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`)
         const datos = (await resp.json()) as RespuestaCalendario
         setCalendario(datos)
-      } catch {
-        // Fallback a datos mock cuando la API no esta disponible
-        setCalendario(generarMock(ejercicio))
+      } catch (err) {
+        setCalendario(null)
+        setError(err instanceof Error ? err.message : 'Error al cargar el calendario')
       } finally {
         setCargando(false)
       }
@@ -273,6 +248,13 @@ export function ModelosFiscales() {
           Pendiente
         </div>
       </div>
+
+      {/* Error */}
+      {error && !cargando && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
 
       {cargando ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useApi } from '../hooks/useApi'
 
 /** Entidad del directorio de empresas y personas */
 interface EntidadDirectorio {
@@ -37,123 +38,6 @@ interface FormNuevaEntidad {
   nombre_comercial: string
   pais: string
   tipo_persona: 'fisica' | 'juridica' | ''
-}
-
-/** Datos mock para desarrollo sin API */
-const ENTIDADES_MOCK: EntidadDirectorio[] = [
-  {
-    id: 1,
-    cif: 'B12345678',
-    nombre: 'PASTORINO COSTA DEL SOL S.L.',
-    nombre_comercial: 'Pastorino',
-    pais: 'ESP',
-    tipo_persona: 'juridica',
-    validado_aeat: true,
-    validado_vies: false,
-    fecha_alta: '2024-01-15',
-    aliases: ['Pastorino', 'Pastorino SL'],
-  },
-  {
-    id: 2,
-    cif: 'A28054609',
-    nombre: 'MAKRO AUTOSERVICIO MAYORISTA S.A.',
-    nombre_comercial: 'Makro',
-    pais: 'ESP',
-    tipo_persona: 'juridica',
-    validado_aeat: true,
-    validado_vies: false,
-    fecha_alta: '2024-02-01',
-    aliases: ['Makro', 'Makro Mayorista'],
-  },
-  {
-    id: 3,
-    cif: 'DK12345678',
-    nombre: 'OCEANLINE SHIPPING A/S',
-    nombre_comercial: null,
-    pais: 'DNK',
-    tipo_persona: 'juridica',
-    validado_aeat: false,
-    validado_vies: true,
-    fecha_alta: '2024-03-10',
-    aliases: ['Oceanline'],
-  },
-  {
-    id: 4,
-    cif: 'PT987654321',
-    nombre: 'LUSITANIA LOGISTICA LDA',
-    nombre_comercial: 'Lusitania',
-    pais: 'PRT',
-    tipo_persona: 'juridica',
-    validado_aeat: false,
-    validado_vies: true,
-    fecha_alta: '2024-03-15',
-    aliases: ['Lusitania', 'Lusitania LDA'],
-  },
-  {
-    id: 5,
-    cif: '12345678A',
-    nombre: 'GERARDO GONZALEZ CALLEJON',
-    nombre_comercial: null,
-    pais: 'ESP',
-    tipo_persona: 'fisica',
-    validado_aeat: true,
-    validado_vies: false,
-    fecha_alta: '2024-04-20',
-    aliases: ['Gerardo', 'G. Gonzalez'],
-  },
-]
-
-/** Overlays mock por entidad */
-const OVERLAYS_MOCK: Record<number, OverlayEmpresa[]> = {
-  1: [
-    {
-      id: 1,
-      empresa_nombre: 'CHIRINGUITO SOL Y ARENA S.L.',
-      tipo: 'proveedor',
-      subcuenta_gasto: '600000001',
-      codimpuesto: 'IVA21',
-      regimen: 'general',
-    },
-  ],
-  2: [
-    {
-      id: 2,
-      empresa_nombre: 'PASTORINO COSTA DEL SOL S.L.',
-      tipo: 'proveedor',
-      subcuenta_gasto: '600000002',
-      codimpuesto: 'IVA21',
-      regimen: 'general',
-    },
-    {
-      id: 3,
-      empresa_nombre: 'CHIRINGUITO SOL Y ARENA S.L.',
-      tipo: 'proveedor',
-      subcuenta_gasto: '600000003',
-      codimpuesto: 'IVA21',
-      regimen: 'general',
-    },
-  ],
-  3: [
-    {
-      id: 4,
-      empresa_nombre: 'PASTORINO COSTA DEL SOL S.L.',
-      tipo: 'proveedor',
-      subcuenta_gasto: '600000010',
-      codimpuesto: 'IVA0',
-      regimen: 'intracomunitario',
-    },
-  ],
-  4: [
-    {
-      id: 5,
-      empresa_nombre: 'PASTORINO COSTA DEL SOL S.L.',
-      tipo: 'proveedor',
-      subcuenta_gasto: '600000011',
-      codimpuesto: 'IVA0',
-      regimen: 'intracomunitario',
-    },
-  ],
-  5: [],
 }
 
 /** Opciones de pais para el filtro */
@@ -207,7 +91,11 @@ function BadgeTipoPersona({ tipo }: { tipo: 'fisica' | 'juridica' | null }) {
  * Ruta global /directorio — no requiere empresa seleccionada.
  */
 export function Directorio() {
-  const [entidades, setEntidades] = useState<EntidadDirectorio[]>(ENTIDADES_MOCK)
+  const { fetchConAuth } = useApi()
+
+  const [entidades, setEntidades] = useState<EntidadDirectorio[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtroPais, setFiltroPais] = useState('todos')
   const [filtroTipoPersona, setFiltroTipoPersona] = useState('todos')
@@ -222,6 +110,24 @@ export function Directorio() {
     pais: 'ESP',
     tipo_persona: '',
   })
+
+  const cargarEntidades = async () => {
+    setCargando(true)
+    setError(null)
+    try {
+      const datos = await fetchConAuth<EntidadDirectorio[]>('/api/directorio/')
+      setEntidades(datos)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar directorio')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  useEffect(() => {
+    void cargarEntidades()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /** Filtra entidades segun busqueda y filtros activos */
   const entidadesFiltradas = useMemo(() => {
@@ -251,64 +157,65 @@ export function Directorio() {
     })
   }, [entidades, busqueda, filtroPais, filtroTipoPersona])
 
-  /** Abre el panel de detalle para una entidad */
-  const abrirDetalle = (entidad: EntidadDirectorio) => {
-    const overlays = OVERLAYS_MOCK[entidad.id] ?? []
-    setDetalle({ entidad, overlays })
+  /** Abre el panel de detalle para una entidad y carga sus overlays */
+  const abrirDetalle = async (entidad: EntidadDirectorio) => {
+    setDetalle({ entidad, overlays: [] })
+    try {
+      const overlays = await fetchConAuth<OverlayEmpresa[]>(`/api/directorio/${entidad.id}/overlays`)
+      setDetalle({ entidad, overlays })
+    } catch {
+      // Si no hay overlays o el endpoint devuelve 404, mostrar lista vacia
+      setDetalle({ entidad, overlays: [] })
+    }
   }
 
-  /** Simula la verificacion AEAT/VIES (mock — sin API real en desarrollo) */
+  /** Verifica la entidad contra AEAT/VIES via API */
   const verificarEntidad = async (entidadId: number) => {
     setVerificando(entidadId)
-    // Simular latencia de API
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    setEntidades((prev) =>
-      prev.map((e) =>
-        e.id === entidadId
-          ? { ...e, validado_aeat: e.pais === 'ESP' ? true : e.validado_aeat, validado_vies: PAISES_UE.has(e.pais) ? true : e.validado_vies }
-          : e
+    try {
+      const resultado = await fetchConAuth<EntidadDirectorio>(`/api/directorio/${entidadId}/verificar`)
+      setEntidades((prev) =>
+        prev.map((e) => (e.id === entidadId ? { ...e, ...resultado } : e))
       )
-    )
-    // Actualizar detalle si esta abierto
-    if (detalle?.entidad.id === entidadId) {
-      setDetalle((prev) =>
-        prev
-          ? {
-              ...prev,
-              entidad: {
-                ...prev.entidad,
-                validado_aeat: prev.entidad.pais === 'ESP' ? true : prev.entidad.validado_aeat,
-                validado_vies: PAISES_UE.has(prev.entidad.pais) ? true : prev.entidad.validado_vies,
-              },
-            }
-          : null
-      )
+      // Actualizar detalle si esta abierto
+      if (detalle?.entidad.id === entidadId) {
+        setDetalle((prev) => (prev ? { ...prev, entidad: { ...prev.entidad, ...resultado } } : null))
+      }
+      setMensajeExito('Verificacion completada')
+      setTimeout(() => setMensajeExito(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al verificar entidad')
+      setTimeout(() => setError(null), 4000)
+    } finally {
+      setVerificando(null)
     }
-    setVerificando(null)
-    setMensajeExito('Verificacion completada')
-    setTimeout(() => setMensajeExito(null), 3000)
   }
 
-  /** Guarda una nueva entidad (mock — agrega al estado local) */
-  const guardarNuevaEntidad = () => {
+  /** Guarda una nueva entidad via API */
+  const guardarNuevaEntidad = async () => {
     if (!formNueva.nombre.trim()) return
-    const nueva: EntidadDirectorio = {
-      id: entidades.length + 1,
+    const datos = {
       cif: formNueva.cif.trim() || null,
       nombre: formNueva.nombre.trim().toUpperCase(),
       nombre_comercial: formNueva.nombre_comercial.trim() || null,
       pais: formNueva.pais,
       tipo_persona: (formNueva.tipo_persona as 'fisica' | 'juridica') || null,
-      validado_aeat: false,
-      validado_vies: false,
-      fecha_alta: new Date().toISOString().split('T')[0] ?? '',
-      aliases: [],
     }
-    setEntidades((prev) => [...prev, nueva])
-    setModalAbierto(false)
-    setFormNueva({ cif: '', nombre: '', nombre_comercial: '', pais: 'ESP', tipo_persona: '' })
-    setMensajeExito('Entidad creada correctamente')
-    setTimeout(() => setMensajeExito(null), 3000)
+    try {
+      const nueva = await fetchConAuth<EntidadDirectorio>('/api/directorio/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: datos,
+      })
+      setEntidades((prev) => [...prev, nueva])
+      setModalAbierto(false)
+      setFormNueva({ cif: '', nombre: '', nombre_comercial: '', pais: 'ESP', tipo_persona: '' })
+      setMensajeExito('Entidad creada correctamente')
+      setTimeout(() => setMensajeExito(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear entidad')
+      setTimeout(() => setError(null), 4000)
+    }
   }
 
   /** Formatea la fecha de alta */
@@ -336,6 +243,28 @@ export function Directorio() {
         </button>
       </div>
 
+      {/* Estado de carga */}
+      {cargando && (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-5 animate-pulse">
+          <div className="h-5 bg-gray-200 rounded w-3/4 mb-3" />
+          <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !cargando && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700 mb-2">{error}</p>
+          <button
+            onClick={() => void cargarEntidades()}
+            className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Mensaje de exito */}
       {mensajeExito && (
         <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 text-sm">
@@ -343,269 +272,273 @@ export function Directorio() {
         </div>
       )}
 
-      {/* Barra de busqueda y filtros */}
-      <div className="mb-4 flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Buscar por CIF, nombre o alias..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="flex-1 min-w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <select
-          value={filtroPais}
-          onChange={(e) => setFiltroPais(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-        >
-          {FILTROS_PAIS.map((f) => (
-            <option key={f.valor} value={f.valor}>
-              {f.etiqueta}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filtroTipoPersona}
-          onChange={(e) => setFiltroTipoPersona(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-        >
-          <option value="todos">Todos los tipos</option>
-          <option value="juridica">Persona juridica</option>
-          <option value="fisica">Persona fisica</option>
-        </select>
-      </div>
+      {!cargando && (
+        <>
+          {/* Barra de busqueda y filtros */}
+          <div className="mb-4 flex flex-wrap gap-3">
+            <input
+              type="text"
+              placeholder="Buscar por CIF, nombre o alias..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="flex-1 min-w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <select
+              value={filtroPais}
+              onChange={(e) => setFiltroPais(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              {FILTROS_PAIS.map((f) => (
+                <option key={f.valor} value={f.valor}>
+                  {f.etiqueta}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filtroTipoPersona}
+              onChange={(e) => setFiltroTipoPersona(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="todos">Todos los tipos</option>
+              <option value="juridica">Persona juridica</option>
+              <option value="fisica">Persona fisica</option>
+            </select>
+          </div>
 
-      {/* Layout principal: tabla + panel detalle */}
-      <div className="flex gap-4">
-        {/* Tabla de entidades */}
-        <div className={`${detalle ? 'flex-1' : 'w-full'} bg-white rounded-lg shadow overflow-hidden`}>
-          {entidadesFiltradas.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-gray-400 text-lg">No se encontraron entidades</p>
-              <p className="text-gray-300 text-sm mt-2">Prueba con otros terminos de busqueda o filtros</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      CIF
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Nombre
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Pais
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Validacion
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Fecha alta
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {entidadesFiltradas.map((entidad) => (
-                    <tr
-                      key={entidad.id}
-                      onClick={() => abrirDetalle(entidad)}
-                      className={`cursor-pointer transition-colors hover:bg-blue-50 ${
-                        detalle?.entidad.id === entidad.id ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-mono text-gray-700">
-                        {entidad.cif ?? <span className="text-gray-300 italic">sin CIF</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-800">{entidad.nombre}</div>
-                        {entidad.nombre_comercial && (
-                          <div className="text-xs text-gray-400">{entidad.nombre_comercial}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-gray-100 text-gray-700">
-                          {entidad.pais}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <BadgeTipoPersona tipo={entidad.tipo_persona} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {entidad.pais === 'ESP' && (
-                            <BadgeValidacion validado={entidad.validado_aeat} etiqueta="AEAT" />
-                          )}
-                          {PAISES_UE.has(entidad.pais) && (
-                            <BadgeValidacion validado={entidad.validado_vies} etiqueta="VIES" />
-                          )}
-                          {entidad.pais !== 'ESP' && !PAISES_UE.has(entidad.pais) && (
-                            <span className="text-xs text-gray-300">N/A</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {formatearFecha(entidad.fecha_alta)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            verificarEntidad(entidad.id)
-                          }}
-                          disabled={verificando === entidad.id}
-                          className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          {/* Layout principal: tabla + panel detalle */}
+          <div className="flex gap-4">
+            {/* Tabla de entidades */}
+            <div className={`${detalle ? 'flex-1' : 'w-full'} bg-white rounded-lg shadow overflow-hidden`}>
+              {entidadesFiltradas.length === 0 ? (
+                <div className="p-12 text-center">
+                  <p className="text-gray-400 text-lg">No se encontraron entidades</p>
+                  <p className="text-gray-300 text-sm mt-2">Prueba con otros terminos de busqueda o filtros</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          CIF
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Nombre
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Pais
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Tipo
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Validacion
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Fecha alta
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {entidadesFiltradas.map((entidad) => (
+                        <tr
+                          key={entidad.id}
+                          onClick={() => void abrirDetalle(entidad)}
+                          className={`cursor-pointer transition-colors hover:bg-blue-50 ${
+                            detalle?.entidad.id === entidad.id ? 'bg-blue-50' : ''
+                          }`}
                         >
-                          {verificando === entidad.id ? 'Verificando...' : 'Verificar'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Panel de detalle */}
-        {detalle && (
-          <div className="w-80 shrink-0 bg-white rounded-lg shadow p-5">
-            {/* Cabecera detalle */}
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-800 leading-snug pr-2">
-                {detalle.entidad.nombre}
-              </h2>
-              <button
-                onClick={() => setDetalle(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none shrink-0"
-                aria-label="Cerrar detalle"
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* Datos principales */}
-            <div className="space-y-2 text-sm mb-5">
-              <div className="flex justify-between">
-                <span className="text-gray-500">CIF</span>
-                <span className="font-mono text-gray-800">
-                  {detalle.entidad.cif ?? <span className="italic text-gray-400">sin CIF</span>}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Pais</span>
-                <span className="font-mono text-gray-800">{detalle.entidad.pais}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tipo</span>
-                <BadgeTipoPersona tipo={detalle.entidad.tipo_persona} />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Alta</span>
-                <span className="text-gray-800">{formatearFecha(detalle.entidad.fecha_alta)}</span>
-              </div>
-              {detalle.entidad.nombre_comercial && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Comercial</span>
-                  <span className="text-gray-800">{detalle.entidad.nombre_comercial}</span>
+                          <td className="px-4 py-3 font-mono text-gray-700">
+                            {entidad.cif ?? <span className="text-gray-300 italic">sin CIF</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-gray-800">{entidad.nombre}</div>
+                            {entidad.nombre_comercial && (
+                              <div className="text-xs text-gray-400">{entidad.nombre_comercial}</div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-gray-100 text-gray-700">
+                              {entidad.pais}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <BadgeTipoPersona tipo={entidad.tipo_persona} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {entidad.pais === 'ESP' && (
+                                <BadgeValidacion validado={entidad.validado_aeat} etiqueta="AEAT" />
+                              )}
+                              {PAISES_UE.has(entidad.pais) && (
+                                <BadgeValidacion validado={entidad.validado_vies} etiqueta="VIES" />
+                              )}
+                              {entidad.pais !== 'ESP' && !PAISES_UE.has(entidad.pais) && (
+                                <span className="text-xs text-gray-300">N/A</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {formatearFecha(entidad.fecha_alta)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void verificarEntidad(entidad.id)
+                              }}
+                              disabled={verificando === entidad.id}
+                              className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {verificando === entidad.id ? 'Verificando...' : 'Verificar'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
 
-            {/* Validaciones */}
-            <div className="mb-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Validaciones
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {detalle.entidad.pais === 'ESP' && (
-                  <BadgeValidacion validado={detalle.entidad.validado_aeat} etiqueta="AEAT" />
-                )}
-                {PAISES_UE.has(detalle.entidad.pais) && (
-                  <BadgeValidacion validado={detalle.entidad.validado_vies} etiqueta="VIES" />
-                )}
-                {detalle.entidad.pais !== 'ESP' && !PAISES_UE.has(detalle.entidad.pais) && (
-                  <span className="text-xs text-gray-400">No aplica validacion automatica</span>
-                )}
-              </div>
-              <button
-                onClick={() => verificarEntidad(detalle.entidad.id)}
-                disabled={verificando === detalle.entidad.id}
-                className="mt-3 w-full px-3 py-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {verificando === detalle.entidad.id ? 'Verificando...' : 'Verificar AEAT / VIES'}
-              </button>
-            </div>
+            {/* Panel de detalle */}
+            {detalle && (
+              <div className="w-80 shrink-0 bg-white rounded-lg shadow p-5">
+                {/* Cabecera detalle */}
+                <div className="flex items-start justify-between mb-4">
+                  <h2 className="text-sm font-semibold text-gray-800 leading-snug pr-2">
+                    {detalle.entidad.nombre}
+                  </h2>
+                  <button
+                    onClick={() => setDetalle(null)}
+                    className="text-gray-400 hover:text-gray-600 text-lg leading-none shrink-0"
+                    aria-label="Cerrar detalle"
+                  >
+                    &times;
+                  </button>
+                </div>
 
-            {/* Aliases */}
-            {detalle.entidad.aliases.length > 0 && (
-              <div className="mb-5">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Aliases
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {detalle.entidad.aliases.map((alias) => (
-                    <span
-                      key={alias}
-                      className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs"
-                    >
-                      {alias}
+                {/* Datos principales */}
+                <div className="space-y-2 text-sm mb-5">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">CIF</span>
+                    <span className="font-mono text-gray-800">
+                      {detalle.entidad.cif ?? <span className="italic text-gray-400">sin CIF</span>}
                     </span>
-                  ))}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Pais</span>
+                    <span className="font-mono text-gray-800">{detalle.entidad.pais}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Tipo</span>
+                    <BadgeTipoPersona tipo={detalle.entidad.tipo_persona} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Alta</span>
+                    <span className="text-gray-800">{formatearFecha(detalle.entidad.fecha_alta)}</span>
+                  </div>
+                  {detalle.entidad.nombre_comercial && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Comercial</span>
+                      <span className="text-gray-800">{detalle.entidad.nombre_comercial}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Validaciones */}
+                <div className="mb-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Validaciones
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {detalle.entidad.pais === 'ESP' && (
+                      <BadgeValidacion validado={detalle.entidad.validado_aeat} etiqueta="AEAT" />
+                    )}
+                    {PAISES_UE.has(detalle.entidad.pais) && (
+                      <BadgeValidacion validado={detalle.entidad.validado_vies} etiqueta="VIES" />
+                    )}
+                    {detalle.entidad.pais !== 'ESP' && !PAISES_UE.has(detalle.entidad.pais) && (
+                      <span className="text-xs text-gray-400">No aplica validacion automatica</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => void verificarEntidad(detalle.entidad.id)}
+                    disabled={verificando === detalle.entidad.id}
+                    className="mt-3 w-full px-3 py-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {verificando === detalle.entidad.id ? 'Verificando...' : 'Verificar AEAT / VIES'}
+                  </button>
+                </div>
+
+                {/* Aliases */}
+                {detalle.entidad.aliases.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Aliases
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {detalle.entidad.aliases.map((alias) => (
+                        <span
+                          key={alias}
+                          className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs"
+                        >
+                          {alias}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Overlays por empresa */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Uso por empresa ({detalle.overlays.length})
+                  </p>
+                  {detalle.overlays.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic">Sin registros en ninguna empresa</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {detalle.overlays.map((overlay) => (
+                        <div key={overlay.id} className="bg-gray-50 rounded-md p-3 text-xs">
+                          <p className="font-medium text-gray-700 mb-1 truncate">{overlay.empresa_nombre}</p>
+                          <div className="space-y-0.5 text-gray-500">
+                            <div className="flex justify-between">
+                              <span>Tipo</span>
+                              <span
+                                className={`font-medium ${
+                                  overlay.tipo === 'proveedor' ? 'text-orange-600' : 'text-green-600'
+                                }`}
+                              >
+                                {overlay.tipo}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Subcuenta</span>
+                              <span className="font-mono text-gray-700">{overlay.subcuenta_gasto}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Impuesto</span>
+                              <span className="font-mono text-gray-700">{overlay.codimpuesto}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Regimen</span>
+                              <span className="text-gray-700">{overlay.regimen}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-
-            {/* Overlays por empresa */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Uso por empresa ({detalle.overlays.length})
-              </p>
-              {detalle.overlays.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">Sin registros en ninguna empresa</p>
-              ) : (
-                <div className="space-y-3">
-                  {detalle.overlays.map((overlay) => (
-                    <div key={overlay.id} className="bg-gray-50 rounded-md p-3 text-xs">
-                      <p className="font-medium text-gray-700 mb-1 truncate">{overlay.empresa_nombre}</p>
-                      <div className="space-y-0.5 text-gray-500">
-                        <div className="flex justify-between">
-                          <span>Tipo</span>
-                          <span
-                            className={`font-medium ${
-                              overlay.tipo === 'proveedor' ? 'text-orange-600' : 'text-green-600'
-                            }`}
-                          >
-                            {overlay.tipo}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Subcuenta</span>
-                          <span className="font-mono text-gray-700">{overlay.subcuenta_gasto}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Impuesto</span>
-                          <span className="font-mono text-gray-700">{overlay.codimpuesto}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Regimen</span>
-                          <span className="text-gray-700">{overlay.regimen}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Modal nueva entidad */}
       {modalAbierto && (
@@ -718,7 +651,7 @@ export function Directorio() {
                 Cancelar
               </button>
               <button
-                onClick={guardarNuevaEntidad}
+                onClick={() => void guardarNuevaEntidad()}
                 disabled={!formNueva.nombre.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >

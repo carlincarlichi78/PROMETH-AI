@@ -273,3 +273,35 @@ class HistoricoModeloOut(BaseModel):
     ruta_boe: Optional[str] = None
     ruta_pdf: Optional[str] = None
     valido: bool = True
+
+
+# --- Importar / Exportar / Cierre ---
+
+class AsientoPreviewOut(BaseModel):
+    """Linea de preview de asiento para confirmacion de importacion."""
+    fecha: str
+    concepto: str
+    subcuenta: str
+    debe: float
+    haber: float
+
+
+class ImportarPreviewOut(BaseModel):
+    """Respuesta del endpoint de importacion (previo a confirmacion)."""
+    importar_id: str
+    total: int
+    asientos_preview: list[AsientoPreviewOut]
+    errores: list[str] = []
+
+
+class CierreEstadoOut(BaseModel):
+    """Estado de los pasos del cierre de ejercicio."""
+    empresa_id: int
+    ejercicio: str
+    pasos: list[dict]  # [{numero, titulo, descripcion, estado}]
+
+
+class ExportarOut(BaseModel):
+    """Metadatos de la exportacion generada."""
+    archivo: str
+    total_registros: int

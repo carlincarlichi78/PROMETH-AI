@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
+import { useApi } from '../hooks/useApi'
 
 /** Casilla de un modelo fiscal */
 interface Casilla {
@@ -42,81 +43,6 @@ const PERIODOS = [
   { valor: '0A', etiqueta: '0A — Anual' },
 ]
 
-/** Genera casillas mock segun el modelo seleccionado */
-function generarCasillasMock(modelo: string): Casilla[] {
-  switch (modelo) {
-    case '303':
-      return [
-        { numero: '01', descripcion: 'Base imponible operaciones interiores corrientes (tipo general)', valor: 125000.0, editable: false },
-        { numero: '02', descripcion: 'Cuota IVA repercutido al 21%', valor: 26250.0, editable: false },
-        { numero: '10', descripcion: 'Base imponible operaciones interiores corrientes (tipo reducido)', valor: 18500.0, editable: false },
-        { numero: '11', descripcion: 'Cuota IVA repercutido al 10%', valor: 1850.0, editable: false },
-        { numero: '28', descripcion: 'Base imponible IVA deducible operaciones interiores', valor: 48000.0, editable: false },
-        { numero: '29', descripcion: 'Cuota IVA soportado deducible', valor: 10080.0, editable: false },
-        { numero: '46', descripcion: 'IVA a compensar de periodos anteriores', valor: 0, editable: true },
-        { numero: '64', descripcion: 'Resultado liquidacion (diferencia)', valor: 18020.0, editable: false },
-        { numero: '65', descripcion: 'A ingresar / A devolver', valor: 18020.0, editable: false },
-      ]
-    case '111':
-      return [
-        { numero: '03', descripcion: 'Rendimientos del trabajo: numero de perceptores', valor: 3, editable: false },
-        { numero: '04', descripcion: 'Rendimientos del trabajo: base de retenciones', valor: 45000.0, editable: false },
-        { numero: '05', descripcion: 'Rendimientos del trabajo: retenciones e ingresos a cuenta', valor: 8100.0, editable: false },
-        { numero: '07', descripcion: 'Rendimientos profesionales: numero de perceptores', valor: 2, editable: false },
-        { numero: '08', descripcion: 'Rendimientos profesionales: base de retenciones', valor: 12000.0, editable: false },
-        { numero: '09', descripcion: 'Rendimientos profesionales: retenciones e ingresos a cuenta', valor: 2280.0, editable: false },
-        { numero: '28', descripcion: 'Total importe a ingresar', valor: 10380.0, editable: false },
-      ]
-    case '130':
-      return [
-        { numero: '01', descripcion: 'Ingresos del trimestre (actividad economica)', valor: 38000.0, editable: false },
-        { numero: '02', descripcion: 'Gastos del trimestre (actividad economica)', valor: 21000.0, editable: false },
-        { numero: '03', descripcion: 'Rendimiento neto (01 - 02)', valor: 17000.0, editable: false },
-        { numero: '04', descripcion: 'Pago fraccionado previo (20% sobre 03)', valor: 3400.0, editable: false },
-        { numero: '05', descripcion: 'Retenciones soportadas en el trimestre', valor: 760.0, editable: false },
-        { numero: '06', descripcion: 'Pagos fraccionados anteriores', valor: 0, editable: true },
-        { numero: '07', descripcion: 'Resultado a ingresar (04 - 05 - 06)', valor: 2640.0, editable: false },
-      ]
-    case '347':
-      return [
-        { numero: 'A', descripcion: 'Numero total de declarados', valor: 5, editable: false },
-        { numero: 'B', descripcion: 'Importe total de operaciones con terceros', valor: 250000.0, editable: false },
-      ]
-    default:
-      return [
-        { numero: '01', descripcion: 'Base imponible', valor: 0, editable: true },
-        { numero: '02', descripcion: 'Cuota resultante', valor: 0, editable: false },
-      ]
-  }
-}
-
-/** Genera validacion mock segun modelo y casillas */
-function generarValidacionMock(modelo: string, casillas: Casilla[]): ResultadoCalculo['validacion'] {
-  const advertencias: string[] = []
-  const errores: string[] = []
-
-  if (modelo === '303') {
-    const cuota64 = casillas.find((c) => c.numero === '64')?.valor ?? 0
-    if (cuota64 > 10000) {
-      advertencias.push('Importe elevado: revisar que todas las facturas estan registradas correctamente')
-    }
-  }
-
-  if (modelo === '130') {
-    const rendimiento = casillas.find((c) => c.numero === '03')?.valor ?? 0
-    if (rendimiento < 0) {
-      advertencias.push('Rendimiento neto negativo: posible perdida en el trimestre')
-    }
-  }
-
-  if (errores.length > 0) {
-    return { estado: 'error', mensajes: errores }
-  }
-  if (advertencias.length > 0) {
-    return { estado: 'advertencia', mensajes: advertencias }
-  }
-  return { estado: 'ok', mensajes: ['Calculo correcto. Sin incidencias detectadas.'] }
-}
 
 /** Badge de estado de validacion */
 function BadgeValidacion({ estado, mensajes }: { estado: 'ok' | 'error' | 'advertencia'; mensajes: string[] }) {
@@ -157,6 +83,7 @@ function formatearImporte(valor: number): string {
 export function GenerarModelo() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
+  const { fetchConAuth } = useApi()
   const empresaId = id ?? ''
   const anoActual = new Date().getFullYear()
 
@@ -166,6 +93,7 @@ export function GenerarModelo() {
   const [resultado, setResultado] = useState<ResultadoCalculo | null>(null)
   const [calculando, setCalculando] = useState(false)
   const [descargando, setDescargando] = useState<'boe' | 'pdf' | null>(null)
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
   const [casillasEditadas, setCasillasEditadas] = useState<Record<string, number>>({})
 
   /** Casillas combinando resultado con ediciones del usuario */
@@ -178,50 +106,45 @@ export function GenerarModelo() {
     setCalculando(true)
     setCasillasEditadas({})
     try {
-      const resp = await fetch('/api/modelos/calcular', {
+      const datos = await fetchConAuth<ResultadoCalculo>('/api/modelos/calcular', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('sfce_token') ?? ''}`,
-        },
-        body: JSON.stringify({
+        body: {
           empresa_id: Number(empresaId),
           modelo: modeloSeleccionado,
           periodo: periodoSeleccionado,
           ejercicio,
-        }),
+        },
       })
-      if (!resp.ok) throw new Error('API no disponible')
-      const datos = (await resp.json()) as ResultadoCalculo
       setResultado(datos)
-    } catch {
-      // Fallback mock
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      const casillas = generarCasillasMock(modeloSeleccionado)
-      const validacion = generarValidacionMock(modeloSeleccionado, casillas)
+    } catch (err) {
       setResultado({
         modelo: modeloSeleccionado,
         periodo: periodoSeleccionado,
         ejercicio,
-        casillas,
-        validacion,
+        casillas: [],
+        validacion: {
+          estado: 'error',
+          mensajes: [err instanceof Error ? err.message : 'Error al calcular el modelo'],
+        },
       })
     } finally {
       setCalculando(false)
     }
   }
 
-  /** Descarga un archivo desde la API con fallback visual */
+  /** Descarga un archivo desde la API */
   const descargar = async (tipo: 'boe' | 'pdf') => {
     if (!resultado) return
     setDescargando(tipo)
+    setErrorDescarga(null)
     try {
       const endpoint = tipo === 'boe' ? '/api/modelos/generar-boe' : '/api/modelos/generar-pdf'
+      const token = localStorage.getItem('sfce_token') ?? ''
       const resp = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('sfce_token') ?? ''}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           empresa_id: Number(empresaId),
@@ -231,7 +154,7 @@ export function GenerarModelo() {
           casillas: casillasActuales,
         }),
       })
-      if (!resp.ok) throw new Error('API no disponible')
+      if (!resp.ok) throw new Error(`Error al generar ${tipo.toUpperCase()}`)
       const blob = await resp.blob()
       const extension = tipo === 'boe' ? 'txt' : 'pdf'
       const nombreArchivo = `Mod${resultado.modelo}_${resultado.periodo}_${resultado.ejercicio}.${extension}`
@@ -241,9 +164,8 @@ export function GenerarModelo() {
       a.download = nombreArchivo
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      // Simular descarga con datos mock (solo en desarrollo)
-      alert(`[MOCK] Descarga de ${tipo.toUpperCase()} simulada. La API no esta disponible.`)
+    } catch (err) {
+      setErrorDescarga(err instanceof Error ? err.message : `Error al descargar ${tipo.toUpperCase()}`)
     } finally {
       setDescargando(null)
     }
@@ -407,6 +329,13 @@ export function GenerarModelo() {
               </table>
             </div>
           </div>
+
+          {/* Error de descarga */}
+          {errorDescarga && (
+            <div className="mb-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+              {errorDescarga}
+            </div>
+          )}
 
           {/* Botones de descarga */}
           <div className="flex flex-wrap gap-3">

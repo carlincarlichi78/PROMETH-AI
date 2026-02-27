@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 /** Formatos de exportacion disponibles */
 type FormatoExportar = 'csv_diario' | 'excel_multihoja' | 'csv_facturas'
@@ -27,31 +28,58 @@ const FORMATOS: { valor: FormatoExportar; etiqueta: string; descripcion: string 
  * Permite descargar datos contables en CSV o Excel.
  */
 export function Exportar() {
+  const { empresaId } = useParams<{ empresaId: string }>()
+
   const [formato, setFormato] = useState<FormatoExportar>('csv_diario')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  /** Placeholder: ejecutar exportacion */
-  const exportar = () => {
-    const formatoSeleccionado = FORMATOS.find((f) => f.valor === formato)
-    const rangoTexto = desde && hasta
-      ? `desde ${desde} hasta ${hasta}`
-      : desde
-        ? `desde ${desde}`
-        : hasta
-          ? `hasta ${hasta}`
-          : 'todo el ejercicio'
+  /** Descarga el archivo exportado */
+  const descargar = async () => {
+    setCargando(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem('sfce_token') ?? ''
+      const params = new URLSearchParams({ tipo: formato })
+      const esExcel = formato === 'excel_multihoja'
+      params.set('formato', esExcel ? 'excel' : 'csv')
+      if (desde) params.set('desde', desde)
+      if (hasta) params.set('hasta', hasta)
 
-    alert(
-      `Se exportaria: ${formatoSeleccionado?.etiqueta}\n` +
-      `Rango: ${rangoTexto}\n\n` +
-      'Esta funcionalidad se conectara al backend en una version futura.'
-    )
+      const resp = await fetch(`/api/contabilidad/${empresaId ?? ''}/exportar?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!resp.ok) {
+        const detalle = await resp.json().catch(() => ({ detail: 'Error al exportar' }))
+        throw new Error((detalle as { detail?: string }).detail ?? `Error HTTP ${resp.status}`)
+      }
+      const blob = await resp.blob()
+      const ext = esExcel ? 'xlsx' : 'csv'
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${formato}_${empresaId ?? 'empresa'}.${ext}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al exportar')
+    } finally {
+      setCargando(false)
+    }
   }
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Exportar Datos</h1>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow p-6 space-y-8">
         {/* Seleccion de formato */}
@@ -115,10 +143,11 @@ export function Exportar() {
         {/* Boton exportar */}
         <div className="pt-2">
           <button
-            onClick={exportar}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            onClick={() => void descargar()}
+            disabled={cargando}
+            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
           >
-            Exportar
+            {cargando ? 'Exportando...' : 'Exportar'}
           </button>
         </div>
       </div>
