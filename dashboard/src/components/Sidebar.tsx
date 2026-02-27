@@ -49,11 +49,17 @@ export function Sidebar() {
           ],
         },
         {
+          titulo: 'Fiscal',
+          enlaces: [
+            { ruta: `/empresa/${empresaId}/modelos-fiscales`, etiqueta: 'Modelos Fiscales' },
+            { ruta: `/empresa/${empresaId}/calendario`, etiqueta: 'Calendario Fiscal' },
+          ],
+        },
+        {
           titulo: 'Operaciones',
           enlaces: [
             { ruta: `/empresa/${empresaId}/importar`, etiqueta: 'Importar' },
             { ruta: `/empresa/${empresaId}/exportar`, etiqueta: 'Exportar' },
-            { ruta: `/empresa/${empresaId}/calendario`, etiqueta: 'Calendario Fiscal' },
             { ruta: `/empresa/${empresaId}/cierre`, etiqueta: 'Cierre Ejercicio' },
           ],
         },

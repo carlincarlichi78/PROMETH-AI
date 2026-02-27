@@ -17,6 +17,9 @@ import { Exportar } from './pages/Exportar'
 import { Calendario } from './pages/Calendario'
 import { CierreEjercicio } from './pages/CierreEjercicio'
 import { Directorio } from './pages/Directorio'
+import { ModelosFiscales } from './pages/ModelosFiscales'
+import { GenerarModelo } from './pages/GenerarModelo'
+import { HistoricoModelos } from './pages/HistoricoModelos'
 import { NotFound } from './pages/NotFound'
 
 /** Definicion de rutas de la aplicacion */
@@ -58,6 +61,11 @@ export function App() {
         <Route path="/empresa/:id/exportar" element={<Exportar />} />
         <Route path="/empresa/:id/calendario" element={<Calendario />} />
         <Route path="/empresa/:id/cierre" element={<CierreEjercicio />} />
+
+        {/* Modelos fiscales */}
+        <Route path="/empresa/:id/modelos-fiscales" element={<ModelosFiscales />} />
+        <Route path="/empresa/:id/modelos-fiscales/generar" element={<GenerarModelo />} />
+        <Route path="/empresa/:id/modelos-fiscales/historico" element={<HistoricoModelos />} />
       </Route>
 
       {/* 404 */}
