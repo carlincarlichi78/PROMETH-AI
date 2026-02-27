@@ -268,18 +268,28 @@ Campos nuevos en resultado: `_ocr_tier`, `_ocr_tier_motivo`, `_ocr_motores_usado
 
 **Solucion**: 43 familias de plantillas (18 facturas + 6 suministros + 10 nominas + 6 bancarios + 3 seguros) + degradacion agresiva (13 capas) + randomizacion etiquetas + provocacion aprendizaje (10 escenarios) + documentos compuestos.
 
-**Estado**: Design + Plan completados. Implementacion pendiente (16 tasks).
+**Estado**: Tasks 1-8 COMPLETADOS. 43 plantillas + infraestructura creadas.
+Tasks completados:
+- T1: 4 YAMLs (`sinonimos_etiquetas`, `convenios_nominas`, `provocaciones`, `formatos`)
+- T2: 3 utils (`etiquetas.py`, `variaciones.py`, `compuestos.py`) + pikepdf instalado
+- T3: `ruido.py` v2 — 13 capas degradacion (D01-D13) + 6 perfiles calidad + `generar_html_degradacion()`
+- T4: `base_v2.css` — CSS reset + custom properties + clases utilitarias
+- T5: 18 plantillas facturas (F01-F18) — todas con layout radicalmente diferente
+- T6: 6 plantillas suministros (S01-S06) — electrica, gas, agua, telefonia, hosting, multi
+- T7: 10 plantillas nominas (N01-N10) — A3Nom, Sage, Meta4, Factorial, gestoria, sectores
+- T8: 9 plantillas bancarios/seguros (B01-B06, G01-G03)
 
-### Proxima sesion: Tasks 1-4 (infraestructura)
-1. **Task 1**: Crear 4 YAMLs datos (`sinonimos_etiquetas`, `convenios_nominas`, `provocaciones`, `formatos`)
-2. **Task 2**: Crear 3 utils (`etiquetas.py`, `variaciones.py`, `compuestos.py`)
-3. **Task 3**: Ampliar `ruido.py` con 13 capas degradacion + 6 perfiles calidad
-4. **Task 4**: Crear `base_v2.css` con custom properties
+### Proxima sesion: Tasks 9-14 (integrar generadores + motor.py)
+- T9: Modificar gen_facturas.py — familias + variaciones + etiquetas
+- T10: Modificar gen_nominas.py — convenios + familias
+- T11: Modificar gen_suministros/bancarios/seguros.py — familias
+- T12: Crear gen_provocaciones.py + gen_compuestos.py
+- T13: Modificar motor.py + pdf_renderer.py — integrar todo
+- T14: Actualizar empresas.yaml — asignar familias a proveedores
 
-### Sesiones siguientes
-- **Sesion 3**: Tasks 5-8 — 43 plantillas HTML (la mas pesada)
-- **Sesion 4**: Tasks 9-14 — integrar generadores + motor.py
-- **Sesion 5**: Tasks 15-16 — tests + validacion + ejecucion completa
+### Sesion final: Tasks 15-16 (tests + ejecucion)
+- T15: Tests unitarios generador v2
+- T16: Ejecucion completa + validacion + deploy
 
 ## Proximos pasos (otros)
 
