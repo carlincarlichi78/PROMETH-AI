@@ -1,5 +1,33 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-27 — Sesion: SFCE v2 Fase D (API + Dashboard + Infra GitHub)
+
+**Objetivo**: Implementar Fase D del plan SFCE Evolucion v2.
+
+**Fase D completada (Tasks 28-37)**:
+- T28: FastAPI base con Pydantic schemas, CORS, lifespan BD, 5 routers (35 tests)
+- T29: JWT auth con bcrypt directo (no passlib), 3 roles admin/gestor/readonly (33 tests)
+- T30: WebSocket con canales por empresa, asyncio.Lock, 6 tipos evento (21 tests)
+- T31: Scaffolding React dashboard — routing, AuthContext, API client, useWebSocket
+- T32-T33: Dashboard empresas+contabilidad — PyG, Balance, Diario paginado, Facturas, Activos
+- T34-T35: Dashboard procesamiento — Inbox, Pipeline real-time, Cuarentena, Importar/Exportar, Calendario, Cierre
+- T36: File watcher con watchdog, 3 modos (manual/semi/auto), debounce (35 tests)
+- T37: Sistema licencias JWT, modulos, max_empresas, verificacion arranque (42 tests)
+
+**Infra GitHub**:
+- Repo creado: `carlincarlichi78/SPICE` (privado)
+- PR #1 abierta: feat/sfce-v2-fase-d → main (+11,109 -171 lineas, 70 archivos)
+- Limpieza git: 234 binarios (PDFs/Excel/JSON clientes) eliminados del tracking
+- `.gitignore` actualizado: excluye binarios clientes, build artifacts, node_modules
+
+**Fix notable**: passlib incompatible con bcrypt 5.x → se usa bcrypt directamente
+
+**Tests totales**: 645 PASS (+166 nuevos)
+**Branch**: `feat/sfce-v2-fase-d`
+**Progreso plan v2**: 37/46 tasks (80%)
+
+---
+
 ## 2026-02-27 — Sesion: SFCE v2 Fases B+C (motor central + BD)
 
 **Objetivo**: Implementar Fases B y C del plan SFCE Evolucion v2.

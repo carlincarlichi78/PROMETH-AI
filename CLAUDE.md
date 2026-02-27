@@ -343,9 +343,18 @@ Tasks completados:
 **API arranque**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 **Dashboard dev**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 
+## GitHub
+
+- **Repo**: `carlincarlichi78/SPICE` (privado)
+- **Remote**: `https://github.com/carlincarlichi78/SPICE.git`
+- **Branch activa**: `feat/sfce-v2-fase-d`
+- **PR abierta**: #1 (feat/sfce-v2-fase-d → main)
+- **Cuenta**: carlincarlichi78 (autenticada via `gh`)
+- **Binarios excluidos**: PDFs, Excel, JSONs de clientes NO se trackean (ver .gitignore)
+
 ## Proximos pasos
 
-- **Implementar Fase E** (Tasks 38-46): naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
+- **Mergear PR #1** y empezar Fase E (Tasks 38-46): naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 - Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
