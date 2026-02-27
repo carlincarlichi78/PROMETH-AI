@@ -215,16 +215,43 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
                 pass
     else:
         cif = (datos.get("receptor_cif") or "").upper()
+        entidad_config = config.buscar_cliente_por_cif(cif)
+        # Fallback: buscar por nombre del receptor (clientes sin CIF)
+        if not entidad_config and doc.get("entidad"):
+            entidad_config = config.buscar_cliente_por_nombre(doc["entidad"])
+        if not entidad_config:
+            nombre_ocr = datos.get("receptor_nombre", "")
+            if nombre_ocr:
+                entidad_config = config.buscar_cliente_por_nombre(nombre_ocr)
+        nombre_fs = entidad_config.get("nombre_fs", "") if entidad_config else ""
+        # Si config tiene CIF, usarlo
+        if entidad_config and entidad_config.get("cif"):
+            cif = entidad_config["cif"].upper()
         cif_normalizado = _normalizar_cif(cif)
-        try:
-            clientes = api_get("clientes", params={
-                "cifnif": cif
-            }, limit=50)
-            for c in clientes:
-                if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
-                    return c.get("codcliente")
-        except Exception:
-            pass
+
+        # Buscar en FS por cifnif (si hay CIF)
+        if cif_normalizado:
+            try:
+                clientes = api_get("clientes", params={
+                    "cifnif": cif
+                }, limit=50)
+                for c in clientes:
+                    if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
+                        return c.get("codcliente")
+            except Exception:
+                pass
+
+        # Buscar por nombre en FS (clientes sin CIF)
+        if nombre_fs:
+            try:
+                clientes = api_get("clientes", params={
+                    "nombre": nombre_fs
+                }, limit=50)
+                for c in clientes:
+                    if c.get("nombre", "").upper() == nombre_fs.upper():
+                        return c.get("codcliente")
+            except Exception:
+                pass
 
     return None
 

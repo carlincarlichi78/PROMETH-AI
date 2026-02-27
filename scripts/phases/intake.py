@@ -308,6 +308,13 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
     elif tipo_doc == "FV":
         cif = (datos_gpt.get("receptor_cif") or "").upper()
         entidad = config.buscar_cliente_por_cif(cif) if cif else None
+        # Fallback: buscar por nombre del receptor (clientes sin CIF)
+        if not entidad:
+            nombre_receptor = datos_gpt.get("receptor_nombre") or ""
+            if nombre_receptor:
+                entidad = config.buscar_cliente_por_nombre(nombre_receptor)
+                if entidad:
+                    logger.info(f"FV: cliente encontrado por nombre '{nombre_receptor}': {entidad.get('_nombre_corto')}")
         return entidad
 
     return None

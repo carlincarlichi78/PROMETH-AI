@@ -116,11 +116,30 @@ class ConfigCliente:
         return None
 
     def buscar_cliente_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca cliente en config por CIF (normalizado)."""
+        """Busca cliente en config por CIF (normalizado).
+
+        Ignora clientes con CIF vacio para evitar falsos positivos.
+        """
         cif_norm = _normalizar_cif(cif)
+        if not cif_norm:
+            return None
         for nombre, datos in self.clientes.items():
-            if _normalizar_cif(datos.get("cif", "")) == cif_norm:
+            cif_config = _normalizar_cif(datos.get("cif", ""))
+            if cif_config and cif_config == cif_norm:
                 return {**datos, "_nombre_corto": nombre}
+        return None
+
+    def buscar_cliente_por_nombre(self, nombre: str) -> Optional[dict]:
+        """Busca cliente por nombre o aliases."""
+        nombre_upper = nombre.upper()
+        for clave, datos in self.clientes.items():
+            if clave.upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            if datos.get("nombre_fs", "").upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            for alias in datos.get("aliases", []):
+                if alias.upper() in nombre_upper or nombre_upper in alias.upper():
+                    return {**datos, "_nombre_corto": clave}
         return None
 
     def es_intracomunitario(self, nombre_prov: str) -> bool:
