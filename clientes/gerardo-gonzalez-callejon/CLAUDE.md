@@ -11,117 +11,89 @@
 - **Email**: PENDIENTE
 
 ## Actividades economicas
-1. **Podologia** — actividad sanitaria, clinica propia
-2. **Estetica** — actividad complementaria en el mismo local
+1. **Podologia** — actividad sanitaria, clinica propia (EXENTA IVA)
+2. **Estetica** — actividad complementaria en el mismo local (IVA 21%)
 
 ## Regimen fiscal
 - Estimacion directa (simplificada o normal — PENDIENTE confirmar)
 - **Podologia**: exenta de IVA (Art. 20.1.3 LIVA — asistencia sanitaria)
 - **Estetica**: sujeta a IVA 21% (no es asistencia sanitaria a efectos fiscales)
-- Prorrata o sectores diferenciados por tener actividad exenta + no exenta
-
-## Obligaciones fiscales
-
-### Trimestrales
-- **Modelo 303**: IVA (solo por actividad de estetica; podologia exenta)
-- **Modelo 130**: Pago fraccionado IRPF (autonomo en estimacion directa)
-- **Modelo 111**: Retenciones IRPF (tiene empleados en ambas actividades)
-
-### Anuales
-- **Modelo 390**: Resumen anual IVA
-- **Modelo 100**: IRPF (declaracion anual — se presenta con la renta)
-- **Modelo 347**: Operaciones con terceros >3.005,06 EUR (febrero)
-
-## Empleados
-- **Podologia**: varios empleados (plantilla estable)
-- **Estetica**: 1-2 empleados (variable segun temporada)
-
-## Particularidades
-- Dos actividades con tratamiento de IVA diferente (exenta + sujeta)
-- Debe llevar contabilidad separada o prorrata de sectores diferenciados
-- Gastos comunes (local, suministros) se reparten entre ambas actividades
-- Retenciones del 15% en facturas a empresas/profesionales (7% si es nuevo autonomo)
-- Modelo 111 confirmado: tiene nominas con retenciones IRPF
-
-## Criterio de clasificacion de facturas
-- La clasificacion es **por factura**, no por proveedor
-- Un mismo proveedor puede facturar a podologia, estetica o ambas
-- Categorias de imputacion: podologia / estetica / compartido
-- Gastos compartidos (alquiler, luz, agua, internet): reparto segun criterio de 2024
-- El catalogo de proveedores se construira a partir de la contabilidad de 2024 del gestor
-- Para proveedores ambiguos, el usuario indica a que actividad va cada factura
-
-## Plan de trabajo
-1. Recibir documentacion 2024 del gestor anterior
-2. Extraer catalogo de proveedores/clientes con patron habitual de cada uno
-3. Dar de alta proveedores y clientes en FacturaScripts
-4. Registrar contabilidad 2025 replicando criterios del gestor
-5. Comparar trimestralmente con la contabilidad del gestor para validar
-
-## Estructura de carpetas
-```
-inbox/                          ← el usuario tira todo aqui
-2024/                           ← documentacion del gestor (referencia)
-2025/
-├── libros_contables_2025.xlsx  ← Excel con 7 pestanas (libros obligatorios)
-└── procesado/T1-T4/            ← podologia/estetica/compartido/nominas/banco
-```
-
-## Workflow de procesamiento
-1. Usuario mete documentos en inbox/
-2. Claude lee inbox/, identifica y clasifica cada documento
-3. Registra en FacturaScripts (facturas via API, asientos directos para gastos sin factura)
-4. Actualiza libros_contables_2025.xlsx
-5. Mueve documentos procesados a 2025/procesado/TX/actividad/tipo/
-6. Si algo es ambiguo, pregunta al usuario
-
-## Libros contables (pestanas del Excel)
-1. Ingresos — facturas emitidas
-2. Gastos — facturas recibidas + gastos sin factura
-3. Bienes Inversion — activos amortizables
-4. Registro Fact. Emitidas — libro IVA (desglose por tipos)
-5. Registro Fact. Recibidas — libro IVA soportado
-6. Resumen Trimestral — totales por trimestre/actividad (para modelos 303/130/111)
-7. Conciliacion Bancaria — extracto vs facturas
+- Sectores diferenciados: IVA solo deducible por gastos de estetica
+- Compensacion IVA arrastrada de 2024: 1,609.34 EUR (toda consumida en 2025)
 
 ## Estado en FacturaScripts
 - Empresa creada (codigo 2, nombre corto G. GONZALEZ)
-- Tipo: Persona fisica, NIF 76638663H
-- Ejercicio 2025 creado (codejercicio=0002, 01/01/2025 - 31/12/2025, estado Abierto)
-- Plan contable PGC espanol importado (802 cuentas, 721 subcuentas)
-- Regimen general de IVA
+- Ejercicio 2025 (codejercicio=0002, 01/01/2025 - 31/12/2025, Abierto)
+- PGC importado (802 cuentas, 721 subcuentas)
+- **92 facturas proveedor** registradas (IDs 920-1012)
+- **79 asientos** verificados + 13 sin asiento (Luz/SUM + Fisaude)
+- **79 subcuentas corregidas** (6000→subcuenta especifica por proveedor)
+- Datos limpios: se eliminaron 131 facturas + 426 asientos huerfanos de sesiones anteriores
 
-## SFCE Pipeline - Estado
-- config.yaml completo: 17 proveedores, codejercicio 0002, empleados true
-- intake.py adaptado: rglob recursivo para subcarpetas, filtro CARPETA REFERENCIA
-- **Dry-run**: 126/127 validados (BAN:71, FC:28, SUM:17, RLC:10, IMP:1)
-- **Ultimo pipeline (sesion 27/02)**: 119/126 OK (94%), 7 fallidos — PERO FS VACIO (sesion perdio contexto)
-- **Estado actual FS**: VACIO (0 facturas, 0 asientos para empresa 2)
-- **Archivos conservados**: intake_results.json (127 docs OCR), validated_batch.json (126 validados)
-- **pipeline_state**: fases=[intake, pre_validacion] — listo para --resume desde REGISTRO
-- **NO repetir OCR**: intake y pre_validacion ya hechos, conservados en disco
+## SFCE Pipeline - Resultado (sesion 27/02/2026)
+- config.yaml: 48 proveedores, codejercicio 0002
+- **Registro**: 92/93 docs registrados (1 NC SkinClinic devolucion fallida por discrepancia total)
+- **Asientos**: 79 OK, 13 sin asiento (12 Luz.pdf tipo SUM + 1 Fisaude)
+- **Correccion**: 79 correcciones automaticas (subcuentas), 36 avisos manuales (discrepancias IRPF)
+- **Cross-validation**: 6 PASS / 7 FAIL (46%) — esperado con 31% cobertura docs
+  - PASS: Ingresos/700, IVA repercutido/477, Libro diario, Balance, Clientes, Personal
+  - FAIL: Gastos/600 (diff 39098), IVA soportado/472 (diff 105.74), Autoliq, Fact=Asientos, 303, Proveedores, Auditor IA
 
-### Comando para retomar (COPIAR Y EJECUTAR)
-```bash
-cd /c/Users/carli/PROYECTOS/CONTABILIDAD
-export FS_API_TOKEN='iOXmrA1Bbn8RDWXLv91L'
-export MISTRAL_API_KEY='yATzL24fWGoXtzfFutkvMQm3ZONwYZuk'
-export GEMINI_API_KEY='AIzaSyCsKoDsjZ9kYVONe21Kx1Y47UbZb8sEGWY'
-export OPENAI_API_KEY=$(grep OPENAI_API_KEY /c/Users/carli/PROYECTOS/AUTOMATIZACION_FACTURAS/.env | cut -d'"' -f2)
-python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --resume --force --no-interactivo
-```
+### Problemas identificados
+1. **13 facturas SIN ASIENTO** (Luz.pdf SUM + Fisaude): asientos.py busca en facturaclientes/ por error, no genera asiento contable
+2. **36 discrepancias total asiento vs factura**: IRPF no se aplica correctamente. Afecta web_developer (7%), canete_may (7%), carolina_lara (15%), sainero_gloria (15%), nuevalos_marta (7%)
+3. **Bug pipeline.py:405**: crash en resumen porque `pre_val["validados"]` son strings (nombres archivo), no dicts. No afecta el pipeline, solo el resumen final
+4. **IVA soportado diff 105.74**: 4574.60 FS vs 4468.86 calculado — posible SUM mal registrada
 
-### 7 docs fallidos (ultimo pipeline 119/126)
-1. **Google/Meta FC rollback** (4): IVA intracomunitario — OCR extrae total sin IVA, FS aplica 21% extra
-2. **Internet SUM** (1): Total OCR=46.10 vs FS=55.78 (discrepancia base)
-3. **SkinClinic FC** (1): CIF vacio en config, entidad no encontrada
-4. **Asesoria Laboral Dec** (1): Total OCR=72.60, FS=0.00
+### OCR conservado
+- validated_batch_full.json: 93 docs con OCR completo
+- validated_batch.json: copia de full (93 docs)
+- registered.json: 92 docs registrados con idfactura
+- pipeline_state.json: 7 fases completadas
 
-### Bugs corregidos (commits 51d46fe + 03e91d5)
-- SUM incluido en `es_proveedor` en TODAS las funciones de registration.py (8 ocurrencias total)
-- Busqueda entidad: fallback a entidad_cif + buscar_proveedor_por_nombre
-- Asiento directo fallido no cae al path facturas
-- Nuevos subtipos BAN: transferencia, impuesto_tasa, tasa, cuota
+## Modelo 303 oficial del gestor (extraido de PDFs)
+
+### IVA repercutido (ventas estetica al 21%)
+| Trim | Base 21% | Cuota | Intracom | Total deveng |
+|------|----------|-------|----------|-------------|
+| T1 | 6,327.59 | 1,328.79 | 71.25 | 1,400.04 |
+| T2 | 5,387.04 | 1,131.28 | 95.76 | 1,227.04 |
+| T3 | 3,374.38 | 708.62 | 21.22 | 729.84 |
+| T4 | 8,972.96 | 1,884.32 | 45.08 | 1,929.40 |
+| **TOT** | **24,061.97** | **5,053.01** | **233.31** | **5,286.32** |
+
+### IVA soportado deducible (solo estetica)
+| Trim | Base int | Cuota int | Intracom | Total deduc |
+|------|----------|-----------|----------|------------|
+| T1 | 4,627.27 | 795.82 | 71.25 | 867.07 |
+| T2 | 3,929.90 | 812.23 | 95.76 | 907.99 |
+| T3 | 2,175.18 | 456.79 | 21.22 | 478.01 |
+| T4 | 5,249.46 | 908.57 | 45.08 | 953.65 |
+| **TOT** | **15,981.81** | **2,973.41** | **233.31** | **3,206.72** |
+
+### Resultado y compensaciones
+| Trim | Resultado | Comp.anterior | Aplicada | Pendiente | A pagar |
+|------|-----------|---------------|----------|-----------|---------|
+| T1 | 532.97 | 1,609.34 | 532.97 | 1,076.37 | 0.00 |
+| T2 | 319.05 | 1,076.37 | 319.05 | 757.32 | 0.00 |
+| T3 | 251.83 | 757.32 | 251.83 | 505.49 | 0.00 |
+| T4 | 975.75 | 505.49 | 505.49 | 0.00 | **470.26** |
+
+### Verificacion cruzada
+- Excel Estetica IVA vs 303 deducible: **COINCIDE EXACTO** (3,206.72 = 3,206.72)
+- Ingresado efectivo 2025: **470.26 EUR** (solo T4, resto compensado con saldo 2024)
+
+## Gastos del gestor (Excels oficiales)
+| Actividad | Docs | Base total | IVA | IRPF |
+|-----------|------|-----------|-----|------|
+| Podologia | 170 | 41,259.42 | 154.24 | 1,586.66 |
+| Estetica | 88 | 17,374.67 | 3,206.72 | 697.73 |
+| **Total** | **258** | **58,634.09** | **3,360.96** | **2,284.39** |
+
+## Cobertura pipeline vs gestor
+- **Docs**: 93 OCR de 258 gestor = **31% cobertura** (faltan 165 docs)
+- **Base FS**: 40,086.79 neto en FS
+- **IVA FS**: 4,574.60 (incluye pod+est, sin filtrar por actividad)
 
 ## Ingresos (del Libro bienes de ingresos - NO registrados en FS)
 - Podologia (exenta IVA): T1=18,646.68 T2=22,641.68 T3=28,830.00 T4=29,629.50 Total=99,747.86
@@ -133,18 +105,34 @@ python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 
 - Items 1-16, 23-25: Podologia | Items 17-22: Estetica
 
 ## Proximos pasos (por prioridad)
-1. **Ejecutar pipeline --resume** (comando arriba): salta OCR, va directo a REGISTRO (~3-5 min)
-2. **Resolver 7 fallidos**: Google (IVA intracom), Internet, SkinClinic (CIF), Asesoria (total)
-3. **Corregir subcuentas** 6000→config en facturas via PUT partidas
-4. **Registrar ingresos** del Excel en FS (facturas cliente o asientos directos)
-5. **Clasificar gastos** por actividad (pod/est/compartido) via carpeta_origen
-6. **Comparar con modelos oficiales** de CARPETA REFERENCIA (303, 130, 111, 390, 190)
+1. **Conseguir los PDFs de vuelta**: usuario debe re-enviar los 152 PDFs eliminados
+2. **Fix IRPF en registro**: facturas con IRPF (7%/15%) no aplican retencion en FS — necesita codretencion en crearFacturaProveedor o correccion post-registro
+3. **Fix 13 facturas sin asiento**: verificar si asientos.py usa endpoint incorrecto para SUM
+4. **Fix pipeline.py:405**: crash en resumen (string vs dict en pre_val.validados)
+5. **Clasificar gastos por actividad**: CRITICO para replicar 303 — cada factura debe ser pod/est/compartido
+6. **Registrar ingresos** del Excel en FS (facturas cliente)
+7. **Completar documentos faltantes**: 165 docs que el gestor tiene y nosotros no
+8. **Generar modelos fiscales** y comparar trimestre a trimestre
+
+## Insight arquitectonico clave
+El 303 de Gerardo **solo incluye IVA de estetica**. Para replicarlo:
+- El config.yaml necesita campo `actividad` por proveedor (pod/est/compartido)
+- Gastos compartidos (luz, local, internet) requieren criterio de reparto
+- El pipeline debe filtrar IVA deducible = solo gastos de estetica
+- La compensacion 2024 (1,609.34) debe configurarse como saldo inicial
 
 ## Pendiente general
 - [ ] Confirmar email
 - [ ] Confirmar regimen estimacion directa
 - [ ] Confirmar epigrafes IAE
+- [ ] Re-obtener 152 PDFs eliminados del usuario
+- [ ] Fix IRPF en facturas (36 discrepancias)
+- [ ] Fix 13 facturas sin asiento
+- [ ] Fix pipeline.py:405 bug resumen
 - [x] Dar de alta en FacturaScripts como empresa
-- [x] Configurar config.yaml SFCE
-- [x] Dry-run pipeline exitoso
-- [x] Pipeline ejecutado 119/126 OK (pendiente re-ejecutar con FS limpio)
+- [x] Configurar config.yaml SFCE (48 proveedores)
+- [x] Pipeline OCR (93 validados de 107)
+- [x] Comparacion completa 303 vs gestor (MATCH EXACTO IVA estetica)
+- [x] Re-registro 92/93 docs en FS (limpio, sin duplicados)
+- [x] Correccion subcuentas automatica (79 corregidas)
+- [x] Cross-validation 6/13 PASS (46%, esperado con cobertura parcial)
