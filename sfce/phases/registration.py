@@ -230,8 +230,12 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
 
 
 def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
-                         codigo_entidad: str) -> dict:
+                         codigo_entidad: str, motor=None) -> dict:
     """Construye form-data para crear factura en FS.
+
+    Args:
+        motor: MotorReglas opcional. Si se pasa, usa motor.decidir_asiento()
+               para resolver codimpuesto, regimen e ISP con trazabilidad.
 
     Returns:
         dict con campos form-encoded
@@ -268,20 +272,39 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     if tipo_doc == "NC":
         form["codserie"] = "R"
 
-    # Buscar entidad en config para codimpuesto y regimen
+    # --- Resolver codimpuesto y regimen ---
+    # Buscar entidad en config (necesario para reglas_especiales en ambos paths)
     cif = (datos.get("emisor_cif") if es_proveedor
            else datos.get("receptor_cif")) or ""
-    entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor
-               else config.buscar_cliente_por_cif(cif))
-    # Fallback: buscar por nombre si CIF vacio o no encontrado
+    entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor and cif
+               else config.buscar_cliente_por_cif(cif) if cif else None)
     if not entidad and doc.get("entidad"):
         entidad = (config.buscar_proveedor_por_nombre(doc["entidad"]) if es_proveedor
                    else config.buscar_cliente_por_nombre(doc.get("entidad", "")))
-    codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
-    regimen = (entidad.get("regimen", "general") if entidad else "general").lower()
+
+    if motor:
+        # Usar MotorReglas para decision con trazabilidad
+        doc_motor = {
+            "emisor_cif": cif,
+            "tipo_doc": tipo_doc,
+            "concepto": datos.get("numero_factura", ""),
+            "base_imponible": datos.get("base_imponible", 0),
+        }
+        decision = motor.decidir_asiento(doc_motor)
+        codimpuesto_defecto = decision.codimpuesto
+        regimen = decision.regimen
+        es_intracomunitario = decision.isp
+        form["_decision_log"] = decision.log_razonamiento
+        form["_subcuenta_gasto"] = decision.subcuenta_gasto
+        if es_intracomunitario:
+            logger.info(f"  Motor: regimen intracomunitario, ISP activo")
+    else:
+        # Legacy: resolver codimpuesto y regimen desde entidad
+        codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
+        regimen = (entidad.get("regimen", "general") if entidad else "general").lower()
+        es_intracomunitario = regimen == "intracomunitario"
 
     # Bug fix: intracomunitario siempre IVA0 (autorepercusion se hace post-registro)
-    es_intracomunitario = regimen == "intracomunitario"
     if es_intracomunitario:
         codimpuesto_defecto = "IVA0"
         logger.info(f"  Regimen intracomunitario: usando IVA0 (autorepercusion post-registro)")
