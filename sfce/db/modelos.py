@@ -1,11 +1,11 @@
-"""SFCE DB — Modelos SQLAlchemy (16 tablas)."""
+"""SFCE DB — Modelos SQLAlchemy (24 tablas)."""
 
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    Numeric, String, Text, JSON, UniqueConstraint, Index
+    Boolean, Column, Date, DateTime, Float, ForeignKey, Integer,
+    Numeric, String, Text, JSON, UniqueConstraint, Index, func
 )
 from sqlalchemy.orm import relationship
 
@@ -379,3 +379,110 @@ class ModeloFiscalGenerado(Base):
     __table_args__ = (
         Index("ix_mfg_empresa_ejercicio", "empresa_id", "ejercicio"),
     )
+
+
+# --- Tablas nuevas para dashboard rewrite ---
+
+class Presupuesto(Base):
+    """Presupuesto anual por partida contable."""
+    __tablename__ = "presupuestos"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    ejercicio = Column(String(4), nullable=False)
+    subcuenta = Column(String(20), nullable=False)
+    descripcion = Column(String(200))
+    importe_mensual = Column(JSON)  # {"01": 1000, "02": 1000, ...}
+    importe_total = Column(Float, default=0)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class CentroCoste(Base):
+    """Centro de coste (departamento, proyecto, sucursal)."""
+    __tablename__ = "centros_coste"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    nombre = Column(String(100), nullable=False)
+    tipo = Column(String(50))  # departamento | proyecto | sucursal | obra
+    activo = Column(Boolean, default=True)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class AsignacionCoste(Base):
+    """Asignacion de gasto a centro de coste."""
+    __tablename__ = "asignaciones_coste"
+
+    id = Column(Integer, primary_key=True)
+    centro_id = Column(Integer, ForeignKey("centros_coste.id"), nullable=False)
+    partida_id = Column(Integer, ForeignKey("partidas.id"), nullable=False)
+    porcentaje = Column(Float, default=100)
+    fecha_asignacion = Column(DateTime, server_default=func.now())
+
+
+class ScoringHistorial(Base):
+    """Historial de scoring de clientes/proveedores."""
+    __tablename__ = "scoring_historial"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    entidad_tipo = Column(String(20))  # proveedor | cliente
+    entidad_id = Column(Integer, nullable=False)
+    puntuacion = Column(Integer)  # 0-100
+    factores = Column(JSON)
+    fecha = Column(DateTime, server_default=func.now())
+
+
+class CopilotConversacion(Base):
+    """Conversacion del copiloto IA."""
+    __tablename__ = "copilot_conversaciones"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    usuario_id = Column(Integer, nullable=False)
+    titulo = Column(String(200))
+    mensajes = Column(JSON, default=list)  # [{rol, contenido, timestamp}]
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now())
+
+
+class CopilotFeedback(Base):
+    """Feedback del usuario sobre respuestas del copiloto."""
+    __tablename__ = "copilot_feedback"
+
+    id = Column(Integer, primary_key=True)
+    conversacion_id = Column(Integer, ForeignKey("copilot_conversaciones.id"), nullable=False)
+    mensaje_idx = Column(Integer, nullable=False)
+    valoracion = Column(Integer)  # 1 (dislike) | 5 (like)
+    correccion = Column(Text)
+    fecha = Column(DateTime, server_default=func.now())
+
+
+class InformeProgramado(Base):
+    """Informe programado para generacion automatica."""
+    __tablename__ = "informes_programados"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    nombre = Column(String(200), nullable=False)
+    plantilla = Column(String(50))  # mensual | trimestral | anual | adhoc
+    secciones = Column(JSON)  # ["pyg", "balance", "ratios", ...]
+    periodicidad = Column(String(20))  # mensual | trimestral | anual | manual
+    email_destino = Column(String(200))
+    activo = Column(Boolean, default=True)
+    ultimo_generado = Column(DateTime)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class VistaUsuario(Base):
+    """Vista personalizada de filtros guardada por usuario."""
+    __tablename__ = "vistas_usuario"
+
+    id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, nullable=False)
+    pagina = Column(String(100), nullable=False)  # ej: "facturas-emitidas"
+    nombre = Column(String(100), nullable=False)
+    filtros = Column(JSON, default=dict)
+    columnas = Column(JSON)  # columnas visibles y orden
+    es_default = Column(Boolean, default=False)
+    fecha_creacion = Column(DateTime, server_default=func.now())
