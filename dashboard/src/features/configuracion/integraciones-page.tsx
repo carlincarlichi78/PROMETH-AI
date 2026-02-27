@@ -34,7 +34,7 @@ export default function IntegracionesPage() {
       {cargando && <p style={{ color: '#9ca3af' }}>Cargando integraciones...</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {integraciones.map((integ) => {
-          const est = ESTADO_COLOR[integ.estado] ?? ESTADO_COLOR.desconectado
+          const est = ESTADO_COLOR[integ.estado] ?? ESTADO_COLOR['desconectado']!
           return (
             <div key={integ.nombre} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#475569' }}>

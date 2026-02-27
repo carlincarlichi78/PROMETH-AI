@@ -43,11 +43,11 @@ export default function UsuariosPage() {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {usuarios.map((u) => {
-          const rol = ROL_COLOR[u.rol] ?? ROL_COLOR.gestor
+          const rol = ROL_COLOR[u.rol] ?? ROL_COLOR['gestor']!
           return (
             <div key={u.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#475569', fontSize: 15 }}>
-                {u.nombre?.[0]?.toUpperCase() ?? u.email[0].toUpperCase()}
+                {u.nombre?.[0]?.toUpperCase() ?? u.email[0]?.toUpperCase() ?? '?'}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: '#1e293b' }}>{u.nombre || u.email}</div>
