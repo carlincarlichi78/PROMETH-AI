@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from sfce.db.base import Base, crear_motor, crear_sesion
 from sfce.db.repositorio import Repositorio
+from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en metadata
+from sfce.api.auth import crear_admin_por_defecto
 
 
 @asynccontextmanager
@@ -18,6 +20,7 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.sesion_factory = sesion_factory
     app.state.repo = Repositorio(sesion_factory)
+    crear_admin_por_defecto(sesion_factory)
     yield
     engine.dispose()
 
@@ -54,10 +57,12 @@ def crear_app(sesion_factory=None) -> FastAPI:
     from sfce.api.rutas.empresas import router as empresas_router
     from sfce.api.rutas.documentos import router as documentos_router
     from sfce.api.rutas.contabilidad import router as contabilidad_router
+    from sfce.api.rutas.auth_rutas import router as auth_router
 
     app.include_router(empresas_router)
     app.include_router(documentos_router)
     app.include_router(contabilidad_router)
+    app.include_router(auth_router)
 
     return app
 
