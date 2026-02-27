@@ -385,33 +385,36 @@ Tasks completados:
 
 **Archivos**: config.yaml (10 prov, 3 cli, 1 trab), inbox_muestra/ (60 PDFs), manifiesto_muestra.json
 
-## Modelos Fiscales Completos — DISEÑADO
+## Modelos Fiscales Completos — COMPLETADO (26/26)
 
 **Design doc**: `docs/plans/2026-02-27-modelos-fiscales-completos-design.md`
-**Plan implementacion**: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md` (26 tasks, 5 fases)
-**Estado**: Diseño aprobado, plan escrito. Pendiente implementacion.
+**Plan implementacion**: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md`
+**Estado**: **COMPLETADO 26/26 tasks. 544 tests modelos fiscales.**
 
-**Arquitectura**: 3 capas independientes:
-1. **CalculadorModelos** (expandir existente) — datos contables → casillas
-2. **MotorBOE** (nuevo) — casillas + YAML spec → fichero posicional AEAT
-3. **GeneradorPDF** (nuevo) — casillas + PDF template → PDF visual
+**Arquitectura** (implementada):
+1. **CalculadorModelos** — 28 modelos (303→720), 5 territorios, perfil fiscal por forma juridica
+2. **MotorBOE** — casillas + YAML spec → fichero posicional AEAT (lon exacta, padding, encoding latin-1)
+3. **GeneradorPDF** — casillas + HTML template → PDF visual + fallback WeasyPrint
+4. **ServicioFiscal** — orquesta calculador+validador+persistencia
+5. **API FastAPI** — `/api/modelos/` (7 endpoints: disponibles, calcular, validar, generar-boe, generar-pdf, calendario, historico)
+6. **Dashboard** — ModelosFiscales (calendario), GenerarModelo (casillas editables), HistoricoModelos (tabla)
 
-**Catalogo**: ~28 modelos (303, 390, 349, 347, 340, 420, 111, 190, 115, 180, 123, 193, 130, 131, 200, 202, 220, 100, 036, 037, 210, 211, 216, 296, 184, 345, 720, 360)
+**Catalogo**: 28 modelos en `sfce/modelos_fiscales/disenos/*.yaml`
 
-**Fases**:
-- A (T1-T8): Motor generico + 28 YAMLs diseno registro
-- B (T9-T13): Calculadores expandidos + queries repositorio + ServicioFiscal
-- C (T14-T15): GeneradorPDF (rellenar PDF AEAT + fallback HTML)
-- D (T16-T22): API endpoints + 3 paginas dashboard nuevas
-- E (T23-T26): Conversor Excel AEAT→YAML, golden files, persistencia BD
+**Fases completadas**:
+- A (T1-T8): MotorBOE + 28 YAMLs + ValidadorModelo + ServicioFiscal base
+- B (T9-T13): CalculadorModelos expandido + queries repositorio + ServicioFiscal completo
+- C (T14-T15): GeneradorPDF (PDF oficial AEAT + fallback HTML/WeasyPrint)
+- D (T16-T22): Schemas Pydantic + router API + 3 paginas dashboard + E2E tests (42 tests)
+- E (T23-T26): script Excel→YAML (`scripts/actualizar_disenos.py`), golden files, persistencia BD (`ModeloFiscalGenerado`)
 
 **Decision clave**: Dashboard SFCE como interfaz del gestor (no FS). Fichero BOE fase 1, telematica AEAT fase futura.
 
-## Directorio Empresas — T1-T7 IMPLEMENTADOS
+## Directorio Empresas — T1-T8 COMPLETADOS
 
 **Design doc**: `docs/plans/2026-02-27-directorio-empresas-design.md`
 **Plan implementacion**: `docs/plans/2026-02-27-directorio-empresas-implementation.md` (10 tasks)
-**Estado**: T1-T7 completados. Pendiente T8-T10 (integracion pipeline, migracion real, docs finales).
+**Estado**: T1-T8 completados. T9 (migracion real BD) es operacion puntual. T10 incluido en esta sesion.
 
 **Implementado**:
 - `sfce/db/modelos.py` — DirectorioEntidad (16a tabla): CIF unico global, aliases JSON, validacion AEAT/VIES
@@ -419,26 +422,27 @@ Tasks completados:
 - `sfce/core/verificacion_fiscal.py` — verificar_cif_aeat (SOAP), verificar_vat_vies (REST), inferir_tipo_persona
 - `scripts/core/config.py` — ConfigCliente con repo BD (busca BD primero, fallback YAML)
 - `sfce/api/rutas/directorio.py` — GET/POST/PUT /api/directorio/, buscar, verificar, overlays
-- `scripts/migrar_config_a_directorio.py` — migracion config.yaml → BD
+- `scripts/migrar_config_a_directorio.py` — migracion config.yaml → BD (T9: ejecutar una vez)
 - `dashboard/src/pages/Directorio.tsx` — tabla, busqueda, filtros, detalle, verificacion
+- `scripts/pipeline.py` + `registration.py` + `intake.py` — integracion opcional BD via try/except
 
-**Tests**: 63 nuevos (26 directorio + 12 API + 25 verificacion fiscal). Total suite: 1439 PASS.
+**Tests**: 65 tests directorio/pipeline. Total suite: 1453 PASS.
 
-**Pendiente T8-T10**: integrar directorio en pipeline (T8), ejecutar migracion real (T9), docs finales (T10).
+**T9 pendiente** (solo cuando haya BD real): `python scripts/migrar_config_a_directorio.py --cliente pastorino-costa-del-sol`
 
 ## Proximos pasos — Roadmap
 
-### Prioridad 1: Directorio empresas — completar (T8-T10)
-- T8: integrar directorio en pipeline (registration.py, intake.py)
-- T9: ejecutar migracion real `python scripts/migrar_config_a_directorio.py`
-- T10: tests finales + docs
+### Prioridad 1: Conectar dashboard a API real
+- Dashboard actualmente con datos mock en todas las paginas
+- Arrancar API: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
+- Arrancar dashboard: `cd dashboard && npm run dev`
+- Conectar fetch() real en componentes React (empresas, documentos, modelos fiscales)
 
-### Prioridad 2: Modelos fiscales Fase B (T9-T16)
-- Calculadores expandidos + queries repositorio + ServicioFiscal
-- Plan: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md`
+### Prioridad 2: Pipeline E2E real (prod)
+- Ejecutar pipeline contra elena-navarro muestra completa (199 PDFs)
+- Ejecutar pipeline contra entidades generador v2 (2343 PDFs)
 
-### Pendiente (cuando convenga)
-- Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
-- Conectar dashboard a API real (actualmente con datos mock)
+### Prioridad 3: Operaciones pendientes
+- T9 Directorio: `python scripts/migrar_config_a_directorio.py --cliente pastorino-costa-del-sol`
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
