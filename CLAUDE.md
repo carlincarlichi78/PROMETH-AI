@@ -103,8 +103,10 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **15 paginas**: Home, Login, Empresa, PyG, Balance, Diario, Facturas, Activos, Inbox, Pipeline, Cuarentena, Importar, Exportar, Calendario fiscal, Cierre ejercicio
+- **Estado actual**: 15 paginas basicas, pendiente rewrite completo
 - `.claude/launch.json` configurado con Vite dev server
+- **Design doc rewrite**: `docs/plans/2026-02-27-dashboard-rewrite-design.md` (38 paginas, modulo economico-financiero, copiloto IA)
+- **Pendiente**: escribir plan de implementacion (writing-plans skill) y ejecutar rewrite
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -116,17 +118,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### Pipeline E2E elena-navarro (60 PDFs)
-Ejecutar pipeline real (no dry-run) con dual backend:
-```bash
-export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo
-```
-Verificar dashboard PyG/Balance/Diario actualizados.
+### 1. Dashboard Rewrite (PRIORIDAD)
+Escribir plan de implementacion detallado con writing-plans skill, luego ejecutar rewrite completo.
+Design doc aprobado: `docs/plans/2026-02-27-dashboard-rewrite-design.md`
 
-### Pipeline entidades generador v2 (2343 PDFs)
-Ejecutar pipeline contra las 11 entidades del generador v2. Validar detecciones vs manifiestos.
+### 2. Pipeline E2E elena-navarro (60 PDFs)
+`export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 
-### Operaciones puntuales
-- Limpiar `clientes/elena-navarro/inbox_sync_test/`
-- Migrar directorio: `python scripts/migrar_config_a_directorio.py --cliente pastorino-costa-del-sol`
+### 3. Operaciones puntuales
+- Pipeline generador v2 (2343 PDFs)
+- Migrar directorio pastorino
 - Backups automaticos BD FacturaScripts

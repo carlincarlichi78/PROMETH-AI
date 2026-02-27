@@ -1,5 +1,26 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-27 — Sesion: Dashboard Rewrite Design + FS Admin Setup
+
+**Objetivo**: Auditar dashboard actual, disenar rewrite completo como producto SaaS, configurar admin en FacturaScripts.
+
+**Trabajo realizado**:
+- Auditoria completa dashboard (frontend 19 paginas ~5700 LOC + backend 35 endpoints)
+- Brainstorming interactivo: stack, arquitectura, 38 paginas en 10 secciones
+- Modulo economico-financiero: 30+ ratios, KPIs sectoriales, tesoreria, centros coste, scoring
+- Copiloto IA: 6 capas (prompt, RAG, function calling, knowledge base, feedback, respuestas enriquecidas)
+- Design doc completo: `docs/plans/2026-02-27-dashboard-rewrite-design.md` (590 lineas)
+- FacturaScripts: creado usuario `carloscanetegomez` (admin nivel 99) + empresa 6 "GESTORIA CARLOS CANETE"
+- CLAUDE.md reducido de 468 a 132 lineas
+
+**Stack aprobado**: shadcn/ui + Recharts + React Query + Zustand + React Hook Form + Zod + Tailwind v4
+
+**Pendiente**: plan de implementacion (writing-plans skill), luego ejecucion rewrite
+
+**Commit**: 35ed2fe en `feat/sfce-v2-fase-e`
+
+---
+
 ## 2026-02-27 — Sesion: Dual Backend FS+BD local + Dashboard operativo
 
 **Objetivo**: Pipeline actualice automaticamente la BD local (dashboard) al registrar en FS, sin migracion manual.
