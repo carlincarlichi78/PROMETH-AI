@@ -407,26 +407,35 @@ Tasks completados:
 
 **Decision clave**: Dashboard SFCE como interfaz del gestor (no FS). Fichero BOE fase 1, telematica AEAT fase futura.
 
-## Directorio Empresas — DISEÑADO
+## Directorio Empresas — T1-T7 IMPLEMENTADOS
 
 **Design doc**: `docs/plans/2026-02-27-directorio-empresas-design.md`
 **Plan implementacion**: `docs/plans/2026-02-27-directorio-empresas-implementation.md` (10 tasks)
-**Estado**: Diseño aprobado, plan escrito. Pendiente implementacion.
+**Estado**: T1-T7 completados. Pendiente T8-T10 (integracion pipeline, migracion real, docs finales).
 
-**Arquitectura**: Tabla maestra `directorio_entidades` (CIF, nombre, pais, tipo_persona, validaciones AEAT/VIES) + overlay en `proveedores_clientes` (subcuenta, codimpuesto, regimen por empresa). FK `directorio_id` en tabla existente.
+**Implementado**:
+- `sfce/db/modelos.py` — DirectorioEntidad (16a tabla): CIF unico global, aliases JSON, validacion AEAT/VIES
+- `sfce/db/repositorio.py` — buscar_directorio_por_cif/nombre, obtener_o_crear_directorio, crear_overlay, buscar_overlay_por_cif, listar_directorio
+- `sfce/core/verificacion_fiscal.py` — verificar_cif_aeat (SOAP), verificar_vat_vies (REST), inferir_tipo_persona
+- `scripts/core/config.py` — ConfigCliente con repo BD (busca BD primero, fallback YAML)
+- `sfce/api/rutas/directorio.py` — GET/POST/PUT /api/directorio/, buscar, verificar, overlays
+- `scripts/migrar_config_a_directorio.py` — migracion config.yaml → BD
+- `dashboard/src/pages/Directorio.tsx` — tabla, busqueda, filtros, detalle, verificacion
 
-**Scope**: Por empresa (overlay empresa-especifico). Enriquecimiento: cache interno + AEAT (CIF espanol) + VIES (VAT europeo). BD local como fuente de verdad.
+**Tests**: 63 nuevos (26 directorio + 12 API + 25 verificacion fiscal). Total suite: 1439 PASS.
+
+**Pendiente T8-T10**: integrar directorio en pipeline (T8), ejecutar migracion real (T9), docs finales (T10).
 
 ## Proximos pasos — Roadmap
 
-### Prioridad 1: Modelos fiscales (siguiente sesion)
-- Implementar Fase A (T1-T8): motor generico MotorBOE + tipos + YAML loader + validador + PDF
-- Plan: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md`
-- Comando: `"implementar modelos fiscales, Fase A"` para arrancar
+### Prioridad 1: Directorio empresas — completar (T8-T10)
+- T8: integrar directorio en pipeline (registration.py, intake.py)
+- T9: ejecutar migracion real `python scripts/migrar_config_a_directorio.py`
+- T10: tests finales + docs
 
-### Prioridad 2: Directorio empresas (sesion posterior)
-- Implementar 10 tasks: tabla maestra + migracion YAML→BD + verificacion AEAT/VIES + API + dashboard
-- Plan: `docs/plans/2026-02-27-directorio-empresas-implementation.md`
+### Prioridad 2: Modelos fiscales Fase B (T9-T16)
+- Calculadores expandidos + queries repositorio + ServicioFiscal
+- Plan: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md`
 
 ### Pendiente (cuando convenga)
 - Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
