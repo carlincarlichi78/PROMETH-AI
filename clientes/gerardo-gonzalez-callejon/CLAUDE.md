@@ -95,19 +95,30 @@ inbox/                          ← el usuario tira todo aqui
 - config.yaml completo: 17 proveedores, codejercicio 0002, empleados true
 - intake.py adaptado: rglob recursivo para subcarpetas, filtro CARPETA REFERENCIA
 - **Dry-run**: 126/127 validados (BAN:71, FC:28, SUM:17, RLC:10, IMP:1)
-- **Pipeline completo**: 103/126 OK (82%), 23 fallidos
-- 13 proveedores creados en FS (cod 26-38), 5 ya existian
-- Cross-validation: 12/13 PASS (Gemini auditor FAIL = no critico)
-- 21 facturas + 82 asientos directos registrados en FS
-- Subcuentas gasto: todas en 6000 (pendiente reclasificar a config)
+- **Ultimo pipeline (sesion 27/02)**: 119/126 OK (94%), 7 fallidos — PERO FS VACIO (sesion perdio contexto)
+- **Estado actual FS**: VACIO (0 facturas, 0 asientos para empresa 2)
+- **Archivos conservados**: intake_results.json (127 docs OCR), validated_batch.json (126 validados)
+- **pipeline_state**: fases=[intake, pre_validacion] — listo para --resume desde REGISTRO
+- **NO repetir OCR**: intake y pre_validacion ya hechos, conservados en disco
 
-### 23 docs fallidos (detalle)
-1. **SUM→crearFacturaCliente** (17): Alarma/Internet SUM endpoint incorrecto. **CORREGIDO en codigo**, pendiente re-ejecutar
-2. **Google/Meta FC rollback** (5): IVA intracomunitario autorepercutido causa discrepancia total
-3. **SkinClinic FC** (1): CIF vacio, entidad no encontrada
+### Comando para retomar (COPIAR Y EJECUTAR)
+```bash
+cd /c/Users/carli/PROYECTOS/CONTABILIDAD
+export FS_API_TOKEN='iOXmrA1Bbn8RDWXLv91L'
+export MISTRAL_API_KEY='yATzL24fWGoXtzfFutkvMQm3ZONwYZuk'
+export GEMINI_API_KEY='AIzaSyCsKoDsjZ9kYVONe21Kx1Y47UbZb8sEGWY'
+export OPENAI_API_KEY=$(grep OPENAI_API_KEY /c/Users/carli/PROYECTOS/AUTOMATIZACION_FACTURAS/.env | cut -d'"' -f2)
+python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --resume --force --no-interactivo
+```
 
-### Bugs corregidos esta sesion
-- SUM incluido en `es_proveedor` (3 ocurrencias registration.py)
+### 7 docs fallidos (ultimo pipeline 119/126)
+1. **Google/Meta FC rollback** (4): IVA intracomunitario — OCR extrae total sin IVA, FS aplica 21% extra
+2. **Internet SUM** (1): Total OCR=46.10 vs FS=55.78 (discrepancia base)
+3. **SkinClinic FC** (1): CIF vacio en config, entidad no encontrada
+4. **Asesoria Laboral Dec** (1): Total OCR=72.60, FS=0.00
+
+### Bugs corregidos (commits 51d46fe + 03e91d5)
+- SUM incluido en `es_proveedor` en TODAS las funciones de registration.py (8 ocurrencias total)
 - Busqueda entidad: fallback a entidad_cif + buscar_proveedor_por_nombre
 - Asiento directo fallido no cae al path facturas
 - Nuevos subtipos BAN: transferencia, impuesto_tasa, tasa, cuota
@@ -122,11 +133,12 @@ inbox/                          ← el usuario tira todo aqui
 - Items 1-16, 23-25: Podologia | Items 17-22: Estetica
 
 ## Proximos pasos (por prioridad)
-1. **Re-ejecutar 23 docs fallidos**: limpiar, resetear state (mantener intake), re-run --resume
-2. **Corregir subcuentas** 6000→config en facturas via PUT partidas
-3. **Registrar ingresos** del Excel en FS (facturas cliente o asientos directos)
-4. **Clasificar gastos** por actividad (pod/est/compartido) via carpeta_origen
-5. **Generar libros simplificados** y comparar con modelos oficiales CARPETA REFERENCIA
+1. **Ejecutar pipeline --resume** (comando arriba): salta OCR, va directo a REGISTRO (~3-5 min)
+2. **Resolver 7 fallidos**: Google (IVA intracom), Internet, SkinClinic (CIF), Asesoria (total)
+3. **Corregir subcuentas** 6000→config en facturas via PUT partidas
+4. **Registrar ingresos** del Excel en FS (facturas cliente o asientos directos)
+5. **Clasificar gastos** por actividad (pod/est/compartido) via carpeta_origen
+6. **Comparar con modelos oficiales** de CARPETA REFERENCIA (303, 130, 111, 390, 190)
 
 ## Pendiente general
 - [ ] Confirmar email
@@ -135,4 +147,4 @@ inbox/                          ← el usuario tira todo aqui
 - [x] Dar de alta en FacturaScripts como empresa
 - [x] Configurar config.yaml SFCE
 - [x] Dry-run pipeline exitoso
-- [x] Pipeline completo ejecutado (103/126 OK)
+- [x] Pipeline ejecutado 119/126 OK (pendiente re-ejecutar con FS limpio)
