@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: "Georgia", "Times New Roman", serif; color: #2a2a2a; }
+    .factura-limpia { max-width: 700px; margin: 0 auto; padding: 50px 40px; }
+    .cabecera-limpia {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 50px;
+    }
+    .titulo-factura {
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #666;
+    }
+    .logo-discreto {
+      width: 100px;
+      height: 35px;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 1px;
+    }
+    .meta-factura {
+      text-align: right;
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+    }
+    .meta-factura span { display: block; margin: 3px 0; }
+    .datos-partes {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 45px;
+      gap: 80px;
+    }
+    .parte { flex: 1; }
+    .parte-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #aaa;
+      margin-bottom: 12px;
+    }
+    .parte p { margin: 2px 0; font-size: 12px; line-height: 1.6; }
+    .parte p:first-of-type { font-weight: bold; }
+    .tabla-limpia { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; }
+    .tabla-limpia th {
+      text-align: left;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #999;
+      padding: 0 0 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tabla-limpia th:last-child,
+    .tabla-limpia td:last-child { text-align: right; }
+    .tabla-limpia td { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .totales-limpia {
+      width: 280px;
+      margin-left: auto;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+    .totales-limpia .fila {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .totales-limpia .fila-principal {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2a2a2a;
+      padding-top: 12px;
+      margin-top: 8px;
+      border-top: 2px solid #2a2a2a;
+    }
+    .pie-limpio {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 10px;
+      color: #bbb;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="factura factura-limpia">
+
+  <div class="cabecera-limpia">
+    <div>
+      <div class="titulo-factura">{{ etiquetas.factura }}</div>
+      <div class="meta-factura">
+        <span>{{ etiquetas.numero }} {{ numero }}</span>
+        <span>{{ etiquetas.fecha }} {{ fecha }}</span>
+      </div>
+    </div>
+    <div class="logo-discreto">{{ emisor.nombre[:10] }}</div>
+  </div>
+
+  <div class="datos-partes">
+    <div class="parte datos-emisor">
+      <div class="parte-label">{{ etiquetas.emisor }}</div>
+      <p>{{ emisor.nombre }}</p>
+      <p>{{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>{{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="parte datos-receptor">
+      <div class="parte-label">{{ etiquetas.receptor }}</div>
+      <p>{{ receptor.nombre }}</p>
+      <p>{{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <table class="tabla-limpia tabla-lineas">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto }}</th>
+        <th>{{ etiquetas.cantidad }}</th>
+        <th>{{ etiquetas.precio_unitario }}</th>
+        <th>{{ etiquetas.iva }}</th>
+        <th>{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td>{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totales-limpia">
+    <div class="fila"><span>{{ etiquetas.base_imponible }}</span><span>{{ resumen.base_imponible | moneda }}</span></div>
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <div class="fila"><span>{{ etiquetas.iva }} {{ tipo | porcentaje }}</span><span>{{ d.cuota | moneda }}</span></div>
+    {% endfor %}
+    {% if resumen.total_retencion > 0 %}
+    <div class="fila"><span>{{ etiquetas.retencion }}</span><span>-{{ resumen.total_retencion | moneda }}</span></div>
+    {% endif %}
+    <div class="fila fila-principal"><span>{{ etiquetas.total }}</span><span>{{ resumen.total | moneda }}</span></div>
+  </div>
+
+  <div class="pie-limpio">
+    {{ emisor.nombre }} &middot; {{ emisor.nif }} &middot; {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}
+  </div>
+
+</div>
+</body>
+</html>

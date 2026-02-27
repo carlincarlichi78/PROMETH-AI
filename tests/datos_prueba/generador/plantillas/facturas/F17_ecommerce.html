@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Order {{ numero }}</title>
+  <link rel="stylesheet" href="../base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 9pt; color: #0f1111; margin: 0; padding: 0; background: #eaeded; }
+    .email-wrapper { max-width: 650px; margin: 16px auto; background: #fff; }
+    .topbar { background: #131921; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .topbar .logo { color: #fff; font-size: 14pt; font-weight: bold; letter-spacing: 1px; }
+    .topbar .logo span { color: #ff9900; }
+    .topbar .order-label { color: #ccc; font-size: 8pt; }
+    .status-bar { background: #f0f2f2; padding: 10px 20px; border-bottom: 1px solid #d5d9d9; display: flex; align-items: center; gap: 12px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 7pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-confirmado { background: #067d62; color: #fff; }
+    .badge-factura { background: #0066c0; color: #fff; }
+    .status-text { font-size: 8pt; color: #565959; }
+    .content { padding: 20px; }
+    .order-header { display: flex; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #d5d9d9; }
+    .order-header h1 { font-size: 14pt; margin: 0 0 4px; color: #0f1111; }
+    .order-meta { font-size: 8pt; color: #565959; }
+    .order-meta strong { color: #0f1111; }
+    .card { border: 1px solid #d5d9d9; border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+    .card-header { background: #f0f2f2; padding: 8px 14px; font-size: 8pt; font-weight: bold; color: #565959; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #d5d9d9; }
+    .card-body { padding: 12px 14px; }
+    .direcciones { display: flex; gap: 14px; }
+    .direcciones .col { flex: 1; font-size: 8.5pt; }
+    .direcciones .col h4 { margin: 0 0 4px; font-size: 8pt; color: #565959; text-transform: uppercase; }
+    .direcciones .col p { margin: 2px 0; }
+    table.items { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    table.items th { text-align: left; padding: 7px 8px; border-bottom: 2px solid #e7e7e7; font-size: 7.5pt; text-transform: uppercase; color: #565959; }
+    table.items th:nth-child(n+2) { text-align: right; }
+    table.items td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+    table.items td:nth-child(n+2) { text-align: right; }
+    table.items td:first-child { max-width: 250px; }
+    .item-nombre { color: #0066c0; font-weight: 500; }
+    .order-summary { display: flex; justify-content: flex-end; }
+    .summary-table { width: 280px; font-size: 9pt; }
+    .summary-table td { padding: 4px 0; }
+    .summary-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .summary-table .sep { border-top: 1px solid #d5d9d9; }
+    .summary-table .total-row td { font-size: 13pt; font-weight: bold; color: #b12704; padding-top: 8px; }
+    .tracking-box { background: #f7f7f7; border: 1px dashed #ccc; border-radius: 4px; padding: 8px 14px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; }
+    .tracking-box .id { font-family: 'Courier New', monospace; font-weight: bold; color: #0066c0; font-size: 9pt; }
+    .footer-ecom { background: #f0f2f2; padding: 12px 20px; font-size: 7pt; color: #999; text-align: center; border-top: 1px solid #d5d9d9; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="email-wrapper">
+  <div class="topbar">
+    <div class="logo">{{ emisor.nombre }} <span>&bull;</span></div>
+    <div class="order-label">{{ etiquetas.get('titulo', 'Factura / Invoice') }}</div>
+  </div>
+
+  <div class="status-bar">
+    <span class="badge badge-confirmado">{{ etiquetas.get('estado', 'Confirmed') }}</span>
+    <span class="badge badge-factura">{{ etiquetas.get('tipo_doc', 'Invoice') }}</span>
+    <span class="status-text">{{ etiquetas.get('tracking_label', 'Order') }} {{ numero }}</span>
+  </div>
+
+  <div class="content">
+    <div class="order-header">
+      <div>
+        <h1>{{ etiquetas.get('confirmacion', 'Confirmacion de pedido') }}</h1>
+        <div class="order-meta">
+          {{ etiquetas.get('numero', 'Order #') }}: <strong>{{ numero }}</strong><br>
+          {{ etiquetas.get('fecha', 'Date') }}: <strong>{{ fecha }}</strong>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div class="order-meta">
+          {{ etiquetas.get('nif_emisor', 'VAT/CIF') }}: <strong>{{ emisor.nif }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">{{ etiquetas.get('direcciones', 'Direcciones') }}</div>
+      <div class="card-body direcciones">
+        <div class="col">
+          <h4>{{ etiquetas.get('emisor_titulo', 'Vendedor / Seller') }}</h4>
+          <p><strong>{{ emisor.nombre }}</strong></p>
+          <p>{{ emisor.direccion }}</p>
+          <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+          {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+        </div>
+        <div class="col">
+          <h4>{{ etiquetas.get('receptor_titulo', 'Comprador / Buyer') }}</h4>
+          <p><strong>{{ receptor.nombre }}</strong></p>
+          <p>{{ etiquetas.get('nif_receptor', 'CIF/NIF') }}: {{ receptor.nif }}</p>
+          <p>{{ receptor.direccion }}</p>
+          <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">{{ etiquetas.get('items_titulo', 'Articulos / Items') }}</div>
+      <div class="card-body">
+        <table class="items">
+          <thead>
+            <tr>
+              <th>{{ etiquetas.get('concepto', 'Item') }}</th>
+              <th>{{ etiquetas.get('cantidad', 'Qty') }}</th>
+              <th>{{ etiquetas.get('precio', 'Price') }}</th>
+              <th>{{ etiquetas.get('descuento', 'Disc.') }}</th>
+              <th>{{ etiquetas.get('base', 'Subtotal') }}</th>
+              <th>{{ etiquetas.get('iva_tipo', 'Tax') }}</th>
+              <th>{{ etiquetas.get('cuota_iva', 'Tax amt') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in lineas %}
+            <tr>
+              <td><span class="item-nombre">{{ l.concepto }}</span></td>
+              <td>{{ l.cantidad }}</td>
+              <td>{{ l.precio_unitario | moneda }}</td>
+              <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+              <td>{{ l.base | moneda }}</td>
+              <td>{{ l.iva_tipo | porcentaje }}</td>
+              <td>{{ l.cuota_iva | moneda }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="order-summary">
+      <table class="summary-table">
+        <tr><td>{{ etiquetas.get('base_imponible', 'Subtotal') }}</td><td>{{ resumen.base_imponible | moneda }}</td></tr>
+        <tr><td>{{ etiquetas.get('envio', 'Shipping & Handling') }}</td><td>{{ etiquetas.get('coste_envio', '0,00 EUR') }}</td></tr>
+        {% for tipo, d in resumen.desglose_iva.items() %}
+        <tr><td>{{ etiquetas.get('iva', 'Tax') }} {{ tipo | porcentaje }}</td><td>{{ d.cuota | moneda }}</td></tr>
+        {% endfor %}
+        {% if resumen.total_retencion > 0 %}
+        <tr><td>{{ etiquetas.get('retencion', 'Withholding') }}</td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+        {% endif %}
+        <tr class="sep total-row"><td>{{ etiquetas.get('total', 'Order Total') }}</td><td>{{ resumen.total | moneda }}</td></tr>
+      </table>
+    </div>
+
+    <div class="tracking-box">
+      <span>{{ etiquetas.get('tracking', 'Tracking ID') }}:</span>
+      <span class="id">{{ etiquetas.get('tracking_id', 'N/A') }}</span>
+    </div>
+  </div>
+
+  <div class="footer-ecom">
+    {{ etiquetas.get('legal', 'This is a tax invoice. Factura emitida conforme al RD 1619/2012.') }}
+    &middot; {{ emisor.nombre }} &middot; {{ etiquetas.get('nif_emisor', 'CIF') }}: {{ emisor.nif }}
+  </div>
+</div>
+</body>
+</html>

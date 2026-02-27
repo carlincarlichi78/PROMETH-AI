@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Ticket {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: 80mm 297mm; margin: 5mm 3mm; }
+    body {
+      font-family: "Courier New", "Lucida Console", monospace;
+      font-size: 9pt;
+      color: #111;
+      width: 74mm;
+      line-height: 1.3;
+    }
+    .ticket { text-align: center; }
+    .ticket-emisor {
+      margin-bottom: 8px;
+      font-size: 8pt;
+    }
+    .ticket-emisor .nombre-negocio {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .ticket-emisor p { margin: 1px 0; }
+    .separador {
+      text-align: center;
+      margin: 6px 0;
+      color: #333;
+      letter-spacing: 1px;
+      font-size: 8pt;
+    }
+    .ticket-titulo {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 8px 0;
+      text-transform: uppercase;
+    }
+    .ticket-meta {
+      text-align: left;
+      font-size: 8pt;
+      margin-bottom: 6px;
+    }
+    .ticket-meta p { margin: 1px 0; }
+
+    /* Lineas como lista monospace */
+    .ticket-lineas {
+      text-align: left;
+      font-size: 8pt;
+      margin: 6px 0;
+    }
+    .ticket-linea {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+    .ticket-linea .desc { flex: 1; overflow: hidden; }
+    .ticket-linea .imp { min-width: 60px; text-align: right; }
+    .ticket-linea-detalle {
+      font-size: 7pt;
+      color: #555;
+      margin-left: 8px;
+      margin-bottom: 3px;
+    }
+    .separador-doble {
+      text-align: center;
+      margin: 8px 0;
+      font-size: 8pt;
+    }
+    .ticket-totales {
+      text-align: left;
+      font-size: 9pt;
+      margin: 4px 0;
+    }
+    .ticket-totales p {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+    .ticket-total-grande {
+      font-size: 16pt;
+      font-weight: bold;
+      text-align: center;
+      margin: 10px 0;
+      border-top: 2px solid #111;
+      border-bottom: 2px solid #111;
+      padding: 6px 0;
+    }
+    .ticket-pie {
+      font-size: 7pt;
+      color: #555;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .ticket-pie p { margin: 2px 0; }
+    .ticket-gracias {
+      font-size: 10pt;
+      font-weight: bold;
+      margin: 12px 0 5px;
+    }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="ticket">
+
+  <div class="ticket-emisor">
+    <div class="nombre-negocio">{{ emisor.nombre }}</div>
+    <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+    <p>{{ emisor.direccion }}</p>
+    <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+    {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+  </div>
+
+  <div class="separador">----------------------------------------</div>
+
+  <div class="ticket-titulo">{{ etiquetas.factura }}</div>
+  <div class="ticket-meta">
+    <p>{{ etiquetas.numero }}: {{ numero }}</p>
+    <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    {% if receptor %}
+    <p>{{ etiquetas.receptor }}: {{ receptor.nombre }}</p>
+    <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+    {% endif %}
+  </div>
+
+  <div class="separador">----------------------------------------</div>
+
+  <div class="ticket-lineas">
+    {% for l in lineas %}
+    <div class="ticket-linea">
+      <span class="desc">{{ l.concepto[:30] }}</span>
+      <span class="imp">{{ l.total_linea | moneda }}</span>
+    </div>
+    <div class="ticket-linea-detalle">
+      {{ l.cantidad }} x {{ l.precio_unitario | moneda }}{% if l.descuento_pct > 0 %} dto {{ l.descuento_pct | porcentaje }}{% endif %} ({{ etiquetas.iva }} {{ l.iva_tipo | porcentaje }})
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="separador-doble">========================================</div>
+
+  <div class="ticket-totales">
+    <p><span>{{ etiquetas.base_imponible }}:</span><span>{{ resumen.base_imponible | moneda }}</span></p>
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <p><span>{{ etiquetas.iva }} {{ tipo | porcentaje }}:</span><span>{{ d.cuota | moneda }}</span></p>
+    {% endfor %}
+  </div>
+
+  <div class="ticket-total-grande">{{ etiquetas.total }}: {{ resumen.total | moneda }}</div>
+
+  <div class="separador">----------------------------------------</div>
+
+  <div class="ticket-pie">
+    <div class="ticket-gracias">GRACIAS POR SU VISITA</div>
+    <p>Factura conforme RD 1619/2012</p>
+    <p>Conserve este ticket</p>
+  </div>
+
+</div>
+</body>
+</html>

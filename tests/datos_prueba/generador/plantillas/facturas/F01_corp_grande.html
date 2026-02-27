@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .factura-header--franja {
+      background: var(--color-primario, #003366);
+      color: #fff;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .factura-header--franja .logo-grande {
+      width: 160px;
+      height: 60px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 22px;
+      letter-spacing: 2px;
+    }
+    .factura-header--franja .info-factura {
+      text-align: right;
+      font-size: 13px;
+    }
+    .factura-header--franja .info-factura h1 {
+      font-size: 28px;
+      margin: 0 0 5px;
+      text-transform: uppercase;
+    }
+    .bloques-datos { display: flex; gap: 40px; margin: 20px 30px; }
+    .bloques-datos .bloque { flex: 1; }
+    .bloques-datos .bloque h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--color-primario, #003366);
+      border-bottom: 2px solid var(--color-primario, #003366);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    .bloques-datos .bloque p { margin: 2px 0; font-size: 12px; }
+    .tabla-corp { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 12px; }
+    .tabla-corp th {
+      background: var(--color-primario, #003366);
+      color: #fff;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .tabla-corp td { padding: 7px 10px; border: 1px solid #ccc; }
+    .tabla-corp tbody tr:nth-child(even) { background: #f5f7fa; }
+    .resumen-totales {
+      width: 320px;
+      margin: 10px 30px 10px auto;
+      font-size: 12px;
+    }
+    .resumen-totales tr td { padding: 4px 10px; }
+    .resumen-totales tr td:last-child { text-align: right; }
+    .resumen-totales .fila-total {
+      font-weight: bold;
+      font-size: 14px;
+      border-top: 2px solid var(--color-primario, #003366);
+    }
+    .footer-legal {
+      background: #f0f0f0;
+      padding: 15px 30px;
+      font-size: 9px;
+      color: #555;
+      margin-top: 30px;
+      border-top: 3px solid var(--color-primario, #003366);
+    }
+    .footer-legal p { margin: 3px 0; }
+    .paginado { text-align: right; font-size: 9px; color: #999; margin: 5px 30px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="factura">
+
+  <div class="factura-header--franja">
+    <div class="logo-grande">{{ emisor.nombre[:12] }}</div>
+    <div class="info-factura">
+      <h1>{{ etiquetas.factura }}</h1>
+      <p>{{ etiquetas.numero }}: <strong>{{ numero }}</strong></p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="bloques-datos">
+    <div class="bloque datos-emisor">
+      <h3>{{ etiquetas.emisor }}</h3>
+      <p><strong>{{ emisor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="bloque datos-receptor">
+      <h3>{{ etiquetas.receptor }}</h3>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <table class="tabla-corp tabla-lineas">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto }}</th>
+        <th>{{ etiquetas.cantidad }}</th>
+        <th>{{ etiquetas.precio_unitario }}</th>
+        <th>{{ etiquetas.descuento }}</th>
+        <th>{{ etiquetas.base_imponible }}</th>
+        <th>{{ etiquetas.iva }}</th>
+        <th>{{ etiquetas.cuota_iva }}</th>
+        <th>{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda }}</td>
+        <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td>{{ l.base | moneda }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td>{{ l.cuota_iva | moneda }}</td>
+        <td>{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="resumen-totales">
+    <tr><td>{{ etiquetas.base_imponible }}:</td><td>{{ resumen.base_imponible | moneda }}</td></tr>
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <tr><td>{{ etiquetas.iva }} {{ tipo | porcentaje }}:</td><td>{{ d.cuota | moneda }}</td></tr>
+    {% endfor %}
+    {% if resumen.total_retencion > 0 %}
+    <tr><td>{{ etiquetas.retencion }}:</td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+    {% endif %}
+    <tr class="fila-total"><td>{{ etiquetas.total }}:</td><td>{{ resumen.total | moneda }}</td></tr>
+  </table>
+
+  <div class="footer-legal">
+    <p>Factura emitida conforme al Real Decreto 1619/2012. Inscrita en el Registro Mercantil.</p>
+    <p>Condiciones de pago: 30 dias fecha factura. Intereses de demora segun Ley 3/2004.</p>
+    <p>Proteccion de datos: los datos personales seran tratados conforme al RGPD (UE) 2016/679.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} - {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+  </div>
+  <div class="paginado">1 / 1</div>
+
+</div>
+</body>
+</html>

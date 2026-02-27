@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm 18mm 25mm 18mm;
+
+      @top-left {
+        content: "{{ emisor.nombre }} - {{ etiquetas.nif }}: {{ emisor.nif }}";
+        font-size: 7pt;
+        color: #888;
+        font-family: Arial, sans-serif;
+      }
+      @top-right {
+        content: "{{ etiquetas.factura }} {{ numero }}";
+        font-size: 7pt;
+        color: #888;
+        font-family: Arial, sans-serif;
+      }
+      @bottom-right {
+        content: "Pag. " counter(page) " de " counter(pages);
+        font-size: 7pt;
+        color: #888;
+        font-family: Arial, sans-serif;
+      }
+      @bottom-left {
+        content: "{{ etiquetas.fecha }}: {{ fecha }}";
+        font-size: 7pt;
+        color: #888;
+        font-family: Arial, sans-serif;
+      }
+    }
+    @page:first {
+      @top-left { content: none; }
+      @top-right { content: none; }
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #222;
+      line-height: 1.35;
+    }
+    .multi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+      border-bottom: 3px solid var(--color-primario, #003366);
+    }
+    .multi-header .emisor-bloque { width: 55%; }
+    .multi-header .emisor-bloque h2 {
+      font-size: 16pt;
+      color: var(--color-primario, #003366);
+      margin: 0 0 4px;
+    }
+    .multi-header .emisor-bloque p { margin: 1px 0; font-size: 8pt; color: #555; }
+    .multi-header .doc-bloque {
+      text-align: right;
+      width: 40%;
+      border: 2px solid var(--color-primario, #003366);
+      padding: 10px 15px;
+      border-radius: var(--bordes-radio, 0);
+    }
+    .multi-header .doc-bloque h1 {
+      font-size: 18pt;
+      margin: 0 0 5px;
+      color: var(--color-primario, #003366);
+    }
+    .multi-header .doc-bloque p { margin: 2px 0; font-size: 9pt; }
+
+    .multi-receptor {
+      background: #f5f7fa;
+      padding: 10px 12px;
+      margin-bottom: 15px;
+      border-left: 4px solid var(--color-primario, #003366);
+    }
+    .multi-receptor h3 {
+      font-size: 8pt;
+      text-transform: uppercase;
+      color: var(--color-primario, #003366);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .multi-receptor p { margin: 1px 0; font-size: 9pt; }
+
+    /* Tabla que fluye entre paginas */
+    .tabla-multi {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 8pt;
+    }
+    .tabla-multi thead {
+      display: table-header-group; /* repetir en cada pagina */
+    }
+    .tabla-multi th {
+      background: var(--color-primario, #003366);
+      color: #fff;
+      padding: 5px 8px;
+      text-align: left;
+      font-size: 7pt;
+      text-transform: uppercase;
+    }
+    .tabla-multi th.num { text-align: right; }
+    .tabla-multi td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tabla-multi td.num { text-align: right; white-space: nowrap; }
+    .tabla-multi tbody tr:nth-child(even) { background: #fafbfc; }
+
+    /* Resumen fiscal SOLO al final */
+    .resumen-final {
+      page-break-inside: avoid;
+      margin-top: 10px;
+    }
+    .resumen-final-tabla {
+      width: 280px;
+      margin-left: auto;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+    .resumen-final-tabla td { padding: 4px 8px; }
+    .resumen-final-tabla td:last-child { text-align: right; }
+    .resumen-final-tabla .fila-total {
+      font-weight: bold;
+      font-size: 12pt;
+      border-top: 3px solid var(--color-primario, #003366);
+    }
+    .resumen-final-tabla .fila-desglose {
+      font-size: 8pt;
+      color: #555;
+    }
+
+    .condiciones {
+      page-break-inside: avoid;
+      margin-top: 20px;
+      padding: 10px 12px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      font-size: 7pt;
+      color: #555;
+    }
+    .condiciones h4 {
+      font-size: 8pt;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+    }
+    .condiciones p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="multi-header">
+    <div class="emisor-bloque">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="doc-bloque">
+      <h1>{{ etiquetas.factura }}</h1>
+      <p>{{ etiquetas.numero }}: <strong>{{ numero }}</strong></p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="multi-receptor">
+    <h3>{{ etiquetas.receptor }}</h3>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+    <p>{{ receptor.direccion }}, {{ receptor.cp }} {{ receptor.ciudad }}</p>
+  </div>
+
+  <table class="tabla-multi tabla-lineas">
+    <thead>
+      <tr>
+        <th style="width:5%">#</th>
+        <th style="width:38%">{{ etiquetas.concepto }}</th>
+        <th class="num" style="width:7%">{{ etiquetas.cantidad }}</th>
+        <th class="num" style="width:12%">{{ etiquetas.precio_unitario }}</th>
+        <th class="num" style="width:7%">{{ etiquetas.descuento }}</th>
+        <th class="num" style="width:12%">{{ etiquetas.base_imponible }}</th>
+        <th class="num" style="width:7%">{{ etiquetas.iva }}</th>
+        <th class="num" style="width:12%">{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ l.concepto }}</td>
+        <td class="num">{{ l.cantidad }}</td>
+        <td class="num">{{ l.precio_unitario | moneda }}</td>
+        <td class="num">{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td class="num">{{ l.base | moneda }}</td>
+        <td class="num">{{ l.iva_tipo | porcentaje }}</td>
+        <td class="num">{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="resumen-final">
+    <table class="resumen-final-tabla">
+      <tr><td>{{ etiquetas.base_imponible }}:</td><td>{{ resumen.base_imponible | moneda }}</td></tr>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <tr class="fila-desglose"><td>{{ etiquetas.iva }} {{ tipo | porcentaje }}:</td><td>{{ d.cuota | moneda }}</td></tr>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <tr><td>{{ etiquetas.retencion }}:</td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+      {% endif %}
+      <tr class="fila-total"><td>{{ etiquetas.total }}:</td><td>{{ resumen.total | moneda }}</td></tr>
+    </table>
+  </div>
+
+  <div class="condiciones">
+    <h4>Condiciones</h4>
+    <p>Pago a 30/60/90 dias fecha factura. Intereses de demora segun Ley 3/2004.</p>
+    <p>Factura emitida conforme al RD 1619/2012. Inscrita en el Registro Mercantil.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} - {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+  </div>
+
+</div>
+</body>
+</html>

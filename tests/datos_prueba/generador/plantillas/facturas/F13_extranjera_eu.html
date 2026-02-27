@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Rechnung {{ numero }}</title>
+  <link rel="stylesheet" href="../base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; color: #1a1a1a; margin: 0; padding: 20px; }
+    .rechnungskopf { display: flex; justify-content: space-between; border-bottom: 3px solid #003399; padding-bottom: 12px; margin-bottom: 18px; }
+    .absender { width: 55%; font-size: 8.5pt; line-height: 1.5; }
+    .absender h2 { font-size: 14pt; margin: 0 0 4px; color: #003399; letter-spacing: 0.5px; }
+    .rechnungsdaten { width: 40%; text-align: right; }
+    .rechnungsdaten h1 { font-size: 16pt; margin: 0 0 8px; color: #003399; line-height: 1.1; }
+    .rechnungsdaten h1 small { display: block; font-size: 10pt; color: #666; font-weight: normal; }
+    .rechnungsdaten table { margin-left: auto; border-collapse: collapse; font-size: 8.5pt; }
+    .rechnungsdaten td { padding: 2px 0 2px 10px; }
+    .rechnungsdaten td:first-child { color: #666; text-align: right; }
+    .steuer-id { background: #f0f4ff; padding: 6px 10px; border-radius: 3px; display: inline-block; margin-top: 4px; font-size: 8.5pt; }
+    .steuer-id strong { color: #003399; }
+    .empfaenger { background: #fafafa; border: 1px solid #ddd; padding: 12px 16px; margin-bottom: 18px; }
+    .empfaenger h3 { margin: 0 0 6px; font-size: 8pt; text-transform: uppercase; color: #999; letter-spacing: 1px; }
+    .empfaenger p { margin: 2px 0; }
+    table.positionen { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 8.5pt; }
+    table.positionen thead { background: #003399; color: #fff; }
+    table.positionen th { padding: 7px 8px; text-align: left; font-weight: 500; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5px; }
+    table.positionen th:nth-child(n+2) { text-align: right; }
+    table.positionen td { padding: 6px 8px; border-bottom: 1px solid #e8e8e8; }
+    table.positionen td:nth-child(n+2) { text-align: right; }
+    table.positionen tbody tr:nth-child(even) { background: #f8f9fc; }
+    .zusammenfassung { width: 50%; margin-left: auto; font-size: 9pt; }
+    .zusammenfassung table { width: 100%; border-collapse: collapse; }
+    .zusammenfassung td { padding: 4px 0; }
+    .zusammenfassung td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .zusammenfassung .gesamt { border-top: 2px solid #003399; font-size: 12pt; font-weight: bold; color: #003399; }
+    .bankdaten { margin-top: 20px; padding-top: 12px; border-top: 1px solid #ccc; font-size: 8pt; color: #555; display: flex; justify-content: space-between; }
+    .bankdaten div { width: 48%; }
+    .hinweis { margin-top: 10px; font-size: 7pt; color: #888; line-height: 1.4; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="rechnungskopf">
+  <div class="absender">
+    <h2>{{ emisor.nombre }}</h2>
+    <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+    {% if emisor.telefono %}<p>Tel.: {{ emisor.telefono }}</p>{% endif %}
+    {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    <div class="steuer-id">
+      <strong>{{ etiquetas.get('nif_emisor', 'USt-IdNr.') }}:</strong> {{ emisor.nif }}
+    </div>
+  </div>
+  <div class="rechnungsdaten">
+    <h1>{{ etiquetas.get('titulo', 'Rechnung') }}<small>{{ etiquetas.get('titulo_alt', 'Factura') }}</small></h1>
+    <table>
+      <tr><td>{{ etiquetas.get('numero', 'Rechnungsnr.') }}</td><td><strong>{{ numero }}</strong></td></tr>
+      <tr><td>{{ etiquetas.get('fecha', 'Datum') }}</td><td>{{ fecha }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="empfaenger">
+  <h3>{{ etiquetas.get('receptor_titulo', 'Rechnungsempfanger / Destinatario') }}</h3>
+  <p><strong>{{ receptor.nombre }}</strong></p>
+  <p>{{ etiquetas.get('nif_receptor', 'CIF/NIF') }}: {{ receptor.nif }}</p>
+  <p>{{ receptor.direccion }}, {{ receptor.cp }} {{ receptor.ciudad }}</p>
+</div>
+
+<table class="positionen">
+  <thead>
+    <tr>
+      <th>{{ etiquetas.get('concepto', 'Beschreibung / Concepto') }}</th>
+      <th>{{ etiquetas.get('cantidad', 'Menge') }}</th>
+      <th>{{ etiquetas.get('precio', 'Einzelpreis') }}</th>
+      <th>{{ etiquetas.get('descuento', 'Rabatt') }}</th>
+      <th>{{ etiquetas.get('base', 'Nettobetrag') }}</th>
+      <th>{{ etiquetas.get('iva_tipo', 'MwSt.') }}</th>
+      <th>{{ etiquetas.get('cuota_iva', 'MwSt.-Betrag') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lineas %}
+    <tr>
+      <td>{{ l.concepto }}</td>
+      <td>{{ l.cantidad }}</td>
+      <td>{{ l.precio_unitario | moneda }}</td>
+      <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+      <td>{{ l.base | moneda }}</td>
+      <td>{{ l.iva_tipo | porcentaje }}</td>
+      <td>{{ l.cuota_iva | moneda }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="zusammenfassung">
+  <table>
+    <tr><td>{{ etiquetas.get('base_imponible', 'Zwischensumme netto') }}</td><td>{{ resumen.base_imponible | moneda }}</td></tr>
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <tr><td>{{ etiquetas.get('iva', 'MwSt.') }} {{ tipo | porcentaje }}</td><td>{{ d.cuota | moneda }}</td></tr>
+    {% endfor %}
+    {% if resumen.total_retencion > 0 %}
+    <tr><td>{{ etiquetas.get('retencion', 'Quellensteuer') }}</td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+    {% endif %}
+    <tr class="gesamt"><td>{{ etiquetas.get('total', 'Gesamtbetrag / Total') }}</td><td>{{ resumen.total | moneda }}</td></tr>
+  </table>
+</div>
+
+<div class="bankdaten">
+  <div>
+    <p><strong>{{ etiquetas.get('forma_pago', 'Zahlungsbedingungen') }}</strong></p>
+    <p>{{ etiquetas.get('plazo', 'Zahlungsziel: 30 Tage netto') }}</p>
+  </div>
+  <div>
+    <p><strong>{{ etiquetas.get('banco', 'Bankverbindung') }}</strong></p>
+    <p>IBAN: DE89 3704 0044 0532 0130 00</p>
+    <p>BIC: COBADEFFXXX</p>
+  </div>
+</div>
+<p class="hinweis">{{ etiquetas.get('legal', 'Es gelten unsere Allgemeinen Geschaftsbedingungen. Factura emitida conforme a la Directiva 2006/112/CE.') }}</p>
+</body>
+</html>

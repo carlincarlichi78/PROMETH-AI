@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 13px;
+      color: #000;
+      margin: 0;
+      padding: 30px 50px;
+      line-height: 1.7;
+    }
+    .factura-carta { max-width: 600px; }
+    .titulo-carta {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 25px;
+      letter-spacing: 2px;
+    }
+    .datos-carta-emisor {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #000;
+    }
+    .datos-carta-emisor p { margin: 1px 0; }
+    .datos-carta-emisor .nombre-emisor { font-weight: bold; font-size: 15px; }
+    .bloque-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .bloque-meta .col-receptor { flex: 1; }
+    .bloque-meta .col-factura {
+      text-align: right;
+      min-width: 180px;
+    }
+    .col-receptor p, .col-factura p { margin: 1px 0; }
+    .col-receptor .label-dest {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 5px;
+    }
+    .separador { border: none; border-top: 1px solid #000; margin: 15px 0; }
+    .cuerpo-carta { margin-bottom: 20px; }
+    .cuerpo-carta p { margin: 6px 0; }
+    .linea-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+    }
+    .linea-item .desc { flex: 1; }
+    .linea-item .importe { min-width: 120px; text-align: right; }
+    .linea-item-detalle {
+      font-size: 11px;
+      color: #555;
+      padding-left: 15px;
+      margin-bottom: 4px;
+    }
+    .bloque-resumen {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #000;
+    }
+    .linea-resumen {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+    .linea-resumen .label-r { color: #333; }
+    .linea-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0 0;
+      margin-top: 5px;
+      border-top: 2px solid #000;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .pie-carta {
+      margin-top: 30px;
+      font-size: 11px;
+      color: #555;
+    }
+    .pie-carta p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="factura factura-carta">
+
+  <div class="titulo-carta">{{ etiquetas.factura }}</div>
+
+  <div class="datos-carta-emisor datos-emisor">
+    <p class="nombre-emisor">{{ emisor.nombre }}</p>
+    <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+    <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+    {% if emisor.telefono %}<p>{{ emisor.telefono }}{% if emisor.email %} - {{ emisor.email }}{% endif %}</p>{% endif %}
+  </div>
+
+  <div class="bloque-meta">
+    <div class="col-receptor datos-receptor">
+      <p class="label-dest">{{ etiquetas.receptor }}:</p>
+      <p>{{ receptor.nombre }}</p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+    <div class="col-factura">
+      <p>{{ etiquetas.numero }}: <strong>{{ numero }}</strong></p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <hr class="separador">
+
+  <div class="cuerpo-carta">
+    <p>Detalle de los trabajos realizados:</p>
+
+    {% for l in lineas %}
+    <div class="linea-item">
+      <span class="desc">{{ l.concepto }}</span>
+      <span class="importe">{{ l.total_linea | moneda }}</span>
+    </div>
+    <div class="linea-item-detalle">
+      {{ l.cantidad }} x {{ l.precio_unitario | moneda }}
+      {% if l.descuento_pct > 0 %} ({{ etiquetas.descuento }}: {{ l.descuento_pct | porcentaje }}){% endif %}
+      &mdash; {{ etiquetas.iva }}: {{ l.iva_tipo | porcentaje }}
+    </div>
+    {% endfor %}
+
+    <div class="bloque-resumen">
+      <div class="linea-resumen">
+        <span class="label-r">{{ etiquetas.base_imponible }}:</span>
+        <span>{{ resumen.base_imponible | moneda }}</span>
+      </div>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <div class="linea-resumen">
+        <span class="label-r">{{ etiquetas.iva }} ({{ tipo | porcentaje }}):</span>
+        <span>{{ d.cuota | moneda }}</span>
+      </div>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <div class="linea-resumen">
+        <span class="label-r">{{ etiquetas.retencion }}:</span>
+        <span>-{{ resumen.total_retencion | moneda }}</span>
+      </div>
+      {% endif %}
+      <div class="linea-total">
+        <span>{{ etiquetas.total }}:</span>
+        <span>{{ resumen.total | moneda }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pie-carta">
+    <p>Forma de pago: transferencia bancaria.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }}</p>
+  </div>
+
+</div>
+</body>
+</html>

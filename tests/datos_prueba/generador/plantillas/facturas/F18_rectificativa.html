@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Rectificativa {{ numero }}</title>
+  <link rel="stylesheet" href="../base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; font-size: 9pt; color: #333; margin: 0; padding: 20px; }
+    .banner-rectificativa { background: linear-gradient(135deg, #c62828, #e53935); color: #fff; text-align: center; padding: 14px 20px; margin-bottom: 18px; position: relative; overflow: hidden; }
+    .banner-rectificativa h1 { margin: 0; font-size: 18pt; letter-spacing: 4px; text-transform: uppercase; }
+    .banner-rectificativa .subtitulo { font-size: 9pt; font-weight: 300; margin-top: 2px; opacity: 0.9; }
+    .banner-rectificativa::before, .banner-rectificativa::after { content: ''; position: absolute; top: 0; width: 40px; height: 100%; }
+    .banner-rectificativa::before { left: 0; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.08) 5px, rgba(255,255,255,0.08) 10px); }
+    .banner-rectificativa::after { right: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(255,255,255,0.08) 5px, rgba(255,255,255,0.08) 10px); }
+    .marca-agua { position: fixed; top: 35%; left: 10%; font-size: 50pt; color: rgba(198, 40, 40, 0.06); font-weight: bold; transform: rotate(-25deg); pointer-events: none; letter-spacing: 10px; white-space: nowrap; z-index: 0; }
+    .ref-original { display: flex; gap: 16px; margin-bottom: 16px; }
+    .ref-original .bloque-ref { flex: 1; border: 2px solid #ef9a9a; border-radius: 6px; padding: 10px 14px; background: #ffebee; }
+    .ref-original .bloque-ref h4 { margin: 0 0 6px; font-size: 8pt; text-transform: uppercase; color: #c62828; letter-spacing: 1px; }
+    .ref-original .bloque-ref p { margin: 2px 0; font-size: 8.5pt; }
+    .ref-original .bloque-ref .valor-ref { font-size: 12pt; font-weight: bold; color: #b71c1c; }
+    .motivo-box { background: #fff3e0; border-left: 4px solid #ff6f00; padding: 10px 14px; margin-bottom: 16px; font-size: 8.5pt; border-radius: 0 4px 4px 0; }
+    .motivo-box strong { color: #e65100; }
+    .cabecera-rect { display: flex; justify-content: space-between; margin-bottom: 16px; }
+    .emisor-rect, .receptor-rect { width: 47%; font-size: 8.5pt; }
+    .emisor-rect { border-bottom: 2px solid #c62828; padding-bottom: 8px; }
+    .emisor-rect h3 { margin: 0 0 4px; font-size: 10pt; color: #333; }
+    .emisor-rect p { margin: 2px 0; }
+    .receptor-rect { background: #f5f5f5; padding: 10px 12px; border-radius: 6px; }
+    .receptor-rect h4 { margin: 0 0 6px; font-size: 8pt; color: #888; text-transform: uppercase; }
+    .receptor-rect p { margin: 2px 0; }
+    .datos-factura-rect { text-align: right; font-size: 8.5pt; margin-bottom: 14px; }
+    .datos-factura-rect span { color: #888; }
+    table.lineas-rect { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 8.5pt; }
+    table.lineas-rect thead th { background: #c62828; color: #fff; padding: 7px 8px; text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5px; }
+    table.lineas-rect thead th:nth-child(n+2) { text-align: right; }
+    table.lineas-rect td { padding: 6px 8px; border-bottom: 1px solid #ffcdd2; }
+    table.lineas-rect td:nth-child(n+2) { text-align: right; }
+    .negativo { color: #c62828; font-weight: bold; }
+    .totales-rect { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .totales-rect .bloque-totales { border: 2px solid #c62828; border-radius: 6px; min-width: 280px; overflow: hidden; }
+    .totales-rect table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .totales-rect td { padding: 5px 12px; }
+    .totales-rect td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .totales-rect .total-devolver { background: #c62828; color: #fff; }
+    .totales-rect .total-devolver td { font-size: 13pt; font-weight: bold; padding: 8px 12px; }
+    .pie-rect { border-top: 1px solid #ddd; padding-top: 10px; font-size: 7pt; color: #999; }
+    .pie-rect p { margin: 3px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="marca-agua">RECTIFICATIVA</div>
+
+<div class="banner-rectificativa">
+  <h1>{{ etiquetas.get('titulo', 'Factura Rectificativa') }}</h1>
+  <div class="subtitulo">{{ etiquetas.get('subtitulo', 'Nota de Credito / Credit Note') }}</div>
+</div>
+
+<div class="ref-original">
+  <div class="bloque-ref">
+    <h4>{{ etiquetas.get('factura_rectificativa', 'Esta Factura Rectificativa') }}</h4>
+    <p>{{ etiquetas.get('numero', 'Numero') }}: <span class="valor-ref">{{ numero }}</span></p>
+    <p>{{ etiquetas.get('fecha', 'Fecha') }}: <strong>{{ fecha }}</strong></p>
+  </div>
+  <div class="bloque-ref">
+    <h4>{{ etiquetas.get('factura_original', 'Factura Original Rectificada') }}</h4>
+    <p>{{ etiquetas.get('numero_original', 'Numero') }}: <span class="valor-ref">{{ etiquetas.get('ref_numero_original', '---') }}</span></p>
+    <p>{{ etiquetas.get('fecha_original', 'Fecha') }}: <strong>{{ etiquetas.get('ref_fecha_original', '---') }}</strong></p>
+  </div>
+</div>
+
+<div class="motivo-box">
+  <strong>{{ etiquetas.get('motivo_titulo', 'Motivo de la rectificacion') }}:</strong>
+  {{ etiquetas.get('motivo', 'Devolucion de mercancia / Error en facturacion') }}
+</div>
+
+<div class="cabecera-rect">
+  <div class="emisor-rect">
+    <h3>{{ emisor.nombre }}</h3>
+    <p>{{ etiquetas.get('nif_emisor', 'CIF/NIF') }}: {{ emisor.nif }}</p>
+    <p>{{ emisor.direccion }}</p>
+    <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+    {% if emisor.telefono %}<p>{{ emisor.telefono }}</p>{% endif %}
+    {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+  </div>
+  <div class="receptor-rect">
+    <h4>{{ etiquetas.get('receptor_titulo', 'Destinatario') }}</h4>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>{{ etiquetas.get('nif_receptor', 'CIF/NIF') }}: {{ receptor.nif }}</p>
+    <p>{{ receptor.direccion }}</p>
+    <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+  </div>
+</div>
+
+<table class="lineas-rect">
+  <thead>
+    <tr>
+      <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+      <th>{{ etiquetas.get('cantidad', 'Ud.') }}</th>
+      <th>{{ etiquetas.get('precio', 'Precio') }}</th>
+      <th>{{ etiquetas.get('descuento', 'Dto.') }}</th>
+      <th>{{ etiquetas.get('base', 'Base') }}</th>
+      <th>{{ etiquetas.get('iva_tipo', 'IVA') }}</th>
+      <th>{{ etiquetas.get('cuota_iva', 'Cuota') }}</th>
+      <th>{{ etiquetas.get('total_linea', 'Total') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lineas %}
+    <tr>
+      <td>{{ l.concepto }}</td>
+      <td>{{ l.cantidad }}</td>
+      <td>{{ l.precio_unitario | moneda }}</td>
+      <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+      <td class="negativo">-{{ l.base | moneda }}</td>
+      <td>{{ l.iva_tipo | porcentaje }}</td>
+      <td class="negativo">-{{ l.cuota_iva | moneda }}</td>
+      <td class="negativo">-{{ l.total_linea | moneda }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="totales-rect">
+  <div class="bloque-totales">
+    <table>
+      <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}</td><td class="negativo">-{{ resumen.base_imponible | moneda }}</td></tr>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <tr><td>{{ etiquetas.get('iva', 'IVA') }} {{ tipo | porcentaje }}</td><td class="negativo">-{{ d.cuota | moneda }}</td></tr>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <tr><td>{{ etiquetas.get('retencion', 'IRPF (devolucion)') }}</td><td>+{{ resumen.total_retencion | moneda }}</td></tr>
+      {% endif %}
+      <tr class="total-devolver">
+        <td>{{ etiquetas.get('total', 'TOTAL A DEVOLVER') }}</td>
+        <td>-{{ resumen.total | moneda }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="pie-rect">
+  <p><strong>{{ etiquetas.get('forma_pago', 'Forma de devolucion') }}:</strong> {{ etiquetas.get('metodo_pago', 'Transferencia bancaria / Compensacion') }}</p>
+  <p>{{ etiquetas.get('legal', 'Factura rectificativa emitida conforme al art. 15 del RD 1619/2012. Los importes negativos implican credito a favor del receptor.') }}</p>
+</div>
+</body>
+</html>

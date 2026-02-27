@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      color: #333;
+      background: #fafafa;
+      margin: 0;
+      padding: 20px;
+    }
+    .factura-moderna { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .header-mod {
+      background: var(--color-primario, #4a6cf7);
+      color: #fff;
+      padding: 30px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-mod h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .header-mod .meta-mod { text-align: right; font-size: 13px; opacity: 0.9; }
+    .header-mod .meta-mod p { margin: 2px 0; }
+    .cuerpo-mod { padding: 30px 35px; }
+    .fila-datos {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 30px;
+    }
+    .fila-datos .bloque-mod { flex: 1; }
+    .bloque-mod .label-mod {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--color-primario, #4a6cf7);
+      margin-bottom: 8px;
+    }
+    .bloque-mod p { margin: 2px 0; font-size: 13px; line-height: 1.5; }
+    .tabla-mod {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 25px;
+      font-size: 13px;
+    }
+    .tabla-mod th {
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      padding: 0 12px 10px;
+    }
+    .tabla-mod th:last-child { text-align: right; }
+    .tabla-mod td {
+      padding: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .tabla-mod td:last-child { text-align: right; }
+    .tabla-mod tbody tr:hover { background: #fafbff; }
+    .card-total {
+      background: var(--color-fondo-total, #f7f8fc);
+      border-radius: 10px;
+      padding: 20px 25px;
+      margin-bottom: 10px;
+    }
+    .card-total .fila-ct {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 13px;
+      color: #666;
+    }
+    .card-total .fila-ct-principal {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 0;
+      margin-top: 10px;
+      border-top: 2px solid var(--color-primario, #4a6cf7);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-primario, #4a6cf7);
+    }
+    .pie-mod {
+      padding: 15px 35px;
+      background: #fafafa;
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="factura factura-moderna">
+
+  <div class="header-mod">
+    <h1>{{ etiquetas.factura }}</h1>
+    <div class="meta-mod">
+      <p>{{ etiquetas.numero }}: <strong>{{ numero }}</strong></p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="cuerpo-mod">
+    <div class="fila-datos">
+      <div class="bloque-mod datos-emisor">
+        <div class="label-mod">{{ etiquetas.emisor }}</div>
+        <p><strong>{{ emisor.nombre }}</strong></p>
+        <p>{{ emisor.nif }}</p>
+        <p>{{ emisor.direccion }}<br>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+        {% if emisor.telefono %}<p>{{ emisor.telefono }}</p>{% endif %}
+        {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+      </div>
+      <div class="bloque-mod datos-receptor">
+        <div class="label-mod">{{ etiquetas.receptor }}</div>
+        <p><strong>{{ receptor.nombre }}</strong></p>
+        <p>{{ receptor.nif }}</p>
+        <p>{{ receptor.direccion }}<br>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+      </div>
+    </div>
+
+    <table class="tabla-mod tabla-lineas">
+      <thead>
+        <tr>
+          <th>{{ etiquetas.concepto }}</th>
+          <th>{{ etiquetas.cantidad }}</th>
+          <th>{{ etiquetas.precio_unitario }}</th>
+          <th>{{ etiquetas.iva }}</th>
+          <th>{{ etiquetas.total_linea }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lineas %}
+        <tr>
+          <td>{{ l.concepto }}</td>
+          <td>{{ l.cantidad }}</td>
+          <td>{{ l.precio_unitario | moneda }}</td>
+          <td>{{ l.iva_tipo | porcentaje }}</td>
+          <td>{{ l.total_linea | moneda }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="card-total">
+      <div class="fila-ct"><span>{{ etiquetas.base_imponible }}</span><span>{{ resumen.base_imponible | moneda }}</span></div>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <div class="fila-ct"><span>{{ etiquetas.iva }} {{ tipo | porcentaje }}</span><span>{{ d.cuota | moneda }}</span></div>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <div class="fila-ct"><span>{{ etiquetas.retencion }}</span><span>-{{ resumen.total_retencion | moneda }}</span></div>
+      {% endif %}
+      <div class="fila-ct-principal"><span>{{ etiquetas.total }}</span><span>{{ resumen.total | moneda }}</span></div>
+    </div>
+  </div>
+
+  <div class="pie-mod">
+    {{ emisor.nombre }} &bull; {{ emisor.nif }} &bull; {{ emisor.ciudad }}
+  </div>
+
+</div>
+</body>
+</html>

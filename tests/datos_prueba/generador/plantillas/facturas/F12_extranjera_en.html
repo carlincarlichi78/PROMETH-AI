@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Invoice {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: letter; margin: 18mm 22mm; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-size: 9pt;
+      color: #333;
+      line-height: 1.4;
+    }
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 25px;
+    }
+    .company-logo {
+      width: var(--logo-tamano, 100px);
+      height: calc(var(--logo-tamano, 100px) * 0.4);
+      background: var(--color-primario, #0078d4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      border-radius: 4px;
+    }
+    .invoice-title {
+      text-align: right;
+    }
+    .invoice-title h1 {
+      font-size: 32px;
+      font-weight: 200;
+      color: var(--color-primario, #0078d4);
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+    .invoice-title p { margin: 2px 0; font-size: 10pt; }
+    .invoice-title .inv-number {
+      font-size: 13pt;
+      font-weight: 600;
+    }
+
+    .parties-row {
+      display: flex;
+      gap: 50px;
+      margin-bottom: 25px;
+    }
+    .party-block { flex: 1; }
+    .party-block h3 {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--color-primario, #0078d4);
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--color-primario, #0078d4);
+    }
+    .party-block p { margin: 2px 0; font-size: 9pt; }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 9pt;
+    }
+    .items-table th {
+      background: var(--color-primario, #0078d4);
+      color: #fff;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .items-table th.amt { text-align: right; }
+    .items-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .items-table td.amt { text-align: right; white-space: nowrap; }
+    .items-table tbody tr:hover { background: #f8f9fa; }
+
+    .summary-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 25px;
+    }
+    .summary-box {
+      width: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 14px;
+      font-size: 9pt;
+      border-bottom: 1px solid #eee;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row.amount-due {
+      background: var(--color-primario, #0078d4);
+      color: #fff;
+      font-size: 14pt;
+      font-weight: 600;
+      padding: 10px 14px;
+    }
+    .summary-row .label { color: #666; }
+    .summary-row.amount-due .label { color: rgba(255,255,255,0.85); }
+
+    .terms-section {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #ddd;
+      font-size: 7pt;
+      color: #888;
+    }
+    .terms-section h4 {
+      font-size: 8pt;
+      color: #666;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .terms-section p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="invoice-header">
+    <div class="company-logo">{{ emisor.nombre[:8] | upper }}</div>
+    <div class="invoice-title">
+      <h1>{{ etiquetas.factura }}</h1>
+      <p class="inv-number">{{ etiquetas.numero }}: {{ numero }}</p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="parties-row">
+    <div class="party-block">
+      <h3>{{ etiquetas.emisor }}</h3>
+      <p><strong>{{ emisor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>{{ emisor.telefono }}</p>{% endif %}
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="party-block">
+      <h3>{{ etiquetas.receptor }}</h3>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <table class="items-table tabla-lineas">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto }}</th>
+        <th class="amt">{{ etiquetas.cantidad }}</th>
+        <th class="amt">{{ etiquetas.precio_unitario }}</th>
+        <th class="amt">{{ etiquetas.descuento }}</th>
+        <th class="amt">{{ etiquetas.base_imponible }}</th>
+        <th class="amt">{{ etiquetas.iva }}</th>
+        <th class="amt">{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l.concepto }}</td>
+        <td class="amt">{{ l.cantidad }}</td>
+        <td class="amt">{{ l.precio_unitario | moneda }}</td>
+        <td class="amt">{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td class="amt">{{ l.base | moneda }}</td>
+        <td class="amt">{{ l.iva_tipo | porcentaje }}</td>
+        <td class="amt">{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="summary-section">
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="label">{{ etiquetas.base_imponible }}</span>
+        <span>{{ resumen.base_imponible | moneda }}</span>
+      </div>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <div class="summary-row">
+        <span class="label">{{ etiquetas.iva }} ({{ tipo | porcentaje }})</span>
+        <span>{{ d.cuota | moneda }}</span>
+      </div>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <div class="summary-row">
+        <span class="label">{{ etiquetas.retencion }}</span>
+        <span>-{{ resumen.total_retencion | moneda }}</span>
+      </div>
+      {% endif %}
+      <div class="summary-row amount-due">
+        <span class="label">{{ etiquetas.total }}</span>
+        <span>{{ resumen.total | moneda }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="terms-section">
+    <h4>Terms &amp; Conditions</h4>
+    <p>Payment is due within 30 days of invoice date. Late payments may incur interest at 1.5% per month.</p>
+    <p>All amounts are in the currency specified. Please reference invoice number on all correspondence.</p>
+    <p>This invoice is issued in accordance with EU Directive 2006/112/EC and applicable local tax regulations.</p>
+    <p>{{ emisor.nombre }} &mdash; {{ emisor.nif }} &mdash; {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+  </div>
+
+</div>
+</body>
+</html>

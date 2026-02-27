@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: A4; margin: 25mm 30mm; }
+    body { font-family: "Georgia", "Garamond", serif; color: #2c2c2c; }
+
+    .portfolio-header {
+      text-align: center;
+      padding-bottom: 30px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #ccc;
+    }
+    .logo-artistico {
+      width: var(--logo-tamano, 120px);
+      height: var(--logo-tamano, 120px);
+      margin: 0 auto 15px;
+      border: 3px solid var(--color-primario, #1a1a1a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: var(--color-primario, #1a1a1a);
+    }
+    .portfolio-header h1 {
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      color: var(--color-primario, #1a1a1a);
+      margin: 0;
+    }
+    .portfolio-header .subtitulo {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #888;
+      margin-top: 5px;
+    }
+    .meta-factura {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      font-size: 11px;
+    }
+    .meta-factura .col { width: 45%; }
+    .meta-factura .col-derecha { text-align: right; }
+    .meta-factura h3 {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    .meta-factura p { margin: 2px 0; }
+
+    /* Items como proyectos, no tabla */
+    .proyecto-item {
+      padding: 14px 0;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .proyecto-item:last-child { border-bottom: none; }
+    .proyecto-nombre {
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1;
+    }
+    .proyecto-detalle {
+      font-size: 10px;
+      color: #777;
+      margin-top: 3px;
+    }
+    .proyecto-importe {
+      text-align: right;
+      min-width: 120px;
+      font-size: 13px;
+    }
+    .separador-elegante {
+      text-align: center;
+      margin: 25px 0;
+      color: #ccc;
+      font-size: 14px;
+      letter-spacing: 8px;
+    }
+    .resumen-elegante {
+      width: 260px;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .resumen-elegante p {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+    .resumen-elegante .total-final {
+      border-top: 2px solid var(--color-primario, #1a1a1a);
+      padding-top: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .pie-creativo {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 9px;
+      color: #aaa;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 15px;
+    }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="portfolio-header">
+    <div class="logo-artistico">{{ emisor.nombre[:3] | upper }}</div>
+    <h1>{{ emisor.nombre }}</h1>
+    <div class="subtitulo">{{ etiquetas.nif }}: {{ emisor.nif }}{% if emisor.telefono %} &middot; {{ emisor.telefono }}{% endif %}{% if emisor.email %} &middot; {{ emisor.email }}{% endif %}</div>
+  </div>
+
+  <div class="meta-factura">
+    <div class="col">
+      <h3>{{ etiquetas.receptor }}</h3>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+    <div class="col col-derecha">
+      <h3>{{ etiquetas.factura }}</h3>
+      <p>{{ etiquetas.numero }}: <strong>{{ numero }}</strong></p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="separador-elegante">&mdash;&mdash;&mdash;</div>
+
+  {% for l in lineas %}
+  <div class="proyecto-item">
+    <div>
+      <div class="proyecto-nombre">{{ l.concepto }}</div>
+      <div class="proyecto-detalle">{{ l.cantidad }} x {{ l.precio_unitario | moneda }}{% if l.descuento_pct > 0 %} &middot; {{ etiquetas.descuento }}: {{ l.descuento_pct | porcentaje }}{% endif %} &middot; {{ etiquetas.iva }}: {{ l.iva_tipo | porcentaje }}</div>
+    </div>
+    <div class="proyecto-importe">{{ l.total_linea | moneda }}</div>
+  </div>
+  {% endfor %}
+
+  <div class="separador-elegante">&middot; &middot; &middot;</div>
+
+  <div class="resumen-elegante">
+    <p><span>{{ etiquetas.base_imponible }}</span><span>{{ resumen.base_imponible | moneda }}</span></p>
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <p><span>{{ etiquetas.iva }} {{ tipo | porcentaje }}</span><span>{{ d.cuota | moneda }}</span></p>
+    {% endfor %}
+    {% if resumen.total_retencion > 0 %}
+    <p><span>{{ etiquetas.retencion }}</span><span>-{{ resumen.total_retencion | moneda }}</span></p>
+    {% endif %}
+    <p class="total-final"><span>{{ etiquetas.total }}</span><span>{{ resumen.total | moneda }}</span></p>
+  </div>
+
+  <div class="pie-creativo">
+    <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+    <p>Factura emitida conforme al RD 1619/2012</p>
+  </div>
+
+</div>
+</body>
+</html>

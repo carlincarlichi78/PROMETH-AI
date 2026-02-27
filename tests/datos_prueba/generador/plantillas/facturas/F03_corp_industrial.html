@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: "Courier New", monospace; font-size: 11px; color: #1a1a1a; }
+    .factura-industrial { padding: 15px 20px; }
+    .cabecera-ind { display: flex; justify-content: space-between; border: 2px solid #000; padding: 10px 15px; margin-bottom: 8px; }
+    .cabecera-ind .empresa-ind { flex: 1; }
+    .cabecera-ind .empresa-ind h2 { font-size: 14px; margin: 0 0 4px; }
+    .cabecera-ind .empresa-ind p { margin: 1px 0; font-size: 10px; }
+    .cabecera-ind .ref-bloque { text-align: right; border-left: 2px solid #000; padding-left: 15px; min-width: 220px; }
+    .ref-bloque table { font-size: 10px; }
+    .ref-bloque table td { padding: 1px 5px; }
+    .ref-bloque table td:first-child { font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+    .cliente-ind { border: 1px solid #666; padding: 8px 12px; margin-bottom: 8px; display: flex; gap: 30px; }
+    .cliente-ind .col { flex: 1; }
+    .cliente-ind .col-label { font-weight: bold; font-size: 9px; text-transform: uppercase; margin-bottom: 3px; }
+    .cliente-ind p { margin: 1px 0; font-size: 10px; }
+    .tabla-densa { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 10px; }
+    .tabla-densa th { background: #000; color: #fff; padding: 4px 6px; text-align: center; font-size: 8px; text-transform: uppercase; }
+    .tabla-densa td { padding: 3px 6px; border: 1px solid #999; text-align: center; }
+    .tabla-densa td:first-child { text-align: left; }
+    .tabla-densa tbody tr:nth-child(odd) { background: #f5f5f5; }
+    .resumen-ind { display: flex; justify-content: space-between; border: 1px solid #666; padding: 8px 12px; margin-bottom: 8px; }
+    .resumen-ind .desglose { flex: 1; }
+    .resumen-ind .desglose table { font-size: 10px; }
+    .resumen-ind .desglose table th { text-align: left; font-size: 8px; text-transform: uppercase; padding: 2px 8px; border-bottom: 1px solid #999; }
+    .resumen-ind .desglose table td { padding: 2px 8px; }
+    .total-bloque { border-left: 2px solid #000; padding-left: 15px; display: flex; flex-direction: column; justify-content: center; min-width: 180px; }
+    .total-bloque .total-label { font-size: 9px; text-transform: uppercase; }
+    .total-bloque .total-valor { font-size: 20px; font-weight: bold; }
+    .condiciones-ind { font-size: 9px; border-top: 1px dashed #999; padding-top: 6px; display: flex; gap: 20px; }
+    .condiciones-ind .cond-col { flex: 1; }
+    .condiciones-ind .cond-titulo { font-weight: bold; text-transform: uppercase; font-size: 8px; margin-bottom: 2px; }
+    .condiciones-ind p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="factura factura-industrial">
+  <div class="cabecera-ind">
+    <div class="empresa-ind datos-emisor">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }} {% if emisor.email %}| {{ emisor.email }}{% endif %}</p>{% endif %}
+    </div>
+    <div class="ref-bloque">
+      <table>
+        <tr><td>{{ etiquetas.factura }} N&ordm;:</td><td><strong>{{ numero }}</strong></td></tr>
+        <tr><td>{{ etiquetas.fecha }}:</td><td>{{ fecha }}</td></tr>
+        <tr><td>Ref. pedido:</td><td>-</td></tr>
+        <tr><td>Cod. cliente:</td><td>-</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="cliente-ind datos-receptor">
+    <div class="col">
+      <div class="col-label">{{ etiquetas.receptor }}</div>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+    </div>
+    <div class="col">
+      <div class="col-label">Direccion envio</div>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+  <table class="tabla-densa tabla-lineas">
+    <thead>
+      <tr>
+        <th>Ref.</th>
+        <th>{{ etiquetas.concepto }}</th>
+        <th>{{ etiquetas.cantidad }}</th>
+        <th>{{ etiquetas.precio_unitario }}</th>
+        <th>{{ etiquetas.descuento }}</th>
+        <th>{{ etiquetas.base_imponible }}</th>
+        <th>{{ etiquetas.iva }}</th>
+        <th>{{ etiquetas.cuota_iva }}</th>
+        <th>{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ "%03d" | format(loop.index) }}</td>
+        <td>{{ l.concepto }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>{{ l.precio_unitario | moneda }}</td>
+        <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td>{{ l.base | moneda }}</td>
+        <td>{{ l.iva_tipo | porcentaje }}</td>
+        <td>{{ l.cuota_iva | moneda }}</td>
+        <td>{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="resumen-ind">
+    <div class="desglose">
+      <table>
+        <thead><tr><th>Tipo</th><th>Base</th><th>Cuota</th></tr></thead>
+        <tbody>
+          {% for tipo, d in resumen.desglose_iva.items() %}
+          <tr><td>{{ tipo | porcentaje }}</td><td>{{ d.base | moneda }}</td><td>{{ d.cuota | moneda }}</td></tr>
+          {% endfor %}
+          {% if resumen.total_retencion > 0 %}
+          <tr><td>{{ etiquetas.retencion }}</td><td></td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <div class="total-bloque">
+      <div class="total-label">{{ etiquetas.total }}</div>
+      <div class="total-valor">{{ resumen.total | moneda }}</div>
+    </div>
+  </div>
+  <div class="condiciones-ind">
+    <div class="cond-col">
+      <div class="cond-titulo">Condiciones de entrega</div>
+      <p>Plazo: segun pedido</p>
+      <p>Transporte: incluido</p>
+    </div>
+    <div class="cond-col">
+      <div class="cond-titulo">Condiciones de pago</div>
+      <p>Vencimiento: 60 dias</p>
+      <p>Forma: transferencia bancaria</p>
+    </div>
+    <div class="cond-col">
+      <div class="cond-titulo">Observaciones</div>
+      <p>Conforme a las condiciones generales de venta.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

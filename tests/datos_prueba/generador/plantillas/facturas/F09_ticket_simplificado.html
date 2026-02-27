@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Simplificada {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: 80mm 200mm; margin: 4mm 3mm; }
+    body {
+      font-family: "Courier New", monospace;
+      font-size: 8pt;
+      color: #222;
+      width: 74mm;
+      line-height: 1.25;
+      background: #faf6e9;
+    }
+    .simplificado {
+      text-align: center;
+    }
+    .emisor-mini {
+      margin-bottom: 6px;
+    }
+    .emisor-mini .nombre {
+      font-size: 13pt;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    .emisor-mini p {
+      margin: 1px 0;
+      font-size: 7pt;
+      color: #444;
+    }
+    .linea-sep {
+      margin: 5px 0;
+      border: none;
+      border-top: 1px dashed #999;
+    }
+    .tipo-doc {
+      font-size: 9pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 6px 0;
+    }
+    .meta-mini {
+      font-size: 7pt;
+      margin-bottom: 6px;
+    }
+    .meta-mini p { margin: 1px 0; }
+
+    /* Lineas resumidas */
+    .lineas-mini {
+      text-align: left;
+      font-size: 7pt;
+      margin: 5px 0;
+    }
+    .linea-mini {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+    .linea-mini .txt { flex: 1; }
+    .linea-mini .val { min-width: 50px; text-align: right; }
+
+    /* Importe prominente */
+    .importe-grande {
+      font-size: 24pt;
+      font-weight: bold;
+      margin: 14px 0;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .iva-incluido {
+      font-size: 7pt;
+      color: #666;
+      margin-top: -8px;
+      margin-bottom: 8px;
+    }
+    .desglose-mini {
+      font-size: 7pt;
+      text-align: left;
+      margin: 4px 0;
+      color: #555;
+    }
+    .desglose-mini p {
+      display: flex;
+      justify-content: space-between;
+      margin: 1px 0;
+    }
+    .pie-mini {
+      font-size: 6pt;
+      color: #888;
+      margin-top: 8px;
+    }
+    .pie-mini p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="simplificado">
+
+  <div class="emisor-mini">
+    <div class="nombre">{{ emisor.nombre }}</div>
+    <p>{{ etiquetas.nif }}: {{ emisor.nif }}</p>
+    <p>{{ emisor.direccion }}</p>
+    <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+    {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+  </div>
+
+  <hr class="linea-sep">
+
+  <div class="tipo-doc">{{ etiquetas.factura }} SIMPLIFICADA</div>
+  <div class="meta-mini">
+    <p>{{ etiquetas.numero }}: {{ numero }}</p>
+    <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+  </div>
+
+  <hr class="linea-sep">
+
+  {% if lineas | length > 1 %}
+  <div class="lineas-mini">
+    {% for l in lineas %}
+    <div class="linea-mini">
+      <span class="txt">{{ l.concepto[:25] }}</span>
+      <span class="val">{{ l.total_linea | moneda }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <hr class="linea-sep">
+  {% endif %}
+
+  <div class="importe-grande">{{ resumen.total | moneda }}</div>
+  <div class="iva-incluido">{{ etiquetas.iva }} INCLUIDO</div>
+
+  <div class="desglose-mini">
+    {% for tipo, d in resumen.desglose_iva.items() %}
+    <p><span>{{ etiquetas.base_imponible }} ({{ tipo | porcentaje }}):</span><span>{{ d.base | moneda }}</span></p>
+    <p><span>{{ etiquetas.iva }} {{ tipo | porcentaje }}:</span><span>{{ d.cuota | moneda }}</span></p>
+    {% endfor %}
+  </div>
+
+  <hr class="linea-sep">
+
+  <div class="pie-mini">
+    <p>Factura simplificada - art. 4 RD 1619/2012</p>
+    <p>Conserve este justificante</p>
+  </div>
+
+</div>
+</body>
+</html>

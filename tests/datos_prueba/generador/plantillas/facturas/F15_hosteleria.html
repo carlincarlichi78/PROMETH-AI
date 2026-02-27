@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    body { font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; font-size: 9.5pt; color: #3e2723; margin: 0; padding: 20px; background: #fffbf5; }
+    .carta-cabecera { text-align: center; padding: 18px 0 14px; border-bottom: 3px solid #bf360c; margin-bottom: 20px; }
+    .carta-cabecera h1 { font-size: 22pt; margin: 0; color: #bf360c; font-weight: 400; letter-spacing: 3px; font-variant: small-caps; }
+    .carta-cabecera .subtitulo { font-size: 9pt; color: #8d6e63; margin: 2px 0 0; letter-spacing: 2px; }
+    .carta-cabecera .direccion { font-size: 7.5pt; color: #a1887f; margin-top: 6px; }
+    .info-servicio { display: flex; justify-content: space-between; margin-bottom: 16px; }
+    .datos-evento { background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius: 6px; padding: 12px 16px; width: 48%; font-size: 8.5pt; }
+    .datos-evento .etiqueta { font-size: 7pt; text-transform: uppercase; color: #bf360c; letter-spacing: 1px; font-weight: bold; }
+    .datos-evento p { margin: 3px 0; }
+    .datos-cliente { border-left: 3px solid #e65100; padding-left: 14px; width: 44%; font-size: 8.5pt; }
+    .datos-cliente h3 { margin: 0 0 6px; font-size: 8pt; text-transform: uppercase; color: #bf360c; letter-spacing: 1px; }
+    .datos-cliente p { margin: 2px 0; }
+    .factura-ref { display: flex; justify-content: space-between; align-items: center; background: #3e2723; color: #fff; padding: 8px 16px; margin-bottom: 14px; border-radius: 4px; }
+    .factura-ref h2 { margin: 0; font-size: 12pt; font-weight: 400; letter-spacing: 2px; }
+    .factura-ref .num-fecha { font-size: 9pt; text-align: right; }
+    table.menu-detalle { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    table.menu-detalle thead th { background: #4e342e; color: #ffcc80; padding: 7px 8px; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.8px; text-align: left; }
+    table.menu-detalle thead th:nth-child(n+2) { text-align: right; }
+    table.menu-detalle td { padding: 7px 8px; border-bottom: 1px dotted #d7ccc8; font-size: 9pt; }
+    table.menu-detalle td:nth-child(n+2) { text-align: right; }
+    table.menu-detalle tbody tr:hover { background: #fbe9e7; }
+    .resumen-cuenta { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .resumen-cuenta .bloque { background: #3e2723; color: #ffcc80; padding: 14px 20px; border-radius: 6px; min-width: 260px; }
+    .resumen-cuenta table { width: 100%; border-collapse: collapse; }
+    .resumen-cuenta td { padding: 4px 0; font-size: 9pt; color: #ffcc80; }
+    .resumen-cuenta td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .resumen-cuenta .linea-total { border-top: 1px solid #8d6e63; }
+    .resumen-cuenta .total-final td { font-size: 14pt; font-weight: bold; color: #fff; padding-top: 8px; }
+    .pie-hosteleria { display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #d7ccc8; font-size: 7.5pt; color: #8d6e63; }
+    .pie-hosteleria div { width: 48%; }
+    .agradecimiento { text-align: center; margin-top: 14px; font-style: italic; color: #a1887f; font-size: 9pt; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="carta-cabecera">
+  <h1>{{ emisor.nombre }}</h1>
+  <div class="subtitulo">{{ etiquetas.get('tipo_negocio', 'Restaurante & Catering') }}</div>
+  <div class="direccion">{{ emisor.direccion }} &bull; {{ emisor.cp }} {{ emisor.ciudad }} &bull; {{ emisor.telefono }}</div>
+</div>
+
+<div class="factura-ref">
+  <h2>{{ etiquetas.get('titulo', 'Factura') }}</h2>
+  <div class="num-fecha">
+    {{ etiquetas.get('numero', 'N.') }}: <strong>{{ numero }}</strong><br>
+    {{ etiquetas.get('fecha', 'Fecha') }}: {{ fecha }}
+  </div>
+</div>
+
+<div class="info-servicio">
+  <div class="datos-evento">
+    <div class="etiqueta">{{ etiquetas.get('evento', 'Datos del Servicio') }}</div>
+    <p><strong>{{ etiquetas.get('comensales', 'Comensales') }}:</strong> {{ etiquetas.get('num_comensales', '---') }}</p>
+    <p><strong>{{ etiquetas.get('sala', 'Sala / Evento') }}:</strong> {{ etiquetas.get('nombre_sala', '---') }}</p>
+    <p><strong>{{ etiquetas.get('servicio', 'Servicio') }}:</strong> {{ etiquetas.get('tipo_servicio', '---') }}</p>
+  </div>
+  <div class="datos-cliente">
+    <h3>{{ etiquetas.get('receptor_titulo', 'Cliente') }}</h3>
+    <p><strong>{{ receptor.nombre }}</strong></p>
+    <p>{{ etiquetas.get('nif_receptor', 'CIF/NIF') }}: {{ receptor.nif }}</p>
+    <p>{{ receptor.direccion }}</p>
+    <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+  </div>
+</div>
+
+<table class="menu-detalle">
+  <thead>
+    <tr>
+      <th>{{ etiquetas.get('concepto', 'Servicio / Producto') }}</th>
+      <th>{{ etiquetas.get('cantidad', 'Ud.') }}</th>
+      <th>{{ etiquetas.get('precio', 'P/U') }}</th>
+      <th>{{ etiquetas.get('descuento', 'Dto.') }}</th>
+      <th>{{ etiquetas.get('base', 'Importe') }}</th>
+      <th>{{ etiquetas.get('iva_tipo', 'IVA') }}</th>
+      <th>{{ etiquetas.get('cuota_iva', 'Cuota') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lineas %}
+    <tr>
+      <td>{{ l.concepto }}</td>
+      <td>{{ l.cantidad }}</td>
+      <td>{{ l.precio_unitario | moneda }}</td>
+      <td>{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+      <td>{{ l.base | moneda }}</td>
+      <td>{{ l.iva_tipo | porcentaje }}</td>
+      <td>{{ l.cuota_iva | moneda }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="resumen-cuenta">
+  <div class="bloque">
+    <table>
+      <tr><td>{{ etiquetas.get('base_imponible', 'Subtotal') }}</td><td>{{ resumen.base_imponible | moneda }}</td></tr>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <tr><td>{{ etiquetas.get('iva', 'IVA') }} {{ tipo | porcentaje }}</td><td>{{ d.cuota | moneda }}</td></tr>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <tr><td>{{ etiquetas.get('retencion', 'IRPF') }}</td><td>-{{ resumen.total_retencion | moneda }}</td></tr>
+      {% endif %}
+      <tr class="linea-total total-final"><td>{{ etiquetas.get('total', 'Total') }}</td><td>{{ resumen.total | moneda }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="pie-hosteleria">
+  <div>
+    <p><strong>{{ etiquetas.get('nif_emisor', 'CIF') }}:</strong> {{ emisor.nif }}</p>
+    {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+  </div>
+  <div style="text-align: right;">
+    <p><strong>{{ etiquetas.get('forma_pago', 'Forma de pago') }}:</strong> {{ etiquetas.get('metodo_pago', 'Tarjeta / Efectivo') }}</p>
+  </div>
+</div>
+<p class="agradecimiento">{{ etiquetas.get('agradecimiento', 'Gracias por su visita. Esperamos volver a atenderle pronto.') }}</p>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ numero }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: A4; margin: 10mm 12mm; }
+    body {
+      font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      font-size: 7pt;
+      color: #111;
+      line-height: 1.2;
+    }
+    .densa-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #000;
+    }
+    .densa-header .emisor-col { width: 58%; }
+    .densa-header .emisor-col h2 {
+      font-size: 11pt;
+      margin: 0 0 2px;
+    }
+    .densa-header .emisor-col p { margin: 0; font-size: 7pt; }
+    .densa-header .factura-col {
+      text-align: right;
+      width: 38%;
+    }
+    .densa-header .factura-col h1 {
+      font-size: 12pt;
+      margin: 0 0 3px;
+    }
+    .densa-header .factura-col p { margin: 1px 0; font-size: 7pt; }
+
+    .densa-receptor {
+      background: #f0f0f0;
+      padding: 4px 6px;
+      margin-bottom: 5px;
+      font-size: 7pt;
+      display: flex;
+      gap: 20px;
+    }
+    .densa-receptor p { margin: 0; }
+
+    /* Tabla densa: muchas columnas estrechas */
+    .tabla-densa {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5px;
+      font-size: 7pt;
+    }
+    .tabla-densa th {
+      background: #222;
+      color: #fff;
+      padding: 3px 4px;
+      font-size: 6pt;
+      text-transform: uppercase;
+      text-align: center;
+      border: 1px solid #222;
+    }
+    .tabla-densa td {
+      padding: 2px 4px;
+      border: 1px solid #ccc;
+      vertical-align: top;
+    }
+    .tabla-densa td.num { text-align: right; white-space: nowrap; }
+    .tabla-densa td.cen { text-align: center; }
+    .tabla-densa tbody tr:nth-child(even) { background: #f8f8f8; }
+    .tabla-densa .subtotal-row {
+      background: #e8e8e8;
+      font-weight: bold;
+    }
+    .tabla-densa .subtotal-row td { border-top: 1px solid #999; }
+
+    .col-ref { width: 10%; }
+    .col-desc { width: 35%; }
+    .col-uds { width: 6%; }
+    .col-precio { width: 10%; }
+    .col-dto { width: 7%; }
+    .col-base { width: 11%; }
+    .col-iva { width: 6%; }
+    .col-imp { width: 11%; }
+
+    .resumen-densa {
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      margin-bottom: 5px;
+    }
+    .desglose-tabla {
+      border-collapse: collapse;
+      font-size: 7pt;
+    }
+    .desglose-tabla th {
+      background: #555;
+      color: #fff;
+      padding: 2px 5px;
+      font-size: 6pt;
+    }
+    .desglose-tabla td { padding: 2px 5px; border: 1px solid #ccc; text-align: right; }
+
+    .total-densa {
+      border: 2px solid #000;
+      padding: 3px 8px;
+      font-size: 10pt;
+      font-weight: bold;
+      text-align: right;
+      min-width: 140px;
+    }
+    .total-densa .label { font-size: 7pt; font-weight: normal; }
+
+    .pie-densa {
+      font-size: 6pt;
+      color: #666;
+      border-top: 1px solid #ccc;
+      padding-top: 3px;
+      margin-top: 4px;
+    }
+    .pie-densa p { margin: 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="densa-header">
+    <div class="emisor-col">
+      <h2>{{ emisor.nombre }}</h2>
+      <p>{{ etiquetas.nif }}: {{ emisor.nif }} | {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}{% if emisor.email %} | {{ emisor.email }}{% endif %}</p>{% endif %}
+    </div>
+    <div class="factura-col">
+      <h1>{{ etiquetas.factura }}</h1>
+      <p>{{ etiquetas.numero }}: {{ numero }}</p>
+      <p>{{ etiquetas.fecha }}: {{ fecha }}</p>
+    </div>
+  </div>
+
+  <div class="densa-receptor">
+    <div>
+      <p><strong>{{ etiquetas.receptor }}:</strong> {{ receptor.nombre }}</p>
+      <p>{{ etiquetas.nif }}: {{ receptor.nif }}</p>
+    </div>
+    <div>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <table class="tabla-densa">
+    <thead>
+      <tr>
+        <th class="col-ref">Ref.</th>
+        <th class="col-desc">{{ etiquetas.concepto }}</th>
+        <th class="col-uds">Uds</th>
+        <th class="col-precio">{{ etiquetas.precio_unitario }}</th>
+        <th class="col-dto">{{ etiquetas.descuento }}</th>
+        <th class="col-base">{{ etiquetas.base_imponible }}</th>
+        <th class="col-iva">{{ etiquetas.iva }}</th>
+        <th class="col-imp">{{ etiquetas.total_linea }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lineas %}
+      <tr>
+        <td class="cen">{{ "%03d" | format(loop.index) }}</td>
+        <td>{{ l.concepto }}</td>
+        <td class="cen">{{ l.cantidad }}</td>
+        <td class="num">{{ l.precio_unitario | moneda }}</td>
+        <td class="cen">{% if l.descuento_pct > 0 %}{{ l.descuento_pct | porcentaje }}{% else %}-{% endif %}</td>
+        <td class="num">{{ l.base | moneda }}</td>
+        <td class="cen">{{ l.iva_tipo | porcentaje }}</td>
+        <td class="num">{{ l.total_linea | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="resumen-densa">
+    {% if resumen.desglose_iva | length > 1 %}
+    <table class="desglose-tabla">
+      <thead>
+        <tr><th>Tipo</th><th>{{ etiquetas.base_imponible }}</th><th>{{ etiquetas.cuota_iva }}</th></tr>
+      </thead>
+      <tbody>
+        {% for tipo, d in resumen.desglose_iva.items() %}
+        <tr><td>{{ tipo | porcentaje }}</td><td>{{ d.base | moneda }}</td><td>{{ d.cuota | moneda }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="total-densa">
+      <div><span class="label">{{ etiquetas.base_imponible }}:</span> {{ resumen.base_imponible | moneda }}</div>
+      {% for tipo, d in resumen.desglose_iva.items() %}
+      <div><span class="label">{{ etiquetas.iva }} {{ tipo | porcentaje }}:</span> {{ d.cuota | moneda }}</div>
+      {% endfor %}
+      {% if resumen.total_retencion > 0 %}
+      <div><span class="label">{{ etiquetas.retencion }}:</span> -{{ resumen.total_retencion | moneda }}</div>
+      {% endif %}
+      <div style="border-top:1px solid #000;padding-top:2px;margin-top:2px;">{{ etiquetas.total }}: {{ resumen.total | moneda }}</div>
+    </div>
+  </div>
+
+  <div class="pie-densa">
+    <p>Factura conforme al RD 1619/2012. {{ emisor.nombre }} - {{ emisor.nif }}</p>
+  </div>
+
+</div>
+</body>
+</html>
