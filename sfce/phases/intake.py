@@ -27,10 +27,13 @@ import yaml
 from openai import OpenAI
 
 from ..core.aritmetica import ejecutar_checks_aritmeticos
+from ..core.cache_ocr import obtener_cache_ocr, guardar_cache_ocr
 from ..core.confidence import DocumentoConfianza, calcular_nivel
 from ..core.config import ConfigCliente
+from ..core.duplicados import detectar_duplicado, filtrar_duplicados_batch
 from ..core.errors import ResultadoFase
 from ..core.logger import crear_logger
+from ..core.nombres import renombrar_documento
 from ..core.ocr_mistral import extraer_factura_mistral
 from ..core.prompts import PROMPT_EXTRACCION
 
@@ -746,6 +749,18 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     logger.info(f"Procesando: {nombre_archivo}")
     avisos = []
 
+    # 0. Verificar cache OCR antes de llamar a APIs
+    cache_datos = obtener_cache_ocr(str(ruta_pdf))
+    if cache_datos is not None:
+        logger.info(f"  [{nombre_archivo}] Cache OCR hit — reutilizando datos")
+        return {
+            "doc": cache_datos,
+            "hash": hash_pdf,
+            "avisos": [],
+            "tier": cache_datos.get("_ocr_tier", 0),
+            "_cache_hit": True,
+        }
+
     # 1. Extraer texto con pdfplumber
     try:
         texto_raw = _extraer_texto_pdf(ruta_pdf)
@@ -910,7 +925,21 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     logger.info(f"  [{nombre_archivo}] {tipo_doc} | Tier {ocr_tier} | "
                 f"{doc_confianza.confianza_global()}% ({nivel})")
 
-    # 6. Construir resultado
+    # 6. Nombre estandar del documento
+    nombre_estandar = renombrar_documento(datos_gpt, tipo_doc)
+
+    # 7. Deteccion de trabajadores nuevos (solo nominas)
+    info_trabajador = None
+    if tipo_doc == "NOM":
+        datos_trab = {**datos_gpt, "tipo_doc": tipo_doc}
+        info_trabajador = detectar_trabajador(datos_trab, config)
+        if info_trabajador and not info_trabajador.get("conocido") and info_trabajador.get("cuarentena"):
+            avisos.append((
+                f"Trabajador nuevo detectado: {info_trabajador['cuarentena'].get('dni', '?')}",
+                info_trabajador["cuarentena"]
+            ))
+
+    # 8. Construir resultado
     doc_resultado = {
         "archivo": nombre_archivo,
         "hash_sha256": hash_pdf,
@@ -935,7 +964,20 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_ocr_motores_usados": motores_usados,
         "_carpeta_origen": carpeta_origen,
         "_ruta_completa": str(ruta_pdf),
+        "_nombre_estandar": nombre_estandar,
     }
+
+    if info_trabajador:
+        doc_resultado["_trabajador"] = info_trabajador
+
+    # 9. Guardar en cache OCR para reutilizar en futuras ejecuciones
+    try:
+        guardar_cache_ocr(str(ruta_pdf), {
+            **doc_resultado,
+            "_ocr_motor_primario": motores_usados[0] if motores_usados else "desconocido",
+        })
+    except Exception as e:
+        logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
 
@@ -1100,6 +1142,63 @@ def ejecutar_intake(
     logger.info(f"OCR Tiers: T0={tier_stats.get(0, 0)}, "
                 f"T1={tier_stats.get(1, 0)}, T2={tier_stats.get(2, 0)}")
 
+    # --- Fase 4: Deteccion de duplicados de negocio ---
+    cache_hits = sum(1 for r in [res for res in [None]] if False)  # placeholder
+    n_cache_hits = 0
+    n_duplicados_negocio = {"seguros": 0, "posibles": 0}
+
+    if len(documentos_extraidos) > 1:
+        # Preparar docs para deteccion: extraer campos clave
+        docs_para_dup = []
+        for doc in documentos_extraidos:
+            datos = doc.get("datos_extraidos", {})
+            docs_para_dup.append({
+                "cif_emisor": doc.get("entidad_cif", ""),
+                "numero_factura": datos.get("numero_factura", ""),
+                "fecha": datos.get("fecha", ""),
+                "total": datos.get("total") or datos.get("importe", 0),
+                "_archivo": doc.get("archivo", ""),
+            })
+
+        # Cargar documentos de ejecuciones previas (si existen)
+        docs_previos = []
+        ruta_intake_previo = ruta_cliente / "intake_results.json"
+        if ruta_intake_previo.exists():
+            try:
+                with open(ruta_intake_previo, "r", encoding="utf-8") as f:
+                    prev = json.load(f)
+                for doc_prev in prev.get("documentos", []):
+                    dp = doc_prev.get("datos_extraidos", {})
+                    docs_previos.append({
+                        "cif_emisor": doc_prev.get("entidad_cif", ""),
+                        "numero_factura": dp.get("numero_factura", ""),
+                        "fecha": dp.get("fecha", ""),
+                        "total": dp.get("total") or dp.get("importe", 0),
+                    })
+            except Exception:
+                pass
+
+        existentes = docs_previos
+        unicos, seguros, posibles = filtrar_duplicados_batch(docs_para_dup, existentes)
+
+        if seguros:
+            n_duplicados_negocio["seguros"] = len(seguros)
+            for dup in seguros:
+                archivo = dup.get("_archivo", "?")
+                resultado.aviso(f"Duplicado seguro: {archivo}",
+                               {"tipo": "duplicado_seguro", "archivo": archivo})
+                logger.warning(f"  Duplicado seguro detectado: {archivo}")
+
+        if posibles:
+            n_duplicados_negocio["posibles"] = len(posibles)
+            for dup in posibles:
+                archivo = dup.get("_archivo", "?")
+                resultado.aviso(f"Posible duplicado: {archivo}",
+                               {"tipo": "duplicado_posible", "archivo": archivo})
+
+        if seguros or posibles:
+            logger.info(f"Duplicados negocio: {len(seguros)} seguros, {len(posibles)} posibles")
+
     # Actualizar estado con hashes nuevos
     estado["hashes_procesados"] = list(hashes_previos | set(hashes_nuevos))
     _guardar_estado_pipeline(ruta_cliente, estado)
@@ -1108,6 +1207,7 @@ def ejecutar_intake(
     resultado.datos["documentos"] = documentos_extraidos
     resultado.datos["ruta_resultados"] = str(ruta_resultados)
     resultado.datos["ocr_tier_stats"] = tier_stats
+    resultado.datos["duplicados_negocio"] = n_duplicados_negocio
 
     if not documentos_extraidos:
         resultado.aviso("No se proceso ningun documento nuevo")

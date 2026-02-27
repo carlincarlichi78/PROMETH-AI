@@ -26,6 +26,7 @@ from scripts.core.config import cargar_config
 from scripts.core.confidence import calcular_nivel
 from scripts.core.errors import CatalogoErrores
 from scripts.core.logger import AuditoriaLogger, crear_logger
+from sfce.core.recurrentes import generar_alertas_recurrentes
 
 from scripts.phases.intake import ejecutar_intake
 from scripts.phases.pre_validation import ejecutar_pre_validacion
@@ -400,8 +401,37 @@ def main():
     estado.data["confianza_global"] = confianza
     estado.guardar()
 
-    # Resumen por tipo de documento
+    # Analisis de facturas recurrentes faltantes
     resultados_acum = estado.obtener_resultados_acumulados()
+    alertas_recurrentes = {"patrones": [], "faltantes": [], "total_patrones": 0, "total_faltantes": 0}
+    intake_data = resultados_acum.get("intake", {})
+    docs_intake = intake_data.get("documentos", [])
+    if docs_intake:
+        facturas_para_recurrentes = []
+        for doc in docs_intake:
+            if doc.get("tipo") in ("FC", "FV", "NC", "SUM"):
+                datos = doc.get("datos_extraidos", {})
+                facturas_para_recurrentes.append({
+                    "cif_emisor": doc.get("entidad_cif", ""),
+                    "nombre_emisor": doc.get("entidad", ""),
+                    "fecha": datos.get("fecha", ""),
+                    "total": datos.get("total") or datos.get("importe", 0),
+                })
+        if facturas_para_recurrentes:
+            try:
+                alertas_recurrentes = generar_alertas_recurrentes(facturas_para_recurrentes)
+                if alertas_recurrentes["total_faltantes"] > 0:
+                    logger.warning(f"Facturas recurrentes faltantes: {alertas_recurrentes['total_faltantes']}")
+                    for falt in alertas_recurrentes["faltantes"]:
+                        logger.warning(f"  - {falt['proveedor_nombre']}: esperada {falt['fecha_esperada']}, "
+                                      f"{falt['dias_retraso']}d retraso, ~{falt['importe_estimado']:.2f} EUR")
+            except Exception as e:
+                logger.warning(f"Error analizando recurrentes: {e}")
+
+    estado.data["alertas_recurrentes"] = alertas_recurrentes
+    estado.guardar()
+
+    # Resumen por tipo de documento
     pre_val = resultados_acum.get("pre_validacion", {})
     docs_validados = pre_val.get("validados", [])
     docs_excluidos = pre_val.get("excluidos", [])
@@ -438,6 +468,19 @@ def main():
     if n_resueltos or n_aprendidos:
         logger.info(f"  Aprendizaje: {n_resueltos} problemas auto-resueltos, "
                     f"{n_aprendidos} patrones nuevos, {n_patrones} en base conocimiento")
+
+    # Duplicados de negocio
+    dup_negocio = intake_data.get("duplicados_negocio", {})
+    n_dup_seg = dup_negocio.get("seguros", 0)
+    n_dup_pos = dup_negocio.get("posibles", 0)
+    if n_dup_seg or n_dup_pos:
+        logger.info(f"  Duplicados: {n_dup_seg} seguros, {n_dup_pos} posibles")
+
+    # Recurrentes
+    if alertas_recurrentes["total_patrones"] > 0:
+        logger.info(f"  Recurrentes: {alertas_recurrentes['total_patrones']} patrones, "
+                    f"{alertas_recurrentes['total_faltantes']} faltantes")
+
     logger.info("=" * 60)
 
     auditoria.registrar("pipeline", "info",
