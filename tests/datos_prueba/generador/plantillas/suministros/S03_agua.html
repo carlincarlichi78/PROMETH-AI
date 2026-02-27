@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Agua - {{ emisor.nombre }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .agua-container { font-family: var(--fuente-principal, 'Times New Roman', serif); }
+    .agua-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--color-primario, #1a5276); }
+    .agua-header .escudo { width: 70px; height: 70px; border: 2px solid var(--color-primario, #1a5276); display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; color: var(--color-primario, #1a5276); font-weight: bold; }
+    .agua-header .org-info { flex: 1; margin-left: 14px; }
+    .agua-header .org-info h1 { font-size: 16px; color: var(--color-primario, #1a5276); margin: 0 0 2px; }
+    .agua-header .org-info .subtitulo { font-size: 10px; color: #555; font-style: italic; }
+    .agua-header .org-info p { font-size: 9px; margin: 1px 0; color: #666; }
+    .agua-header .factura-ref { text-align: right; font-size: 10px; }
+    .agua-header .factura-ref .tipo-doc { font-size: 14px; font-weight: bold; color: var(--color-primario, #1a5276); text-transform: uppercase; border: 2px solid var(--color-primario, #1a5276); padding: 3px 12px; display: inline-block; margin-bottom: 4px; }
+    .agua-banner { background: var(--color-primario, #1a5276); color: #fff; padding: 4px 12px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .agua-datos-row { display: flex; gap: 20px; margin-bottom: 10px; font-size: 10px; }
+    .agua-datos-row .col { flex: 1; border: 1px solid #bbb; padding: 8px; }
+    .agua-datos-row .col h4 { font-size: 8px; text-transform: uppercase; color: var(--color-primario, #1a5276); margin: 0 0 4px; letter-spacing: 0.5px; }
+    .agua-datos-row .col p { margin: 1px 0; }
+    .agua-contador { display: flex; gap: 12px; margin-bottom: 10px; font-size: 10px; }
+    .agua-contador .lectura { flex: 1; text-align: center; padding: 6px; border: 1px solid #ccc; }
+    .agua-contador .lectura .num { font-size: 15px; font-weight: bold; color: var(--color-primario, #1a5276); }
+    .agua-contador .lectura .lbl { font-size: 8px; color: #777; text-transform: uppercase; }
+    .tramos-tabla { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; }
+    .tramos-tabla caption { font-size: 9px; text-align: left; font-weight: bold; color: var(--color-primario, #1a5276); text-transform: uppercase; padding: 4px 0; }
+    .tramos-tabla th { background: var(--color-primario, #1a5276); color: #fff; padding: 4px 6px; text-align: left; font-size: 8px; text-transform: uppercase; }
+    .tramos-tabla th:nth-child(2), .tramos-tabla th:nth-child(3), .tramos-tabla th:last-child { text-align: right; }
+    .tramos-tabla td { padding: 3px 6px; border-bottom: 1px solid #ddd; }
+    .tramos-tabla td:nth-child(2), .tramos-tabla td:nth-child(3), .tramos-tabla td:last-child { text-align: right; }
+    .tramos-tabla .tramo-activo { background: #e8f0f8; font-weight: bold; }
+    .conceptos-adicionales { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; }
+    .conceptos-adicionales td { padding: 3px 6px; border-bottom: 1px solid #eee; }
+    .conceptos-adicionales td:last-child { text-align: right; }
+    .conceptos-adicionales .subtotal-row { font-weight: bold; background: #f5f5f5; }
+    .agua-resumen { width: 260px; margin-left: auto; border: 2px solid var(--color-primario, #1a5276); padding: 8px 10px; margin-bottom: 12px; font-size: 10px; }
+    .agua-resumen p { display: flex; justify-content: space-between; margin: 2px 0; }
+    .agua-resumen .linea-total { border-top: 1px solid var(--color-primario, #1a5276); padding-top: 4px; margin-top: 4px; font-size: 13px; font-weight: bold; color: var(--color-primario, #1a5276); }
+    .agua-pie { font-size: 7.5px; color: #888; border-top: 1px solid #aaa; padding-top: 6px; margin-top: 10px; }
+    .agua-pie p { margin: 1px 0; }
+    .sello-municipal { float: right; border: 2px solid var(--color-primario, #1a5276); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 7px; text-align: center; color: var(--color-primario, #1a5276); transform: rotate(-8deg); opacity: 0.5; margin-left: 10px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="agua-container">
+
+  <div class="agua-header">
+    <div class="escudo">SERVICIO<br>MUNICIPAL<br>AGUAS</div>
+    <div class="org-info">
+      <h1>{{ emisor.nombre }}</h1>
+      <p class="subtitulo">Empresa Municipal de Aguas</p>
+      <p>{{ etiquetas.get('nif', 'CIF') }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }} {% if emisor.email %}| {{ emisor.email }}{% endif %}</p>{% endif %}
+    </div>
+    <div class="factura-ref">
+      <div class="tipo-doc">{{ etiquetas.get('factura', 'Factura') }}</div>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ periodo.hasta }}</p>
+    </div>
+  </div>
+
+  <div class="agua-banner">{{ etiquetas.get('periodo', 'Periodo de facturacion') }}: {{ periodo.desde }} - {{ periodo.hasta }}</div>
+
+  <div class="agua-datos-row">
+    <div class="col">
+      <h4>{{ etiquetas.get('receptor', 'Abonado') }}</h4>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+    <div class="col">
+      <h4>{{ etiquetas.get('suministro', 'Datos del suministro') }}</h4>
+      <p>{{ etiquetas.get('concepto', 'Concepto') }}: {{ concepto }}</p>
+      {% if cups %}<p>Ref. suministro: {{ cups }}</p>{% endif %}
+      <p>Calibre contador: 13 mm</p>
+      <p>Uso: Domestico/Comercial</p>
+    </div>
+  </div>
+
+  <div class="agua-contador">
+    <div class="lectura">
+      <div class="lbl">{{ etiquetas.get('lectura_anterior', 'Lectura anterior') }}</div>
+      <div class="num">{{ lectura_anterior | default(0) }}</div>
+      <div class="lbl">m3</div>
+    </div>
+    <div class="lectura">
+      <div class="lbl">{{ etiquetas.get('lectura_actual', 'Lectura actual') }}</div>
+      <div class="num">{{ lectura_actual | default(0) }}</div>
+      <div class="lbl">m3</div>
+    </div>
+    <div class="lectura">
+      <div class="lbl">{{ etiquetas.get('consumo', 'Consumo') }}</div>
+      <div class="num">{{ consumo | default(0) }}</div>
+      <div class="lbl">m3</div>
+    </div>
+  </div>
+
+  <table class="tramos-tabla">
+    <caption>Bloques tarifarios - Abastecimiento de agua</caption>
+    <thead>
+      <tr>
+        <th>Tramo</th>
+        <th>m3</th>
+        <th>Precio/m3</th>
+        <th>Importe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set consumo_restante = [consumo | default(0)] %}
+      <tr{% if (consumo | default(0)) <= 10 %} class="tramo-activo"{% endif %}>
+        <td>Bloque 1: 0 - 10 m3</td>
+        <td>{{ [consumo | default(0), 10] | min }}</td>
+        <td>0,45</td>
+        <td>{{ ([consumo | default(0), 10] | min * 0.45) | round(2) | moneda }}</td>
+      </tr>
+      <tr{% if (consumo | default(0)) > 10 and (consumo | default(0)) <= 20 %} class="tramo-activo"{% endif %}>
+        <td>Bloque 2: 10 - 20 m3</td>
+        <td>{{ [([consumo | default(0) - 10, 0] | max), 10] | min }}</td>
+        <td>0,95</td>
+        <td>{{ ([([consumo | default(0) - 10, 0] | max), 10] | min * 0.95) | round(2) | moneda }}</td>
+      </tr>
+      <tr{% if (consumo | default(0)) > 20 %} class="tramo-activo"{% endif %}>
+        <td>Bloque 3: > 20 m3</td>
+        <td>{{ [consumo | default(0) - 20, 0] | max }}</td>
+        <td>1,85</td>
+        <td>{{ ([consumo | default(0) - 20, 0] | max * 1.85) | round(2) | moneda }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="conceptos-adicionales">
+    <tbody>
+      {% for item in desglose %}
+      <tr>
+        <td>{{ item.concepto }}</td>
+        <td>{{ item.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="overflow: hidden;">
+    <div class="sello-municipal">EXCMO.<br>AYTO.<br>{{ emisor.ciudad[:8] | upper }}</div>
+    <div class="agua-resumen">
+      <p><span>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</span><span>{{ base_imponible | moneda }}</span></p>
+      <p><span>{{ etiquetas.get('iva', 'IVA') }} ({{ iva_tipo | porcentaje }}):</span><span>{{ iva_importe | moneda }}</span></p>
+      <p class="linea-total"><span>{{ etiquetas.get('total', 'Total recibo') }}:</span><span>{{ total | moneda }}</span></p>
+    </div>
+  </div>
+
+  <div class="agua-pie">
+    <p>{{ etiquetas.get('forma_pago', 'Forma de pago') }}: Domiciliacion bancaria. Cargo en cuenta dentro del plazo legal establecido.</p>
+    <p>Tarifas aprobadas por el Pleno Municipal y publicadas en el BOP. Ordenanza fiscal reguladora de la tasa por suministro de agua.</p>
+    <p>Reclamaciones: {{ emisor.telefono | default('952 XXX XXX') }} | {{ emisor.email | default('reclamaciones@aguas.es') }}</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} - {{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Consolidada Energia - {{ emisor.nombre }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .multi-container { font-family: var(--fuente-principal, 'Calibri', Arial, sans-serif); }
+    .multi-header { background: linear-gradient(135deg, var(--color-primario, #2d6a4f), var(--color-secundario, #40916c)); color: #fff; padding: 18px 24px; margin-bottom: 14px; }
+    .multi-header .top-row { display: flex; justify-content: space-between; align-items: center; }
+    .multi-header .brand { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+    .multi-header .brand span { display: block; font-size: 9px; font-weight: normal; opacity: 0.8; }
+    .multi-header .doc-ref { text-align: right; font-size: 10px; }
+    .multi-header .doc-ref h1 { font-size: 16px; margin: 0 0 2px; font-weight: 500; }
+    .multi-datos { display: flex; gap: 24px; margin-bottom: 12px; font-size: 10px; }
+    .multi-datos .col { flex: 1; }
+    .multi-datos .col h3 { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primario, #2d6a4f); border-bottom: 1px solid var(--color-primario, #2d6a4f); padding-bottom: 2px; margin-bottom: 4px; }
+    .multi-datos .col p { margin: 1px 0; }
+    .multi-periodo { background: #f0faf4; border: 1px solid var(--color-primario, #2d6a4f); padding: 6px 12px; font-size: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; }
+    .suministro-bloque { border: 1px solid #d4e5dc; margin-bottom: 12px; }
+    .suministro-titulo { background: var(--color-primario, #2d6a4f); color: #fff; padding: 6px 12px; font-size: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .suministro-titulo .tipo-icono { font-size: 14px; }
+    .suministro-cups { background: #f7faf8; padding: 4px 12px; font-size: 9px; color: #555; border-bottom: 1px solid #e8efe9; }
+    .suministro-cups code { font-family: monospace; font-weight: bold; color: var(--color-primario, #2d6a4f); }
+    .suministro-lecturas { display: flex; gap: 8px; padding: 6px 12px; font-size: 9px; background: #fcfdfc; }
+    .suministro-lecturas .lec { flex: 1; text-align: center; }
+    .suministro-lecturas .lec .num { font-size: 13px; font-weight: bold; color: var(--color-primario, #2d6a4f); }
+    .suministro-lecturas .lec .lbl { font-size: 7px; color: #888; text-transform: uppercase; }
+    .suministro-detalle { padding: 6px 12px; font-size: 9px; }
+    .suministro-detalle .fila { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
+    .suministro-detalle .fila:last-child { border-bottom: none; }
+    .suministro-subtotal { background: #edf5f0; padding: 4px 12px; font-size: 10px; font-weight: bold; display: flex; justify-content: space-between; color: var(--color-primario, #2d6a4f); }
+    .tabla-resumen { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }
+    .tabla-resumen th { background: var(--color-primario, #2d6a4f); color: #fff; padding: 5px 10px; text-align: left; font-size: 9px; text-transform: uppercase; }
+    .tabla-resumen th:nth-child(3), .tabla-resumen th:last-child { text-align: right; }
+    .tabla-resumen td { padding: 4px 10px; border-bottom: 1px solid #eee; }
+    .tabla-resumen td:nth-child(3), .tabla-resumen td:last-child { text-align: right; }
+    .tabla-resumen .fila-total td { font-weight: bold; background: #f0faf4; border-top: 2px solid var(--color-primario, #2d6a4f); }
+    .ahorro-box { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 10px 14px; margin-bottom: 12px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .ahorro-box .ahorro-label { color: #2e7d32; }
+    .ahorro-box .ahorro-valor { font-size: 18px; font-weight: bold; color: #1b5e20; }
+    .ahorro-box .ahorro-pct { font-size: 11px; color: #388e3c; }
+    .multi-totales { width: 280px; margin-left: auto; margin-bottom: 14px; font-size: 10px; }
+    .multi-totales .row { display: flex; justify-content: space-between; padding: 3px 0; }
+    .multi-totales .row.total { font-size: 15px; font-weight: bold; color: var(--color-primario, #2d6a4f); border-top: 2px solid var(--color-primario, #2d6a4f); padding-top: 6px; margin-top: 4px; }
+    .multi-pie { font-size: 7.5px; color: #999; border-top: 1px solid #ccc; padding-top: 6px; }
+    .multi-pie p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="multi-container">
+
+  <div class="multi-header">
+    <div class="top-row">
+      <div class="brand">
+        {{ emisor.nombre }}
+        <span>Gestor energetico integral</span>
+      </div>
+      <div class="doc-ref">
+        <h1>{{ etiquetas.get('factura', 'Factura consolidada') }}</h1>
+        <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ periodo.hasta }}</p>
+        <p>{{ etiquetas.get('concepto', 'Ref') }}: {{ concepto }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="multi-datos">
+    <div class="col">
+      <h3>{{ etiquetas.get('emisor', 'Comercializadora') }}</h3>
+      <p><strong>{{ emisor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'CIF') }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.telefono %}<p>Tel: {{ emisor.telefono }}</p>{% endif %}
+    </div>
+    <div class="col">
+      <h3>{{ etiquetas.get('receptor', 'Cliente') }}</h3>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF/CIF') }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}, {{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <div class="multi-periodo">
+    <span><strong>{{ etiquetas.get('periodo', 'Periodo de facturacion') }}:</strong> {{ periodo.desde }} - {{ periodo.hasta }}</span>
+    <span>{{ suministros | default(desglose) | length }} puntos de suministro</span>
+  </div>
+
+  <!-- Bloque Electricidad -->
+  <div class="suministro-bloque">
+    <div class="suministro-titulo">
+      <span><span class="tipo-icono">E</span> Electricidad</span>
+      <span>{{ (base_imponible * 0.6) | round(2) | moneda }}</span>
+    </div>
+    {% if cups %}
+    <div class="suministro-cups">{{ etiquetas.get('cups', 'CUPS') }}: <code>{{ cups }}</code></div>
+    {% endif %}
+    <div class="suministro-lecturas">
+      <div class="lec">
+        <div class="lbl">{{ etiquetas.get('lectura_anterior', 'Anterior') }}</div>
+        <div class="num">{{ lectura_anterior | default(0) }}</div>
+        <div class="lbl">kWh</div>
+      </div>
+      <div class="lec">
+        <div class="lbl">{{ etiquetas.get('lectura_actual', 'Actual') }}</div>
+        <div class="num">{{ lectura_actual | default(0) }}</div>
+        <div class="lbl">kWh</div>
+      </div>
+      <div class="lec">
+        <div class="lbl">{{ etiquetas.get('consumo', 'Consumo') }}</div>
+        <div class="num">{{ consumo | default(0) }}</div>
+        <div class="lbl">kWh</div>
+      </div>
+    </div>
+    <div class="suministro-detalle">
+      {% for item in desglose[:3] %}
+      <div class="fila">
+        <span>{{ item.concepto }}</span>
+        <span>{{ item.importe | moneda }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="suministro-subtotal">
+      <span>Subtotal electricidad</span>
+      <span>{{ (base_imponible * 0.6) | round(2) | moneda }}</span>
+    </div>
+  </div>
+
+  <!-- Bloque Gas -->
+  <div class="suministro-bloque">
+    <div class="suministro-titulo">
+      <span><span class="tipo-icono">G</span> Gas Natural</span>
+      <span>{{ (base_imponible * 0.4) | round(2) | moneda }}</span>
+    </div>
+    {% if cups_gas is defined and cups_gas %}
+    <div class="suministro-cups">{{ etiquetas.get('cups', 'CUPS') }}: <code>{{ cups_gas }}</code></div>
+    {% endif %}
+    <div class="suministro-detalle">
+      {% for item in desglose[3:] %}
+      <div class="fila">
+        <span>{{ item.concepto }}</span>
+        <span>{{ item.importe | moneda }}</span>
+      </div>
+      {% endfor %}
+      {% if desglose | length <= 3 %}
+      <div class="fila">
+        <span>Termino fijo gas</span>
+        <span>{{ (base_imponible * 0.15) | round(2) | moneda }}</span>
+      </div>
+      <div class="fila">
+        <span>Termino variable gas</span>
+        <span>{{ (base_imponible * 0.25) | round(2) | moneda }}</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="suministro-subtotal">
+      <span>Subtotal gas</span>
+      <span>{{ (base_imponible * 0.4) | round(2) | moneda }}</span>
+    </div>
+  </div>
+
+  <!-- Tabla resumen consolidada -->
+  <table class="tabla-resumen">
+    <thead>
+      <tr>
+        <th>Suministro</th>
+        <th>{{ etiquetas.get('cups', 'CUPS') }}</th>
+        <th>{{ etiquetas.get('consumo', 'Consumo') }}</th>
+        <th>{{ etiquetas.get('importe', 'Importe') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Electricidad</td>
+        <td style="font-family: monospace; font-size: 8px;">{{ cups | default('ES0021...') }}</td>
+        <td style="text-align: right;">{{ consumo | default(0) }} kWh</td>
+        <td>{{ (base_imponible * 0.6) | round(2) | moneda }}</td>
+      </tr>
+      <tr>
+        <td>Gas Natural</td>
+        <td style="font-family: monospace; font-size: 8px;">{{ cups_gas | default('ES0031...') }}</td>
+        <td style="text-align: right;">{{ (consumo | default(0) * 0.3) | round(0) | int }} m3</td>
+        <td>{{ (base_imponible * 0.4) | round(2) | moneda }}</td>
+      </tr>
+      <tr class="fila-total">
+        <td colspan="3">Total suministros</td>
+        <td>{{ base_imponible | moneda }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Ahorro vs tarifa regulada -->
+  <div class="ahorro-box">
+    <div class="ahorro-label">
+      <strong>Ahorro estimado vs tarifa regulada (PVPC/TUR)</strong>
+      <br>Comparativa con tarifas oficiales del periodo
+    </div>
+    <div>
+      <div class="ahorro-valor">{{ (total * 0.12) | round(2) | moneda }}</div>
+      <div class="ahorro-pct">-12% vs regulada</div>
+    </div>
+  </div>
+
+  <!-- Totales fiscales -->
+  <div class="multi-totales">
+    <div class="row"><span>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</span><span>{{ base_imponible | moneda }}</span></div>
+    <div class="row"><span>{{ etiquetas.get('iva', 'IVA') }} ({{ iva_tipo | porcentaje }}):</span><span>{{ iva_importe | moneda }}</span></div>
+    <div class="row"><span>Impuesto electrico (5,11%):</span><span>{{ (base_imponible * 0.6 * 0.0511) | round(2) | moneda }}</span></div>
+    <div class="row total"><span>{{ etiquetas.get('total', 'Total a pagar') }}:</span><span>{{ total | moneda }}</span></div>
+  </div>
+
+  <div class="multi-pie">
+    <p>{{ etiquetas.get('forma_pago', 'Forma de pago') }}: Domiciliacion bancaria. Cargo en cuenta en los proximos dias habiles.</p>
+    <p>Comparativa de ahorro calculada segun tarifas PVPC (electricidad) y TUR (gas) vigentes durante el periodo facturado. Fuente: OMIE/REE.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} - Comercializadora autorizada CNMC n.o R2-XXX | {{ emisor.telefono | default('900 XXX XXX') }}</p>
+    <p>Factura emitida conforme al RD 1619/2012. Reclamaciones: {{ emisor.email | default('clientes@energia.es') }}</p>
+  </div>
+
+</div>
+</body>
+</html>

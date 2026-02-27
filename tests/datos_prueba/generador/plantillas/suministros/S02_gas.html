@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Gas - {{ emisor.nombre }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .gas-container { max-width: 600px; margin: 0 auto; font-family: var(--fuente-principal, Arial, sans-serif); }
+    .gas-header { border-bottom: 3px solid var(--color-primario, #e67e00); padding-bottom: 12px; margin-bottom: 14px; }
+    .gas-header .logo-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .gas-header .logo-box { background: var(--color-primario, #e67e00); color: #fff; padding: 8px 20px; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
+    .gas-header .doc-tipo { font-size: 20px; font-weight: bold; color: var(--color-primario, #e67e00); text-transform: uppercase; }
+    .gas-header .fecha-num { font-size: 10px; color: #555; text-align: right; }
+    .gas-seccion { margin-bottom: 12px; }
+    .gas-seccion-titulo { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primario, #e67e00); border-bottom: 1px solid var(--color-primario, #e67e00); padding-bottom: 3px; margin-bottom: 6px; font-weight: bold; }
+    .gas-datos p { margin: 2px 0; font-size: 11px; }
+    .gas-datos strong { color: #333; }
+    .contador-box { background: #fff8f0; border: 1px solid var(--color-primario, #e67e00); padding: 10px 14px; margin-bottom: 12px; }
+    .contador-grid { display: flex; gap: 16px; font-size: 11px; }
+    .contador-grid .col { flex: 1; }
+    .contador-grid .col .valor { font-size: 16px; font-weight: bold; color: var(--color-primario, #e67e00); }
+    .contador-grid .col .unidad { font-size: 8px; color: #888; }
+    .conversion-box { background: #f9f9f9; border-left: 3px solid var(--color-primario, #e67e00); padding: 8px 12px; margin-bottom: 12px; font-size: 10px; }
+    .conversion-box .formula { font-family: monospace; color: #444; }
+    .tarifa-tabla { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }
+    .tarifa-tabla th { background: var(--color-primario, #e67e00); color: #fff; padding: 5px 8px; text-align: left; font-size: 9px; text-transform: uppercase; }
+    .tarifa-tabla th:last-child { text-align: right; }
+    .tarifa-tabla td { padding: 4px 8px; border-bottom: 1px solid #eee; }
+    .tarifa-tabla td:last-child { text-align: right; }
+    .costes-separados { display: flex; gap: 20px; margin-bottom: 12px; }
+    .costes-separados .coste-col { flex: 1; border: 1px solid #ddd; padding: 8px; font-size: 10px; }
+    .costes-separados .coste-col h4 { font-size: 9px; text-transform: uppercase; color: var(--color-primario, #e67e00); margin: 0 0 6px; }
+    .costes-separados .coste-col .coste-valor { font-size: 14px; font-weight: bold; text-align: right; margin-top: 6px; }
+    .total-box { background: var(--color-primario, #e67e00); color: #fff; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .total-box .total-label { font-size: 12px; text-transform: uppercase; }
+    .total-box .total-valor { font-size: 20px; font-weight: bold; }
+    .gas-pie { font-size: 8px; color: #888; border-top: 1px solid #ccc; padding-top: 6px; }
+    .gas-pie p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="gas-container">
+
+  <div class="gas-header">
+    <div class="logo-row">
+      <div class="logo-box">{{ emisor.nombre[:12] }}</div>
+      <div class="doc-tipo">{{ etiquetas.get('factura', 'Factura Gas') }}</div>
+    </div>
+    <div class="fecha-num">
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ periodo.hasta }}</p>
+      <p>{{ etiquetas.get('concepto', 'Suministro') }}: {{ concepto }}</p>
+    </div>
+  </div>
+
+  <div class="gas-seccion">
+    <div class="gas-seccion-titulo">{{ etiquetas.get('emisor', 'Comercializadora') }}</div>
+    <div class="gas-datos">
+      <p><strong>{{ emisor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'CIF') }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+    </div>
+  </div>
+
+  <div class="gas-seccion">
+    <div class="gas-seccion-titulo">{{ etiquetas.get('receptor', 'Titular del contrato') }}</div>
+    <div class="gas-datos">
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF') }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}, {{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  {% if cups %}
+  <div class="gas-seccion">
+    <div class="gas-seccion-titulo">{{ etiquetas.get('cups', 'Punto de suministro') }}</div>
+    <div class="gas-datos">
+      <p style="font-family: monospace; font-size: 12px; font-weight: bold;">{{ cups }}</p>
+      <p>{{ etiquetas.get('periodo', 'Periodo') }}: {{ periodo.desde }} - {{ periodo.hasta }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="contador-box">
+    <div class="gas-seccion-titulo" style="border: none; margin-bottom: 8px;">{{ etiquetas.get('lectura_contador', 'Lectura del contador') }}</div>
+    <div class="contador-grid">
+      <div class="col">
+        <div class="unidad">{{ etiquetas.get('lectura_anterior', 'Anterior') }}</div>
+        <div class="valor">{{ lectura_anterior | default(0) }}</div>
+        <div class="unidad">m3</div>
+      </div>
+      <div class="col">
+        <div class="unidad">{{ etiquetas.get('lectura_actual', 'Actual') }}</div>
+        <div class="valor">{{ lectura_actual | default(0) }}</div>
+        <div class="unidad">m3</div>
+      </div>
+      <div class="col">
+        <div class="unidad">{{ etiquetas.get('consumo', 'Consumo') }}</div>
+        <div class="valor">{{ consumo | default(0) }}</div>
+        <div class="unidad">m3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conversion-box">
+    <p><strong>Conversion a kWh:</strong></p>
+    <p class="formula">{{ consumo | default(0) }} m3 x {{ coeficiente_conversion | default(11.70) }} kWh/m3 = {{ ((consumo | default(0)) * (coeficiente_conversion | default(11.70))) | round(2) }} kWh</p>
+    <p style="font-size: 9px; color: #999;">Coeficiente segun PCS medio zona y presion</p>
+  </div>
+
+  <div class="costes-separados">
+    <div class="coste-col">
+      <h4>Termino fijo</h4>
+      <p>Peaje acceso ATR</p>
+      <p>Coste fijo comercializadora</p>
+      <div class="coste-valor">{{ (base_imponible * 0.35) | round(2) | moneda }}</div>
+    </div>
+    <div class="coste-col">
+      <h4>Termino variable</h4>
+      <p>Peaje variable ATR</p>
+      <p>Coste energia gas natural</p>
+      <div class="coste-valor">{{ (base_imponible * 0.65) | round(2) | moneda }}</div>
+    </div>
+  </div>
+
+  <table class="tarifa-tabla">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.get('concepto', 'Concepto') }}</th>
+        <th>{{ etiquetas.get('importe', 'Importe') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in desglose %}
+      <tr>
+        <td>{{ item.concepto }}</td>
+        <td>{{ item.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="tarifa-tabla" style="width: 260px; margin-left: auto;">
+    <tbody>
+      <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}</td><td>{{ base_imponible | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.get('iva', 'IVA') }} ({{ iva_tipo | porcentaje }})</td><td>{{ iva_importe | moneda }}</td></tr>
+      <tr><td>Impuesto hidrocarburos</td><td>{{ (base_imponible * 0.0234) | round(2) | moneda }}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="total-box">
+    <span class="total-label">{{ etiquetas.get('total', 'Total a pagar') }}</span>
+    <span class="total-valor">{{ total | moneda }}</span>
+  </div>
+
+  <div class="gas-pie">
+    <p>{{ etiquetas.get('forma_pago', 'Forma de pago') }}: Domiciliacion bancaria.</p>
+    <p>Tarifa TUR {{ (consumo | default(0)) | int }} kWh/ano. Precio regulado por el Ministerio para la Transicion Ecologica.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} | Atencion al cliente: {{ emisor.telefono | default('900 XXX XXX') }}</p>
+  </div>
+
+</div>
+</body>
+</html>

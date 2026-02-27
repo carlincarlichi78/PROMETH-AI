@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura Telefonia - {{ emisor.nombre }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .tel-container { font-family: var(--fuente-principal, 'Helvetica Neue', Arial, sans-serif); }
+    .tel-header { background: var(--color-primario, #e60000); color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+    .tel-header .brand { font-size: 22px; font-weight: bold; letter-spacing: 2px; }
+    .tel-header .doc-info { text-align: right; font-size: 11px; }
+    .tel-header .doc-info h1 { font-size: 18px; margin: 0 0 3px; font-weight: normal; }
+    .tel-subheader { background: #f2f2f2; padding: 10px 24px; display: flex; justify-content: space-between; font-size: 10px; color: #444; margin-bottom: 14px; border-bottom: 1px solid #ddd; }
+    .tel-datos { display: flex; gap: 24px; margin: 0 24px 14px; }
+    .tel-datos .col { flex: 1; font-size: 10px; }
+    .tel-datos .col h3 { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primario, #e60000); margin: 0 0 4px; }
+    .tel-datos .col p { margin: 1px 0; }
+    .tel-seccion { margin: 0 24px 12px; border: 1px solid #e0e0e0; }
+    .tel-seccion-header { background: var(--color-secundario, #f5f5f5); padding: 6px 12px; font-size: 10px; font-weight: bold; color: var(--color-primario, #e60000); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; }
+    .tel-seccion-body { padding: 8px 12px; font-size: 10px; }
+    .tel-linea-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
+    .tel-linea-row:last-child { border-bottom: none; }
+    .tel-linea-row .desc { flex: 1; }
+    .tel-linea-row .precio { text-align: right; min-width: 70px; }
+    .tel-linea-tel { font-family: monospace; font-size: 11px; font-weight: bold; color: #333; margin-bottom: 6px; padding: 4px 0; border-bottom: 1px dashed #ccc; }
+    .tel-promo { background: #fff3e0; border-left: 3px solid #ff9800; padding: 6px 10px; margin: 6px 0; font-size: 9px; color: #e65100; }
+    .tel-resumen { margin: 0 24px 12px; }
+    .tel-resumen table { width: 280px; margin-left: auto; border-collapse: collapse; font-size: 10px; }
+    .tel-resumen table td { padding: 3px 8px; }
+    .tel-resumen table td:last-child { text-align: right; }
+    .tel-resumen .fila-total { background: var(--color-primario, #e60000); color: #fff; font-weight: bold; font-size: 13px; }
+    .tel-total-banner { background: var(--color-primario, #e60000); color: #fff; margin: 0 24px 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .tel-total-banner .total-label { font-size: 13px; text-transform: uppercase; }
+    .tel-total-banner .total-valor { font-size: 22px; font-weight: bold; }
+    .tel-pie { margin: 0 24px; font-size: 7.5px; color: #999; border-top: 1px solid #ddd; padding-top: 6px; }
+    .tel-pie p { margin: 1px 0; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="tel-container">
+
+  <div class="tel-header">
+    <div class="brand">{{ emisor.nombre[:12] }}</div>
+    <div class="doc-info">
+      <h1>{{ etiquetas.get('factura', 'Factura') }}</h1>
+      <p>{{ etiquetas.get('fecha', 'Fecha') }}: {{ periodo.hasta }}</p>
+    </div>
+  </div>
+
+  <div class="tel-subheader">
+    <span>{{ etiquetas.get('periodo', 'Periodo') }}: {{ periodo.desde }} - {{ periodo.hasta }}</span>
+    <span>{{ etiquetas.get('concepto', 'Concepto') }}: {{ concepto }}</span>
+  </div>
+
+  <div class="tel-datos">
+    <div class="col">
+      <h3>{{ etiquetas.get('emisor', 'Operador') }}</h3>
+      <p><strong>{{ emisor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'CIF') }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+    </div>
+    <div class="col">
+      <h3>{{ etiquetas.get('receptor', 'Titular') }}</h3>
+      <p><strong>{{ receptor.nombre }}</strong></p>
+      <p>{{ etiquetas.get('nif', 'NIF') }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <!-- Seccion: Lineas y servicios -->
+  <div class="tel-seccion">
+    <div class="tel-seccion-header">
+      <span>Lineas y servicios contratados</span>
+      <span>{{ desglose | length }} conceptos</span>
+    </div>
+    <div class="tel-seccion-body">
+      {% if cups %}
+      <div class="tel-linea-tel">Linea principal: {{ cups }}</div>
+      {% endif %}
+      {% for item in desglose %}
+      <div class="tel-linea-row">
+        <span class="desc">{{ item.concepto }}</span>
+        <span class="precio">{{ item.importe | moneda }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Seccion: Paquetes y datos -->
+  <div class="tel-seccion">
+    <div class="tel-seccion-header">
+      <span>Paquetes de datos</span>
+    </div>
+    <div class="tel-seccion-body">
+      <div class="tel-linea-row">
+        <span class="desc">Tarifa plana datos moviles</span>
+        <span class="precio">Incluido</span>
+      </div>
+      <div class="tel-linea-row">
+        <span class="desc">Fibra optica 600 Mb</span>
+        <span class="precio">Incluido</span>
+      </div>
+      {% if consumo is defined and consumo %}
+      <div class="tel-linea-row">
+        <span class="desc">Consumo adicional: {{ consumo }} GB exceso</span>
+        <span class="precio">{{ (consumo * 1.5) | round(2) | moneda }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Seccion: Promociones -->
+  <div class="tel-seccion">
+    <div class="tel-seccion-header">
+      <span>Promociones y descuentos</span>
+    </div>
+    <div class="tel-seccion-body">
+      <div class="tel-promo">
+        Descuento permanencia 12 meses: -10% sobre cuota mensual. Permanencia hasta {{ periodo.hasta }}.
+      </div>
+      <div class="tel-linea-row">
+        <span class="desc">Dto. fidelizacion aplicado</span>
+        <span class="precio">-{{ (base_imponible * 0.05) | round(2) | moneda }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen fiscal -->
+  <div class="tel-resumen">
+    <table>
+      <tr><td>{{ etiquetas.get('base_imponible', 'Base imponible') }}:</td><td>{{ base_imponible | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.get('iva', 'IVA') }} ({{ iva_tipo | porcentaje }}):</td><td>{{ iva_importe | moneda }}</td></tr>
+    </table>
+  </div>
+
+  <div class="tel-total-banner">
+    <span class="total-label">{{ etiquetas.get('total', 'Total factura') }}</span>
+    <span class="total-valor">{{ total | moneda }}</span>
+  </div>
+
+  <div class="tel-pie">
+    <p>{{ etiquetas.get('forma_pago', 'Forma de pago') }}: Domiciliacion bancaria. Cargo previsto en los proximos 5 dias habiles.</p>
+    <p>Servicio de atencion al cliente: {{ emisor.telefono | default('1004 / 900 XXX XXX') }} (gratuito desde red {{ emisor.nombre[:8] }})</p>
+    <p>Puede consultar el detalle de consumo en su area privada. Plazo de reclamacion: 1 mes desde fecha de emision.</p>
+    <p>{{ emisor.nombre }} - {{ emisor.nif }} | Inscrita en el R.M. de Madrid | Operador habilitado por la CNMC</p>
+  </div>
+
+</div>
+</body>
+</html>

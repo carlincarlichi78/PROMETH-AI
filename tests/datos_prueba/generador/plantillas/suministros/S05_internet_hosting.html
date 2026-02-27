@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Invoice / Factura - {{ emisor.nombre }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    .hosting-container { font-family: var(--fuente-principal, 'Segoe UI', 'Roboto', sans-serif); color: #2c3e50; }
+    .hosting-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid #ecf0f1; }
+    .hosting-header .brand-area { display: flex; align-items: center; gap: 10px; }
+    .hosting-header .brand-logo { width: 40px; height: 40px; background: var(--color-primario, #0066cc); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border-radius: 4px; }
+    .hosting-header .brand-text { font-size: 18px; font-weight: 600; color: var(--color-primario, #0066cc); }
+    .hosting-header .brand-text span { display: block; font-size: 9px; color: #95a5a6; font-weight: normal; }
+    .hosting-header .invoice-badge { text-align: right; }
+    .hosting-header .invoice-badge h1 { font-size: 13px; text-transform: uppercase; color: #7f8c8d; font-weight: 400; margin: 0; letter-spacing: 2px; }
+    .hosting-header .invoice-badge .inv-num { font-size: 20px; font-weight: 700; color: #2c3e50; margin: 2px 0; }
+    .hosting-header .invoice-badge .inv-date { font-size: 10px; color: #95a5a6; }
+    .hosting-parties { display: flex; gap: 40px; margin-bottom: 16px; }
+    .hosting-parties .party { flex: 1; font-size: 10px; }
+    .hosting-parties .party-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #95a5a6; margin-bottom: 4px; }
+    .hosting-parties .party p { margin: 1px 0; }
+    .hosting-parties .party .name { font-weight: 600; font-size: 11px; }
+    .specs-panel { background: #f8f9fa; border: 1px solid #ecf0f1; border-radius: 4px; padding: 12px 16px; margin-bottom: 14px; }
+    .specs-panel h3 { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primario, #0066cc); margin: 0 0 8px; }
+    .specs-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .specs-grid .spec { flex: 1; min-width: 100px; text-align: center; padding: 6px; border-right: 1px solid #ecf0f1; }
+    .specs-grid .spec:last-child { border-right: none; }
+    .specs-grid .spec .spec-value { font-size: 14px; font-weight: 700; color: var(--color-primario, #0066cc); }
+    .specs-grid .spec .spec-label { font-size: 8px; color: #95a5a6; text-transform: uppercase; }
+    .hosting-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 10px; }
+    .hosting-table thead th { padding: 6px 10px; text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #7f8c8d; border-bottom: 2px solid #ecf0f1; }
+    .hosting-table thead th:last-child { text-align: right; }
+    .hosting-table td { padding: 6px 10px; border-bottom: 1px solid #f5f5f5; }
+    .hosting-table td:last-child { text-align: right; }
+    .hosting-table .desc-en { font-size: 8px; color: #95a5a6; display: block; }
+    .hosting-periodo { font-size: 9px; color: #7f8c8d; margin-bottom: 14px; padding: 6px 10px; background: #fafbfc; border-left: 3px solid var(--color-primario, #0066cc); }
+    .hosting-totales { width: 260px; margin-left: auto; margin-bottom: 16px; font-size: 10px; }
+    .hosting-totales .row { display: flex; justify-content: space-between; padding: 3px 0; }
+    .hosting-totales .row.sep { border-top: 1px solid #ecf0f1; padding-top: 6px; margin-top: 4px; }
+    .hosting-totales .row.total { font-size: 14px; font-weight: 700; color: var(--color-primario, #0066cc); border-top: 2px solid var(--color-primario, #0066cc); padding-top: 6px; margin-top: 4px; }
+    .hosting-pie { display: flex; gap: 20px; font-size: 8px; color: #95a5a6; border-top: 1px solid #ecf0f1; padding-top: 8px; }
+    .hosting-pie .col { flex: 1; }
+    .hosting-pie .col h4 { font-size: 7px; text-transform: uppercase; letter-spacing: 1px; color: #bdc3c7; margin: 0 0 3px; }
+    .hosting-pie .col p { margin: 1px 0; }
+    .bilingue { color: #b0b8bf; font-style: italic; font-size: 9px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="hosting-container">
+
+  <div class="hosting-header">
+    <div class="brand-area">
+      <div class="brand-logo">{{ emisor.nombre[:2] | upper }}</div>
+      <div class="brand-text">
+        {{ emisor.nombre }}
+        <span>Cloud & Hosting Services</span>
+      </div>
+    </div>
+    <div class="invoice-badge">
+      <h1>{{ etiquetas.get('factura', 'Invoice') }} <span class="bilingue">/ Factura</span></h1>
+      <div class="inv-num">{{ concepto }}</div>
+      <div class="inv-date">{{ etiquetas.get('fecha', 'Date') }}: {{ periodo.hasta }}</div>
+    </div>
+  </div>
+
+  <div class="hosting-parties">
+    <div class="party">
+      <div class="party-label">{{ etiquetas.get('emisor', 'From') }} <span class="bilingue">/ Emisor</span></div>
+      <p class="name">{{ emisor.nombre }}</p>
+      <p>{{ etiquetas.get('nif', 'Tax ID') }}: {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}</p>
+      <p>{{ emisor.cp }} {{ emisor.ciudad }}</p>
+      {% if emisor.email %}<p>{{ emisor.email }}</p>{% endif %}
+    </div>
+    <div class="party">
+      <div class="party-label">{{ etiquetas.get('receptor', 'Bill to') }} <span class="bilingue">/ Cliente</span></div>
+      <p class="name">{{ receptor.nombre }}</p>
+      <p>{{ etiquetas.get('nif', 'Tax ID') }}: {{ receptor.nif }}</p>
+      <p>{{ receptor.direccion }}</p>
+      <p>{{ receptor.cp }} {{ receptor.ciudad }}</p>
+    </div>
+  </div>
+
+  <div class="hosting-periodo">
+    <strong>{{ etiquetas.get('periodo', 'Billing period') }}:</strong> {{ periodo.desde }} - {{ periodo.hasta }}
+    <span class="bilingue"> / Periodo de facturacion</span>
+  </div>
+
+  <div class="specs-panel">
+    <h3>Server specifications <span class="bilingue">/ Especificaciones del servidor</span></h3>
+    <div class="specs-grid">
+      <div class="spec">
+        <div class="spec-value">{{ cpu | default('4') }} vCPU</div>
+        <div class="spec-label">Processor</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value">{{ ram | default('16') }} GB</div>
+        <div class="spec-label">Memory / RAM</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value">{{ disco | default('200') }} GB</div>
+        <div class="spec-label">SSD Storage</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value">{{ ip | default('1') }}</div>
+        <div class="spec-label">IPv4 Address</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="hosting-table">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.get('concepto', 'Description') }} <span class="bilingue">/ Concepto</span></th>
+        <th>{{ etiquetas.get('importe', 'Amount') }} <span class="bilingue">/ Importe</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in desglose %}
+      <tr>
+        <td>{{ item.concepto }}</td>
+        <td>{{ item.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="hosting-totales">
+    <div class="row"><span>{{ etiquetas.get('base_imponible', 'Subtotal') }}:</span><span>{{ base_imponible | moneda }}</span></div>
+    <div class="row"><span>{{ etiquetas.get('iva', 'VAT') }} ({{ iva_tipo | porcentaje }}):</span><span>{{ iva_importe | moneda }}</span></div>
+    <div class="row total"><span>{{ etiquetas.get('total', 'Total') }}:</span><span>{{ total | moneda }}</span></div>
+  </div>
+
+  <div class="hosting-pie">
+    <div class="col">
+      <h4>Payment / Pago</h4>
+      <p>{{ etiquetas.get('forma_pago', 'Payment method') }}: Credit card / Tarjeta</p>
+      <p>Auto-renewal enabled / Renovacion automatica activa</p>
+    </div>
+    <div class="col">
+      <h4>Support / Soporte</h4>
+      <p>{{ emisor.email | default('support@hosting.com') }}</p>
+      <p>{{ emisor.telefono | default('+34 900 XXX XXX') }}</p>
+    </div>
+    <div class="col">
+      <h4>Legal</h4>
+      <p>{{ emisor.nombre }} - {{ emisor.nif }}</p>
+      <p>{{ emisor.direccion }}, {{ emisor.cp }} {{ emisor.ciudad }}</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
