@@ -436,8 +436,9 @@ Tasks completados:
 ## Proximos pasos — Roadmap
 
 ### Prioridad 1: Pipeline E2E real (prod)
-- Ejecutar pipeline completo contra elena-navarro (199 PDFs en inbox/)
-- 9 FV fallidos (alumnos-pilates, pacientes-fisioterapia): clientes sin CIF → fallback "VARIOS CLIENTES" o cliente generico FS
+- Ejecutar pipeline muestra elena-navarro (60 PDFs en inbox_muestra/) — FS empresa 5 limpia, CLIENTES VARIOS creado (codcliente=7), cache OCR activo
+- **Esperado**: 60/60 registrados (los 9 FV antes fallidos ahora usan CLIENTES VARIOS via fallback_sin_cif)
+- Comando: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 - Ejecutar pipeline contra entidades generador v2 (2343 PDFs)
 
 ### Prioridad 2: Dashboard — arrancar y verificar
