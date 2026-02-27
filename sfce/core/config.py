@@ -3,6 +3,7 @@ import yaml
 from pathlib import Path
 from typing import Optional
 from .logger import crear_logger
+from .perfil_fiscal import PerfilFiscal
 
 logger = crear_logger("config")
 
@@ -43,6 +44,13 @@ class ConfigCliente:
             "confianza_minima": 85
         })
         self._tipo_entidad = None
+        self.trabajadores = data.get("trabajadores", [])
+
+        # PerfilFiscal: desde seccion explica o derivado del tipo
+        if "perfil_fiscal" in data:
+            self.perfil_fiscal = PerfilFiscal.desde_dict(data["perfil_fiscal"])
+        else:
+            self.perfil_fiscal = self._generar_perfil_desde_tipo()
 
     @property
     def nombre(self) -> str:
@@ -148,6 +156,25 @@ class ConfigCliente:
         """Devuelve tipo de cambio por defecto para una divisa."""
         clave = f"{divisa}_EUR"
         return self.tipos_cambio.get(clave, 1.0)
+
+    def buscar_trabajador_por_dni(self, dni: str) -> Optional[dict]:
+        """Busca trabajador por DNI."""
+        for trab in self.trabajadores:
+            if trab.get("dni") == dni:
+                return trab
+        return None
+
+    def _generar_perfil_desde_tipo(self) -> PerfilFiscal:
+        """Genera PerfilFiscal basico a partir del campo empresa.tipo."""
+        _TIPO_A_FORMA = {
+            "sl": "sl", "sa": "sa", "autonomo": "autonomo",
+            "comunidad_propietarios": "comunidad_propietarios",
+            "asociacion": "asociacion", "comunidad_bienes": "cb",
+            "cooperativa": "cooperativa", "fundacion": "asociacion",
+            "sociedad_civil": "scp",
+        }
+        forma = _TIPO_A_FORMA.get(self.tipo, "sl")
+        return PerfilFiscal(forma_juridica=forma)
 
 
 def cargar_config(ruta_cliente: Path) -> ConfigCliente:
