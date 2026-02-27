@@ -1,5 +1,29 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-27 — Sesion: Dual Backend FS+BD local + Dashboard operativo
+
+**Objetivo**: Pipeline actualice automaticamente la BD local (dashboard) al registrar en FS, sin migracion manual.
+
+**Trabajo realizado**:
+- Implementado dual backend (`sfce/core/backend.py`) con 3 modos: fs, local, dual
+- Pipeline instancia `Backend(modo="dual")` y lo pasa a registration/correction/asientos_directos
+- `_sincronizar_asientos_factura_a_bd()` captura asientos post-correcciones en BD local
+- Param `solo_local=True` para sync sin reenviar a FS
+- Migradas 5 empresas a SQLite (205 asientos empresa 5)
+- Dashboard operativo: API FastAPI (8000) + Vite dev (3000) con proxy
+- `resumen_fiscal.py` ampliado con empresas 3, 4, 5
+- Fix `launch.json`: Vite dev server en vez de static serve (proxy necesario)
+
+**Verificacion**:
+- Pipeline 1 SUM (EMASAGRA) → asiento sincronizado a BD (id=391, idasiento_fs=2131, 3 partidas)
+- Antes: 205 asientos, despues: 207 asientos en empresa 5
+
+**Archivos modificados**: backend.py, registration.py, correction.py, asientos_directos.py, pipeline.py, resumen_fiscal.py, launch.json
+
+**Commit**: f0c8909 en `feat/sfce-v2-fase-e`
+
+---
+
 ## 2026-02-27 — Sesion: E2E dry-run elena-navarro + pipeline fix
 
 **Objetivo**: Ejecutar pipeline SFCE contra elena-navarro (generador v2) para validar ingesta multi-tipo.
