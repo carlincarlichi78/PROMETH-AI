@@ -6,161 +6,119 @@ export interface Usuario {
   rol: 'admin' | 'gestor' | 'cliente'
 }
 
-/** Empresa/cliente contable */
+/** Empresa/cliente contable (coincide con EmpresaOut del backend) */
 export interface Empresa {
   id: number
-  nombre: string
   cif: string
+  nombre: string
   forma_juridica: string
-  regimen_iva: string
   territorio: string
-  ejercicio_activo: string
-  estado: string
-  documentos_pendientes: number
-  cuarentena_pendiente: number
+  regimen_iva: string
+  activa: boolean
 }
 
-/** Cuenta de Perdidas y Ganancias */
+/** Cuenta de Perdidas y Ganancias (coincide con PyGOut) */
 export interface PyG {
-  empresa_id: number
-  ejercicio: string
-  hasta_fecha: string
-  ingresos: LineaPyG[]
-  gastos: LineaPyG[]
-  resultado_explotacion: number
-  resultado_financiero: number
-  resultado_antes_impuestos: number
-  impuesto_sociedades: number
-  resultado_neto: number
+  ingresos: number
+  gastos: number
+  resultado: number
+  detalle_ingresos: Record<string, number>
+  detalle_gastos: Record<string, number>
 }
 
-export interface LineaPyG {
-  cuenta: string
-  descripcion: string
+/** Balance de situacion (coincide con BalanceOut) */
+export interface Balance {
+  activo: number
+  pasivo: number
+  patrimonio_neto: number
+}
+
+/** Partida de asiento (coincide con PartidaOut) */
+export interface Partida {
+  id: number
+  subcuenta: string
   debe: number
   haber: number
-  saldo: number
+  concepto: string | null
 }
 
-/** Balance de situacion */
-export interface Balance {
-  empresa_id: number
-  hasta_fecha: string
-  activo: LineaBalance[]
-  pasivo: LineaBalance[]
-  patrimonio_neto: LineaBalance[]
-  total_activo: number
-  total_pasivo_patrimonio: number
-  cuadra: boolean
-}
-
-export interface LineaBalance {
-  cuenta: string
-  descripcion: string
-  saldo: number
-}
-
-/** Asiento contable */
+/** Asiento contable (coincide con AsientoOut) */
 export interface Asiento {
   id: number
-  numero: number
+  numero: number | null
   fecha: string
-  concepto: string
-  documento: string
-  importe: number
+  concepto: string | null
+  origen: string | null
   partidas: Partida[]
 }
 
-export interface Partida {
-  id: number
-  codsubcuenta: string
-  concepto: string
-  debe: number
-  haber: number
-}
-
-/** Factura (cliente o proveedor) */
+/** Factura (coincide con FacturaOut) */
 export interface Factura {
   id: number
-  tipo: 'cliente' | 'proveedor'
-  numero: string
-  fecha: string
-  nombre_entidad: string
-  cif_entidad: string
-  base_imponible: number
-  iva_importe: number
-  irpf_importe: number
-  total: number
+  tipo: string
+  numero_factura: string | null
+  fecha_factura: string | null
+  cif_emisor: string | null
+  nombre_emisor: string | null
+  base_imponible: number | null
+  iva_importe: number | null
+  total: number | null
   pagada: boolean
-  codejercicio: string
 }
 
-/** Documento en pipeline */
-export interface Documento {
-  id: number
-  nombre_archivo: string
-  tipo_doc: string
-  estado: 'pendiente' | 'procesado' | 'cuarentena' | 'error'
-  confianza: number
-  fecha_recepcion: string
-  fecha_proceso: string | null
-  emisor_nombre: string | null
-  importe_total: number | null
-  ocr_tier: number | null
-}
-
-/** Documento en cuarentena */
-export interface Cuarentena {
-  id: number
-  documento_id: number
-  nombre_archivo: string
-  motivo: string
-  pregunta: string
-  opciones: string[]
-  respuesta: string | null
-  resuelto: boolean
-  fecha_creacion: string
-  fecha_resolucion: string | null
-}
-
-/** Activo fijo */
+/** Activo fijo (coincide con ActivoFijoOut) */
 export interface ActivoFijo {
   id: number
   descripcion: string
-  fecha_alta: string
+  tipo_bien: string | null
   valor_adquisicion: number
-  valor_residual: number
-  vida_util_anos: number
-  amortizacion_anual: number
   amortizacion_acumulada: number
-  valor_neto_contable: number
-  cuenta_activo: string
-  cuenta_amortizacion: string
+  fecha_adquisicion: string
+  activo: boolean
 }
 
-/** Proveedor o cliente */
+/** Proveedor o cliente (coincide con ProveedorClienteOut) */
 export interface ProveedorCliente {
   id: number
-  tipo: 'proveedor' | 'cliente'
-  nombre: string
   cif: string
-  codsubcuenta: string
-  codpais: string
-  email: string | null
-  telefono: string | null
+  nombre: string
+  tipo: string
+  subcuenta_gasto: string | null
+  codimpuesto: string | null
+  pais: string | null
 }
 
-/** Trabajador */
+/** Trabajador (coincide con TrabajadorOut) */
 export interface Trabajador {
   id: number
+  dni: string
   nombre: string
-  nif: string
-  nss: string | null
-  categoria: string | null
-  salario_bruto_anual: number
-  fecha_alta: string
-  fecha_baja: string | null
+  bruto_mensual: number | null
+  pagas: number | null
   activo: boolean
+}
+
+/** Documento en pipeline (coincide con DocumentoOut) */
+export interface Documento {
+  id: number
+  tipo_doc: string
+  ruta_pdf: string | null
+  estado: string
+  confianza: number | null
+  ocr_tier: number | null
+  fecha_proceso: string | null
+}
+
+/** Documento en cuarentena (coincide con CuarentenaOut) */
+export interface Cuarentena {
+  id: number
+  documento_id: number
+  empresa_id: number
+  tipo_pregunta: string
+  pregunta: string
+  opciones: string[] | null
+  resuelta: boolean
+  respuesta: string | null
 }
 
 /** Evento WebSocket */
@@ -175,12 +133,4 @@ export interface EventoWS {
 export interface LoginResponse {
   access_token: string
   token_type: string
-}
-
-/** Respuesta paginada */
-export interface RespuestaPaginada<T> {
-  items: T[]
-  total: number
-  pagina: number
-  por_pagina: number
 }

@@ -14,6 +14,12 @@ import type {
 /**
  * Cliente API tipado para el backend SFCE.
  * Usa fetch con Authorization Bearer JWT.
+ *
+ * Rutas reales del backend:
+ *   /api/empresas                           — empresas
+ *   /api/contabilidad/{id}/pyg|balance|...  — contabilidad
+ *   /api/documentos/{id}                    — documentos
+ *   /api/documentos/{id}/cuarentena         — cuarentena
  */
 export class ApiClient {
   private baseUrl = '/api'
@@ -66,7 +72,7 @@ export class ApiClient {
     empresaId: number,
     params?: { ejercicio?: string; hasta_fecha?: string }
   ): Promise<PyG> {
-    return this.get<PyG>(`/empresas/${empresaId}/pyg`, params)
+    return this.get<PyG>(`/contabilidad/${empresaId}/pyg`, params)
   }
 
   /** Balance de situacion */
@@ -74,7 +80,7 @@ export class ApiClient {
     empresaId: number,
     params?: { hasta_fecha?: string }
   ): Promise<Balance> {
-    return this.get<Balance>(`/empresas/${empresaId}/balance`, params)
+    return this.get<Balance>(`/contabilidad/${empresaId}/balance`, params)
   }
 
   /** Libro diario (asientos) */
@@ -82,7 +88,7 @@ export class ApiClient {
     empresaId: number,
     params?: { desde?: string; hasta?: string; limit?: number; offset?: number }
   ): Promise<Asiento[]> {
-    return this.get<Asiento[]>(`/empresas/${empresaId}/diario`, params)
+    return this.get<Asiento[]>(`/contabilidad/${empresaId}/diario`, params)
   }
 
   /** Listado de facturas */
@@ -90,7 +96,12 @@ export class ApiClient {
     empresaId: number,
     params?: { tipo?: string; pagada?: boolean }
   ): Promise<Factura[]> {
-    return this.get<Factura[]>(`/empresas/${empresaId}/facturas`, params)
+    return this.get<Factura[]>(`/contabilidad/${empresaId}/facturas`, params)
+  }
+
+  /** Activos fijos */
+  async obtenerActivos(empresaId: number): Promise<ActivoFijo[]> {
+    return this.get<ActivoFijo[]>(`/contabilidad/${empresaId}/activos`)
   }
 
   /** Documentos en pipeline */
@@ -98,12 +109,12 @@ export class ApiClient {
     empresaId: number,
     params?: { estado?: string; tipo_doc?: string }
   ): Promise<Documento[]> {
-    return this.get<Documento[]>(`/empresas/${empresaId}/documentos`, params)
+    return this.get<Documento[]>(`/documentos/${empresaId}`, params)
   }
 
   /** Documentos en cuarentena */
   async obtenerCuarentena(empresaId: number): Promise<Cuarentena[]> {
-    return this.get<Cuarentena[]>(`/empresas/${empresaId}/cuarentena`)
+    return this.get<Cuarentena[]>(`/documentos/${empresaId}/cuarentena`)
   }
 
   /** Resolver un documento en cuarentena */
@@ -113,14 +124,9 @@ export class ApiClient {
     respuesta: string
   ): Promise<Cuarentena> {
     return this.post<Cuarentena>(
-      `/empresas/${empresaId}/cuarentena/${cuarentenaId}/resolver`,
+      `/documentos/${empresaId}/cuarentena/${cuarentenaId}/resolver`,
       { respuesta }
     )
-  }
-
-  /** Activos fijos */
-  async obtenerActivos(empresaId: number): Promise<ActivoFijo[]> {
-    return this.get<ActivoFijo[]>(`/empresas/${empresaId}/activos`)
   }
 
   /** Proveedores y clientes */
