@@ -1,0 +1,284 @@
+# Normativa fiscal espanola 2025 — multi-territorio
+# Fuente: BOE, Haciendas forales
+
+# ========== PENINSULA (territorio comun) ==========
+peninsula:
+  iva:
+    general: 21
+    reducido: 10
+    superreducido: 4
+    recargo_equivalencia:
+      general: 5.2
+      reducido: 1.4
+      superreducido: 0.5
+
+  impuesto_sociedades:
+    general: 25
+    pymes: 23
+    micro: 23
+    cooperativas: 20
+    entidades_sin_lucro: 10
+    nuevas_empresas: 15
+
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 12450
+        tipo: 19
+      - base_hasta: 20200
+        tipo: 24
+      - base_hasta: 35200
+        tipo: 30
+      - base_hasta: 60000
+        tipo: 37
+      - base_hasta: 300000
+        tipo: 45
+      - base_hasta: 999999999
+        tipo: 47
+
+# ========== CANARIAS (IGIC) ==========
+canarias:
+  igic:
+    general: 7
+    reducido: 3
+    tipo_cero: 0
+    incrementado_1: 9.5
+    incrementado_2: 15
+    especial: 20
+
+  impuesto_sociedades:
+    general: 25
+    pymes: 23
+    micro: 23
+    zec: 4
+
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 12450
+        tipo: 19
+      - base_hasta: 20200
+        tipo: 24
+      - base_hasta: 35200
+        tipo: 30
+      - base_hasta: 60000
+        tipo: 37
+      - base_hasta: 300000
+        tipo: 45
+      - base_hasta: 999999999
+        tipo: 47
+
+# ========== CEUTA Y MELILLA (IPSI) ==========
+ceuta_melilla:
+  ipsi:
+    tipo_1: 0.5
+    tipo_2: 1.0
+    tipo_3: 2.0
+    tipo_4: 4.0
+    tipo_5: 8.0
+    tipo_6: 10.0
+
+  impuesto_sociedades:
+    general: 25
+    pymes: 23
+    bonificacion_ceuta_melilla: 50
+
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 12450
+        tipo: 19
+      - base_hasta: 20200
+        tipo: 24
+      - base_hasta: 35200
+        tipo: 30
+      - base_hasta: 60000
+        tipo: 37
+      - base_hasta: 300000
+        tipo: 45
+      - base_hasta: 999999999
+        tipo: 47
+
+# ========== NAVARRA ==========
+navarra:
+  iva:
+    general: 21
+    reducido: 10
+    superreducido: 4
+    recargo_equivalencia:
+      general: 5.2
+      reducido: 1.4
+      superreducido: 0.5
+
+  impuesto_sociedades:
+    general: 28
+    micro: 20
+    pymes: 25
+    cooperativas: 20
+
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 4070
+        tipo: 13
+      - base_hasta: 8450
+        tipo: 22
+      - base_hasta: 14550
+        tipo: 25
+      - base_hasta: 22100
+        tipo: 28
+      - base_hasta: 32600
+        tipo: 35.4
+      - base_hasta: 43700
+        tipo: 39.6
+      - base_hasta: 63700
+        tipo: 42
+      - base_hasta: 83700
+        tipo: 44.5
+      - base_hasta: 154000
+        tipo: 47
+      - base_hasta: 300000
+        tipo: 49
+      - base_hasta: 500000
+        tipo: 52
+      - base_hasta: 999999999
+        tipo: 53
+
+# ========== PAIS VASCO ==========
+pais_vasco:
+  iva:
+    general: 21
+    reducido: 10
+    superreducido: 4
+    recargo_equivalencia:
+      general: 5.2
+      reducido: 1.4
+      superreducido: 0.5
+
+  impuesto_sociedades:
+    general: 24
+    micro: 20
+    pymes: 24
+    cooperativas: 20
+
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 17360
+        tipo: 23
+      - base_hasta: 32060
+        tipo: 28
+      - base_hasta: 46660
+        tipo: 35
+      - base_hasta: 71260
+        tipo: 40
+      - base_hasta: 101660
+        tipo: 45
+      - base_hasta: 177660
+        tipo: 49
+      - base_hasta: 999999999
+        tipo: 53
+
+# ========== SEGURIDAD SOCIAL (comun a todos los territorios) ==========
+seguridad_social:
+  smi_mensual: 1134.00
+  smi_anual_14_pagas: 15876.00
+  base_minima_cotizacion: 1134.00
+  base_maxima_cotizacion: 4720.50
+  tipo_contingencias_comunes_empresa: 23.60
+  tipo_contingencias_comunes_trabajador: 4.70
+  tipo_desempleo_general_empresa: 5.50
+  tipo_desempleo_general_trabajador: 1.55
+  tipo_fogasa: 0.20
+  tipo_formacion_profesional_empresa: 0.60
+  tipo_formacion_profesional_trabajador: 0.10
+  tipo_mecanismo_equidad_intergeneracional: 0.67
+
+# ========== UMBRALES (comunes) ==========
+umbrales:
+  modelo_347: 3005.06
+  modelo_349: 0
+  gran_empresa_facturacion: 6010121.04
+  obligacion_auditar_activo: 2850000
+  obligacion_auditar_cifra_negocios: 5700000
+  obligacion_auditar_empleados: 50
+  micropyme_facturacion: 1000000
+
+# ========== PLAZOS PRESENTACION ==========
+plazos_presentacion:
+  trimestral:
+    T1:
+      desde: "04-01"
+      hasta: "04-20"
+    T2:
+      desde: "07-01"
+      hasta: "07-20"
+    T3:
+      desde: "10-01"
+      hasta: "10-20"
+    T4:
+      desde: "01-01"
+      hasta: "01-30"
+  anual:
+    modelo_390:
+      desde: "01-01"
+      hasta: "01-30"
+    modelo_347:
+      desde: "02-01"
+      hasta: "02-28"
+    modelo_190:
+      desde: "01-01"
+      hasta: "01-31"
+    modelo_200:
+      desde: "07-01"
+      hasta: "07-25"
+    modelo_100:
+      desde: "04-03"
+      hasta: "06-30"
+
+# ========== AMORTIZACION (tablas simplificadas PGC) ==========
+amortizacion:
+  tablas:
+    - tipo_bien: vehiculos
+      pct_maximo_lineal: 16
+      periodo_maximo_anos: 14
+    - tipo_bien: mobiliario
+      pct_maximo_lineal: 10
+      periodo_maximo_anos: 20
+    - tipo_bien: equipos_informaticos
+      pct_maximo_lineal: 25
+      periodo_maximo_anos: 8
+    - tipo_bien: maquinaria
+      pct_maximo_lineal: 12
+      periodo_maximo_anos: 18
+    - tipo_bien: edificios_comerciales
+      pct_maximo_lineal: 2
+      periodo_maximo_anos: 68
+    - tipo_bien: edificios_industriales
+      pct_maximo_lineal: 3
+      periodo_maximo_anos: 68
+    - tipo_bien: instalaciones
+      pct_maximo_lineal: 10
+      periodo_maximo_anos: 20
+    - tipo_bien: utillaje
+      pct_maximo_lineal: 25
+      periodo_maximo_anos: 8
+    - tipo_bien: moldes_matrices
+      pct_maximo_lineal: 33
+      periodo_maximo_anos: 6
+    - tipo_bien: elementos_transporte_interno
+      pct_maximo_lineal: 10
+      periodo_maximo_anos: 14
+    - tipo_bien: aplicaciones_informaticas
+      pct_maximo_lineal: 33
+      periodo_maximo_anos: 6
