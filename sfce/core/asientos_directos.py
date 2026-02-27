@@ -176,6 +176,7 @@ def crear_asiento_directo(
     codejercicio: str,
     idempresa: int,
     partidas: list[dict],
+    motor=None,
 ) -> dict:
     """Crea un asiento contable directo via API (POST asientos + POST partidas).
 
@@ -185,6 +186,7 @@ def crear_asiento_directo(
         codejercicio: codigo del ejercicio en FS (ej: '2025', '0003')
         idempresa: ID de la empresa en FS
         partidas: lista de dicts con codsubcuenta, debe, haber, concepto
+        motor: MotorReglas opcional para validacion pre-envio
 
     Returns:
         dict con idasiento y num_partidas

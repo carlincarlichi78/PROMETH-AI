@@ -575,7 +575,8 @@ def ejecutar_correccion(
     config: ConfigCliente,
     ruta_cliente: Path,
     catalogo: CatalogoErrores = None,
-    auditoria=None
+    auditoria=None,
+    motor=None
 ) -> ResultadoFase:
     """Ejecuta la fase 4 de correccion automatica.
 
@@ -584,6 +585,7 @@ def ejecutar_correccion(
         ruta_cliente: ruta a la carpeta del cliente
         catalogo: catalogo de errores conocidos
         auditoria: AuditoriaLogger opcional
+        motor: MotorReglas opcional para validacion con trazabilidad
 
     Returns:
         ResultadoFase con asientos corregidos
