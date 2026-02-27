@@ -369,15 +369,20 @@ Tasks completados:
 
 ## E2E Testing elena-navarro (dry-run)
 
-**Estado**: Completado parcialmente con muestra 30% (60/199 PDFs)
-**Resultados**: 41 procesados, 19 cuarentena. Score 100% (FIABLE)
+**Estado**: COMPLETADO — muestra 30% (60/199 PDFs), **60/60 validados, 0 excluidos**
+**Resultados**: Score 100% (FIABLE)
 - FC: 12/12 (100%), BAN: 17/17 (100%), NOM: 4/4 (100%), RLC: 4/4 (100%), IMP: 1/1 (100%)
-- FV: 3/11 (27%) — clientes sin CIF van a cuarentena
-- SUM: 0/11 (0%) → proveedores anadidos post-test (Endesa, Emasagra, Movistar, Mapfre)
+- FV: 11/11 (100%) — fix matching por nombre/alias sin CIF
+- SUM: 11/11 (100%) — proveedores anadidos + fallback por emisor_nombre
 - OCR Tiers: T0=10, T1=30, T2=1
-- GPT-4o rate limiting frecuente (429, 30K TPM)
 
-**Bug fix**: PatronRecurrente no serializable a JSON en pipeline.py (dataclasses.asdict)
+**Fix FV cuarentena** (commit cd8e1e3):
+- `config.py`: nuevo `buscar_cliente_por_nombre()` con matching parcial por aliases
+- `intake.py`: fallback por nombre_receptor cuando CIF vacio en FV
+- `pre_validation.py`: CHECK 1 no-bloqueante para entidades sin CIF en config; SUM fallback por emisor_nombre
+- `registration.py`: busqueda FS por nombre/alias para clientes sin CIF
+- 19 tests nuevos en `tests/test_fv_cuarentena.py`
+
 **Archivos**: config.yaml (10 prov, 3 cli, 1 trab), inbox_muestra/ (60 PDFs), manifiesto_muestra.json
 
 ## Modelos Fiscales Completos — DISEÑADO
@@ -402,13 +407,29 @@ Tasks completados:
 
 **Decision clave**: Dashboard SFCE como interfaz del gestor (no FS). Fichero BOE fase 1, telematica AEAT fase futura.
 
-## Proximos pasos
+## Directorio Empresas — DISEÑADO
 
-1. **Modelos fiscales completos** — implementar plan (26 tasks, 5 fases). Empezar por Fase A (motor generico)
-2. **Directorio empresas** — BD compartida proveedores/clientes (CIF→nombre, CNAE), auto-resolve desde OCR
-3. Re-ejecutar elena-navarro dry-run con config completo (suministros anadidos)
-4. Fix facturas venta cuarentena (clientes sin CIF → reconocer ventas propias)
-5. Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
-6. Conectar dashboard a API real (actualmente con datos mock)
-7. Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
-8. Configurar backups automaticos BD FacturaScripts
+**Design doc**: `docs/plans/2026-02-27-directorio-empresas-design.md`
+**Plan implementacion**: `docs/plans/2026-02-27-directorio-empresas-implementation.md` (10 tasks)
+**Estado**: Diseño aprobado, plan escrito. Pendiente implementacion.
+
+**Arquitectura**: Tabla maestra `directorio_entidades` (CIF, nombre, pais, tipo_persona, validaciones AEAT/VIES) + overlay en `proveedores_clientes` (subcuenta, codimpuesto, regimen por empresa). FK `directorio_id` en tabla existente.
+
+**Scope**: Por empresa (overlay empresa-especifico). Enriquecimiento: cache interno + AEAT (CIF espanol) + VIES (VAT europeo). BD local como fuente de verdad.
+
+## Proximos pasos — Roadmap
+
+### Prioridad 1: Modelos fiscales (siguiente sesion)
+- Implementar Fase A (T1-T8): motor generico MotorBOE + tipos + YAML loader + validador + PDF
+- Plan: `docs/plans/2026-02-27-modelos-fiscales-completos-implementation.md`
+- Comando: `"implementar modelos fiscales, Fase A"` para arrancar
+
+### Prioridad 2: Directorio empresas (sesion posterior)
+- Implementar 10 tasks: tabla maestra + migracion YAML→BD + verificacion AEAT/VIES + API + dashboard
+- Plan: `docs/plans/2026-02-27-directorio-empresas-implementation.md`
+
+### Pendiente (cuando convenga)
+- Ejecutar pipeline completo contra 2343 PDFs (11 entidades generador v2)
+- Conectar dashboard a API real (actualmente con datos mock)
+- Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
+- Configurar backups automaticos BD FacturaScripts
