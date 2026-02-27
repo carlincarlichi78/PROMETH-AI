@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nomina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <style>{{ css_variaciones }}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt;
+      color: #2d3748; padding: 20px 25px; background: #fff; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px;
+      margin-bottom: 12px; }
+    .header-fac { display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; }
+    .header-fac h1 { font-size: 18pt; color: #6c5ce7; font-weight: 300; }
+    .header-fac .badge { background: #6c5ce7; color: #fff; padding: 5px 14px; border-radius: 20px;
+      font-size: 9pt; font-weight: bold; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .info-grid .card { background: #f7fafc; }
+    .info-grid .card h3 { font-size: 8pt; text-transform: uppercase; letter-spacing: 1px;
+      color: #a0aec0; margin-bottom: 6px; }
+    .info-grid .card p { font-size: 9pt; line-height: 1.6; }
+    .info-grid .card p strong { color: #4a5568; }
+    .seccion-icon { font-size: 11pt; font-weight: bold; margin-bottom: 8px; color: #2d3748; }
+    table.fac { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 9pt; }
+    table.fac th { background: #f7fafc; color: #718096; padding: 8px 10px; font-size: 8pt;
+      text-transform: uppercase; letter-spacing: 0.5px; text-align: left;
+      border-bottom: 2px solid #e2e8f0; }
+    table.fac th.dr { text-align: right; }
+    table.fac td { padding: 7px 10px; border-bottom: 1px solid #edf2f7; }
+    table.fac td.dr { text-align: right; font-variant-numeric: tabular-nums; }
+    table.fac tfoot td { font-weight: bold; border-top: 2px solid #6c5ce7; padding: 9px 10px; }
+    .barra-progreso { margin: 14px 0; }
+    .barra-progreso .label-row { display: flex; justify-content: space-between; font-size: 8pt;
+      color: #718096; margin-bottom: 4px; }
+    .barra-outer { height: 18px; background: #edf2f7; border-radius: 9px; overflow: hidden;
+      position: relative; }
+    .barra-inner { height: 100%; background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+      border-radius: 9px; transition: width 0.3s; }
+    .barra-deducido { position: absolute; right: 0; top: 0; height: 100%;
+      background: #fc8181; border-radius: 0 9px 9px 0; }
+    .neto-card { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff;
+      border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 12px; }
+    .neto-card .label { font-size: 10pt; font-weight: 300; }
+    .neto-card .valor { font-size: 20pt; font-weight: bold; }
+    .bases-fac { display: flex; gap: 10px; flex-wrap: wrap; font-size: 8pt; }
+    .bases-fac .chip { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 6px 10px; flex: 1; min-width: 120px; }
+    .bases-fac .chip label { display: block; font-size: 7pt; color: #a0aec0; text-transform: uppercase; }
+    .bases-fac .chip span { font-weight: bold; color: #2d3748; }
+    .firmas-fac { display: flex; justify-content: space-between; margin-top: 25px; font-size: 8pt;
+      color: #a0aec0; }
+    .firmas-fac div { width: 35%; text-align: center; border-top: 1px dashed #cbd5e0; padding-top: 5px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="nomina-fac">
+
+  <div class="header-fac">
+    <h1>{{ empresa.nombre }}</h1>
+    <div class="badge">{{ periodo.mes }} / {{ periodo.anio }}</div>
+  </div>
+
+  <div class="info-grid">
+    <div class="card">
+      <h3>{{ etiquetas.empresa | default("Empresa") }}</h3>
+      <p><strong>{{ etiquetas.nif | default("CIF") }}:</strong> {{ empresa.nif }}</p>
+      <p>{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+      <p><strong>{{ etiquetas.ccc_ss | default("CCC") }}:</strong> {{ empresa.ccc_ss }}</p>
+    </div>
+    <div class="card">
+      <h3>{{ etiquetas.trabajador | default("Trabajador") }}</h3>
+      <p><strong>{{ trabajador.nombre }}</strong></p>
+      <p>{{ etiquetas.nif_trabajador | default("NIF") }}: {{ trabajador.nif }} &middot; {{ etiquetas.naf_ss | default("SS") }}: {{ trabajador.naf_ss }}</p>
+      <p>{{ trabajador.categoria }} &middot; Grupo {{ trabajador.grupo_cotizacion }} &middot; {{ trabajador.contrato_tipo }}</p>
+      <p>{{ etiquetas.antiguedad | default("Antiguedad") }}: {{ trabajador.antiguedad }} &middot; {{ etiquetas.dias | default("Dias") }}: {{ periodo.dias_trabajados }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="seccion-icon">&#x1F4B0; {{ etiquetas.devengos | default("Devengos") }}</div>
+    <table class="fac">
+      <thead>
+        <tr><th>{{ etiquetas.concepto | default("Concepto") }}</th><th class="dr">{{ etiquetas.importe | default("Importe") }}</th></tr>
+      </thead>
+      <tbody>
+        {% for d in devengos %}
+        <tr><td>{{ d.concepto }}</td><td class="dr">{{ d.importe | moneda }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td>{{ etiquetas.total_devengado | default("Total devengado") }}</td><td class="dr">{{ total_devengado | moneda }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="seccion-icon">&#x1F4C9; {{ etiquetas.deducciones | default("Deducciones") }}</div>
+    <table class="fac">
+      <thead>
+        <tr>
+          <th>{{ etiquetas.concepto | default("Concepto") }}</th>
+          <th class="dr">%</th>
+          <th class="dr">{{ etiquetas.base | default("Base") }}</th>
+          <th class="dr">{{ etiquetas.importe | default("Importe") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in deducciones %}
+        <tr>
+          <td>{{ d.concepto }}</td>
+          <td class="dr">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}-{% endif %}</td>
+          <td class="dr">{% if d.base %}{{ d.base | moneda }}{% else %}-{% endif %}</td>
+          <td class="dr">{{ d.importe | moneda }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3">{{ etiquetas.total_deducido | default("Total deducciones") }}</td><td class="dr">{{ total_deducido | moneda }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {% set pct_neto = (liquido / total_devengado * 100) | int if total_devengado > 0 else 0 %}
+  <div class="barra-progreso">
+    <div class="label-row">
+      <span>{{ etiquetas.total_devengado | default("Bruto") }}: {{ total_devengado | moneda }}</span>
+      <span>{{ etiquetas.liquido | default("Neto") }}: {{ liquido | moneda }}</span>
+    </div>
+    <div class="barra-outer">
+      <div class="barra-inner" style="width: {{ pct_neto }}%"></div>
+    </div>
+  </div>
+
+  <div class="neto-card">
+    <span class="label">{{ etiquetas.liquido | default("Liquido a percibir") }}</span>
+    <span class="valor">{{ liquido | moneda }}</span>
+  </div>
+
+  <div class="card">
+    <div class="bases-fac">
+      <div class="chip"><label>{{ etiquetas.bc_cc | default("B. Cont. Comunes") }}</label><span>{{ bases_cotizacion.contingencias_comunes | moneda }}</span></div>
+      <div class="chip"><label>{{ etiquetas.bc_at | default("B. AT/EP") }}</label><span>{{ bases_cotizacion.accidentes_trabajo | moneda }}</span></div>
+      <div class="chip"><label>{{ etiquetas.bc_hex | default("B. H.Extra") }}</label><span>{{ bases_cotizacion.horas_extra | moneda }}</span></div>
+      <div class="chip"><label>{{ etiquetas.bc_irpf | default("Base IRPF") }}</label><span>{{ bases_cotizacion.base_irpf | moneda }}</span></div>
+      <div class="chip"><label>{{ etiquetas.irpf | default("% IRPF") }}</label><span>{{ irpf_pct | porcentaje }}</span></div>
+    </div>
+  </div>
+
+  <div class="firmas-fac">
+    <div>Empresa<br>{{ empresa.nombre }}</div>
+    <div>Trabajador<br>{{ trabajador.nombre }}</div>
+  </div>
+
+</div>
+</body>
+</html>

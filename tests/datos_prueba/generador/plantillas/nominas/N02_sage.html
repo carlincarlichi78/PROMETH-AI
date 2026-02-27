@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nomina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <style>{{ css_variaciones }}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 9pt; color: #333; padding: 15px 20px;
+      background: #fff; }
+    .header-sage { display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 3px solid #2e7d32; padding-bottom: 10px; margin-bottom: 8px; }
+    .header-sage .logo-area { width: 120px; height: 45px; background: #e8f5e9; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-weight: bold; color: #2e7d32;
+      font-size: 14pt; }
+    .header-sage .empresa-info { text-align: right; font-size: 8pt; line-height: 1.5; }
+    .header-sage .empresa-info h2 { font-size: 11pt; color: #2e7d32; }
+    .fila-trabajador { display: flex; gap: 15px; background: #f5f5f5; border-radius: 8px;
+      padding: 8px 12px; margin-bottom: 10px; font-size: 8pt; flex-wrap: wrap; }
+    .fila-trabajador .campo { flex: 1; min-width: 120px; }
+    .fila-trabajador .campo label { font-weight: bold; color: #666; display: block; font-size: 7pt;
+      text-transform: uppercase; }
+    .fila-trabajador .campo span { font-size: 9pt; color: #222; }
+    .periodo-sage { text-align: center; background: #2e7d32; color: #fff; padding: 5px;
+      border-radius: 4px; margin-bottom: 10px; font-size: 9pt; font-weight: bold; }
+    .columnas { display: flex; gap: 15px; margin-bottom: 10px; }
+    .col-izq, .col-der { flex: 1; }
+    .col-izq h4, .col-der h4 { font-size: 8pt; text-transform: uppercase; color: #2e7d32;
+      border-bottom: 2px solid #c8e6c9; padding-bottom: 3px; margin-bottom: 5px; }
+    table.sage { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    table.sage th { background: #e8f5e9; color: #2e7d32; padding: 4px 6px; font-size: 7.5pt;
+      text-align: left; border-radius: 3px; }
+    table.sage th.dr { text-align: right; }
+    table.sage td { padding: 3px 6px; border-bottom: 1px solid #eee; }
+    table.sage td.dr { text-align: right; }
+    table.sage tfoot td { font-weight: bold; border-top: 2px solid #2e7d32; background: #f1f8e9;
+      padding: 5px 6px; }
+    .totales-box { background: #e8f5e9; border: 2px solid #2e7d32; border-radius: 10px;
+      padding: 12px 16px; margin-top: 10px; display: flex; justify-content: space-around;
+      text-align: center; }
+    .totales-box .item label { font-size: 7pt; text-transform: uppercase; color: #666; display: block; }
+    .totales-box .item span { font-size: 12pt; font-weight: bold; color: #222; }
+    .totales-box .item.neto span { color: #2e7d32; font-size: 14pt; }
+    .bases-sage { margin-top: 10px; font-size: 8pt; display: flex; gap: 20px; flex-wrap: wrap; }
+    .bases-sage .par { display: flex; gap: 5px; }
+    .bases-sage .par label { color: #666; }
+    .bases-sage .par span { font-weight: bold; }
+    .pie-sage { margin-top: 20px; display: flex; justify-content: space-between;
+      font-size: 7.5pt; color: #999; border-top: 1px solid #ddd; padding-top: 8px; }
+    .pie-sage .firma-sage { text-align: center; width: 35%; border-top: 1px solid #999;
+      padding-top: 4px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="nomina-sage">
+
+  <div class="header-sage">
+    <div class="logo-area">SAGE</div>
+    <div class="empresa-info">
+      <h2>{{ empresa.nombre }}</h2>
+      <p>{{ etiquetas.nif | default("CIF") }}: {{ empresa.nif }} &middot; {{ etiquetas.ccc_ss | default("CCC") }}: {{ empresa.ccc_ss }}</p>
+      <p>{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+    </div>
+  </div>
+
+  <div class="fila-trabajador">
+    <div class="campo"><label>{{ etiquetas.trabajador | default("Trabajador") }}</label><span>{{ trabajador.nombre }}</span></div>
+    <div class="campo"><label>{{ etiquetas.nif_trabajador | default("NIF") }}</label><span>{{ trabajador.nif }}</span></div>
+    <div class="campo"><label>{{ etiquetas.naf_ss | default("N.Afil.SS") }}</label><span>{{ trabajador.naf_ss }}</span></div>
+    <div class="campo"><label>{{ etiquetas.categoria | default("Categoria") }}</label><span>{{ trabajador.categoria }}</span></div>
+    <div class="campo"><label>{{ etiquetas.grupo_cotizacion | default("Grupo") }}</label><span>{{ trabajador.grupo_cotizacion }}</span></div>
+    <div class="campo"><label>{{ etiquetas.contrato | default("Contrato") }}</label><span>{{ trabajador.contrato_tipo }}</span></div>
+    <div class="campo"><label>{{ etiquetas.antiguedad | default("Antiguedad") }}</label><span>{{ trabajador.antiguedad }}</span></div>
+  </div>
+
+  <div class="periodo-sage">
+    {{ etiquetas.periodo | default("Periodo") }}: {{ periodo.mes }} / {{ periodo.anio }}
+    &mdash; {{ etiquetas.dias | default("Dias trabajados") }}: {{ periodo.dias_trabajados }}
+  </div>
+
+  <div class="columnas">
+    <div class="col-izq">
+      <h4>{{ etiquetas.devengos | default("Devengos") }}</h4>
+      <table class="sage">
+        <thead>
+          <tr><th>{{ etiquetas.concepto | default("Concepto") }}</th><th class="dr">{{ etiquetas.importe | default("Importe") }}</th></tr>
+        </thead>
+        <tbody>
+          {% for d in devengos %}
+          <tr><td>{{ d.concepto }}</td><td class="dr">{{ d.importe | moneda }}</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td>Total</td><td class="dr">{{ total_devengado | moneda }}</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="col-der">
+      <h4>{{ etiquetas.deducciones | default("Deducciones") }}</h4>
+      <table class="sage">
+        <thead>
+          <tr>
+            <th>{{ etiquetas.concepto | default("Concepto") }}</th>
+            <th class="dr">%</th>
+            <th class="dr">{{ etiquetas.base | default("Base") }}</th>
+            <th class="dr">{{ etiquetas.importe | default("Imp.") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in deducciones %}
+          <tr>
+            <td>{{ d.concepto }}</td>
+            <td class="dr">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}-{% endif %}</td>
+            <td class="dr">{% if d.base %}{{ d.base | moneda }}{% else %}-{% endif %}</td>
+            <td class="dr">{{ d.importe | moneda }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3">Total</td><td class="dr">{{ total_deducido | moneda }}</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="totales-box">
+    <div class="item"><label>{{ etiquetas.total_devengado | default("Total devengado") }}</label><span>{{ total_devengado | moneda }}</span></div>
+    <div class="item"><label>{{ etiquetas.total_deducido | default("Total deducido") }}</label><span>{{ total_deducido | moneda }}</span></div>
+    <div class="item neto"><label>{{ etiquetas.liquido | default("Liquido a percibir") }}</label><span>{{ liquido | moneda }}</span></div>
+  </div>
+
+  <div class="bases-sage">
+    <div class="par"><label>{{ etiquetas.bc_cc | default("B.C.C.") }}:</label><span>{{ bases_cotizacion.contingencias_comunes | moneda }}</span></div>
+    <div class="par"><label>{{ etiquetas.bc_at | default("B.AT/EP") }}:</label><span>{{ bases_cotizacion.accidentes_trabajo | moneda }}</span></div>
+    <div class="par"><label>{{ etiquetas.bc_hex | default("B.H.Extra") }}:</label><span>{{ bases_cotizacion.horas_extra | moneda }}</span></div>
+    <div class="par"><label>{{ etiquetas.bc_irpf | default("Base IRPF") }}:</label><span>{{ bases_cotizacion.base_irpf | moneda }}</span></div>
+    <div class="par"><label>{{ etiquetas.irpf | default("% IRPF") }}:</label><span>{{ irpf_pct | porcentaje }}</span></div>
+  </div>
+
+  <div class="pie-sage">
+    <div class="firma-sage">Sello empresa<br>{{ empresa.nombre }}</div>
+    <div class="firma-sage">Recibi conforme<br>{{ trabajador.nombre }}</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nomina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <style>{{ css_variaciones }}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Courier New', Courier, monospace; font-size: 8pt; color: #111;
+      padding: 15px 20px; background: #fff; }
+    .header-m4 { border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 6px; }
+    .header-m4 h1 { font-size: 14pt; letter-spacing: 3px; text-transform: uppercase; }
+    .header-m4 .sub { font-size: 7pt; color: #555; }
+    .datos-m4 { display: flex; gap: 10px; font-size: 7.5pt; margin-bottom: 6px;
+      border: 1px solid #999; padding: 5px 8px; }
+    .datos-m4 .bloque { flex: 1; }
+    .datos-m4 .bloque p { line-height: 1.5; }
+    .datos-m4 .bloque .label { font-weight: bold; display: inline-block; width: 80px; }
+    .periodo-m4 { background: #eee; padding: 4px 8px; font-size: 8pt; font-weight: bold;
+      border: 1px solid #999; margin-bottom: 8px; text-align: center; }
+    .grupo-titulo { font-size: 7.5pt; font-weight: bold; text-transform: uppercase;
+      background: #ddd; padding: 2px 6px; margin: 6px 0 2px; border-left: 3px solid #333; }
+    table.m4 { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+    table.m4 th { background: #333; color: #fff; padding: 3px 5px; font-size: 7pt;
+      text-align: left; }
+    table.m4 th.dr { text-align: right; }
+    table.m4 td { padding: 2px 5px; border-bottom: 1px dotted #ccc; }
+    table.m4 td.dr { text-align: right; font-variant-numeric: tabular-nums; }
+    table.m4 td.cod { color: #666; width: 40px; }
+    table.m4 tfoot td { font-weight: bold; border-top: 1.5px solid #000; padding: 4px 5px;
+      background: #f5f5f5; }
+    .bases-m4 { border: 1px solid #999; padding: 5px 8px; margin-top: 6px; font-size: 7.5pt; }
+    .bases-m4 h4 { font-size: 7.5pt; text-transform: uppercase; margin-bottom: 4px; }
+    .bases-m4 table { width: 100%; border-collapse: collapse; }
+    .bases-m4 td { padding: 1px 5px; }
+    .bases-m4 td.dr { text-align: right; }
+    .bases-m4 tr:nth-child(even) { background: #f9f9f9; }
+    .neto-m4 { border: 2px solid #000; padding: 6px 10px; margin-top: 8px; display: flex;
+      justify-content: space-between; font-size: 10pt; font-weight: bold; }
+    .firmas-m4 { display: flex; justify-content: space-between; margin-top: 25px; font-size: 7pt; }
+    .firmas-m4 div { width: 38%; text-align: center; border-top: 1px solid #666; padding-top: 3px; }
+    .legal-m4 { font-size: 6.5pt; color: #888; margin-top: 10px; border-top: 1px solid #ddd;
+      padding-top: 4px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="nomina-m4">
+
+  <div class="header-m4">
+    <h1>{{ empresa.nombre }}</h1>
+    <p class="sub">{{ etiquetas.nif | default("CIF") }}: {{ empresa.nif }} | {{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }} | {{ etiquetas.ccc_ss | default("CCC") }}: {{ empresa.ccc_ss }}</p>
+  </div>
+
+  <div class="datos-m4">
+    <div class="bloque">
+      <p><span class="label">{{ etiquetas.trabajador | default("Empleado") }}:</span> {{ trabajador.nombre }}</p>
+      <p><span class="label">{{ etiquetas.nif_trabajador | default("NIF") }}:</span> {{ trabajador.nif }}</p>
+      <p><span class="label">{{ etiquetas.naf_ss | default("NAF SS") }}:</span> {{ trabajador.naf_ss }}</p>
+      <p><span class="label">{{ etiquetas.antiguedad | default("Antig.") }}:</span> {{ trabajador.antiguedad }}</p>
+    </div>
+    <div class="bloque">
+      <p><span class="label">{{ etiquetas.categoria | default("Categoria") }}:</span> {{ trabajador.categoria }}</p>
+      <p><span class="label">{{ etiquetas.grupo_cotizacion | default("Grupo cot.") }}:</span> {{ trabajador.grupo_cotizacion }}</p>
+      <p><span class="label">{{ etiquetas.contrato | default("Contrato") }}:</span> {{ trabajador.contrato_tipo }}</p>
+    </div>
+  </div>
+
+  <div class="periodo-m4">
+    {{ etiquetas.periodo | default("PERIODO DE LIQUIDACION") }}: {{ periodo.mes }}/{{ periodo.anio }}
+    &nbsp;|&nbsp; {{ etiquetas.dias | default("Dias") }}: {{ periodo.dias_trabajados }}
+  </div>
+
+  <div class="grupo-titulo">I. {{ etiquetas.devengos | default("Percepciones") }} &mdash; Salariales</div>
+  <table class="m4">
+    <thead>
+      <tr><th>Cod</th><th>{{ etiquetas.concepto | default("Concepto") }}</th><th class="dr">{{ etiquetas.importe | default("Importe") }}</th></tr>
+    </thead>
+    <tbody>
+      {% for d in devengos %}
+      <tr>
+        <td class="cod">{{ "%03d" | format(loop.index) }}</td>
+        <td>{{ d.concepto }}</td>
+        <td class="dr">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td></td><td>{{ etiquetas.total_devengado | default("TOTAL DEVENGADO") }}</td><td class="dr">{{ total_devengado | moneda }}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="grupo-titulo">II. {{ etiquetas.deducciones | default("Deducciones") }}</div>
+  <table class="m4">
+    <thead>
+      <tr>
+        <th>Cod</th>
+        <th>{{ etiquetas.concepto | default("Concepto") }}</th>
+        <th class="dr">%</th>
+        <th class="dr">{{ etiquetas.base | default("Base") }}</th>
+        <th class="dr">{{ etiquetas.importe | default("Importe") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deducciones %}
+      <tr>
+        <td class="cod">{{ "%03d" | format(loop.index + 100) }}</td>
+        <td>{{ d.concepto }}</td>
+        <td class="dr">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}{% endif %}</td>
+        <td class="dr">{% if d.base %}{{ d.base | moneda }}{% else %}{% endif %}</td>
+        <td class="dr">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td></td><td colspan="3">{{ etiquetas.total_deducido | default("TOTAL DEDUCCIONES") }}</td><td class="dr">{{ total_deducido | moneda }}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="bases-m4">
+    <h4>{{ etiquetas.bases_cotizacion | default("Determinacion de las bases de cotizacion a la S.S. e IRPF") }}</h4>
+    <table>
+      <tr><td>1. {{ etiquetas.bc_cc | default("Base cotiz. contingencias comunes") }}</td><td class="dr">{{ bases_cotizacion.contingencias_comunes | moneda }}</td></tr>
+      <tr><td>2. {{ etiquetas.bc_at | default("Base cotiz. contingencias profesionales (AT y EP)") }}</td><td class="dr">{{ bases_cotizacion.accidentes_trabajo | moneda }}</td></tr>
+      <tr><td>3. {{ etiquetas.bc_hex | default("Base cotiz. horas extraordinarias") }}</td><td class="dr">{{ bases_cotizacion.horas_extra | moneda }}</td></tr>
+      <tr><td>4. {{ etiquetas.bc_irpf | default("Base sujeta a retencion del IRPF") }}</td><td class="dr">{{ bases_cotizacion.base_irpf | moneda }}</td></tr>
+      <tr><td>5. {{ etiquetas.irpf | default("Tipo retencion IRPF") }}</td><td class="dr">{{ irpf_pct | porcentaje }}</td></tr>
+    </table>
+  </div>
+
+  <div class="neto-m4">
+    <span>{{ etiquetas.liquido | default("LIQUIDO TOTAL A PERCIBIR") }}</span>
+    <span>{{ liquido | moneda }}</span>
+  </div>
+
+  <div class="firmas-m4">
+    <div>Sello y firma de la empresa</div>
+    <div>Recibi</div>
+  </div>
+
+  <div class="legal-m4">
+    Recibo de salarios conforme al modelo oficial (art. 29.1 ET y RD 2064/1995).
+    El trabajador dispone de un plazo de un ano para reclamar las cantidades.
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{{ etiquetas.nomina }} {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: A4; margin: 12mm 15mm; }
+    body { font-family: Arial, "Helvetica Neue", sans-serif; color: #222; font-size: 9pt; }
+
+    .header-obra {
+      background: #3a3a3a; color: #fff; padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    }
+    .header-obra h1 { margin: 0; font-size: 15pt; }
+    .header-obra .empresa-info { font-size: 8pt; }
+    .header-obra .empresa-info p { margin: 1px 0; }
+
+    .obra-datos {
+      background: #f5c518; color: #222; padding: 8px 14px; margin-bottom: 10px;
+      display: flex; gap: 30px; font-size: 8pt; font-weight: bold;
+    }
+    .obra-datos .campo { display: flex; gap: 4px; }
+    .obra-datos .lbl { font-weight: normal; color: #555; }
+
+    .trabajador-obra {
+      border: 2px solid #3a3a3a; padding: 8px 12px; margin-bottom: 10px;
+      display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 8pt;
+    }
+    .trabajador-obra .campo { display: flex; gap: 4px; }
+    .trabajador-obra .lbl { color: #666; }
+    .trabajador-obra .val { font-weight: bold; }
+    .trabajador-obra .categoria-dest {
+      background: #3a3a3a; color: #f5c518; padding: 2px 8px; font-weight: bold; font-size: 9pt;
+    }
+
+    .jornada-box {
+      display: flex; gap: 16px; margin-bottom: 10px; font-size: 8pt;
+      border: 1px solid #ccc; padding: 6px 12px; background: #fafafa;
+    }
+    .jornada-box .item { display: flex; gap: 4px; }
+    .jornada-box .lbl { color: #666; }
+    .jornada-box .val { font-weight: bold; }
+
+    .periodo-obra {
+      background: #555; color: #fff; padding: 5px 14px;
+      font-weight: bold; text-transform: uppercase; font-size: 9pt; margin-bottom: 10px;
+    }
+
+    .tabla-pesada { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 8pt; }
+    .tabla-pesada th {
+      background: #3a3a3a; color: #f5c518; padding: 5px 6px;
+      text-align: left; font-size: 7pt; text-transform: uppercase; border: 1px solid #555;
+    }
+    .tabla-pesada th.num { text-align: right; }
+    .tabla-pesada td { padding: 4px 6px; border: 1px solid #ccc; }
+    .tabla-pesada td.num { text-align: right; }
+    .tabla-pesada tbody tr:nth-child(even) { background: #f5f5f0; }
+    .tabla-pesada tfoot td {
+      font-weight: bold; background: #e8e4d8; border-top: 3px solid #3a3a3a;
+    }
+
+    .seccion-obra { font-size: 9pt; font-weight: bold; color: #3a3a3a; margin: 8px 0 3px; text-transform: uppercase; border-left: 4px solid #f5c518; padding-left: 8px; }
+
+    .bases-obra { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 10px; }
+    .bases-obra td { border: 1px solid #ccc; padding: 3px 6px; }
+    .bases-obra td.num { text-align: right; }
+    .bases-obra td.lbl { background: #e8e4d8; font-weight: bold; width: 45%; }
+
+    .liquido-obra {
+      background: #3a3a3a; color: #f5c518; padding: 10px 16px;
+      font-size: 13pt; font-weight: bold; text-align: right; margin-bottom: 12px;
+    }
+
+    .firmas { display: flex; justify-content: space-between; margin-top: 16px; font-size: 8pt; }
+    .firma-col { width: 38%; text-align: center; padding-top: 30px; border-top: 2px solid #3a3a3a; }
+    .legal { font-size: 7pt; color: #888; margin-top: 8px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="header-obra">
+    <h1>{{ empresa.nombre }}</h1>
+    <div class="empresa-info">
+      <p>{{ etiquetas.nif }}: {{ empresa.nif }}</p>
+      <p>{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+      <p>{{ etiquetas.ccc_ss }}: {{ empresa.ccc_ss }}</p>
+    </div>
+  </div>
+
+  <div class="obra-datos">
+    <div class="campo"><span class="lbl">{{ etiquetas.obra }}:</span> {{ trabajador.categoria }}</div>
+    <div class="campo"><span class="lbl">{{ etiquetas.direccion_obra }}:</span> {{ empresa.direccion }}</div>
+  </div>
+
+  <div class="trabajador-obra">
+    <div class="campo"><span class="lbl">{{ etiquetas.trabajador }}:</span><span class="val">{{ trabajador.nombre }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.nif }}:</span><span class="val">{{ trabajador.nif }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.naf_ss }}:</span><span class="val">{{ trabajador.naf_ss }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.contrato }}:</span><span class="val">{{ trabajador.contrato_tipo }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.antiguedad }}:</span><span class="val">{{ trabajador.antiguedad }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.grupo_cotizacion }}:</span><span class="val">{{ trabajador.grupo_cotizacion }}</span></div>
+    <span class="categoria-dest">{{ trabajador.categoria }}</span>
+  </div>
+
+  <div class="jornada-box">
+    <div class="item"><span class="lbl">{{ etiquetas.dias_trabajados }}:</span><span class="val">{{ periodo.dias_trabajados }}</span></div>
+    <div class="item"><span class="lbl">{{ etiquetas.dias_festivos }}:</span><span class="val">{{ periodo.dias_trabajados }}</span></div>
+    <div class="item"><span class="lbl">{{ etiquetas.dias_nocturnos }}:</span><span class="val">0</span></div>
+  </div>
+
+  <div class="periodo-obra">
+    {{ etiquetas.nomina }} &mdash; {{ periodo.mes | upper }} {{ periodo.anio }}
+  </div>
+
+  <div class="seccion-obra">I. {{ etiquetas.devengos }}</div>
+  <table class="tabla-pesada">
+    <thead><tr><th>{{ etiquetas.concepto }}</th><th class="num">{{ etiquetas.importe }}</th></tr></thead>
+    <tbody>
+      {% for d in devengos %}
+      <tr><td>{{ d.concepto }}</td><td class="num">{{ d.importe | moneda }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td>{{ etiquetas.total_devengado }}</td><td class="num">{{ total_devengado | moneda }}</td></tr></tfoot>
+  </table>
+
+  <div class="seccion-obra">II. {{ etiquetas.deducciones }}</div>
+  <table class="tabla-pesada">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto }}</th>
+        <th class="num">%</th>
+        <th class="num">{{ etiquetas.base }}</th>
+        <th class="num">{{ etiquetas.importe }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deducciones %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td class="num">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+        <td class="num">{% if d.base %}{{ d.base | moneda }}{% else %}&mdash;{% endif %}</td>
+        <td class="num">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="3">{{ etiquetas.total_deducido }}</td><td class="num">{{ total_deducido | moneda }}</td></tr></tfoot>
+  </table>
+
+  <div class="seccion-obra">III. {{ etiquetas.bases_cotizacion }}</div>
+  <table class="bases-obra">
+    <tr><td class="lbl">{{ etiquetas.contingencias_comunes }}</td><td class="num">{{ bases_cotizacion.contingencias_comunes | moneda }}</td></tr>
+    <tr><td class="lbl">{{ etiquetas.accidentes_trabajo }}</td><td class="num">{{ bases_cotizacion.accidentes_trabajo | moneda }}</td></tr>
+    <tr><td class="lbl">{{ etiquetas.horas_extra }}</td><td class="num">{{ bases_cotizacion.horas_extra | moneda }}</td></tr>
+    <tr><td class="lbl">{{ etiquetas.base_irpf }}</td><td class="num">{{ bases_cotizacion.base_irpf | moneda }}</td></tr>
+  </table>
+
+  <div class="liquido-obra">
+    {{ etiquetas.liquido }}: {{ liquido | moneda }}
+  </div>
+
+  <div class="firmas">
+    <div class="firma-col">{{ etiquetas.firma_empresa }}<br>{{ empresa.nombre }}</div>
+    <div class="firma-col">{{ etiquetas.firma_trabajador }}<br>{{ trabajador.nombre }}</div>
+  </div>
+
+  <p class="legal">Convenio General del Sector de la Construccion. Recibo conforme RD 2064/1995. {{ etiquetas.irpf }}: {{ irpf_pct | porcentaje }}</p>
+
+</div>
+</body>
+</html>

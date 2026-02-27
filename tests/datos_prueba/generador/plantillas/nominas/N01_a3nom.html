@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nomina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <style>{{ css_variaciones }}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 9pt; color: #222; padding: 20px 25px; }
+    .cab { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .cab-empresa { width: 48%; }
+    .cab-empresa h2 { font-size: 13pt; margin-bottom: 4px; }
+    .cab-empresa p { font-size: 8pt; line-height: 1.5; }
+    .cab-trabajador { width: 48%; border: 1.5px solid #333; padding: 8px 10px; font-size: 8pt; }
+    .cab-trabajador p { line-height: 1.6; }
+    .cab-trabajador strong { display: inline-block; width: 120px; }
+    .barra-periodo { background: #333; color: #fff; text-align: center; padding: 6px 0; font-size: 9pt;
+      font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    table.nom { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    table.nom th { background: #555; color: #fff; padding: 4px 8px; font-size: 8pt;
+      text-transform: uppercase; text-align: left; }
+    table.nom th.dr { text-align: right; }
+    table.nom td { padding: 3px 8px; border-bottom: 1px solid #ddd; font-size: 8.5pt; }
+    table.nom td.dr { text-align: right; }
+    table.nom tfoot td { font-weight: bold; background: #eee; border-top: 2px solid #333; padding: 5px 8px; }
+    .seccion-titulo { font-size: 9pt; font-weight: bold; margin: 8px 0 3px; text-transform: uppercase;
+      border-bottom: 1px solid #999; padding-bottom: 2px; }
+    .bases { border: 1px solid #bbb; padding: 8px 10px; margin-top: 8px; font-size: 8pt; }
+    .bases h4 { font-size: 8pt; text-transform: uppercase; margin-bottom: 5px; }
+    .bases table { width: 100%; border-collapse: collapse; }
+    .bases td { padding: 2px 6px; }
+    .bases td:last-child { text-align: right; }
+    .liquido-box { background: #111; color: #fff; padding: 10px 15px; margin-top: 10px;
+      font-size: 12pt; font-weight: bold; display: flex; justify-content: space-between; }
+    .firmas { display: flex; justify-content: space-between; margin-top: 30px; font-size: 8pt; }
+    .firmas div { width: 40%; text-align: center; border-top: 1px solid #333; padding-top: 5px; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="nomina-a3">
+
+  <div class="cab">
+    <div class="cab-empresa">
+      <h2>{{ empresa.nombre }}</h2>
+      <p>{{ etiquetas.nif | default("CIF") }}: {{ empresa.nif }}</p>
+      <p>{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+      <p>{{ etiquetas.ccc_ss | default("C.C.C.") }}: {{ empresa.ccc_ss }}</p>
+    </div>
+    <div class="cab-trabajador">
+      <p><strong>{{ etiquetas.trabajador | default("Trabajador") }}:</strong> {{ trabajador.nombre }}</p>
+      <p><strong>{{ etiquetas.nif_trabajador | default("NIF") }}:</strong> {{ trabajador.nif }}</p>
+      <p><strong>{{ etiquetas.naf_ss | default("N.Afil. SS") }}:</strong> {{ trabajador.naf_ss }}</p>
+      <p><strong>{{ etiquetas.categoria | default("Categoria") }}:</strong> {{ trabajador.categoria }}</p>
+      <p><strong>{{ etiquetas.grupo_cotizacion | default("Grupo cotiz.") }}:</strong> {{ trabajador.grupo_cotizacion }}</p>
+      <p><strong>{{ etiquetas.contrato | default("Contrato") }}:</strong> {{ trabajador.contrato_tipo }}</p>
+      <p><strong>{{ etiquetas.antiguedad | default("Antiguedad") }}:</strong> {{ trabajador.antiguedad }}</p>
+    </div>
+  </div>
+
+  <div class="barra-periodo">
+    {{ etiquetas.periodo | default("Periodo") }}: {{ periodo.mes }} / {{ periodo.anio }}
+    &nbsp;&mdash;&nbsp; {{ etiquetas.dias | default("Dias") }}: {{ periodo.dias_trabajados }}
+  </div>
+
+  <div class="seccion-titulo">I. {{ etiquetas.devengos | default("Devengos") }}</div>
+  <table class="nom">
+    <thead>
+      <tr><th>{{ etiquetas.concepto | default("Concepto") }}</th><th class="dr">{{ etiquetas.importe | default("Importe") }}</th></tr>
+    </thead>
+    <tbody>
+      {% for d in devengos %}
+      <tr><td>{{ d.concepto }}</td><td class="dr">{{ d.importe | moneda }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td>{{ etiquetas.total_devengado | default("TOTAL DEVENGADO") }}</td><td class="dr">{{ total_devengado | moneda }}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="seccion-titulo">II. {{ etiquetas.deducciones | default("Deducciones") }}</div>
+  <table class="nom">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto | default("Concepto") }}</th>
+        <th class="dr">%</th>
+        <th class="dr">{{ etiquetas.base | default("Base") }}</th>
+        <th class="dr">{{ etiquetas.importe | default("Importe") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deducciones %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td class="dr">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+        <td class="dr">{% if d.base %}{{ d.base | moneda }}{% else %}&mdash;{% endif %}</td>
+        <td class="dr">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">{{ etiquetas.total_deducido | default("TOTAL DEDUCCIONES") }}</td><td class="dr">{{ total_deducido | moneda }}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="bases">
+    <h4>{{ etiquetas.bases_cotizacion | default("Bases de cotizacion") }}</h4>
+    <table>
+      <tr><td>{{ etiquetas.bc_cc | default("Contingencias comunes") }}:</td><td>{{ bases_cotizacion.contingencias_comunes | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_at | default("Accidentes trabajo / E.P.") }}:</td><td>{{ bases_cotizacion.accidentes_trabajo | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_hex | default("Horas extraordinarias") }}:</td><td>{{ bases_cotizacion.horas_extra | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_irpf | default("Base sujeta a IRPF") }}:</td><td>{{ bases_cotizacion.base_irpf | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.irpf | default("Tipo IRPF") }}:</td><td>{{ irpf_pct | porcentaje }}</td></tr>
+    </table>
+  </div>
+
+  <div class="liquido-box">
+    <span>{{ etiquetas.liquido | default("LIQUIDO A PERCIBIR") }}</span>
+    <span>{{ liquido | moneda }}</span>
+  </div>
+
+  <div class="firmas">
+    <div>Firma y sello empresa<br>{{ empresa.nombre }}</div>
+    <div>Recibi conforme<br>{{ trabajador.nombre }}</div>
+  </div>
+
+</div>
+</body>
+</html>

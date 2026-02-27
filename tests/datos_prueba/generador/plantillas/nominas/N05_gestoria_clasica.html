@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nomina {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <style>{{ css_variaciones }}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; color: #000;
+      padding: 15px 20px; background: #fff; }
+    h1.titulo { text-align: center; font-size: 14pt; text-transform: uppercase;
+      letter-spacing: 2px; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+    .datos-linea { font-size: 9pt; margin-bottom: 3px; }
+    .datos-linea strong { display: inline; }
+    .separador { border-top: 1px solid #000; margin: 8px 0; }
+    table.clasica { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; }
+    table.clasica th { border: 1px solid #000; padding: 3px 6px; text-align: left;
+      font-size: 8pt; background: #f0f0f0; }
+    table.clasica th.dr { text-align: right; }
+    table.clasica td { border: 1px solid #000; padding: 2px 6px; }
+    table.clasica td.dr { text-align: right; }
+    table.clasica td.seccion { background: #ddd; font-weight: bold; font-size: 8pt;
+      text-transform: uppercase; }
+    table.clasica tfoot td { font-weight: bold; background: #eee; }
+    .bloque-final { margin-top: 10px; font-size: 9pt; }
+    .bloque-final table { border-collapse: collapse; width: 60%; }
+    .bloque-final td { padding: 2px 6px; }
+    .bloque-final td.dr { text-align: right; }
+    .neto-linea { font-size: 12pt; font-weight: bold; margin-top: 10px; border: 2px solid #000;
+      padding: 6px 10px; display: flex; justify-content: space-between; }
+    .firmas-cl { display: flex; justify-content: space-between; margin-top: 40px; font-size: 8pt; }
+    .firmas-cl div { width: 35%; text-align: center; border-top: 1px solid #000; padding-top: 4px; }
+    .legal-cl { font-size: 7pt; color: #555; margin-top: 15px; text-align: center; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="nomina-clasica">
+
+  <h1 class="titulo">{{ etiquetas.titulo | default("RECIBO DE SALARIOS") }}</h1>
+
+  <p class="datos-linea"><strong>{{ etiquetas.empresa | default("Empresa") }}:</strong> {{ empresa.nombre }} &mdash; {{ etiquetas.nif | default("CIF") }}: {{ empresa.nif }} &mdash; {{ etiquetas.ccc_ss | default("CCC") }}: {{ empresa.ccc_ss }}</p>
+  <p class="datos-linea">{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+  <p class="datos-linea"><strong>{{ etiquetas.trabajador | default("Trabajador") }}:</strong> {{ trabajador.nombre }} &mdash; {{ etiquetas.nif_trabajador | default("NIF") }}: {{ trabajador.nif }} &mdash; {{ etiquetas.naf_ss | default("N.Afil.SS") }}: {{ trabajador.naf_ss }}</p>
+  <p class="datos-linea"><strong>{{ etiquetas.categoria | default("Cat.") }}:</strong> {{ trabajador.categoria }} &mdash; <strong>{{ etiquetas.grupo_cotizacion | default("Grupo") }}:</strong> {{ trabajador.grupo_cotizacion }} &mdash; <strong>{{ etiquetas.contrato | default("Contrato") }}:</strong> {{ trabajador.contrato_tipo }} &mdash; <strong>{{ etiquetas.antiguedad | default("Antig.") }}:</strong> {{ trabajador.antiguedad }}</p>
+  <p class="datos-linea"><strong>{{ etiquetas.periodo | default("Periodo") }}:</strong> {{ periodo.mes }} / {{ periodo.anio }} &mdash; <strong>{{ etiquetas.dias | default("Dias") }}:</strong> {{ periodo.dias_trabajados }}</p>
+
+  <div class="separador"></div>
+
+  <table class="clasica">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto | default("Concepto") }}</th>
+        <th class="dr">%</th>
+        <th class="dr">{{ etiquetas.base | default("Base") }}</th>
+        <th class="dr">{{ etiquetas.devengos | default("Devengos") }}</th>
+        <th class="dr">{{ etiquetas.deducciones | default("Deducciones") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="seccion" colspan="5">I. {{ etiquetas.devengos | default("DEVENGOS") }}</td></tr>
+      {% for d in devengos %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td class="dr"></td>
+        <td class="dr"></td>
+        <td class="dr">{{ d.importe | moneda }}</td>
+        <td class="dr"></td>
+      </tr>
+      {% endfor %}
+      <tr><td class="seccion" colspan="5">II. {{ etiquetas.deducciones | default("DEDUCCIONES") }}</td></tr>
+      {% for d in deducciones %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td class="dr">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}{% endif %}</td>
+        <td class="dr">{% if d.base %}{{ d.base | moneda }}{% else %}{% endif %}</td>
+        <td class="dr"></td>
+        <td class="dr">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">{{ etiquetas.totales | default("TOTALES") }}</td>
+        <td class="dr">{{ total_devengado | moneda }}</td>
+        <td class="dr">{{ total_deducido | moneda }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="bloque-final">
+    <table>
+      <tr><td>{{ etiquetas.bc_cc | default("Base cotiz. cont. comunes") }}:</td><td class="dr">{{ bases_cotizacion.contingencias_comunes | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_at | default("Base cotiz. AT/EP") }}:</td><td class="dr">{{ bases_cotizacion.accidentes_trabajo | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_hex | default("Base horas extra") }}:</td><td class="dr">{{ bases_cotizacion.horas_extra | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.bc_irpf | default("Base IRPF") }}:</td><td class="dr">{{ bases_cotizacion.base_irpf | moneda }}</td></tr>
+      <tr><td>{{ etiquetas.irpf | default("Tipo retencion IRPF") }}:</td><td class="dr">{{ irpf_pct | porcentaje }}</td></tr>
+    </table>
+  </div>
+
+  <div class="neto-linea">
+    <span>{{ etiquetas.liquido | default("LIQUIDO A PERCIBIR") }}</span>
+    <span>{{ liquido | moneda }}</span>
+  </div>
+
+  <div class="firmas-cl">
+    <div>Firma y sello empresa</div>
+    <div>Recibi conforme</div>
+  </div>
+
+  <div class="legal-cl">
+    Recibo de salarios conforme al art. 29.1 del Estatuto de los Trabajadores.
+  </div>
+
+</div>
+</body>
+</html>

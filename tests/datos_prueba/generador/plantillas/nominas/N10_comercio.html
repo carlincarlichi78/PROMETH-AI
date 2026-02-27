@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{{ etiquetas.nomina }} {{ trabajador.nombre }} - {{ periodo.mes }}/{{ periodo.anio }}</title>
+  <link rel="stylesheet" href="../../css/base_v2.css">
+  <style>{{ css_variaciones }}</style>
+  <style>
+    @page { size: A4; margin: 14mm 18mm; }
+    body { font-family: "Calibri", "Segoe UI", sans-serif; color: #1e293b; font-size: 9pt; }
+
+    .header-comercio {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--color-primario, #0369a1);
+    }
+    .header-logo {
+      width: 120px; height: 45px;
+      background: var(--color-primario, #0369a1); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 14px; letter-spacing: 1px; border-radius: 4px;
+    }
+    .header-empresa { text-align: right; font-size: 8pt; }
+    .header-empresa h2 { margin: 0; font-size: 13pt; color: var(--color-primario, #0369a1); }
+    .header-empresa p { margin: 1px 0; color: #475569; }
+    .header-empresa .sucursal { font-weight: bold; color: var(--color-primario, #0369a1); font-size: 9pt; }
+
+    .trabajador-comercio {
+      background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 4px;
+      padding: 8px 12px; margin-bottom: 10px;
+      display: flex; flex-wrap: wrap; gap: 5px 22px; font-size: 8pt;
+    }
+    .trabajador-comercio .campo { display: flex; gap: 4px; }
+    .trabajador-comercio .lbl { color: #0369a1; }
+    .trabajador-comercio .val { font-weight: 600; }
+
+    .periodo-comercio {
+      background: var(--color-primario, #0369a1); color: #fff;
+      padding: 5px 14px; font-weight: bold; text-transform: uppercase;
+      font-size: 9pt; margin-bottom: 10px; border-radius: 2px;
+    }
+
+    .seccion-com { font-size: 9pt; font-weight: bold; color: var(--color-primario, #0369a1); margin: 8px 0 3px; text-transform: uppercase; }
+    .subseccion { font-size: 8pt; font-weight: 600; color: #475569; margin: 6px 0 3px; padding-left: 8px; border-left: 3px solid var(--color-secundario, #10b981); }
+
+    .tabla-com { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 6px; }
+    .tabla-com th {
+      background: var(--color-primario, #0369a1); color: #fff;
+      padding: 4px 8px; text-align: left; font-size: 7pt; text-transform: uppercase;
+    }
+    .tabla-com th.num { text-align: right; }
+    .tabla-com td { padding: 3px 8px; border-bottom: 1px solid #e2e8f0; }
+    .tabla-com td.num { text-align: right; }
+    .tabla-com tbody tr:nth-child(even) { background: #f8fafc; }
+    .tabla-com tfoot td {
+      font-weight: bold; background: #e0f2fe; border-top: 2px solid var(--color-primario, #0369a1);
+    }
+    .tabla-com .fila-destacada td { background: #fef3c7; font-weight: 600; }
+
+    .bases-com {
+      display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 8pt;
+      border: 1px solid #bae6fd; padding: 6px 10px; margin-bottom: 10px; background: #f0f9ff;
+      border-radius: 3px;
+    }
+    .bases-com .item { display: flex; gap: 4px; }
+    .bases-com .lbl { color: #0369a1; }
+    .bases-com .val { font-weight: 600; }
+
+    .liquido-com {
+      background: var(--color-secundario, #10b981); color: #fff;
+      padding: 10px 16px; font-size: 13pt; font-weight: bold;
+      text-align: right; border-radius: 4px; margin-bottom: 14px;
+    }
+
+    .firmas { display: flex; justify-content: space-between; margin-top: 18px; font-size: 8pt; }
+    .firma-col { width: 38%; text-align: center; padding-top: 28px; border-top: 1px solid #94a3b8; color: #64748b; }
+    .legal { font-size: 7pt; color: #94a3b8; margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+{{ degradacion_html }}
+<div class="documento">
+
+  <div class="header-comercio">
+    <div class="header-logo">{{ empresa.nombre[:8] | upper }}</div>
+    <div class="header-empresa">
+      <h2>{{ empresa.nombre }}</h2>
+      <p>{{ etiquetas.nif }}: {{ empresa.nif }}</p>
+      <p>{{ empresa.direccion }}, {{ empresa.cp }} {{ empresa.ciudad }}</p>
+      <p>{{ etiquetas.ccc_ss }}: {{ empresa.ccc_ss }}</p>
+      <p class="sucursal">{{ etiquetas.sucursal }}: {{ empresa.ciudad }}</p>
+    </div>
+  </div>
+
+  <div class="trabajador-comercio">
+    <div class="campo"><span class="lbl">{{ etiquetas.trabajador }}:</span><span class="val">{{ trabajador.nombre }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.nif }}:</span><span class="val">{{ trabajador.nif }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.naf_ss }}:</span><span class="val">{{ trabajador.naf_ss }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.categoria }}:</span><span class="val">{{ trabajador.categoria }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.contrato }}:</span><span class="val">{{ trabajador.contrato_tipo }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.antiguedad }}:</span><span class="val">{{ trabajador.antiguedad }}</span></div>
+    <div class="campo"><span class="lbl">{{ etiquetas.grupo_cotizacion }}:</span><span class="val">{{ trabajador.grupo_cotizacion }}</span></div>
+  </div>
+
+  <div class="periodo-comercio">
+    {{ etiquetas.nomina }} &mdash; {{ periodo.mes | upper }} {{ periodo.anio }}
+    &nbsp;|&nbsp; {{ etiquetas.dias_trabajados }}: {{ periodo.dias_trabajados }}
+  </div>
+
+  <div class="seccion-com">I. {{ etiquetas.devengos }}</div>
+
+  <div class="subseccion">{{ etiquetas.devengos_fijos }}</div>
+  <table class="tabla-com">
+    <thead><tr><th>{{ etiquetas.concepto }}</th><th class="num">{{ etiquetas.importe }}</th></tr></thead>
+    <tbody>
+      {% for d in devengos %}
+      {% if loop.index0 < (devengos | length) // 2 + 1 %}
+      <tr><td>{{ d.concepto }}</td><td class="num">{{ d.importe | moneda }}</td></tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="subseccion">{{ etiquetas.devengos_variables }}</div>
+  <table class="tabla-com">
+    <thead><tr><th>{{ etiquetas.concepto }}</th><th class="num">{{ etiquetas.importe }}</th></tr></thead>
+    <tbody>
+      {% for d in devengos %}
+      {% if loop.index0 >= (devengos | length) // 2 + 1 %}
+      <tr{% if 'comisi' in d.concepto | lower or 'incentivo' in d.concepto | lower %} class="fila-destacada"{% endif %}>
+        <td>{{ d.concepto }}</td><td class="num">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="tabla-com">
+    <tfoot><tr><td>{{ etiquetas.total_devengado }}</td><td class="num">{{ total_devengado | moneda }}</td></tr></tfoot>
+  </table>
+
+  <div class="seccion-com">II. {{ etiquetas.deducciones }}</div>
+  <table class="tabla-com">
+    <thead>
+      <tr>
+        <th>{{ etiquetas.concepto }}</th>
+        <th class="num">%</th>
+        <th class="num">{{ etiquetas.base }}</th>
+        <th class="num">{{ etiquetas.importe }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deducciones %}
+      <tr>
+        <td>{{ d.concepto }}</td>
+        <td class="num">{% if d.tipo_pct %}{{ d.tipo_pct | porcentaje }}{% else %}&mdash;{% endif %}</td>
+        <td class="num">{% if d.base %}{{ d.base | moneda }}{% else %}&mdash;{% endif %}</td>
+        <td class="num">{{ d.importe | moneda }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="3">{{ etiquetas.total_deducido }}</td><td class="num">{{ total_deducido | moneda }}</td></tr></tfoot>
+  </table>
+
+  <div class="seccion-com">III. {{ etiquetas.bases_cotizacion }}</div>
+  <div class="bases-com">
+    <div class="item"><span class="lbl">{{ etiquetas.contingencias_comunes }}:</span><span class="val">{{ bases_cotizacion.contingencias_comunes | moneda }}</span></div>
+    <div class="item"><span class="lbl">{{ etiquetas.accidentes_trabajo }}:</span><span class="val">{{ bases_cotizacion.accidentes_trabajo | moneda }}</span></div>
+    <div class="item"><span class="lbl">{{ etiquetas.horas_extra }}:</span><span class="val">{{ bases_cotizacion.horas_extra | moneda }}</span></div>
+    <div class="item"><span class="lbl">{{ etiquetas.base_irpf }}:</span><span class="val">{{ bases_cotizacion.base_irpf | moneda }}</span></div>
+  </div>
+
+  <div class="liquido-com">
+    {{ etiquetas.liquido }}: {{ liquido | moneda }}
+  </div>
+
+  <div class="firmas">
+    <div class="firma-col">{{ etiquetas.firma_empresa }}<br>{{ empresa.nombre }}</div>
+    <div class="firma-col">{{ etiquetas.firma_trabajador }}<br>{{ trabajador.nombre }}</div>
+  </div>
+
+  <p class="legal">Convenio Colectivo de Comercio. Recibo conforme RD 2064/1995. {{ etiquetas.irpf }}: {{ irpf_pct | porcentaje }}</p>
+
+</div>
+</body>
+</html>
