@@ -1,5 +1,26 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-27 — Sesion: SFCE v2 Fase E (Ingesta Inteligente)
+
+**Objetivo**: Implementar Fase E del plan SFCE Evolucion v2 (Tasks 38-46).
+
+**Fase E completada (Tasks 38-46)**:
+- T38: nombres.py — convencion naming carpetas/documentos (30 tests)
+- T39: cache_ocr.py — cache .ocr.json junto al PDF con SHA256 (31 tests)
+- T40: duplicados.py — deteccion duplicados seguro/posible/ninguno (32 tests)
+- T41: detectar_trabajador + agregar_trabajador con persistencia YAML (11 tests)
+- T42: ingesta_email.py — IMAP, adjuntos PDF, enrutamiento por remitente (34 tests)
+- T43: notificaciones.py — 7 tipos, gestor multicanal log/email/websocket (59 tests)
+- T44: recurrentes.py — patrones facturas recurrentes + alertas faltantes (32 tests)
+- T45: generar_periodicas.py — asientos automaticos amortizaciones/provisiones (49 tests)
+- T46: tests integracion Fase E — 8 escenarios cross-modulo (31 tests)
+
+**Infra**: PR #1 mergeada, branch feat/sfce-v2-fase-e creada desde main
+**Tests totales**: 954 PASS (+309 nuevos)
+**Progreso plan v2**: 46/46 tasks (100%) — PLAN COMPLETADO
+
+---
+
 ## 2026-02-27 — Sesion: SFCE v2 Fase D (API + Dashboard + Infra GitHub)
 
 **Objetivo**: Implementar Fase D del plan SFCE Evolucion v2.

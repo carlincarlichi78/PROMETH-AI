@@ -289,14 +289,14 @@ Tasks completados:
 
 **Design doc v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-design.md`
 **Plan implementacion v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-implementation.md` (46 tasks, 5 fases)
-**Estado**: Fases A+B+C+D COMPLETADAS (37/46 tasks, 80%). 645 tests PASS.
+**Estado**: 5 FASES COMPLETADAS (46/46 tasks, 100%). 954 tests PASS.
 
 **Fases**:
 - A (T1-10): COMPLETADA — sfce/, normativa 5 territorios, perfil fiscal, decision con trazabilidad, cierre ejercicio
 - B (T11-19): COMPLETADA — clasificador (cascada 6 niveles), MotorReglas (OBLIGATORIO en pipeline), calculador modelos 3 categorias, notas credito. 392 tests
 - C (T20-27): COMPLETADA — BD dual SQLite/PostgreSQL (14 tablas SQLAlchemy), repositorio (PyG, balance, saldos), backend doble destino (FS+local), importador CSV/Excel, exportador universal, migrador FS→BD. 479 tests
 - D (T28-37): COMPLETADA — FastAPI + JWT + WebSocket, React dashboard (15 paginas), file watcher, licencias. 645 tests
-- E (T38-46): PENDIENTE — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
+- E (T38-46): COMPLETADA — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones, recurrentes, periodicas. 954 tests
 
 **Modulos Fase B** (sfce/core/):
 - `clasificador.py` — cascada 6 niveles: regla_cliente → aprendizaje → tipo_doc → palabras_clave → libro_diario → cuarentena
@@ -343,19 +343,31 @@ Tasks completados:
 **API arranque**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 **Dashboard dev**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 
+**Modulos Fase E** (sfce/core/ + scripts/):
+- `sfce/core/nombres.py` — generar_slug_cliente, renombrar_documento, mover_documento, carpeta_sin_clasificar
+- `sfce/core/cache_ocr.py` — cache .ocr.json junto al PDF (SHA256), hit/miss/invalidar, estadisticas
+- `sfce/core/duplicados.py` — detectar_duplicado (seguro CIF+num+fecha, posible CIF+importe+fecha+-5d), filtrar_duplicados_batch
+- `sfce/core/recurrentes.py` — detectar_patrones_recurrentes (3+ facturas, stdev<15d), detectar_faltantes, generar_alertas
+- `sfce/core/ingesta_email.py` — IMAP, extraer adjuntos PDF, enrutar por remitente, guardar en inbox
+- `sfce/core/notificaciones.py` — 7 tipos, GestorNotificaciones multicanal (log/email/websocket), plantillas
+- `scripts/generar_periodicas.py` — asientos automaticos desde operaciones_periodicas (amortizaciones, provisiones)
+- `scripts/leer_correo.py` — CLI ingesta email
+- `sfce/core/config.py` — agregar_trabajador() con persistencia YAML
+- `sfce/phases/intake.py` — detectar_trabajador() para nominas
+
 ## GitHub
 
 - **Repo**: `carlincarlichi78/SPICE` (privado)
 - **Remote**: `https://github.com/carlincarlichi78/SPICE.git`
-- **Branch activa**: `feat/sfce-v2-fase-d`
-- **PR abierta**: #1 (feat/sfce-v2-fase-d → main)
+- **Branch activa**: `feat/sfce-v2-fase-e`
+- **PR mergeada**: #1 (feat/sfce-v2-fase-d → main)
 - **Cuenta**: carlincarlichi78 (autenticada via `gh`)
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes NO se trackean (ver .gitignore)
 
 ## Proximos pasos
 
-- **Mergear PR #1** y empezar Fase E (Tasks 38-46): naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 - Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
+- Conectar dashboard a API real (actualmente con datos mock)
+- Integrar cache_ocr + duplicados + recurrentes en pipeline.py
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
-- Conectar dashboard a API real (actualmente con datos mock)
