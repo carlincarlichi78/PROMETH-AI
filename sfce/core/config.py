@@ -164,6 +164,52 @@ class ConfigCliente:
                 return trab
         return None
 
+    def agregar_trabajador(self, dni: str, nombre: str, bruto_mensual: float,
+                           pagas: int = 14) -> dict:
+        """Agrega o actualiza un trabajador en la lista en memoria y en el YAML en disco.
+
+        Si ya existe un trabajador con el mismo DNI, actualiza sus datos.
+        Siempre marca el trabajador como confirmado=True.
+
+        Args:
+            dni: DNI del trabajador.
+            nombre: Nombre completo.
+            bruto_mensual: Salario bruto mensual en EUR.
+            pagas: Numero de pagas anuales (defecto 14).
+
+        Returns:
+            dict con los datos del trabajador agregado/actualizado.
+        """
+        nuevo = {
+            "dni": dni,
+            "nombre": nombre,
+            "bruto_mensual": bruto_mensual,
+            "pagas": pagas,
+            "confirmado": True,
+        }
+
+        # Actualizar en memoria: si ya existe el DNI, reemplazar; si no, agregar
+        indice_existente = next(
+            (i for i, t in enumerate(self.trabajadores) if t.get("dni") == dni),
+            None,
+        )
+        if indice_existente is not None:
+            self.trabajadores[indice_existente] = nuevo
+        else:
+            self.trabajadores.append(nuevo)
+
+        # Persistir en disco: leer YAML actual, sustituir seccion trabajadores, reescribir
+        with open(self.ruta, "r", encoding="utf-8") as f:
+            data_yaml = yaml.safe_load(f) or {}
+
+        data_yaml["trabajadores"] = self.trabajadores
+
+        with open(self.ruta, "w", encoding="utf-8") as f:
+            yaml.dump(data_yaml, f, allow_unicode=True, default_flow_style=False)
+
+        logger.info(f"Trabajador {dni} ({nombre}) guardado en {self.ruta}")
+        return nuevo
+
     def _generar_perfil_desde_tipo(self) -> PerfilFiscal:
         """Genera PerfilFiscal basico a partir del campo empresa.tipo."""
         _TIPO_A_FORMA = {

@@ -1115,3 +1115,56 @@ def ejecutar_intake(
         logger.info(f"Intake completado: {len(documentos_extraidos)} documentos procesados")
 
     return resultado
+
+
+# ---------------------------------------------------------------------------
+# Deteccion de trabajadores nuevos en nominas (Task 41 — SFCE Fase E)
+# ---------------------------------------------------------------------------
+
+def detectar_trabajador(datos_ocr: dict, config: ConfigCliente) -> Optional[dict]:
+    """Detecta si el trabajador de una nomina es conocido o nuevo.
+
+    Solo aplica cuando tipo_doc == "NOM". Para cualquier otro tipo devuelve None.
+
+    Flujo:
+    1. Si tipo_doc != NOM → None (no aplica).
+    2. Extraer DNI de datos_ocr["dni_trabajador"].
+    3. Si no hay DNI → {"conocido": False} sin cuarentena (skip, no hay dato para buscar).
+    4. Buscar DNI en config.trabajadores via buscar_trabajador_por_dni().
+    5. Encontrado → {"conocido": True, "pagas": <pagas del trabajador>}.
+    6. No encontrado → {"conocido": False, "cuarentena": {tipo, dni, nombre, bruto_mensual, default}}.
+
+    Args:
+        datos_ocr: dict con los datos extraidos por OCR del documento.
+        config: ConfigCliente del cliente activo.
+
+    Returns:
+        dict con resultado de la deteccion, o None si no es nomina.
+    """
+    tipo_doc = datos_ocr.get("tipo_doc", "")
+    if tipo_doc != "NOM":
+        return None
+
+    dni = (datos_ocr.get("dni_trabajador") or "").strip()
+    if not dni:
+        # Sin DNI no se puede identificar al trabajador; se omite sin cuarentena
+        return {"conocido": False}
+
+    trabajador = config.buscar_trabajador_por_dni(dni)
+    if trabajador is not None:
+        return {"conocido": True, "pagas": trabajador.get("pagas", 14)}
+
+    # Trabajador desconocido: generar entrada de cuarentena
+    nombre = datos_ocr.get("nombre_trabajador", "")
+    bruto = datos_ocr.get("bruto", 0) or 0
+
+    return {
+        "conocido": False,
+        "cuarentena": {
+            "tipo": "trabajador_nuevo",
+            "dni": dni,
+            "nombre": nombre,
+            "bruto_mensual": bruto,
+            "default": 14,
+        },
+    }
