@@ -408,6 +408,35 @@ def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
 
     logger.info(f"Nueva entidad registrada en config: {nombre_corto} ({cif}) como {tipo_relacion}")
 
+    # Grabar en directorio BD si hay repo disponible (opcional — no bloquea si falla)
+    if config._repo and config._empresa_bd_id:
+        try:
+            cif_para_bd = cif if cif != "DESCONOCIDO" else None
+            dir_ent, _ = config._repo.obtener_o_crear_directorio(
+                cif=cif_para_bd,
+                nombre=nombre_fs,
+                pais=pais,
+                aliases=[nombre_corto],
+            )
+            cif_dir = cif_para_bd or ""
+            existente_overlay = config._repo.buscar_overlay_por_cif(
+                config._empresa_bd_id, cif_dir, tipo_relacion
+            ) if cif_dir else None
+            if not existente_overlay:
+                config._repo.crear_overlay(
+                    empresa_id=config._empresa_bd_id,
+                    directorio_id=dir_ent.id,
+                    tipo=tipo_relacion,
+                    subcuenta_gasto=subcuenta,
+                    codimpuesto=codimpuesto,
+                    regimen=regimen,
+                    pais=pais,
+                    aliases=[nombre_corto],
+                )
+            logger.info(f"Entidad {nombre_corto} grabada en directorio BD (id={dir_ent.id})")
+        except Exception as exc_bd:
+            logger.warning(f"No se pudo grabar {nombre_corto} en directorio BD: {exc_bd}")
+
     return {**nueva_entidad, "_nombre_corto": nombre_corto}
 
 

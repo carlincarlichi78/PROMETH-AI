@@ -108,6 +108,34 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
             cifs_existentes[cif_norm] = codprov
             stats["creados_prov"] += 1
             logger.info(f"  Proveedor creado: {datos['nombre_fs']} (cod={codprov})")
+
+            # Grabar en directorio BD (opcional — no bloquea si falla)
+            if config._repo and config._empresa_bd_id:
+                try:
+                    dir_ent, _ = config._repo.obtener_o_crear_directorio(
+                        cif=datos.get("cif") or None,
+                        nombre=datos.get("nombre_fs", nombre_corto),
+                        pais=pais,
+                        aliases=datos.get("aliases", []),
+                    )
+                    cif_dir = datos.get("cif") or ""
+                    existente_overlay = config._repo.buscar_overlay_por_cif(
+                        config._empresa_bd_id, cif_dir, "proveedor"
+                    ) if cif_dir else None
+                    if not existente_overlay:
+                        config._repo.crear_overlay(
+                            empresa_id=config._empresa_bd_id,
+                            directorio_id=dir_ent.id,
+                            tipo="proveedor",
+                            subcuenta_gasto=datos.get("subcuenta", "6000000000"),
+                            codimpuesto=datos.get("codimpuesto", "IVA21"),
+                            regimen=datos.get("regimen", "general"),
+                            pais=pais,
+                            aliases=[nombre_corto],
+                        )
+                except Exception as exc_bd:
+                    logger.warning(f"  No se pudo grabar proveedor {nombre_corto} en BD: {exc_bd}")
+
         except Exception as e:
             stats["errores"] += 1
             logger.error(f"  Error creando proveedor {nombre_corto}: {e}")
@@ -151,6 +179,33 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
             cifs_cli_existentes[cif_norm] = codcli
             stats["creados_cli"] += 1
             logger.info(f"  Cliente creado: {datos['nombre_fs']} (cod={codcli})")
+
+            # Grabar en directorio BD (opcional — no bloquea si falla)
+            if config._repo and config._empresa_bd_id:
+                try:
+                    dir_ent, _ = config._repo.obtener_o_crear_directorio(
+                        cif=datos.get("cif") or None,
+                        nombre=datos.get("nombre_fs", nombre_corto),
+                        pais=pais,
+                        aliases=datos.get("aliases", []),
+                    )
+                    cif_dir = datos.get("cif") or ""
+                    existente_overlay = config._repo.buscar_overlay_por_cif(
+                        config._empresa_bd_id, cif_dir, "cliente"
+                    ) if cif_dir else None
+                    if not existente_overlay:
+                        config._repo.crear_overlay(
+                            empresa_id=config._empresa_bd_id,
+                            directorio_id=dir_ent.id,
+                            tipo="cliente",
+                            codimpuesto=datos.get("codimpuesto", "IVA21"),
+                            regimen=datos.get("regimen", "general"),
+                            pais=pais,
+                            aliases=[nombre_corto],
+                        )
+                except Exception as exc_bd:
+                    logger.warning(f"  No se pudo grabar cliente {nombre_corto} en BD: {exc_bd}")
+
         except Exception as e:
             stats["errores"] += 1
             logger.error(f"  Error creando cliente {nombre_corto}: {e}")

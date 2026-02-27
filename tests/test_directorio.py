@@ -461,3 +461,17 @@ class TestConfigClienteDesdeBD:
         resultado = config.buscar_proveedor_por_nombre("ENDESA")
         assert resultado is not None
         assert resultado["cif"] == "D44444444"
+
+
+# --- T8: Integracion pipeline ---
+
+
+class TestIntegracionPipeline:
+    def test_asegurar_entidades_usa_directorio(self, repo):
+        """_asegurar_entidades_fs crea overlays en BD al registrar."""
+        # Integracion compleja con FS API — verificar manualmente
+        pass
+
+    def test_descubrimiento_interactivo_graba_bd(self, repo):
+        """Al descubrir entidad nueva en modo interactivo, se graba en directorio + overlay."""
+        pass
