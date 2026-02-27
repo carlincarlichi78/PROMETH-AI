@@ -172,3 +172,47 @@ class SaldoSubcuentaOut(BaseModel):
     """Saldo de una subcuenta."""
     subcuenta: str
     saldo: float
+
+
+# --- Directorio ---
+
+class DirectorioEntidadOut(BaseModel):
+    """Entidad del directorio maestro."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    cif: Optional[str] = None
+    nombre: str
+    nombre_comercial: Optional[str] = None
+    aliases: list[str] = []
+    pais: str = "ESP"
+    tipo_persona: Optional[str] = None
+    forma_juridica: Optional[str] = None
+    validado_aeat: bool = False
+    validado_vies: bool = False
+    fecha_alta: Optional[datetime] = None
+    datos_enriquecidos: Optional[dict] = None
+
+
+class DirectorioEntidadIn(BaseModel):
+    """Body para crear/actualizar entidad en directorio."""
+    cif: Optional[str] = None
+    nombre: str
+    nombre_comercial: Optional[str] = None
+    aliases: list[str] = []
+    pais: str = "ESP"
+    tipo_persona: Optional[str] = None
+    forma_juridica: Optional[str] = None
+
+
+class DirectorioOverlayOut(BaseModel):
+    """Overlay empresa-especifico de una entidad."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    empresa_id: int
+    tipo: str
+    subcuenta_gasto: Optional[str] = None
+    codimpuesto: Optional[str] = None
+    regimen: Optional[str] = None
+    pais: Optional[str] = None

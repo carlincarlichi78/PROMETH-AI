@@ -1,4 +1,4 @@
-"""SFCE DB — Modelos SQLAlchemy (15 tablas)."""
+"""SFCE DB — Modelos SQLAlchemy (16 tablas)."""
 
 from datetime import date, datetime
 from decimal import Decimal
@@ -10,6 +10,33 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from sfce.db.base import Base
+
+
+class DirectorioEntidad(Base):
+    """Directorio maestro global de entidades (proveedores/clientes)."""
+    __tablename__ = "directorio_entidades"
+
+    id = Column(Integer, primary_key=True)
+    cif = Column(String(20), unique=True, nullable=True)  # nullable para clientes sin CIF
+    nombre = Column(String(200), nullable=False)
+    nombre_comercial = Column(String(200))
+    aliases = Column(JSON, default=list)
+    pais = Column(String(3), default="ESP")
+    tipo_persona = Column(String(10))  # fisica | juridica
+    forma_juridica = Column(String(20))
+    cnae = Column(String(4))
+    sector = Column(String(50))
+    validado_aeat = Column(Boolean, default=False)
+    validado_vies = Column(Boolean, default=False)
+    fecha_alta = Column(DateTime, default=datetime.now)
+    fecha_actualizacion = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    datos_enriquecidos = Column(JSON, default=dict)
+
+    overlays = relationship("ProveedorCliente", back_populates="directorio")
+
+    __table_args__ = (
+        Index("ix_directorio_nombre", "nombre"),
+    )
 
 
 class Empresa(Base):
@@ -55,12 +82,15 @@ class ProveedorCliente(Base):
     persona_fisica = Column(Boolean, default=False)
     aliases = Column(JSON, default=list)  # nombres alternativos
     activo = Column(Boolean, default=True)
+    directorio_id = Column(Integer, ForeignKey("directorio_entidades.id"), nullable=True)
 
     empresa = relationship("Empresa", back_populates="proveedores_clientes")
+    directorio = relationship("DirectorioEntidad", back_populates="overlays")
 
     __table_args__ = (
         UniqueConstraint("empresa_id", "cif", "tipo", name="uq_empresa_cif_tipo"),
         Index("ix_provcli_cif", "cif"),
+        Index("ix_provcli_directorio", "directorio_id"),
     )
 
 

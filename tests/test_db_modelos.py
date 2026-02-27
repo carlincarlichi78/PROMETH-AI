@@ -187,8 +187,8 @@ class TestAprendizajeLog:
 
 
 class TestConteoTablas:
-    def test_15_tablas(self):
-        """Verificar que hay 15 tablas definidas (14 modelos + usuarios auth)."""
+    def test_16_tablas(self):
+        """Verificar que hay 16 tablas definidas (15 modelos + usuarios auth)."""
         from sfce.db.base import Base as BaseDB
         tablas = BaseDB.metadata.tables.keys()
-        assert len(tablas) == 15
+        assert len(tablas) == 16

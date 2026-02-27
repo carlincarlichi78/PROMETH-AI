@@ -23,6 +23,7 @@ export function Sidebar() {
   /** Enlaces principales (siempre visibles) */
   const enlacesPrincipales: EnlaceSidebar[] = [
     { ruta: '/', etiqueta: 'Inicio' },
+    { ruta: '/directorio', etiqueta: 'Directorio' },
   ]
 
   /** Grupos de enlaces de empresa (visibles solo con empresa seleccionada) */

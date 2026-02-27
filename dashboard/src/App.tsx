@@ -16,6 +16,7 @@ import { Importar } from './pages/Importar'
 import { Exportar } from './pages/Exportar'
 import { Calendario } from './pages/Calendario'
 import { CierreEjercicio } from './pages/CierreEjercicio'
+import { Directorio } from './pages/Directorio'
 import { NotFound } from './pages/NotFound'
 
 /** Definicion de rutas de la aplicacion */
@@ -34,6 +35,7 @@ export function App() {
         }
       >
         <Route path="/" element={<Home />} />
+        <Route path="/directorio" element={<Directorio />} />
 
         {/* Rutas de empresa */}
         <Route path="/empresa/:id" element={<Empresa />} />
