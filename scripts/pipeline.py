@@ -239,6 +239,15 @@ def main():
     ejercicio = config.ejercicio
     interactivo = not args.no_interactivo
 
+    # Crear MotorReglas (v2) si disponible
+    motor = None
+    try:
+        from sfce.core.motor_reglas import MotorReglas
+        motor = MotorReglas(config)
+        logger.info("MotorReglas v2 activo")
+    except ImportError:
+        pass
+
     logger.info("=" * 60)
     logger.info(f"SFCE Pipeline — {config.nombre}")
     logger.info(f"Ejercicio: {ejercicio}")
@@ -287,7 +296,8 @@ def main():
             "indice": 2,
             "descripcion": "Fase 2: Registro en FacturaScripts",
             "ejecutar": lambda: ejecutar_registro(config, ruta_cliente,
-                                                    auditoria=auditoria),
+                                                    auditoria=auditoria,
+                                                    motor=motor),
             "dry_run_skip": True,
         },
         {
@@ -304,7 +314,8 @@ def main():
             "descripcion": "Fase 4: Correccion automatica",
             "ejecutar": lambda: ejecutar_correccion(config, ruta_cliente,
                                                       catalogo=catalogo,
-                                                      auditoria=auditoria),
+                                                      auditoria=auditoria,
+                                                      motor=motor),
             "dry_run_skip": True,
         },
         {
@@ -402,7 +413,10 @@ def main():
     if todos_docs:
         tipos_conteo = {}
         for doc in todos_docs:
-            t = doc.get("tipo", "OTRO")
+            if isinstance(doc, dict):
+                t = doc.get("tipo", "OTRO")
+            else:
+                t = "OTRO"
             tipos_conteo[t] = tipos_conteo.get(t, 0) + 1
         resumen_tipos = ", ".join(f"{t}:{n}" for t, n in sorted(tipos_conteo.items()))
     else:

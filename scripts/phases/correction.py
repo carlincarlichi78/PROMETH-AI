@@ -337,12 +337,25 @@ def _check_subcuenta(asiento_data: dict, partidas: list,
                       config: ConfigCliente) -> list[dict]:
     """Check 6: Subcuenta gasto/proveedor coincide con config.
 
+    Busca por CIF y por nombre/alias (para proveedores sin CIF).
+    Auto-corrige via PUT partidas/{id}.
+
     Returns:
-        Lista de discrepancias (no auto-fix, solo aviso)
+        Lista de correcciones (auto_fix=True)
     """
     datos = asiento_data.get("datos_extraidos", {})
     cif = (datos.get("emisor_cif") or "").upper()
-    entidad = config.buscar_proveedor_por_cif(cif)
+    entidad = config.buscar_proveedor_por_cif(cif) if cif else None
+
+    # Fallback: buscar por nombre del asiento o emisor OCR
+    if not entidad:
+        nombre_entidad = asiento_data.get("entidad", "")
+        if nombre_entidad:
+            entidad = config.buscar_proveedor_por_nombre(nombre_entidad)
+        if not entidad:
+            nombre_ocr = datos.get("emisor_nombre", "")
+            if nombre_ocr:
+                entidad = config.buscar_proveedor_por_nombre(nombre_ocr)
 
     if not entidad:
         return []
@@ -351,24 +364,27 @@ def _check_subcuenta(asiento_data: dict, partidas: list,
     if not subcuenta_config:
         return []
 
+    # Asegurar 10 digitos
+    subcuenta_esperada = subcuenta_config.ljust(10, "0")
+
     correcciones = []
     for p in partidas:
         subcta = p.get("codsubcuenta", "")
         debe = float(p.get("debe", 0))
 
-        # Verificar subcuenta de gasto (600x)
+        # Verificar subcuenta de gasto (6xx)
         if subcta.startswith("6") and debe > 0:
-            if not subcta.startswith(subcuenta_config):
+            if subcta != subcuenta_esperada:
                 correcciones.append({
                     "check": 6,
                     "tipo": "subcuenta_incorrecta",
-                    "descripcion": (f"Subcuenta gasto {subcta} != esperada "
-                                    f"{subcuenta_config} para {entidad.get('_nombre_corto', cif)}"),
-                    "auto_fix": False,
+                    "descripcion": (f"Subcuenta gasto {subcta} -> {subcuenta_esperada} "
+                                    f"para {entidad.get('_nombre_corto', cif)}"),
+                    "auto_fix": True,
                     "datos": {
                         "idpartida": p.get("idpartida"),
                         "subcuenta_actual": subcta,
-                        "subcuenta_esperada": subcuenta_config,
+                        "subcuenta_esperada": subcuenta_esperada,
                     }
                 })
     return correcciones
@@ -511,6 +527,10 @@ def _aplicar_correccion(correccion: dict) -> bool:
             corr = datos.get("correccion", {})
             return bool(api_put(f"partidas/{idpartida}", corr))
 
+        elif tipo == "subcuenta_incorrecta":
+            return bool(api_put(f"partidas/{idpartida}",
+                                {"codsubcuenta": datos["subcuenta_esperada"]}))
+
         elif tipo == "regla_especial_reclasificar":
             return bool(api_put(f"partidas/{idpartida}",
                                 {"codsubcuenta": datos["subcuenta_destino"]}))
@@ -555,7 +575,8 @@ def ejecutar_correccion(
     config: ConfigCliente,
     ruta_cliente: Path,
     catalogo: CatalogoErrores = None,
-    auditoria=None
+    auditoria=None,
+    motor=None
 ) -> ResultadoFase:
     """Ejecuta la fase 4 de correccion automatica.
 

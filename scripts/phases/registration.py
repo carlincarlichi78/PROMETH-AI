@@ -61,8 +61,18 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
 
     for nombre_corto, datos in config.proveedores.items():
         cif_norm = _normalizar_cif(datos.get("cif", ""))
+        codretencion = datos.get("codretencion", "")
+
         if cif_norm in cifs_existentes:
+            codprov = cifs_existentes[cif_norm]
             stats["existentes"] += 1
+
+            # Actualizar codretencion si configurado
+            if codretencion:
+                try:
+                    api_put(f"proveedores/{codprov}", data={"codretencion": codretencion})
+                except Exception:
+                    pass
             continue
 
         pais = datos.get("pais", "ESP")
@@ -90,6 +100,10 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
             # Setear codpais en contacto (CRITICO para modelos fiscales)
             if idcontacto:
                 api_put(f"contactos/{idcontacto}", data={"codpais": pais})
+
+            # Setear codretencion si configurado
+            if codretencion:
+                api_put(f"proveedores/{codprov}", data={"codretencion": codretencion})
 
             cifs_existentes[cif_norm] = codprov
             stats["creados_prov"] += 1
@@ -165,19 +179,28 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
         # Si no se encuentra por CIF, buscar por nombre de entidad del intake
         if not entidad_config and doc.get("entidad"):
             entidad_config = config.buscar_proveedor_por_nombre(doc["entidad"])
+        # Bug fix: si CIF vacio en config pero OCR tiene nombre, buscar por nombre OCR
+        if not entidad_config:
+            nombre_ocr = datos.get("emisor_nombre", "")
+            if nombre_ocr:
+                entidad_config = config.buscar_proveedor_por_nombre(nombre_ocr)
         nombre_fs = entidad_config.get("nombre_fs", "") if entidad_config else ""
+        # Si config tiene CIF, usarlo (puede ser mas fiable que OCR)
+        if entidad_config and entidad_config.get("cif"):
+            cif = entidad_config["cif"].upper()
         cif_normalizado = _normalizar_cif(cif)
 
-        # Buscar en FS por cifnif (proveedores son globales, sin idempresa)
-        try:
-            proveedores = api_get("proveedores", params={
-                "cifnif": cif
-            }, limit=50)
-            for p in proveedores:
-                if _normalizar_cif(p.get("cifnif", "")) == cif_normalizado:
-                    return p.get("codproveedor")
-        except Exception:
-            pass
+        # Buscar en FS por cifnif (si hay CIF)
+        if cif_normalizado:
+            try:
+                proveedores = api_get("proveedores", params={
+                    "cifnif": cif
+                }, limit=50)
+                for p in proveedores:
+                    if _normalizar_cif(p.get("cifnif", "")) == cif_normalizado:
+                        return p.get("codproveedor")
+            except Exception:
+                pass
 
         # Buscar por nombre
         if nombre_fs:
@@ -245,28 +268,65 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     if tipo_doc == "NC":
         form["codserie"] = "R"
 
+    # Buscar entidad en config para codimpuesto y regimen
+    cif = (datos.get("emisor_cif") if es_proveedor
+           else datos.get("receptor_cif")) or ""
+    entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor
+               else config.buscar_cliente_por_cif(cif))
+    # Fallback: buscar por nombre si CIF vacio o no encontrado
+    if not entidad and doc.get("entidad"):
+        entidad = (config.buscar_proveedor_por_nombre(doc["entidad"]) if es_proveedor
+                   else config.buscar_cliente_por_nombre(doc.get("entidad", "")))
+    codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
+    regimen = (entidad.get("regimen", "general") if entidad else "general").lower()
+
+    # Bug fix: intracomunitario siempre IVA0 (autorepercusion se hace post-registro)
+    es_intracomunitario = regimen == "intracomunitario"
+    if es_intracomunitario:
+        codimpuesto_defecto = "IVA0"
+        logger.info(f"  Regimen intracomunitario: usando IVA0 (autorepercusion post-registro)")
+
     # Lineas
     lineas_gpt = datos.get("lineas", [])
     if lineas_gpt:
-        # Determinar codimpuesto desde config
-        cif = (datos.get("emisor_cif") if es_proveedor
-               else datos.get("receptor_cif")) or ""
-        entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor
-                   else config.buscar_cliente_por_cif(cif))
-        codimpuesto_defecto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
-
         # Obtener reglas_especiales para IVA por linea
         reglas = (entidad.get("reglas_especiales", []) or []) if entidad else []
+
+        # Bug fix: detectar si lineas tienen precio con IVA incluido
+        # Si sum(precio_unitario) ≈ total (no base), los precios incluyen IVA
+        suma_precios = sum(l.get("precio_unitario", 0) * l.get("cantidad", 1)
+                          for l in lineas_gpt)
+        total_doc = float(datos.get("total", 0))
+        base_doc = float(datos.get("base_imponible", 0))
+        precios_incluyen_iva = (
+            total_doc > 0 and base_doc > 0 and total_doc != base_doc
+            and abs(suma_precios - total_doc) < 0.10
+            and abs(suma_precios - base_doc) > 1.0
+        )
+        if precios_incluyen_iva:
+            iva_pct = float(datos.get("iva_porcentaje", 21))
+            factor_iva = 1 + iva_pct / 100
+            logger.info(f"  Lineas con IVA incluido detectadas: dividiendo por {factor_iva}")
 
         lineas_fs = []
         for linea in lineas_gpt:
             desc = linea.get("descripcion", "")
+            pvp = linea.get("precio_unitario", 0)
+
+            # Bug fix: precio_unitario=0 pero base_imponible disponible
+            if pvp == 0 and base_doc > 0 and len(lineas_gpt) == 1:
+                pvp = base_doc
+                logger.info(f"  precio_unitario=0, usando base_imponible={base_doc}")
+
+            # Bug fix: precios con IVA incluido → extraer base
+            if precios_incluyen_iva and pvp > 0:
+                pvp = round(pvp / factor_iva, 2)
+
             # Determinar codimpuesto por linea segun reglas_especiales
             codimpuesto_linea = codimpuesto_defecto
             for regla in reglas:
                 patron = regla.get("patron_linea", "")
                 if patron and patron.upper() in desc.upper():
-                    # Linea de suplido/IVA extranjero: aplicar IVA0
                     codimpuesto_linea = "IVA0"
                     logger.info(f"  Linea '{desc[:40]}' -> IVA0 (regla: {regla.get('tipo', '')})")
                     break
@@ -274,26 +334,40 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
             linea_fs = {
                 "descripcion": desc,
                 "cantidad": linea.get("cantidad", 1),
-                "pvpunitario": linea.get("precio_unitario", 0),
+                "pvpunitario": pvp,
                 "codimpuesto": codimpuesto_linea,
             }
             lineas_fs.append(linea_fs)
+
+        # Validacion: verificar que lineas suman ~= base_imponible
+        suma_lineas = sum(l["pvpunitario"] * l.get("cantidad", 1) for l in lineas_fs)
+        if base_doc > 0 and abs(suma_lineas - base_doc) > 1.0:
+            logger.warning(
+                f"  Lineas no cuadran: sum={suma_lineas:.2f} vs base={base_doc:.2f}. "
+                f"Usando linea unica con base_imponible"
+            )
+            lineas_fs = [{
+                "descripcion": datos.get("numero_factura", "Factura"),
+                "cantidad": 1,
+                "pvpunitario": base_doc,
+                "codimpuesto": codimpuesto_defecto,
+            }]
+
         form["lineas"] = json.dumps(lineas_fs)
     else:
         # Sin lineas detalladas: crear una linea con el total
-        cif = (datos.get("emisor_cif") if es_proveedor
-               else datos.get("receptor_cif")) or ""
-        entidad = (config.buscar_proveedor_por_cif(cif) if es_proveedor
-                   else config.buscar_cliente_por_cif(cif))
-        codimpuesto = entidad.get("codimpuesto", "IVA21") if entidad else "IVA21"
-
         linea_unica = {
             "descripcion": datos.get("numero_factura", "Factura"),
             "cantidad": 1,
             "pvpunitario": datos.get("base_imponible", datos.get("total", 0)),
-            "codimpuesto": codimpuesto,
+            "codimpuesto": codimpuesto_defecto,
         }
         form["lineas"] = json.dumps([linea_unica])
+
+    # Marcar para post-procesamiento intracomunitario
+    if es_intracomunitario:
+        form["_intracomunitario"] = True
+        form["_iva_autorepercusion"] = float(datos.get("iva_porcentaje", 21))
 
     return form
 
@@ -395,6 +469,52 @@ def _eliminar_factura(idfactura: int, tipo_doc: str) -> bool:
     }
     endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
     return api_delete(endpoint)
+
+
+def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
+                                       form_data: dict) -> bool:
+    """Añade partidas de autorepercusion IVA para facturas intracomunitarias.
+
+    Contabilizacion intracomunitaria:
+    - 472 IVA soportado (DEBE) = base * iva%
+    - 477 IVA repercutido (HABER) = base * iva%
+    El neto es 0 (se anulan), pero es obligatorio declararlo.
+    """
+    try:
+        factura = verificar_factura(idfactura, tipo="proveedor")
+        idasiento = factura.get("idasiento")
+        if not idasiento:
+            logger.warning(f"  Intracom: factura {idfactura} sin asiento, skip autorepercusion")
+            return False
+
+        neto = float(factura.get("neto", 0))
+        iva_pct = form_data.get("_iva_autorepercusion", 21)
+        iva_importe = round(neto * iva_pct / 100, 2)
+
+        if iva_importe <= 0:
+            return False
+
+        # Crear partida 472 IVA soportado (DEBE)
+        api_post("partidas", data={
+            "idasiento": idasiento,
+            "codsubcuenta": "4720000000",
+            "concepto": f"IVA soportado intracom {iva_pct}%",
+            "debe": iva_importe,
+            "haber": 0,
+        })
+        # Crear partida 477 IVA repercutido (HABER)
+        api_post("partidas", data={
+            "idasiento": idasiento,
+            "codsubcuenta": "4770000000",
+            "concepto": f"IVA repercutido intracom {iva_pct}%",
+            "debe": 0,
+            "haber": iva_importe,
+        })
+        logger.info(f"  Autorepercusion intracom: {iva_importe} EUR (472 DEBE / 477 HABER)")
+        return True
+    except Exception as e:
+        logger.error(f"  Error autorepercusion intracom factura {idfactura}: {e}")
+        return False
 
 
 def _corregir_asientos_proveedores(registrados: list) -> int:
@@ -569,7 +689,8 @@ def _generar_concepto_asiento(tipo_doc: str, datos: dict) -> str:
 def ejecutar_registro(
     config: ConfigCliente,
     ruta_cliente: Path,
-    auditoria=None
+    auditoria=None,
+    motor=None
 ) -> ResultadoFase:
     """Ejecuta la fase 2 de registro en FacturaScripts.
 
@@ -786,6 +907,10 @@ def ejecutar_registro(
         if not pagada_ok:
             logger.warning(f"  No se pudo marcar como pagada (ID {idfactura})")
             resultado.aviso(f"Factura {idfactura} no marcada como pagada")
+
+        # 5b. Autorepercusion IVA intracomunitario
+        if form_data.get("_intracomunitario"):
+            _aplicar_autorepercusion_intracom(idfactura, tipo_doc, form_data)
 
         # Registrar exito
         registro = {
