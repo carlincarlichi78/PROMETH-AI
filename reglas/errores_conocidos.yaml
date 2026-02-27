@@ -78,4 +78,17 @@ errores:
     accion: envolver lineas con json.dumps()
   aplicable_a: todos
   ocurrencias: 0
-actualizado: '2026-02-26T12:11:01.742877'
+- id: ERR007
+  descubierto: '2026-02-27'
+  cliente: todos
+  tipo: subcuenta_incorrecta
+  descripcion: Subcuenta gasto 6000000000 -> 6020000000 para skinclinic
+  deteccion:
+    fase: correccion
+    check: 6
+  correccion:
+    automatica: false
+  aplicable_a: todos
+  ocurrencias: 236
+  ultima_ocurrencia: '2026-02-27T10:59:46.046703'
+actualizado: '2026-02-27T10:59:46.046703'

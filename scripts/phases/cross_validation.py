@@ -97,18 +97,20 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
 
 
 def _check_gastos_vs_600(datos: dict, tolerancia: float) -> dict:
-    """Check 1: Total base facturas proveedor == subcuenta 600 neto + 4709."""
+    """Check 1: Total base facturas proveedor == subcuentas grupo 6 neto + 4709."""
     total_base_prov = sum(float(f.get("neto", 0)) for f in datos["facturas_prov"])
 
-    total_600_debe = sum(
+    # Grupo 6 completo: 600 compras, 602 aprovisionamientos, 623 servicios,
+    # 627 publicidad, 628 suministros, 629 otros, 640 personal, etc.
+    total_6_debe = sum(
         float(p.get("debe", 0))
         for p in datos["partidas"]
-        if p.get("codsubcuenta", "").startswith("600")
+        if p.get("codsubcuenta", "").startswith("6")
     )
-    total_600_haber = sum(
+    total_6_haber = sum(
         float(p.get("haber", 0))
         for p in datos["partidas"]
-        if p.get("codsubcuenta", "").startswith("600")
+        if p.get("codsubcuenta", "").startswith("6")
     )
     total_4709 = sum(
         float(p.get("debe", 0))
@@ -116,45 +118,45 @@ def _check_gastos_vs_600(datos: dict, tolerancia: float) -> dict:
         if p.get("codsubcuenta", "").startswith("4709")
     )
 
-    neto_600 = total_600_debe - total_600_haber
-    total_contable = neto_600 + total_4709
+    neto_6 = total_6_debe - total_6_haber
+    total_contable = neto_6 + total_4709
     diferencia = abs(total_base_prov - total_contable)
 
     return {
         "check": 1,
-        "nombre": "Gastos vs subcuenta 600+4709",
+        "nombre": "Gastos vs grupo 6+4709",
         "pasa": diferencia <= tolerancia,
         "total_facturas": total_base_prov,
         "total_contable": total_contable,
         "diferencia": diferencia,
         "detalle": f"Base fact prov: {total_base_prov:.2f} | "
-                   f"600 neto: {neto_600:.2f} + 4709: {total_4709:.2f} = {total_contable:.2f}"
+                   f"grupo 6 neto: {neto_6:.2f} + 4709: {total_4709:.2f} = {total_contable:.2f}"
     }
 
 
 def _check_ingresos_vs_700(datos: dict, tolerancia: float) -> dict:
-    """Check 2: Total base facturas cliente == subcuenta 700 HABER."""
+    """Check 2: Total base facturas cliente == subcuentas grupo 7 HABER."""
     total_base_cli = sum(float(f.get("neto", 0)) for f in datos["facturas_cli"])
 
-    total_700_haber = sum(
+    total_7_haber = sum(
         float(p.get("haber", 0))
         for p in datos["partidas"]
-        if p.get("codsubcuenta", "").startswith("700")
+        if p.get("codsubcuenta", "").startswith("7")
     )
-    total_700_debe = sum(
+    total_7_debe = sum(
         float(p.get("debe", 0))
         for p in datos["partidas"]
-        if p.get("codsubcuenta", "").startswith("700")
+        if p.get("codsubcuenta", "").startswith("7")
     )
-    neto_700 = total_700_haber - total_700_debe
-    diferencia = abs(total_base_cli - neto_700)
+    neto_7 = total_7_haber - total_7_debe
+    diferencia = abs(total_base_cli - neto_7)
 
     return {
         "check": 2,
-        "nombre": "Ingresos vs subcuenta 700",
+        "nombre": "Ingresos vs grupo 7",
         "pasa": diferencia <= tolerancia,
         "total_facturas": total_base_cli,
-        "total_contable": neto_700,
+        "total_contable": neto_7,
         "diferencia": diferencia,
     }
 
@@ -375,12 +377,12 @@ def _check_cruce_por_proveedor(datos: dict, tolerancia: float = 0.02) -> dict:
         ids_asientos = {int(f.get("idasiento", 0)) for f in facts if f.get("idasiento")}
         partidas_prov = [p for p in partidas if int(p.get("idasiento", 0)) in ids_asientos]
 
-        # Base imponible: facturas vs 600+4709
+        # Base imponible: facturas vs grupo 6 + 4709
         total_base = sum(float(f.get("neto", 0)) for f in facts)
-        total_600 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("600")) \
-                  - sum(float(p.get("haber", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("600"))
+        total_6 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("6")) \
+                - sum(float(p.get("haber", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("6"))
         total_4709 = sum(float(p.get("debe", 0)) for p in partidas_prov if p.get("codsubcuenta", "").startswith("4709"))
-        diff_base = abs(total_base - (total_600 + total_4709))
+        diff_base = abs(total_base - (total_6 + total_4709))
 
         # IVA: facturas vs 472
         total_iva = sum(float(f.get("totaliva", 0)) for f in facts)
@@ -399,7 +401,7 @@ def _check_cruce_por_proveedor(datos: dict, tolerancia: float = 0.02) -> dict:
             "codigo": cod,
             "num_facturas": len(facts),
             "pasa": pasa,
-            "base": {"facturas": round(total_base, 2), "contable": round(total_600 + total_4709, 2), "diff": round(diff_base, 2)},
+            "base": {"facturas": round(total_base, 2), "contable": round(total_6 + total_4709, 2), "diff": round(diff_base, 2)},
             "iva": {"facturas": round(total_iva, 2), "contable_472": round(total_472, 2), "diff": round(diff_iva, 2)},
             "total": {"facturas": round(total_total, 2), "contable_400": round(total_400, 2), "diff": round(diff_total, 2)},
         }

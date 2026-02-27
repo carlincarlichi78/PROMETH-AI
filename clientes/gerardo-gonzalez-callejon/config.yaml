@@ -50,7 +50,7 @@ proveedores:
     subcuenta: "6250000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Alarma local. Gasto compartido pod/est"
+    notas: "Alarma local. Gasto podologia"
 
   masmovil:
     cif: "A82528548"
@@ -61,7 +61,7 @@ proveedores:
     subcuenta: "6290000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Internet y telefono. Gasto compartido"
+    notas: "Internet y telefono. Gasto podologia"
 
   caixabank:
     cif: "A08663619"
@@ -83,7 +83,7 @@ proveedores:
     subcuenta: "6250000000"
     codimpuesto: IVA0
     regimen: general
-    notas: "Seguro vida vinculado a prestamo. Exento IVA"
+    notas: "Seguro vida vinculado a prestamo. Exento IVA. Gasto podologia"
 
   colegio_podologos:
     cif: "Q4100650C"
@@ -105,7 +105,7 @@ proveedores:
     subcuenta: "6230000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Asesoria laboral mensual. Gasto compartido"
+    notas: "Web y asesoria estetica. Gasto estetica"
 
   comunidad:
     cif: "H92104421"
@@ -138,7 +138,7 @@ proveedores:
     subcuenta: "6280000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Suministro electrico local. Gasto compartido"
+    notas: "Suministro electrico local. Gasto podologia"
 
   aquaservice:
     cif: "B04500492"
@@ -149,12 +149,12 @@ proveedores:
     subcuenta: "6290000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Agua dispensador. Gasto compartido"
+    notas: "Agua dispensador. Gasto podologia"
 
   clinni:
-    cif: ""
+    cif: "B91622753"
     nombre_fs: "CLINNI"
-    aliases: ["CLINNI"]
+    aliases: ["CLINNI", "VIAFISIO", "VIAFISIO SL"]
     pais: ESP
     divisa: EUR
     subcuenta: "6290000000"
@@ -163,9 +163,9 @@ proveedores:
     notas: "Software gestion clinica/agenda. Podologia o estetica segun carpeta"
 
   skinclinic:
-    cif: ""
+    cif: "B53661690"
     nombre_fs: "SKINCLINIC"
-    aliases: ["SKINCLINIC", "SKIN CLINIC"]
+    aliases: ["SKINCLINIC", "SKIN CLINIC", "CARMADO", "CARMADO SL"]
     pais: ESP
     divisa: EUR
     subcuenta: "6020000000"
@@ -174,7 +174,7 @@ proveedores:
     notas: "Material estetica. Gasto estetica"
 
   skeyndor:
-    cif: ""
+    cif: "B63091870"
     nombre_fs: "SKEYNDOR"
     aliases: ["SKEYNDOR"]
     pais: ESP
@@ -207,9 +207,9 @@ proveedores:
     notas: "Publicidad redes sociales. Estetica"
 
   podiatech:
-    cif: ""
+    cif: "B62757695"
     nombre_fs: "PODIATECH"
-    aliases: ["PODIATECH"]
+    aliases: ["PODIATECH", "SIDAS", "SIDAS SPAIN"]
     pais: ESP
     divisa: EUR
     subcuenta: "6020000000"
@@ -218,7 +218,7 @@ proveedores:
     notas: "Materiales y herramientas podologia"
 
   dh_material:
-    cif: ""
+    cif: "B61751475"
     nombre_fs: "DH MATERIAL MEDICO"
     aliases: ["DH MATERIAL", "DH MATERIAL MEDICO"]
     pais: ESP
@@ -229,15 +229,351 @@ proveedores:
     notas: "Material medico. Podologia o estetica segun carpeta"
 
   groupon:
-    cif: ""
+    cif: "B85834729"
     nombre_fs: "GROUPON"
-    aliases: ["GROUPON"]
+    aliases: ["GROUPON", "GROUPON SPAIN"]
     pais: ESP
     divisa: EUR
     subcuenta: "6290000000"
     codimpuesto: IVA21
     regimen: general
     notas: "Comisiones plataforma. Gasto estetica"
+
+  canete_may:
+    cif: "44581706R"
+    nombre_fs: "MARIA ISABEL CANETE GOMEZ"
+    aliases: ["CANETE", "CANETE GOMEZ", "PODOLOGA MAY", "MAY"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA0
+    codretencion: IRPF7
+    regimen: general
+    notas: "Podologa colaboradora autonoma. IRPF 7%. Gasto podologia"
+
+  nuevalos_marta:
+    cif: "44523191K"
+    nombre_fs: "NUEVALOS ALVAREZ MARTA"
+    aliases: ["NUEVALOS", "PODOLOGA MARTA", "MARTA NUEVALOS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA0
+    codretencion: IRPF7
+    regimen: general
+    notas: "Podologa colaboradora autonoma. IRPF 7%. Gasto podologia"
+
+  sainero_gloria:
+    cif: "06285776Z"
+    nombre_fs: "SAINERO TIRADO GLORIA"
+    aliases: ["SAINERO", "PSICOLOGA GLORIA", "GLORIA SAINERO", "PSICOLOGIA GLORIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA0
+    codretencion: IRPF15
+    regimen: general
+    notas: "Psicologa colaboradora. IRPF 15%. Gasto podologia"
+
+  global_medical:
+    cif: "B13565155"
+    nombre_fs: "GLOBAL MEDICAL EXPORT SL"
+    aliases: ["GLOBAL MEDICAL", "GME", "GME APSE4"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Equipo podologia GME APSE4. Gasto podologia"
+
+  proser_clinic:
+    cif: "B65853806"
+    nombre_fs: "PROSER CLINIC SLU"
+    aliases: ["PROSER", "PROSER CLINIC"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material quirurgico. Gasto podologia"
+
+  podoservice:
+    cif: "B63021943"
+    nombre_fs: "PODOSERVICE 2002 SL"
+    aliases: ["PODOSERVICE"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material podologia. Gasto podologia"
+
+  vectem:
+    cif: "A08185431"
+    nombre_fs: "VECTEM SA"
+    aliases: ["VECTEM"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Cremas podologia. Gasto podologia"
+
+  fresco:
+    cif: "B58618323"
+    nombre_fs: "FRESCO PODOLOGIA SL"
+    aliases: ["FRESCO", "FRESCO PODOLOGIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Cremas podologia. Gasto podologia"
+
+  herbitas:
+    cif: "B46594362"
+    nombre_fs: "PRODUCTOS HERBITAS SL"
+    aliases: ["HERBITAS", "PRODUCTOS HERBITAS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material podologia. Gasto podologia"
+
+  namrol:
+    cif: ""
+    nombre_fs: "NAMROL MEDICAL SL"
+    aliases: ["NAMROL", "NAMROL MEDICAL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material medico manguera. Gasto podologia"
+
+  farmaamparo:
+    cif: "73539027T"
+    nombre_fs: "AMPARO GONZALVO HUGUET"
+    aliases: ["FARMAAMPARO", "GONZALVO", "AMPARO GONZALVO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Farmacia. Gasto podologia"
+
+  sumevi:
+    cif: "B36797637"
+    nombre_fs: "SUMEVI"
+    aliases: ["SUMEVI"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministros varios. Gasto podologia"
+
+  fisaude:
+    cif: "B32403495"
+    nombre_fs: "PORTALWEB FISAUDE SL"
+    aliases: ["FISAUDE", "PORTALWEB FISAUDE"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material podologia. Factura + devolucion (neto 0). Gasto podologia"
+
+  proteccion_datos:
+    cif: "B01664762"
+    nombre_fs: "PROTECCTION REPORT CONSULTING SLU"
+    aliases: ["PROTECCION DATOS", "PROTECCTION REPORT", "PROTECTION REPORT"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Proteccion datos LOPD. Gasto podologia"
+
+  gestion_residuos:
+    cif: ""
+    nombre_fs: "GONZALO SALCINI GARCIA"
+    aliases: ["SALCINI", "GESTION RESIDUOS", "GONZALO SALCINI"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Gestion residuos sanitarios. Gasto podologia"
+
+  patronato_malaga:
+    cif: ""
+    nombre_fs: "PATRONATO RECAUDACION PROV MALAGA"
+    aliases: ["PATRONATO", "PATRONATO RECAUDACION"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6310000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Impuesto/tasa provincial. Gasto podologia"
+
+  carolina_lara:
+    cif: "03907517R"
+    nombre_fs: "CAROLINA LARA PALMERO"
+    aliases: ["CAROLINA LARA", "DRA", "LARA PALMERO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    codretencion: IRPF15
+    regimen: general
+    notas: "DRA estetica colaboradora. IRPF 15%. Gasto estetica"
+
+  javier_luque:
+    cif: "78971133N"
+    nombre_fs: "JAVIER LUQUE FERNANDEZ REGATILLO"
+    aliases: ["JAVIER LUQUE", "LUQUE FERNANDEZ", "BOTOX", "LIDOCAINA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA4
+    regimen: general
+    notas: "Botox y lidocaina. IVA 4% superreducido. Gasto estetica"
+
+  wake_up:
+    cif: "B87409686"
+    nombre_fs: "WAKE UP CONSULTORIA SL"
+    aliases: ["WAKE UP", "WAKEUP", "WAKE UP CONSULTORIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6270000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Consultoria marketing. Gasto estetica"
+
+  estores:
+    cif: "B60304391"
+    nombre_fs: "JUAN CARLOS MARTIN ESTEVEZ"
+    aliases: ["MARTIN ESTEVEZ", "ESTORES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Estores decoracion. Gasto estetica"
+
+  evocare:
+    cif: "19994601B"
+    nombre_fs: "AGUDO VICENTE FRANCISCO J"
+    aliases: ["AGUDO VICENTE", "EVOCARE", "ELECTRODOS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Electrodos estetica. Gasto estetica"
+
+  celdual:
+    cif: "B97053623"
+    nombre_fs: "CELDUAL SL"
+    aliases: ["CELDUAL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material estetica. Gasto estetica"
+
+  coexsur:
+    cif: "27347722D"
+    nombre_fs: "MIGUEL GRANADO GARCIA"
+    aliases: ["COEXSUR", "GRANADO GARCIA", "MIGUEL GRANADO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Servicios varios. Gasto estetica"
+
+  quirumed:
+    cif: "B97267405"
+    nombre_fs: "QUIRUMED SLU"
+    aliases: ["QUIRUMED"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6020000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material medico lampara LED. Gasto estetica"
+
+  susin_fernando:
+    cif: ""
+    nombre_fs: "SUSIN MALDONADO FERNANDO"
+    aliases: ["SUSIN", "SUSIN MALDONADO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    codretencion: IRPF15
+    regimen: general
+    notas: "Asesor fiscal. IRPF 15%. Gasto compartido (3 POD + 8 EST)"
+
+  nanosat:
+    cif: ""
+    nombre_fs: "NANOSAT"
+    aliases: ["NANOSAT"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6220000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Revision laser estetica. Gasto estetica"
+
+  naturgy_clientes:
+    cif: "A08431090"
+    nombre_fs: "NATURGY CLIENTES SA"
+    aliases: ["NATURGY CLIENTES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro electrico (CIF alternativo T1-T2). Gasto podologia"
+
+  naturgy_energia:
+    cif: "A67760876"
+    nombre_fs: "NATURGY ENERGIA SA"
+    aliases: ["NATURGY ENERGIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro electrico (CIF alternativo T3-T4). Gasto podologia"
+
+  web_developer:
+    cif: "25686266G"
+    nombre_fs: "WEB DEVELOPER"
+    aliases: ["WEB"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6270000000"
+    codimpuesto: IVA21
+    codretencion: IRPF7
+    regimen: general
+    notas: "Mantenimiento web. IRPF 7%. Gasto estetica"
+
+  prestamo_local:
+    cif: "A08663619"
+    nombre_fs: "CAIXABANK SA"
+    aliases: ["PRESTAMO LOCAL", "PRESTAMO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6620000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota prestamo local (intereses). Gasto podologia"
 
 clientes: {}
 
