@@ -298,6 +298,17 @@ def _renderizar_compuesto(
 # Renderizado de PDFs
 # ---------------------------------------------------------------------------
 
+class _CallableDict(dict):
+    """Dict que tambien es callable: .items() funciona y () retorna self.
+
+    Las plantillas v2 acceden a resumen.desglose_iva.items() (como dict).
+    Las plantillas v1 llaman resumen.desglose_iva() (como funcion).
+    Esta clase soporta ambos usos.
+    """
+    def __call__(self):
+        return self
+
+
 def _normalizar_datos(datos: dict) -> dict:
     """Adapta keys del generador al formato que esperan las plantillas.
 
@@ -324,24 +335,23 @@ def _normalizar_datos(datos: dict) -> dict:
     d.setdefault("pagada", False)
     d.setdefault("retencion_pct", 0)
 
-    # Si resumen es dict (no objeto), asegurar campos y wrappear desglose_iva
+    # Si resumen es dict (no objeto), asegurar campos y desglose_iva
     if "resumen" in d and isinstance(d["resumen"], dict):
         resumen_dict = d["resumen"]
         resumen_dict.setdefault("total_recargo", 0)
         resumen_dict.setdefault("total_retencion", 0)
         if "desglose_iva" in resumen_dict and isinstance(resumen_dict["desglose_iva"], dict):
-            # Ya viene serializado como dict, wrappear en lambda
-            desglose_existente = resumen_dict["desglose_iva"]
-            resumen_dict["desglose_iva"] = lambda: desglose_existente
+            # Envolver en _CallableDict para que funcione como dict (.items()) y callable ()
+            resumen_dict["desglose_iva"] = _CallableDict(resumen_dict["desglose_iva"])
         elif "desglose_iva" not in resumen_dict:
             # Construir desglose desde datos disponibles
             iva_tipo = resumen_dict.get("iva_tipo", 21)
-            resumen_dict["desglose_iva"] = lambda: {
+            resumen_dict["desglose_iva"] = _CallableDict({
                 iva_tipo: {
                     "base": resumen_dict.get("base_imponible", 0),
                     "cuota": resumen_dict.get("total_iva", 0),
                 }
-            }
+            })
 
     return d
 

@@ -14,6 +14,9 @@ DIR_GENERADOR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DIR_GENERADOR))
 
 from generadores.gen_facturas import DocGenerado, _slug
+from utils.etiquetas import etiquetas_para_proveedor, formato_para_proveedor
+from utils.variaciones import generar_variaciones_css, css_custom_properties_str
+from utils.ruido import perfil_para_proveedor
 from utils.fechas import generar_fecha_en_mes, _ultimo_dia_mes
 from utils.importes import _redondear
 
@@ -71,6 +74,17 @@ _IVA_SUMINISTRO: dict[str, int] = {
 
 # Contador global de facturas por proveedor para numerar correlativas
 _contadores_suministro: dict[str, int] = {}
+
+# Mapeo tipo suministro -> familia plantilla v2
+_FAMILIAS_SUMINISTRO: dict[str, str] = {
+    "electricidad": "suministros/S01_electrica.html",
+    "gas": "suministros/S02_gas.html",
+    "agua": "suministros/S03_agua.html",
+    "telefono": "suministros/S04_telefonia.html",
+    "internet": "suministros/S05_internet_hosting.html",
+    "hosting": "suministros/S05_internet_hosting.html",
+    "multi": "suministros/S06_multi_utility.html",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +184,7 @@ def generar_suministros(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera facturas mensuales de suministros segun entidad["gastos_recurrentes"]["suministros"].
@@ -206,6 +221,15 @@ def generar_suministros(
         slug_proveedor = _slug(nombre_proveedor)
 
         meses = meses_activos if meses_activos else list(range(1, 13))
+
+        # v2: seleccion de plantilla, etiquetas, variaciones CSS y perfil por proveedor
+        plantilla_v2 = _FAMILIAS_SUMINISTRO.get(tipo, "suministros/S01_electrica.html")
+        familia_v2 = tipo if tipo in _FAMILIAS_SUMINISTRO else "electricidad"
+        etiquetas = etiquetas_para_proveedor(nombre_proveedor, seed)
+        formato = formato_para_proveedor(nombre_proveedor, seed)
+        variaciones = generar_variaciones_css(nombre_proveedor, familia_v2, seed)
+        perfil = perfil_para_proveedor(nombre_proveedor, seed)
+        fmt_numero_id = formato["numero"]["id"]
 
         for mes in meses:
             # Importe base con variacion estacional
@@ -265,12 +289,38 @@ def generar_suministros(
                 "precio_unidad": precio_unidad,
             }
 
+            # Concepto descriptivo para plantillas
+            concepto_texto = {
+                "electricidad": "Factura de suministro electrico",
+                "gas": "Factura de suministro de gas natural",
+                "agua": "Factura de suministro de agua",
+                "telefono": "Factura de telecomunicaciones",
+                "internet": "Factura de servicios de internet y hosting",
+                "hosting": "Factura de servicios de hosting",
+            }.get(tipo, f"Factura de {tipo}")
+
             datos_plantilla = {
                 "numero_factura": numero,
                 "fecha_factura": fecha.isoformat(),
+                "emisor": {
+                    "nombre": nombre_proveedor,
+                    "nif": suministro.get("cif", ""),
+                    "direccion": suministro.get("direccion", ""),
+                    "cp": suministro.get("cp", "28000"),
+                    "ciudad": suministro.get("ciudad", "Madrid"),
+                    "telefono": suministro.get("telefono", ""),
+                    "email": suministro.get("email", ""),
+                },
                 "proveedor": {
                     "nombre": nombre_proveedor,
                     "slug": slug_proveedor,
+                },
+                "receptor": {
+                    "nombre": nombre_entidad,
+                    "nif": cif_entidad,
+                    "direccion": direccion_entidad,
+                    "cp": entidad.get("cp", "29000"),
+                    "ciudad": entidad.get("ciudad", ""),
                 },
                 "cliente": {
                     "nombre": nombre_entidad,
@@ -278,13 +328,24 @@ def generar_suministros(
                     "direccion": direccion_entidad,
                 },
                 "tipo": tipo,
+                "concepto": concepto_texto,
                 "periodo": periodo,
-                "consumo": consumo,
+                "consumo": cantidad_consumo,
+                "consumo_detalle": consumo,
+                "unidades": unidades,
+                "precio_unidad": precio_unidad,
                 "conceptos": conceptos,
+                "desglose": conceptos,
                 "subtotal": subtotal,
+                "base_imponible": subtotal,
                 "iva_tipo": iva_tipo,
                 "iva_cuota": iva_cuota,
+                "iva_importe": iva_cuota,
                 "total": total,
+                # v2: etiquetas, variaciones CSS y formato numero
+                "etiquetas": etiquetas,
+                "variaciones_css_str": css_custom_properties_str(variaciones),
+                "formato_numero_id": fmt_numero_id,
             }
 
             metadatos = {
@@ -304,12 +365,18 @@ def generar_suministros(
                 archivo=nombre_archivo,
                 tipo="recibo_suministro",
                 subtipo=tipo,
-                plantilla="recibo_suministro.html",
+                plantilla=plantilla_v2,
                 css_variante="corporativo",
                 datos_plantilla=datos_plantilla,
                 metadatos=metadatos,
                 error_inyectado=None,
                 edge_case=None,
+                familia=familia_v2,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas,
+                formato_fecha=formato["fecha"]["id"],
+                formato_numero=fmt_numero_id,
+                perfil_calidad=perfil,
             ))
 
     return docs

@@ -29,6 +29,9 @@ entidades:
     empleados: 4
     css_variante: corporativo
     docs_estimados: 108
+    familia_factura_venta: corp_limpia
+    familia_nomina: sage
+    convenio: oficinas
 
     proveedores:
       aws-ireland:
@@ -43,6 +46,7 @@ entidades:
         importe_rango: [350, 650]
         concepto: "Servicios de hosting y computacion en la nube (AWS)"
         retencion: 0
+        familia_factura: ecommerce
 
       microsoft-ireland:
         nombre: "Microsoft Ireland Operations Ltd."
@@ -56,6 +60,7 @@ entidades:
         importe_rango: [180, 280]
         concepto: "Licencias Microsoft 365 Business Premium"
         retencion: 0
+        familia_factura: extranjera_eu
 
       vodafone:
         nombre: "Vodafone España S.A.U."
@@ -69,6 +74,7 @@ entidades:
         importe_rango: [85, 120]
         concepto: "Servicio de telefonia movil e internet fibra empresa"
         retencion: 0
+        familia_factura: corp_grande
 
       northgate-renting:
         nombre: "Northgate Renting S.A."
@@ -82,6 +88,7 @@ entidades:
         importe_rango: [800, 800]
         concepto: "Renting equipos informaticos (laptops + servidores)"
         retencion: 0
+        familia_factura: corp_limpia
 
       mutua-madrilena:
         nombre: "Mutua Madrileña Automovilista"
@@ -108,6 +115,7 @@ entidades:
         importe_rango: [40, 120]
         concepto: "Material de oficina y consumibles informaticos"
         retencion: 0
+        familia_factura: pyme_clasica
 
     clientes:
       ayto-valencia:
@@ -327,6 +335,9 @@ entidades:
     empleados: 8
     css_variante: corporativo
     docs_estimados: 145
+    familia_factura_venta: tabla_densa
+    familia_nomina: gestoria_pro
+    convenio: comercio
 
     proveedores:
       coop-agricola-huerta:
@@ -341,6 +352,7 @@ entidades:
         importe_rango: [8000, 22000]
         concepto: "Frutas y verduras frescas de temporada (IVA 4% y 10% segun producto)"
         retencion: 0
+        familia_factura: autonomo_basico
 
       frigorificos-sur:
         nombre: "Frigorificos del Sur S.L."
@@ -354,6 +366,7 @@ entidades:
         importe_rango: [2000, 4500]
         concepto: "Transporte refrigerado y almacenamiento en camara"
         retencion: 0
+        familia_factura: corp_industrial
 
       envases-plasticos:
         nombre: "Envases Plasticos Alicante S.L."
@@ -367,6 +380,7 @@ entidades:
         importe_rango: [800, 2000]
         concepto: "Packaging y envases plasticos para distribucion"
         retencion: 0
+        familia_factura: pyme_moderna
 
       importadora-especias-bombay:
         nombre: "Bombay Spices Import & Export Pvt. Ltd."
@@ -380,6 +394,7 @@ entidades:
         importe_rango: [3500, 7000]
         concepto: "Especias y condimentos importacion extracomunitaria (DUA, IVA diferido casilla 77)"
         retencion: 0
+        familia_factura: extranjera_en
 
       repsol-gasolinera:
         nombre: "Repsol S.A."
@@ -393,6 +408,7 @@ entidades:
         importe_rango: [600, 1200]
         concepto: "Combustible flota de furgonetas (gasoil)"
         retencion: 0
+        familia_factura: corp_grande
 
       fertiberia-almacen:
         nombre: "Fertiberia S.A."
@@ -406,6 +422,7 @@ entidades:
         importe_rango: [150, 350]
         concepto: "Productos de limpieza e higiene para almacen y nave"
         retencion: 0
+        familia_factura: pyme_clasica
 
     clientes:
       supermercados-consum:
@@ -686,6 +703,9 @@ entidades:
     empleados: 2
     css_variante: corporativo
     docs_estimados: 68
+    familia_factura_venta: corp_grande
+    familia_nomina: a3nom
+    convenio: oficinas
 
     proveedores:
       gestoria-costa-del-sol:
@@ -700,6 +720,7 @@ entidades:
         importe_rango: [400, 400]
         concepto: "Asesoria fiscal, contable y laboral del grupo (todos los ejercicios)"
         retencion: 15
+        familia_factura: autonomo_pro
 
       seguros-mapfre-grupo:
         nombre: "Seguros Mapfre S.A."
@@ -726,6 +747,7 @@ entidades:
         importe_rango: [300, 800]
         concepto: "Publicidad Google Ads campanas grupo (inversion sujeto pasivo)"
         retencion: 0
+        familia_factura: extranjera_eu
 
     clientes:
       la-marea-mgmt:
@@ -884,6 +906,9 @@ entidades:
     empleados: 6
     css_variante: corporativo
     docs_estimados: 110
+    familia_factura_venta: hosteleria
+    familia_nomina: gestoria_clasica
+    convenio: hosteleria
 
     proveedores:
       makro-la-marea:
@@ -898,6 +923,7 @@ entidades:
         importe_rango: [3000, 6000]
         concepto: "Alimentacion, bebidas y consumibles (IVA mixto 4/10/21% segun producto)"
         retencion: 0
+        familia_factura: tabla_densa
 
       distribuidora-bebidas-sur:
         nombre: "Distribuidora de Bebidas Sur S.L."
@@ -911,6 +937,7 @@ entidades:
         importe_rango: [1500, 3000]
         concepto: "Vinos, cervezas, refrescos y aguas para servicio de barra y mesa"
         retencion: 0
+        familia_factura: hosteleria
 
       lavanderia-industrial:
         nombre: "Lavanderia Industrial Malaga S.L."
@@ -924,6 +951,7 @@ entidades:
         importe_rango: [300, 600]
         concepto: "Lavado y planchado de manteles, servilletas y uniformes"
         retencion: 0
+        familia_factura: pyme_moderna
 
       gas-natural-cocina:
         nombre: "Naturgy (Gas Natural) S.A."
@@ -937,6 +965,7 @@ entidades:
         importe_rango: [180, 400]
         concepto: "Suministro de gas natural para cocinas industriales"
         retencion: 0
+        familia_factura: corp_grande
 
       gastro-holding-fee:
         nombre: "Grupo Gastro Costa del Sol S.L."
@@ -950,6 +979,7 @@ entidades:
         importe_rango: [500, 500]
         concepto: "Management fee mensual + intereses prestamo intercompany"
         retencion: 0
+        familia_factura: corp_limpia
 
     clientes:
       clientes-diarios:
@@ -1129,6 +1159,9 @@ entidades:
     empleados: 4
     css_variante: corporativo
     docs_estimados: 72
+    familia_factura_venta: hosteleria
+    familia_nomina: gestoria_clasica
+    convenio: hosteleria
 
     proveedores:
       makro-chiringuito:
@@ -1143,6 +1176,7 @@ entidades:
         importe_rango: [2000, 4500]
         concepto: "Alimentacion, bebidas y consumibles temporada (abr-oct)"
         retencion: 0
+        familia_factura: tabla_densa
 
       ayto-marbella-canon:
         nombre: "Ayuntamiento de Marbella"
@@ -1156,6 +1190,7 @@ entidades:
         importe_rango: [8000, 8000]
         concepto: "Canon anual licencia de ocupacion de dominio publico maritimo-terrestre"
         retencion: 0
+        familia_factura: administracion
 
       renting-mobiliario-terraza:
         nombre: "Renting Mobiliario Terraza S.L."
@@ -1169,6 +1204,7 @@ entidades:
         importe_rango: [600, 600]
         concepto: "Renting hamacas, sombrillas y mobiliario de terraza de playa (abr-oct)"
         retencion: 0
+        familia_factura: corp_limpia
 
       gastro-holding-chiringuito:
         nombre: "Grupo Gastro Costa del Sol S.L."
@@ -1182,6 +1218,7 @@ entidades:
         importe_rango: [300, 300]
         concepto: "Management fee + intereses prestamo intercompany"
         retencion: 0
+        familia_factura: pyme_moderna
 
     clientes:
       ventas-diarias-chiringuito:
@@ -1325,6 +1362,9 @@ entidades:
     empleados: 3
     css_variante: corporativo
     docs_estimados: 85
+    familia_factura_venta: hosteleria
+    familia_nomina: gestoria_clasica
+    convenio: hosteleria
 
     proveedores:
       makro-catering:
@@ -1339,6 +1379,7 @@ entidades:
         importe_rango: [2500, 5500]
         concepto: "Alimentacion y bebidas para elaboracion catering eventos"
         retencion: 0
+        familia_factura: hosteleria
 
       alquiler-menaje-eventos:
         nombre: "Alquiler Menaje Eventos S.L."
@@ -1352,6 +1393,7 @@ entidades:
         importe_rango: [300, 1200]
         concepto: "Alquiler de vajilla, cristaleria y menaje para eventos"
         retencion: 0
+        familia_factura: pyme_clasica
 
       gastro-holding-catering:
         nombre: "Grupo Gastro Costa del Sol S.L."
@@ -1365,6 +1407,7 @@ entidades:
         importe_rango: [350, 350]
         concepto: "Management fee + intereses prestamo intercompany"
         retencion: 0
+        familia_factura: corp_grande
 
       chiringuito-prestamo:
         nombre: "Chiringuito Sol y Arena S.L."
@@ -1378,6 +1421,7 @@ entidades:
         importe_rango: [5000, 5000]
         concepto: "Devoluciones prestamo cruzado estacional (abr-oct)"
         retencion: 0
+        familia_factura: pyme_moderna
 
     clientes:
       bodas-eventos-particulares:
@@ -1526,6 +1570,7 @@ entidades:
     empleados: 1
     css_variante: autonomo
     docs_estimados: 95
+    familia_factura_venta: autonomo_pro
 
     proveedores:
       saneamientos-perez:
@@ -1540,6 +1585,7 @@ entidades:
         importe_rango: [400, 1200]
         concepto: "Materiales de fontaneria: tuberias, griferia, accesorios"
         retencion: 0
+        familia_factura: pyme_clasica
 
       leroy-merlin:
         nombre: "Leroy Merlin España S.L.U."
@@ -1553,6 +1599,7 @@ entidades:
         importe_rango: [100, 350]
         concepto: "Materiales de bricolaje y herramientas (tickets simplificados)"
         retencion: 0
+        familia_factura: tabla_densa
 
       repsol-marcos:
         nombre: "Repsol S.A."
@@ -1566,6 +1613,7 @@ entidades:
         importe_rango: [150, 300]
         concepto: "Combustible gasolina furgoneta de trabajo"
         retencion: 0
+        familia_factura: corp_grande
 
       reta-marcos:
         nombre: "Tesoreria General de la Seguridad Social"
@@ -1579,6 +1627,7 @@ entidades:
         importe_rango: [320, 380]
         concepto: "Cuota RETA (Regimen Especial Trabajadores Autonomos)"
         retencion: 0
+        familia_factura: administracion
 
       gestoria-lopez:
         nombre: "Gestoria Lopez S.L."
@@ -1592,6 +1641,7 @@ entidades:
         importe_rango: [120, 120]
         concepto: "Asesoria fiscal y contable mensual (tramitacion modelos 130/303/100)"
         retencion: 15
+        familia_factura: autonomo_basico
 
     clientes:
       comunidad-propietarios-edificio-sol:
@@ -1723,6 +1773,7 @@ entidades:
     empleados: 1
     css_variante: autonomo
     docs_estimados: 88
+    familia_factura_venta: autonomo_pro
 
     proveedores:
       quirumed:
@@ -1737,6 +1788,7 @@ entidades:
         importe_rango: [300, 800]
         concepto: "Equipamiento sanitario y material clinico para fisioterapia"
         retencion: 0
+        familia_factura: sanitario
 
       farmacia-central:
         nombre: "Farmacia Central de Granada"
@@ -1750,6 +1802,7 @@ entidades:
         importe_rango: [40, 120]
         concepto: "Material sanitario fungible: vendas, esparadrapo, electrodos"
         retencion: 0
+        familia_factura: sanitario
 
       propietario-local:
         nombre: "Antonio Fernandez Gimenez (arrendador)"
@@ -1763,6 +1816,7 @@ entidades:
         importe_rango: [950, 950]
         concepto: "Alquiler local comercial Calle Recogidas 44 (retencion 19% IRPF arrendador)"
         retencion: 19
+        familia_factura: autonomo_basico
 
       spotify-sweden:
         nombre: "Spotify AB"
@@ -1776,6 +1830,7 @@ entidades:
         importe_rango: [15, 18]
         concepto: "Spotify for Business — musica ambiente (inversion sujeto pasivo)"
         retencion: 0
+        familia_factura: extranjera_eu
 
       colegio-fisioterapeutas:
         nombre: "Colegio Oficial de Fisioterapeutas de Andalucia"
@@ -1789,6 +1844,7 @@ entidades:
         importe_rango: [180, 200]
         concepto: "Cuota colegio profesional anual (exenta de IVA)"
         retencion: 0
+        familia_factura: administracion
 
     clientes:
       pacientes-fisioterapia:
@@ -1928,6 +1984,7 @@ entidades:
     empleados: 5
     css_variante: autonomo
     docs_estimados: 90
+    familia_factura_venta: autonomo_basico
 
     proveedores:
       fertiberia-agricola:
@@ -1942,6 +1999,7 @@ entidades:
         importe_rango: [800, 2500]
         concepto: "Fertilizantes, fitosanitarios y productos para el cultivo del olivar"
         retencion: 0
+        familia_factura: autonomo_basico
 
       talleres-agricolas-jaen:
         nombre: "Talleres Agricolas Jaen S.L."
@@ -1955,6 +2013,7 @@ entidades:
         importe_rango: [200, 800]
         concepto: "Reparacion y mantenimiento de maquinaria agricola (tractor, aperos)"
         retencion: 0
+        familia_factura: pyme_clasica
 
       comunidad-regantes:
         nombre: "Comunidad de Regantes Sierra Magina"
@@ -1968,6 +2027,7 @@ entidades:
         importe_rango: [180, 450]
         concepto: "Cuota de riego y canon uso agua comunidad de regantes"
         retencion: 0
+        familia_factura: administracion
 
       gasoil-agricola:
         nombre: "Distribuidora Gasoil Agricola Sur S.L."
@@ -1981,6 +2041,7 @@ entidades:
         importe_rango: [200, 600]
         concepto: "Gasoil agricola bonificado para maquinaria agricola"
         retencion: 0
+        familia_factura: pyme_moderna
 
       reta-agraria:
         nombre: "Tesoreria General de la Seguridad Social"
@@ -1994,6 +2055,7 @@ entidades:
         importe_rango: [280, 320]
         concepto: "Cuota RETA base minima — Sistema especial agrario autonomo"
         retencion: 0
+        familia_factura: administracion
 
     clientes:
       coop-oleicola-sierra-magina:
@@ -2197,6 +2259,7 @@ entidades:
     empleados: 1
     css_variante: autonomo
     docs_estimados: 75
+    familia_factura_venta: autonomo_basico
 
     proveedores:
       distribuidora-bebidas-andalucia:
@@ -2211,6 +2274,7 @@ entidades:
         importe_rango: [800, 1800]
         concepto: "Cervezas, refrescos, aguas y licores para barra"
         retencion: 0
+        familia_factura: hosteleria
 
       makro-bar:
         nombre: "Makro Autoservicio S.A."
@@ -2224,6 +2288,7 @@ entidades:
         importe_rango: [500, 1200]
         concepto: "Alimentacion, cafes, desayunos y consumibles bar (IVA 4/10/21% segun producto)"
         retencion: 0
+        familia_factura: tabla_densa
 
       propietario-local-francisco:
         nombre: "Carmen Ruiz Blanco (arrendadora)"
@@ -2237,6 +2302,7 @@ entidades:
         importe_rango: [650, 650]
         concepto: "Alquiler local bar Calle Cruz Conde 12 (retencion 19% IRPF arrendadora)"
         retencion: 19
+        familia_factura: autonomo_basico
 
       suministros-varios:
         nombre: "Endesa Energia S.A.U."
@@ -2250,6 +2316,7 @@ entidades:
         importe_rango: [120, 250]
         concepto: "Suministro electrico bar/cafeteria"
         retencion: 0
+        familia_factura: corp_grande
 
       gestoria-lopez-bar:
         nombre: "Gestoria Lopez S.L."
@@ -2263,6 +2330,7 @@ entidades:
         importe_rango: [100, 100]
         concepto: "Asesoria fiscal y tramitacion modelos 131 y cuotas IVA simplificado"
         retencion: 15
+        familia_factura: pyme_clasica
 
     clientes:
       ventas-diarias-bar:
@@ -2390,6 +2458,9 @@ entidades:
     empleados: 1
     css_variante: administracion
     docs_estimados: 78
+    familia_factura_venta: administracion
+    familia_nomina: gestoria_clasica
+    convenio: oficinas
 
     proveedores:
       limpisa:
@@ -2404,6 +2475,7 @@ entidades:
         importe_rango: [400, 500]
         concepto: "Servicio de limpieza zonas comunes, portal y escaleras (contrato mensual)"
         retencion: 0
+        familia_factura: pyme_moderna
 
       endesa-comunidad:
         nombre: "Endesa Energia S.A.U."
@@ -2417,6 +2489,7 @@ entidades:
         importe_rango: [200, 400]
         concepto: "Electricidad zonas comunes: portal, ascensor, garaje y piscina"
         retencion: 0
+        familia_factura: corp_grande
 
       ascensores-otis:
         nombre: "Ascensores Otis S.A."
@@ -2430,6 +2503,7 @@ entidades:
         importe_rango: [280, 320]
         concepto: "Contrato mantenimiento preventivo y correctivo ascensor"
         retencion: 0
+        familia_factura: corp_industrial
 
       jardineria-verde:
         nombre: "Jardineria Verde S.L."
@@ -2443,6 +2517,7 @@ entidades:
         importe_rango: [180, 250]
         concepto: "Mantenimiento zonas ajardinadas y piscina comunitaria"
         retencion: 0
+        familia_factura: pyme_clasica
 
       administrador-fincas:
         nombre: "Francisco Javier Herrera Soto (Administrador de Fincas)"
@@ -2456,6 +2531,7 @@ entidades:
         importe_rango: [250, 250]
         concepto: "Honorarios administracion y gestion de la comunidad (retencion 15%)"
         retencion: 15
+        familia_factura: autonomo_pro
 
     clientes:
       cuotas-propietarios:

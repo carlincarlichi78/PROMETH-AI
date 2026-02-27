@@ -14,11 +14,34 @@ from typing import List
 DIR_GENERADOR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DIR_GENERADOR))
 
+from utils.etiquetas import etiquetas_para_proveedor, formato_para_proveedor
+from utils.variaciones import generar_variaciones_css, css_custom_properties_str
+from utils.ruido import perfil_para_proveedor
 from utils.fechas import fechas_mensuales
 from utils.importes import _redondear
 
 # Importar DocGenerado desde gen_facturas (dataclass compartida del proyecto)
 from generadores.gen_facturas import DocGenerado
+
+
+# ---------------------------------------------------------------------------
+# Mapeo tipo producto financiero -> familia plantilla v2
+# ---------------------------------------------------------------------------
+
+_FAMILIAS_BANCARIO: dict[str, str] = {
+    "banco_grande": "bancarios/B01_banco_grande.html",
+    "banco_mediano": "bancarios/B02_banco_mediano.html",
+    "banco_online": "bancarios/B03_banco_online.html",
+    "leasing_renting": "bancarios/B04_leasing_renting.html",
+    "confirming": "bancarios/B05_confirming.html",
+    "extracto": "bancarios/B06_extracto.html",
+}
+
+
+def _familia_por_nombre_banco(nombre_banco: str, seed: int) -> str:
+    """Asigna familia banco_grande o banco_mediano segun nombre (determinista)."""
+    rng = random.Random(hash(nombre_banco) + seed + 2017)
+    return rng.choice(["banco_grande", "banco_mediano"])
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +70,7 @@ _OFICINAS = [
 
 
 def _nombre_banco(rng: random.Random = None) -> dict:
-    """Devuelve un banco ficticio con nombre, oficina y BIC."""
+    """Devuelve un banco ficticio con nombre, oficina, BIC y direccion."""
     generador = rng or random
     banco = generador.choice(_BANCOS_FICTICIOS)
     oficina = generador.choice(_OFICINAS)
@@ -55,7 +78,32 @@ def _nombre_banco(rng: random.Random = None) -> dict:
         "nombre": banco["nombre"],
         "bic": banco["bic"],
         "oficina": oficina,
+        "direccion": "Paseo de la Castellana, 1 — 28046 Madrid",
     }
+
+
+def _normalizar_datos_bancario(datos: dict, entidad: dict = None) -> dict:
+    """
+    Anade aliases y campos faltantes para compatibilidad con plantillas v2.
+    Las plantillas usan nombres distintos a los del generador original.
+    """
+    # Alias numero_recibo <- referencia
+    datos.setdefault("numero_recibo", datos.get("referencia", ""))
+    # Alias desglose <- detalle
+    datos.setdefault("desglose", datos.get("detalle", []))
+    # Alias importe <- total (plantillas usan {{ importe | moneda }})
+    datos.setdefault("importe", datos.get("total", 0))
+    # base_imponible e iva_importe desde dict 'iva' si existe
+    if "iva" in datos:
+        datos.setdefault("base_imponible", datos["iva"].get("base", 0))
+        datos.setdefault("iva_importe", datos["iva"].get("cuota", 0))
+    # titular.cuenta_iban si no existe
+    if "titular" in datos and "cuenta_iban" not in datos["titular"]:
+        cuenta = "ES00 0000 0000 00 0000000000"
+        if entidad:
+            cuenta = entidad.get("cuenta_banco_principal", cuenta)
+        datos["titular"]["cuenta_iban"] = cuenta
+    return datos
 
 
 def _generar_referencia(tipo: str, anio: int, rng: random.Random = None) -> str:
@@ -129,6 +177,7 @@ def _generar_cuotas_prestamo(
     entidad: dict,
     anio: int,
     rng: random.Random = None,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera 12 documentos de cuota mensual para un prestamo o hipoteca
@@ -147,6 +196,15 @@ def _generar_cuotas_prestamo(
 
     nombre_entidad = entidad.get("nombre", entidad.get("nombre_fiscal", "Empresa"))
     nif_entidad = entidad.get("nif", entidad.get("cif", ""))
+
+    # v2: familia segun nombre banco, etiquetas y variaciones por banco
+    familia_v2 = _familia_por_nombre_banco(banco["nombre"], seed)
+    plantilla_v2 = _FAMILIAS_BANCARIO[familia_v2]
+    etiquetas = etiquetas_para_proveedor(banco["nombre"], seed)
+    formato = formato_para_proveedor(banco["nombre"], seed)
+    variaciones = generar_variaciones_css(banco["nombre"], familia_v2, seed)
+    perfil = perfil_para_proveedor(banco["nombre"], seed)
+    fmt_numero_id = formato["numero"]["id"]
 
     tipo_interes_mensual = interes_anual / 100 / 12
     docs: List[DocGenerado] = []
@@ -196,10 +254,16 @@ def _generar_cuotas_prestamo(
 
         archivo = f"{anio}-{mes_num:02d}_prestamo_{slug}.pdf"
 
+        # v2: incluir etiquetas y variaciones en datos de plantilla
+        datos["etiquetas"] = etiquetas
+        datos["variaciones_css_str"] = css_custom_properties_str(variaciones)
+        datos["formato_numero_id"] = fmt_numero_id
+        _normalizar_datos_bancario(datos, entidad)
+
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo=tipo,
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=entidad.get("css_variante", "corporativo"),
             archivo=archivo,
             datos_plantilla=datos,
@@ -212,6 +276,12 @@ def _generar_cuotas_prestamo(
                 "anio": anio,
                 "nombre_producto": nombre,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     return docs
@@ -226,6 +296,7 @@ def _generar_cuotas_leasing(
     entidad: dict,
     anio: int,
     rng: random.Random = None,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera 12 cuotas mensuales de leasing financiero con IVA 21%.
@@ -244,6 +315,15 @@ def _generar_cuotas_leasing(
 
     nombre_entidad = entidad.get("nombre", entidad.get("nombre_fiscal", "Empresa"))
     nif_entidad = entidad.get("nif", entidad.get("cif", ""))
+
+    # v2: leasing usa plantilla especializada leasing_renting
+    familia_v2 = "leasing_renting"
+    plantilla_v2 = _FAMILIAS_BANCARIO[familia_v2]
+    etiquetas = etiquetas_para_proveedor(banco["nombre"], seed)
+    formato = formato_para_proveedor(banco["nombre"], seed)
+    variaciones = generar_variaciones_css(banco["nombre"], familia_v2, seed)
+    perfil = perfil_para_proveedor(banco["nombre"], seed)
+    fmt_numero_id = formato["numero"]["id"]
 
     # La cuota del YAML incluye IVA: desglosamos
     IVA_PCT = 21
@@ -317,10 +397,16 @@ def _generar_cuotas_leasing(
 
         archivo = f"{anio}-{mes_num:02d}_leasing_{slug}.pdf"
 
+        # v2: incluir etiquetas y variaciones en datos de plantilla
+        datos["etiquetas"] = etiquetas
+        datos["variaciones_css_str"] = css_custom_properties_str(variaciones)
+        datos["formato_numero_id"] = fmt_numero_id
+        _normalizar_datos_bancario(datos, entidad)
+
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="leasing",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=entidad.get("css_variante", "corporativo"),
             archivo=archivo,
             datos_plantilla=datos,
@@ -335,6 +421,12 @@ def _generar_cuotas_leasing(
                 "anio": anio,
                 "nombre_producto": nombre,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     return docs
@@ -348,6 +440,7 @@ def _generar_recibos_renting(
     producto: dict,
     entidad: dict,
     anio: int,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera facturas mensuales de renting (gasto cuenta 621, IVA 21%).
@@ -370,6 +463,16 @@ def _generar_recibos_renting(
     # El proveedor de renting se extrae del nombre del producto si es posible
     nombre_partes = nombre.split(" ")
     proveedor_renting = nombre_partes[-1] if len(nombre_partes) > 1 else "Proveedor Renting"
+
+    # v2: renting usa plantilla leasing_renting, etiquetas por proveedor renting
+    familia_v2 = "leasing_renting"
+    plantilla_v2 = _FAMILIAS_BANCARIO[familia_v2]
+    nombre_prov_renting = f"{proveedor_renting} S.A."
+    etiquetas = etiquetas_para_proveedor(nombre_prov_renting, seed)
+    formato = formato_para_proveedor(nombre_prov_renting, seed)
+    variaciones = generar_variaciones_css(nombre_prov_renting, familia_v2, seed)
+    perfil = perfil_para_proveedor(nombre_prov_renting, seed)
+    fmt_numero_id = formato["numero"]["id"]
 
     docs: List[DocGenerado] = []
     fechas = fechas_mensuales(anio, meses=meses_activos, dia=5)
@@ -408,14 +511,19 @@ def _generar_recibos_renting(
             },
             "total": total_recibo,
             "cuenta_gasto": producto.get("cuenta", "621"),
+            # v2: etiquetas y variaciones en datos de plantilla
+            "etiquetas": etiquetas,
+            "variaciones_css_str": css_custom_properties_str(variaciones),
+            "formato_numero_id": fmt_numero_id,
         }
+        _normalizar_datos_bancario(datos, entidad)
 
         archivo = f"{anio}-{mes_num:02d}_renting_{slug}.pdf"
 
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="renting",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=entidad.get("css_variante", "corporativo"),
             archivo=archivo,
             datos_plantilla=datos,
@@ -427,6 +535,12 @@ def _generar_recibos_renting(
                 "anio": anio,
                 "nombre_producto": nombre,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     return docs
@@ -441,6 +555,7 @@ def _generar_recibos_poliza(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera los cargos anuales y trimestrales de una poliza de credito:
@@ -458,6 +573,15 @@ def _generar_recibos_poliza(
 
     nombre_entidad = entidad.get("nombre", entidad.get("nombre_fiscal", "Empresa"))
     nif_entidad = entidad.get("nif", entidad.get("cif", ""))
+
+    # v2: poliza de credito usa banco_grande, etiquetas y variaciones por banco
+    familia_v2 = "banco_grande"
+    plantilla_v2 = _FAMILIAS_BANCARIO[familia_v2]
+    etiquetas = etiquetas_para_proveedor(banco["nombre"], seed)
+    formato = formato_para_proveedor(banco["nombre"], seed)
+    variaciones = generar_variaciones_css(banco["nombre"], familia_v2, seed)
+    perfil = perfil_para_proveedor(banco["nombre"], seed)
+    fmt_numero_id = formato["numero"]["id"]
 
     no_dispuesto = max(0.0, limite - saldo_dispuesto)
     docs: List[DocGenerado] = []
@@ -481,11 +605,16 @@ def _generar_recibos_poliza(
         "total": comision_apertura,
         "limite": limite,
         "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+        # v2: etiquetas y variaciones
+        "etiquetas": etiquetas,
+        "variaciones_css_str": css_custom_properties_str(variaciones),
+        "formato_numero_id": fmt_numero_id,
     }
+    _normalizar_datos_bancario(datos_apertura, entidad)
     docs.append(DocGenerado(
         tipo="recibo_bancario",
         subtipo="poliza_credito",
-        plantilla="recibo_bancario.html",
+        plantilla=plantilla_v2,
         css_variante=entidad.get("css_variante", "corporativo"),
         archivo=f"{anio}-01_poliza_apertura_{slug}.pdf",
         datos_plantilla=datos_apertura,
@@ -495,6 +624,12 @@ def _generar_recibos_poliza(
             "anio": anio,
             "nombre_producto": nombre,
         },
+        familia=familia_v2,
+        variaciones_css=variaciones,
+        etiquetas_usadas=etiquetas,
+        formato_fecha=formato["fecha"]["id"],
+        formato_numero=fmt_numero_id,
+        perfil_calidad=perfil,
     ))
 
     # --- Recibos trimestrales ---
@@ -548,7 +683,12 @@ def _generar_recibos_poliza(
             "saldo_dispuesto": saldo_trimestral,
             "no_dispuesto": no_dispuesto_t,
             "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+            # v2: etiquetas y variaciones
+            "etiquetas": etiquetas,
+            "variaciones_css_str": css_custom_properties_str(variaciones),
+            "formato_numero_id": fmt_numero_id,
         }
+        _normalizar_datos_bancario(datos_t, entidad)
 
         trimestre_mes = trimestres.index((mes_ini, mes_fin, codigo_t, fecha_liq)) + 1
         archivo = f"{anio}-{mes_fin:02d}_poliza_{codigo_t.lower()}_{slug}.pdf"
@@ -556,7 +696,7 @@ def _generar_recibos_poliza(
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="poliza_credito",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=entidad.get("css_variante", "corporativo"),
             archivo=archivo,
             datos_plantilla=datos_t,
@@ -568,6 +708,12 @@ def _generar_recibos_poliza(
                 "anio": anio,
                 "nombre_producto": nombre,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     return docs
@@ -581,6 +727,7 @@ def _generar_comisiones(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera comisiones bancarias de diverso tipo segun el perfil de la entidad:
@@ -593,6 +740,16 @@ def _generar_comisiones(
     nombre_entidad = entidad.get("nombre", entidad.get("nombre_fiscal", "Empresa"))
     nif_entidad = entidad.get("nif", entidad.get("cif", ""))
     css = entidad.get("css_variante", "corporativo")
+
+    # v2: comisiones usan banco_online (extracto requiere movimientos/saldo_posterior)
+    familia_v2 = "banco_online"
+    plantilla_v2 = _FAMILIAS_BANCARIO[familia_v2]
+    etiquetas = etiquetas_para_proveedor(banco["nombre"], seed)
+    formato = formato_para_proveedor(banco["nombre"], seed)
+    variaciones = generar_variaciones_css(banco["nombre"], familia_v2, seed)
+    perfil = perfil_para_proveedor(banco["nombre"], seed)
+    fmt_numero_id = formato["numero"]["id"]
+
     docs: List[DocGenerado] = []
 
     # --- Mantenimiento de cuenta: 4 recibos trimestrales ---
@@ -620,12 +777,18 @@ def _generar_comisiones(
                 {"concepto": "Comision administracion cuenta corriente", "importe": comision_mant},
             ],
             "total": comision_mant,
+            "saldo_anterior": _redondear(rng.uniform(5000.0, 50000.0)),
             "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+            # v2: etiquetas y variaciones
+            "etiquetas": etiquetas,
+            "variaciones_css_str": css_custom_properties_str(variaciones),
+            "formato_numero_id": fmt_numero_id,
         }
+        _normalizar_datos_bancario(datos, entidad)
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="comision",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=css,
             archivo=f"{anio}-{fecha.month:02d}_comision_mantenimiento_{codigo_t.lower()}.pdf",
             datos_plantilla=datos,
@@ -635,6 +798,12 @@ def _generar_comisiones(
                 "trimestre": codigo_t,
                 "anio": anio,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     # --- Comisiones por transferencias: 2-5 por trimestre ---
@@ -660,12 +829,18 @@ def _generar_comisiones(
                 },
             ],
             "total": total_transf,
+            "saldo_anterior": _redondear(rng.uniform(5000.0, 50000.0)),
             "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+            # v2: etiquetas y variaciones
+            "etiquetas": etiquetas,
+            "variaciones_css_str": css_custom_properties_str(variaciones),
+            "formato_numero_id": fmt_numero_id,
         }
+        _normalizar_datos_bancario(datos, entidad)
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="comision",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=css,
             archivo=f"{anio}-{mes_fin:02d}_comision_transferencias_{codigo_t.lower()}.pdf",
             datos_plantilla=datos,
@@ -675,6 +850,12 @@ def _generar_comisiones(
                 "trimestre": codigo_t,
                 "anio": anio,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     # --- TPV: comision mensual ~1% de ventas estimadas ---
@@ -707,13 +888,19 @@ def _generar_comisiones(
                     },
                 ],
                 "total": comision_tpv,
+                "saldo_anterior": _redondear(rng.uniform(5000.0, 50000.0)),
                 "ventas_periodo": ventas_mes,
                 "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+                # v2: etiquetas y variaciones
+                "etiquetas": etiquetas,
+                "variaciones_css_str": css_custom_properties_str(variaciones),
+                "formato_numero_id": fmt_numero_id,
             }
+            _normalizar_datos_bancario(datos, entidad)
             docs.append(DocGenerado(
                 tipo="recibo_bancario",
                 subtipo="comision",
-                plantilla="recibo_bancario.html",
+                plantilla=plantilla_v2,
                 css_variante=css,
                 archivo=f"{anio}-{fecha.month:02d}_comision_tpv.pdf",
                 datos_plantilla=datos,
@@ -723,6 +910,12 @@ def _generar_comisiones(
                     "mes": fecha.month,
                     "anio": anio,
                 },
+                familia=familia_v2,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas,
+                formato_fecha=formato["fecha"]["id"],
+                formato_numero=fmt_numero_id,
+                perfil_calidad=perfil,
             ))
 
     # --- Transferencia internacional: 1 puntual si hay operaciones internacionales ---
@@ -746,12 +939,18 @@ def _generar_comisiones(
                 {"concepto": "Comision emision transferencia SWIFT internacional", "importe": comision_int},
             ],
             "total": comision_int,
+            "saldo_anterior": _redondear(rng.uniform(5000.0, 50000.0)),
             "cuenta_cargo": entidad.get("cuenta_banco_principal", "57200000"),
+            # v2: etiquetas y variaciones
+            "etiquetas": etiquetas,
+            "variaciones_css_str": css_custom_properties_str(variaciones),
+            "formato_numero_id": fmt_numero_id,
         }
+        _normalizar_datos_bancario(datos, entidad)
         docs.append(DocGenerado(
             tipo="recibo_bancario",
             subtipo="comision",
-            plantilla="recibo_bancario.html",
+            plantilla=plantilla_v2,
             css_variante=css,
             archivo=f"{anio}-{mes_int:02d}_comision_swift_internacional.pdf",
             datos_plantilla=datos,
@@ -761,6 +960,12 @@ def _generar_comisiones(
                 "mes": mes_int,
                 "anio": anio,
             },
+            familia=familia_v2,
+            variaciones_css=variaciones,
+            etiquetas_usadas=etiquetas,
+            formato_fecha=formato["fecha"]["id"],
+            formato_numero=fmt_numero_id,
+            perfil_calidad=perfil,
         ))
 
     return docs
@@ -774,6 +979,7 @@ def generar_bancarios(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera todos los recibos bancarios de la entidad para el ano indicado.
@@ -794,6 +1000,7 @@ def generar_bancarios(
         entidad: dict con los datos de la entidad del YAML
         anio: ejercicio a generar
         rng: instancia de Random para reproducibilidad
+        seed: seed global del generador (para v2 etiquetas y variaciones CSS)
 
     Retorna lista de DocGenerado (tipo="recibo_bancario").
     """
@@ -804,20 +1011,20 @@ def generar_bancarios(
         tipo = producto.get("tipo", "")
 
         if tipo in ("prestamo", "hipoteca"):
-            docs.extend(_generar_cuotas_prestamo(producto, entidad, anio, rng))
+            docs.extend(_generar_cuotas_prestamo(producto, entidad, anio, rng, seed))
 
         elif tipo == "leasing":
-            docs.extend(_generar_cuotas_leasing(producto, entidad, anio, rng))
+            docs.extend(_generar_cuotas_leasing(producto, entidad, anio, rng, seed))
 
         elif tipo == "renting":
-            docs.extend(_generar_recibos_renting(producto, entidad, anio))
+            docs.extend(_generar_recibos_renting(producto, entidad, anio, seed))
 
         elif tipo == "poliza_credito":
-            docs.extend(_generar_recibos_poliza(producto, entidad, anio, rng))
+            docs.extend(_generar_recibos_poliza(producto, entidad, anio, rng, seed))
 
         # tipos ignorados: linea_descuento, confirming, factoring, etc.
 
     # Comisiones bancarias genericas (siempre se generan)
-    docs.extend(_generar_comisiones(entidad, anio, rng))
+    docs.extend(_generar_comisiones(entidad, anio, rng, seed))
 
     return docs

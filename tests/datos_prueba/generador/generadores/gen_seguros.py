@@ -17,6 +17,9 @@ DIR_GENERADOR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DIR_GENERADOR))
 
 from generadores.gen_facturas import DocGenerado, _slug
+from utils.etiquetas import etiquetas_para_proveedor, formato_para_proveedor
+from utils.variaciones import generar_variaciones_css, css_custom_properties_str
+from utils.ruido import perfil_para_proveedor
 from utils.fechas import generar_fecha_en_mes
 from utils.importes import _redondear
 
@@ -57,6 +60,19 @@ _contadores_seguro: dict[str, int] = {}
 
 # Meses de inicio segun frecuencia trimestral
 _MESES_TRIMESTRAL = [1, 4, 7, 10]
+
+# Mapeo familia seguro -> plantilla v2
+_FAMILIAS_SEGURO: dict[str, str] = {
+    "seguro_grande": "seguros/G01_seguro_grande.html",
+    "seguro_mutua": "seguros/G02_seguro_mutua.html",
+    "seguro_recibo": "seguros/G03_seguro_recibo.html",
+}
+
+
+def _familia_para_seguro(nombre_proveedor: str, seed: int) -> str:
+    """Asigna familia de plantilla a un proveedor de seguros (determinista)."""
+    rng = random.Random(hash(nombre_proveedor) + seed + 5003)
+    return rng.choice(list(_FAMILIAS_SEGURO.keys()))
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +144,7 @@ def generar_seguros(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera recibos de seguros segun entidad["gastos_recurrentes"]["seguros"].
@@ -162,6 +179,15 @@ def generar_seguros(
         slug_proveedor = _slug(nombre_proveedor)
         numero_poliza = _numero_poliza(tipo, cif_entidad)
 
+        # v2: familia determinista por nombre proveedor, etiquetas y variaciones
+        familia_v2 = _familia_para_seguro(nombre_proveedor, seed)
+        plantilla_v2 = _FAMILIAS_SEGURO[familia_v2]
+        etiquetas = etiquetas_para_proveedor(nombre_proveedor, seed)
+        formato = formato_para_proveedor(nombre_proveedor, seed)
+        variaciones = generar_variaciones_css(nombre_proveedor, familia_v2, seed)
+        perfil = perfil_para_proveedor(nombre_proveedor, seed)
+        fmt_numero_id = formato["numero"]["id"]
+
         if frecuencia == "trimestral":
             meses_recibo = _MESES_TRIMESTRAL
             fraccion = 4
@@ -191,11 +217,39 @@ def generar_seguros(
                 "importe": desglose["total"],
             })
 
+            # Recargo Consorcio Compensacion Seguros (~2% sobre prima neta para seguros con IPS)
+            recargo_consorcio = _redondear(desglose["prima_neta"] * 0.02) if tiene_ips else 0.0
+
+            # Coberturas desglosadas para plantillas G01/G02
+            coberturas = [
+                {
+                    "concepto": nombre_concepto,
+                    "capital": _redondear(desglose["prima_neta"] * rng.uniform(8, 15)),
+                    "prima": desglose["prima_neta"],
+                },
+            ]
+
             datos_plantilla = {
                 "banco": banco_entidad,
                 "titular": {
                     "nombre": nombre_entidad,
                     "cif": cif_entidad,
+                },
+                "aseguradora": {
+                    "nombre": nombre_proveedor,
+                    "nif": seguro.get("cif", ""),
+                    "direccion": seguro.get("direccion", ""),
+                },
+                "tomador": {
+                    "nombre": nombre_entidad,
+                    "nif": cif_entidad,
+                    "direccion": entidad.get("direccion", ""),
+                },
+                "poliza": {
+                    "numero": numero_poliza,
+                    "tipo": nombre_concepto,
+                    "vigencia_desde": f"01/01/{anio}",
+                    "vigencia_hasta": f"31/12/{anio}",
                 },
                 "tipo_recibo": "seguro",
                 "referencia": numero_poliza,
@@ -206,11 +260,18 @@ def generar_seguros(
                 "detalle": detalle_recibo,
                 "prima_neta": desglose["prima_neta"],
                 "ips_cuota": desglose["ips_cuota"],
+                "ips": desglose["ips_cuota"],
                 "tiene_ips": tiene_ips,
+                "recargo_consorcio": recargo_consorcio,
+                "coberturas": coberturas,
                 "total": desglose["total"],
                 "frecuencia": frecuencia,
                 "anio": anio,
                 "mes": mes,
+                # v2: etiquetas, variaciones CSS y formato numero
+                "etiquetas": etiquetas,
+                "variaciones_css_str": css_custom_properties_str(variaciones),
+                "formato_numero_id": fmt_numero_id,
             }
 
             metadatos = {
@@ -232,12 +293,18 @@ def generar_seguros(
                 archivo=nombre_archivo,
                 tipo="recibo_bancario",
                 subtipo="seguro",
-                plantilla="recibo_bancario.html",
+                plantilla=plantilla_v2,
                 css_variante="corporativo",
                 datos_plantilla=datos_plantilla,
                 metadatos=metadatos,
                 error_inyectado=None,
                 edge_case=None,
+                familia=familia_v2,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas,
+                formato_fecha=formato["fecha"]["id"],
+                formato_numero=fmt_numero_id,
+                perfil_calidad=perfil,
             ))
 
     return docs

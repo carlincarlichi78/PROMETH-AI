@@ -17,6 +17,9 @@ sys.path.insert(0, str(DIR_GENERADOR))
 
 from utils.fechas import distribuir_fechas, trimestre_de_fecha
 from utils.importes import LineaFactura, ResumenFactura, generar_importe_aleatorio
+from utils.etiquetas import etiquetas_para_proveedor, formato_para_proveedor, formatear_fecha, formatear_numero
+from utils.variaciones import generar_variaciones_css, css_custom_properties_str
+from utils.ruido import perfil_para_proveedor
 
 
 # ---------------------------------------------------------------------------
@@ -29,12 +32,21 @@ class DocGenerado:
     archivo: str          # nombre archivo PDF (ej: "2025-01-15_AWS-Ireland_F2025-0001.pdf")
     tipo: str             # factura_compra, factura_venta, nomina, rlc_ss, recibo_bancario...
     subtipo: str          # estandar, intracomunitaria, simplificada, servicios, nota_credito, restauracion
-    plantilla: str        # nombre plantilla HTML (ej: "factura_estandar.html")
+    plantilla: str        # nombre plantilla HTML (ej: "facturas/F04_pyme_clasica.html")
     css_variante: str     # estilo CSS (corporativo, autonomo, administracion, extranjero)
     datos_plantilla: dict # variables para renderizar con Jinja2
     metadatos: dict       # para manifiesto.json: fecha, base, iva, total, emisor, receptor, etc.
     error_inyectado: str | None = None   # ID error (E01..E15) o None
     edge_case: str | None = None         # ID edge case (EC01..EC25) o None
+    # --- Campos v2 ---
+    familia: str | None = None           # familia plantilla (ej: "pyme_clasica", "corp_grande")
+    variaciones_css: dict = field(default_factory=dict)  # custom properties CSS
+    etiquetas_usadas: dict = field(default_factory=dict)  # etiquetas asignadas al proveedor
+    formato_fecha: str = "es_barra"      # formato fecha del proveedor
+    formato_numero: str = "es_estandar"  # formato numero del proveedor
+    perfil_calidad: str = "digital_bueno"  # perfil degradacion
+    degradaciones: list = field(default_factory=list)  # degradaciones aplicadas [str]
+    provocaciones: list = field(default_factory=list)   # provocaciones aplicadas [str]
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +59,36 @@ _CONCEPTOS_RESTAURACION = {
 }
 
 _CONCEPTOS_SIMPLIFICADA = {"ticket", "simplificada"}
+
+# Mapeo familia -> plantilla v2 (en plantillas/facturas/)
+_FAMILIAS_PLANTILLA: dict[str, str] = {
+    "corp_grande": "facturas/F01_corp_grande.html",
+    "corp_limpia": "facturas/F02_corp_limpia.html",
+    "corp_industrial": "facturas/F03_corp_industrial.html",
+    "pyme_clasica": "facturas/F04_pyme_clasica.html",
+    "pyme_moderna": "facturas/F05_pyme_moderna.html",
+    "autonomo_basico": "facturas/F06_autonomo_basico.html",
+    "autonomo_pro": "facturas/F07_autonomo_pro.html",
+    "ticket_tpv": "facturas/F08_ticket_tpv.html",
+    "ticket_simplificado": "facturas/F09_ticket_simplificado.html",
+    "tabla_densa": "facturas/F10_tabla_densa.html",
+    "multi_pagina": "facturas/F11_multi_pagina.html",
+    "extranjera_en": "facturas/F12_extranjera_en.html",
+    "extranjera_eu": "facturas/F13_extranjera_eu.html",
+    "administracion": "facturas/F14_administracion.html",
+    "hosteleria": "facturas/F15_hosteleria.html",
+    "sanitario": "facturas/F16_sanitario.html",
+    "ecommerce": "facturas/F17_ecommerce.html",
+    "rectificativa": "facturas/F18_rectificativa.html",
+}
+
+# Familias por defecto segun contexto (cuando no se especifica en empresas.yaml)
+_FAMILIAS_DEFECTO_COMPRA = [
+    "pyme_clasica", "pyme_moderna", "corp_limpia", "autonomo_pro", "tabla_densa",
+]
+_FAMILIAS_DEFECTO_VENTA = [
+    "pyme_clasica", "pyme_moderna", "corp_limpia",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -126,47 +168,66 @@ def _generar_lineas(
     return lineas
 
 
-def _seleccionar_plantilla_compra(proveedor: dict) -> tuple[str, str]:
+def _seleccionar_plantilla_compra(proveedor: dict, seed: int) -> tuple[str, str, str]:
     """
-    Selecciona plantilla HTML y variante CSS para factura de compra.
-    Retorna (plantilla, css_variante).
+    Selecciona plantilla HTML, variante CSS y familia para factura de compra.
+    Retorna (plantilla, css_variante, familia).
+    Usa familia_factura del YAML si existe, si no asigna por heuristica.
     """
+    familia = proveedor.get("familia_factura")
     regimen = proveedor.get("regimen", "general")
     retencion = proveedor.get("retencion", 0)
 
-    if regimen in ("intracomunitario", "extracomunitario"):
-        return "factura_extranjera.html", "extranjero"
-    if retencion and float(retencion) > 0:
-        return "factura_servicios.html", "corporativo"
-    return "factura_estandar.html", "corporativo"
+    # Asignar familia automatica si no viene del YAML
+    if not familia:
+        if regimen == "intracomunitario":
+            familia = "extranjera_eu"
+        elif regimen == "extracomunitario":
+            familia = "extranjera_en"
+        elif retencion and float(retencion) > 0:
+            familia = "autonomo_pro"
+        else:
+            # Familia determinista por nombre proveedor
+            rng_fam = random.Random(hash(proveedor.get("nombre", "")) + seed)
+            familia = rng_fam.choice(_FAMILIAS_DEFECTO_COMPRA)
+
+    plantilla = _FAMILIAS_PLANTILLA.get(familia, "facturas/F04_pyme_clasica.html")
+    css_variante = "extranjero" if "extranjera" in familia else "corporativo"
+    return plantilla, css_variante, familia
 
 
-def _seleccionar_plantilla_venta(entidad: dict, cliente: dict) -> tuple[str, str]:
+def _seleccionar_plantilla_venta(entidad: dict, cliente: dict, seed: int) -> tuple[str, str, str]:
     """
-    Selecciona plantilla HTML y variante CSS para factura de venta.
-    Retorna (plantilla, css_variante).
+    Selecciona plantilla HTML, variante CSS y familia para factura de venta.
+    Retorna (plantilla, css_variante, familia).
+    Usa familia_factura_venta de la entidad o heuristica.
     """
+    familia = entidad.get("familia_factura_venta")
     tipo_entidad = entidad.get("tipo", "sl")
     css_base = entidad.get("css_variante", "corporativo")
     concepto = cliente.get("concepto", "").lower()
     pais = cliente.get("pais", "ESP")
     codimpuesto = cliente.get("codimpuesto", "IVA21")
 
-    # Cliente extranjero intracomunitario (IVA0 + pais distinto de ESP)
-    if pais != "ESP" and codimpuesto == "IVA0":
-        return "factura_extranjera.html", "extranjero"
+    # Asignar familia automatica si no viene del YAML
+    if not familia:
+        if pais != "ESP" and codimpuesto == "IVA0":
+            familia = "extranjera_eu"
+        elif any(palabra in concepto for palabra in _CONCEPTOS_SIMPLIFICADA):
+            familia = "ticket_simplificado"
+        elif tipo_entidad == "restaurante" or any(
+            palabra in concepto for palabra in _CONCEPTOS_RESTAURACION
+        ):
+            familia = "hosteleria"
+        elif tipo_entidad == "autonomo":
+            familia = "autonomo_pro"
+        else:
+            rng_fam = random.Random(hash(entidad.get("nombre", "")) + seed)
+            familia = rng_fam.choice(_FAMILIAS_DEFECTO_VENTA)
 
-    # Factura simplificada (ticket)
-    if any(palabra in concepto for palabra in _CONCEPTOS_SIMPLIFICADA):
-        return "factura_simplificada.html", css_base
-
-    # Restauracion: tipo entidad o concepto
-    if tipo_entidad == "restaurante" or any(
-        palabra in concepto for palabra in _CONCEPTOS_RESTAURACION
-    ):
-        return "factura_restauracion.html", css_base
-
-    return "factura_estandar.html", css_base
+    plantilla = _FAMILIAS_PLANTILLA.get(familia, "facturas/F04_pyme_clasica.html")
+    css_variante = "extranjero" if "extranjera" in familia else css_base
+    return plantilla, css_variante, familia
 
 
 def _detectar_edge_case_compra(proveedor: dict) -> str | None:
@@ -219,6 +280,7 @@ def generar_facturas_compra(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera las facturas de compra de una entidad para un ejercicio completo.
@@ -236,7 +298,14 @@ def generar_facturas_compra(
 
         fechas = distribuir_fechas(anio, n, rng, meses_activos=meses_activos)
 
-        plantilla, css_variante = _seleccionar_plantilla_compra(proveedor)
+        plantilla, css_variante, familia = _seleccionar_plantilla_compra(proveedor, seed)
+
+        # v2: etiquetas, formatos, variaciones CSS y perfil calidad por proveedor
+        nombre_prov = proveedor.get("nombre", slug_prov)
+        etiquetas = etiquetas_para_proveedor(nombre_prov, seed)
+        formato = formato_para_proveedor(nombre_prov, seed)
+        variaciones = generar_variaciones_css(nombre_prov, familia, seed)
+        perfil = perfil_para_proveedor(nombre_prov, seed)
         codimpuesto = proveedor.get("codimpuesto", "IVA21")
         iva_tipo = _codimpuesto_a_tipo(codimpuesto)
         retencion_pct = float(proveedor.get("retencion", 0))
@@ -274,9 +343,14 @@ def generar_facturas_compra(
             else:
                 subtipo = "estandar"
 
+            # v2: formatear fecha y numero segun proveedor
+            fecha_fmt = formatear_fecha(fecha, formato["fecha"]["id"])
+            fmt_numero_id = formato["numero"]["id"]
+
             datos_plantilla = {
                 "numero": numero,
                 "fecha": fecha.isoformat(),
+                "fecha_formateada": fecha_fmt,
                 "fecha_vencimiento": date(fecha.year, fecha.month, min(fecha.day + 30, 28)).isoformat(),
                 "trimestre": trimestre_de_fecha(fecha),
                 "emisor": {
@@ -323,6 +397,10 @@ def generar_facturas_compra(
                 },
                 "codimpuesto": codimpuesto,
                 "pagado": True,
+                # v2: etiquetas y variaciones para las plantillas
+                "etiquetas": etiquetas,
+                "variaciones_css_str": css_custom_properties_str(variaciones),
+                "formato_numero_id": fmt_numero_id,
             }
 
             metadatos = {
@@ -344,6 +422,7 @@ def generar_facturas_compra(
                 "codimpuesto": codimpuesto,
                 "pais_emisor": pais_prov,
                 "plantilla": plantilla,
+                "familia": familia,
             }
 
             docs.append(DocGenerado(
@@ -356,6 +435,12 @@ def generar_facturas_compra(
                 metadatos=metadatos,
                 error_inyectado=None,
                 edge_case=edge_case,
+                familia=familia,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas,
+                formato_fecha=formato["fecha"]["id"],
+                formato_numero=fmt_numero_id,
+                perfil_calidad=perfil,
             ))
 
     return docs
@@ -369,6 +454,7 @@ def generar_facturas_venta(
     entidad: dict,
     anio: int,
     rng: random.Random,
+    seed: int = 42,
 ) -> List[DocGenerado]:
     """
     Genera las facturas de venta de una entidad para un ejercicio completo.
@@ -381,13 +467,20 @@ def generar_facturas_venta(
     meses_activos = entidad.get("meses_activos")
     serie_entidad = entidad.get("cif", "F")[:1].upper()
 
+    # v2: etiquetas y variaciones de la ENTIDAD (emisor en ventas)
+    nombre_entidad = entidad.get("nombre", "")
+    etiquetas_ent = etiquetas_para_proveedor(nombre_entidad, seed)
+    formato_ent = formato_para_proveedor(nombre_entidad, seed)
+
     for slug_cli, cliente in clientes.items():
         frecuencia = cliente.get("frecuencia", "puntual")
         n = _n_facturas_por_frecuencia(frecuencia, rng)
 
         fechas = distribuir_fechas(anio, n, rng, meses_activos=meses_activos)
 
-        plantilla, css_variante = _seleccionar_plantilla_venta(entidad, cliente)
+        plantilla, css_variante, familia = _seleccionar_plantilla_venta(entidad, cliente, seed)
+        variaciones = generar_variaciones_css(nombre_entidad, familia, seed)
+        perfil = perfil_para_proveedor(nombre_entidad, seed)
         codimpuesto = cliente.get("codimpuesto", "IVA21")
         iva_tipo = _codimpuesto_a_tipo(codimpuesto)
         retencion_pct = float(cliente.get("retencion", 0))
@@ -430,9 +523,13 @@ def generar_facturas_venta(
             slug_archivo = _slug(cliente.get("nombre", slug_cli))
             nombre_archivo = f"{fecha.isoformat()}_{slug_archivo}_{numero}.pdf"
 
+            fecha_fmt = formatear_fecha(fecha, formato_ent["fecha"]["id"])
+            fmt_numero_id = formato_ent["numero"]["id"]
+
             datos_plantilla = {
                 "numero": numero,
                 "fecha": fecha.isoformat(),
+                "fecha_formateada": fecha_fmt,
                 "fecha_vencimiento": date(fecha.year, fecha.month, min(fecha.day + 30, 28)).isoformat(),
                 "trimestre": trimestre_de_fecha(fecha),
                 "emisor": {
@@ -480,6 +577,9 @@ def generar_facturas_venta(
                 },
                 "codimpuesto": codimpuesto,
                 "pagado": True,
+                "etiquetas": etiquetas_ent,
+                "variaciones_css_str": css_custom_properties_str(variaciones),
+                "formato_numero_id": fmt_numero_id,
             }
 
             metadatos = {
@@ -501,6 +601,7 @@ def generar_facturas_venta(
                 "codimpuesto": codimpuesto,
                 "pais_receptor": pais_cli,
                 "plantilla": plantilla,
+                "familia": familia,
             }
 
             docs.append(DocGenerado(
@@ -513,6 +614,12 @@ def generar_facturas_venta(
                 metadatos=metadatos,
                 error_inyectado=None,
                 edge_case=edge_case,
+                familia=familia,
+                variaciones_css=variaciones,
+                etiquetas_usadas=etiquetas_ent,
+                formato_fecha=formato_ent["fecha"]["id"],
+                formato_numero=fmt_numero_id,
+                perfil_calidad=perfil,
             ))
 
     return docs

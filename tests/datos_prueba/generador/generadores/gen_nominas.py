@@ -263,6 +263,86 @@ def _calcular_nomina_mensual(
 
 
 # ---------------------------------------------------------------------------
+# Helper para datos_plantilla de nominas
+# ---------------------------------------------------------------------------
+
+def _datos_plantilla_nomina(
+    calculo: dict,
+    empresa_datos: dict,
+    trabajador_datos: dict,
+    mes_nombre: str,
+    anio: int,
+    ultimo_dia: int,
+    *,
+    paga_extra: bool = False,
+    etiquetas: dict = None,
+    variaciones: dict = None,
+    formato: dict = None,
+) -> dict:
+    """
+    Construye el dict datos_plantilla para una nomina, compatible con TODAS
+    las plantillas N01-N10.
+
+    Centraliza aliases (total_devengado/total_deducido, tipo_pct, naf_ss, etc.)
+    y campos derivados (bases_cotizacion, irpf_pct) para evitar duplicacion.
+    """
+    base_cot = calculo["base_cotizacion"]
+
+    # Enriquecer deducciones con alias tipo_pct (N05 usa tipo_pct, otras usan pct)
+    deducciones = []
+    for d in calculo["deducciones"]:
+        d_copia = dict(d)
+        d_copia["tipo_pct"] = d.get("pct")
+        deducciones.append(d_copia)
+
+    # Alias en trabajador para compatibilidad con distintas plantillas
+    trabajador = dict(trabajador_datos)
+    trabajador.setdefault("naf_ss", trabajador.get("num_ss", ""))
+    trabajador.setdefault("categoria", trabajador.get("puesto", ""))
+    trabajador.setdefault("contrato_tipo", trabajador.get("tipo_contrato", ""))
+
+    # Alias en empresa
+    empresa = dict(empresa_datos)
+    empresa.setdefault("nif", empresa.get("cif", ""))
+    empresa.setdefault("cp", "")
+    empresa.setdefault("ciudad", "")
+
+    fmt_numero_id = ""
+    if formato:
+        fmt_numero_id = formato.get("numero", {}).get("id", "")
+
+    return {
+        "empresa": empresa,
+        "trabajador": trabajador,
+        "periodo": {
+            "mes": mes_nombre,
+            "anio": anio,
+            "dias_trabajados": ultimo_dia,
+        },
+        "devengos": calculo["devengos"],
+        "deducciones": deducciones,
+        "total_devengos": calculo["total_devengos"],
+        "total_devengado": calculo["total_devengos"],
+        "total_deducciones": calculo["total_deducciones"],
+        "total_deducido": calculo["total_deducciones"],
+        "liquido": calculo["liquido"],
+        "ss_empresa": calculo["ss_empresa"],
+        "paga_extra": paga_extra,
+        "especie": 0,
+        "irpf_pct": calculo.get("irpf_pct", 0),
+        "bases_cotizacion": {
+            "contingencias_comunes": base_cot,
+            "accidentes_trabajo": base_cot,
+            "horas_extra": 0.0,
+            "base_irpf": calculo["total_devengos"],
+        },
+        "etiquetas": etiquetas or {},
+        "variaciones_css_str": css_custom_properties_str(variaciones or {}),
+        "formato_numero_id": fmt_numero_id,
+    }
+
+
+# ---------------------------------------------------------------------------
 # API publica
 # ---------------------------------------------------------------------------
 
@@ -337,27 +417,12 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random, seed: int = 42
                 subtipo="mensual",
                 plantilla=plantilla_v2,
                 css_variante=css_variante,
-                datos_plantilla={
-                    "empresa": empresa_datos,
-                    "trabajador": trabajador_datos,
-                    "periodo": {
-                        "mes": _NOMBRES_MES[mes],
-                        "anio": anio,
-                        "dias_trabajados": ultimo_dia,
-                    },
-                    "devengos": calculo["devengos"],
-                    "deducciones": calculo["deducciones"],
-                    "total_devengos": calculo["total_devengos"],
-                    "total_deducciones": calculo["total_deducciones"],
-                    "liquido": calculo["liquido"],
-                    "ss_empresa": calculo["ss_empresa"],
-                    "paga_extra": False,
-                    "especie": None,
-                    # campos v2
-                    "etiquetas": etiquetas,
-                    "variaciones_css_str": css_custom_properties_str(variaciones),
-                    "formato_numero_id": formato["numero"]["id"],
-                },
+                datos_plantilla=_datos_plantilla_nomina(
+                    calculo, empresa_datos, trabajador_datos,
+                    _NOMBRES_MES[mes], anio, ultimo_dia,
+                    paga_extra=False, etiquetas=etiquetas,
+                    variaciones=variaciones, formato=formato,
+                ),
                 metadatos={
                     "fecha": date(anio, mes, min(28, ultimo_dia)).isoformat(),
                     "entidad_id": slug_entidad,
@@ -389,27 +454,12 @@ def generar_nominas(entidad: dict, anio: int, rng: random.Random, seed: int = 42
                     subtipo="paga_extra",
                     plantilla=plantilla_v2,
                     css_variante=css_variante,
-                    datos_plantilla={
-                        "empresa": empresa_datos,
-                        "trabajador": trabajador_datos,
-                        "periodo": {
-                            "mes": _NOMBRES_MES[mes_extra],
-                            "anio": anio,
-                            "dias_trabajados": _ultimo_dia_mes(anio, mes_extra),
-                        },
-                        "devengos": calculo_extra["devengos"],
-                        "deducciones": calculo_extra["deducciones"],
-                        "total_devengos": calculo_extra["total_devengos"],
-                        "total_deducciones": calculo_extra["total_deducciones"],
-                        "liquido": calculo_extra["liquido"],
-                        "ss_empresa": calculo_extra["ss_empresa"],
-                        "paga_extra": True,
-                        "especie": None,
-                        # campos v2
-                        "etiquetas": etiquetas,
-                        "variaciones_css_str": css_custom_properties_str(variaciones),
-                        "formato_numero_id": formato["numero"]["id"],
-                    },
+                    datos_plantilla=_datos_plantilla_nomina(
+                        calculo_extra, empresa_datos, trabajador_datos,
+                        _NOMBRES_MES[mes_extra], anio, _ultimo_dia_mes(anio, mes_extra),
+                        paga_extra=True, etiquetas=etiquetas,
+                        variaciones=variaciones, formato=formato,
+                    ),
                     metadatos={
                         "fecha": date(anio, mes_extra, 28).isoformat(),
                         "entidad_id": slug_entidad,
