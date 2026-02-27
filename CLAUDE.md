@@ -289,13 +289,13 @@ Tasks completados:
 
 **Design doc v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-design.md`
 **Plan implementacion v2**: `docs/plans/2026-02-27-sfce-evolucion-v2-implementation.md` (46 tasks, 5 fases)
-**Estado**: Fases A+B+C COMPLETADAS (27/46 tasks, 59%). 479 tests PASS.
+**Estado**: Fases A+B+C+D COMPLETADAS (37/46 tasks, 80%). 645 tests PASS.
 
 **Fases**:
 - A (T1-10): COMPLETADA — sfce/, normativa 5 territorios, perfil fiscal, decision con trazabilidad, cierre ejercicio
 - B (T11-19): COMPLETADA — clasificador (cascada 6 niveles), MotorReglas (OBLIGATORIO en pipeline), calculador modelos 3 categorias, notas credito. 392 tests
 - C (T20-27): COMPLETADA — BD dual SQLite/PostgreSQL (14 tablas SQLAlchemy), repositorio (PyG, balance, saldos), backend doble destino (FS+local), importador CSV/Excel, exportador universal, migrador FS→BD. 479 tests
-- D (T28-37): **PENDIENTE** — FastAPI + JWT, WebSocket, React dashboard, watcher, licencia
+- D (T28-37): COMPLETADA — FastAPI + JWT + WebSocket, React dashboard (15 paginas), file watcher, licencias. 645 tests
 - E (T38-46): PENDIENTE — naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 
 **Modulos Fase B** (sfce/core/):
@@ -325,9 +325,28 @@ Tasks completados:
 
 **Deploy**: DNS Porkbun (A record spice→65.108.60.69) + certbot SSL + Nginx conf
 
+**Modulos Fase D** (sfce/api/ + dashboard/ + scripts/):
+- `sfce/api/app.py` — FastAPI app, lifespan BD, CORS, routers
+- `sfce/api/schemas.py` — 15 modelos Pydantic (request/response)
+- `sfce/api/auth.py` — JWT auth con bcrypt, 3 roles (admin/gestor/readonly), admin por defecto
+- `sfce/api/websocket.py` — GestorWebSocket, canales por empresa, 6 tipos de evento
+- `sfce/api/rutas/` — 5 routers: empresas, documentos, contabilidad, auth, websocket
+- `sfce/db/modelos_auth.py` — modelo Usuario (15a tabla)
+- `sfce/core/licencia.py` — licencias JWT firmadas, modulos, max_empresas, verificacion
+- `scripts/watcher.py` — watchdog inbox 3 modos (manual/semi/auto), debounce
+- `dashboard/` — React 18 + TypeScript + Tailwind v4 + Vite, 15 paginas:
+  - Home (grid empresas), Login, Empresa (detalle + stats)
+  - PyG, Balance, Diario (paginado), Facturas (filtros), Activos (amortizacion)
+  - Inbox, Pipeline (WebSocket real-time), Cuarentena (resolucion interactiva)
+  - Importar (wizard 3 pasos), Exportar, Calendario fiscal, Cierre ejercicio (10 pasos)
+
+**API arranque**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
+**Dashboard dev**: `cd dashboard && npm run dev` (proxy a localhost:8000)
+
 ## Proximos pasos
 
-- **Implementar Fase D** (Tasks 28-37): FastAPI + JWT, WebSocket, React dashboard, watcher, licencia. Branch `feat/sfce-v2-fase-d` creada, directorios `sfce/api/` y `sfce/api/rutas/` creados, dependencias instaladas (fastapi, uvicorn, pyjwt, passlib, websockets, watchdog)
+- **Implementar Fase E** (Tasks 38-46): naming, cache OCR, duplicados, trabajadores nuevos, IMAP, notificaciones
 - Ejecutar pipeline SFCE contra entidades de prueba (generador v2 listo, 2343 PDFs)
 - Corregir Pastorino suplidos Primatransit (reclasificacion 600->4709)
 - Configurar backups automaticos BD FacturaScripts
+- Conectar dashboard a API real (actualmente con datos mock)
