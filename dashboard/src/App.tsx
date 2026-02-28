@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 // --- Auth ---
 const Login = lazy(() => import('@/features/auth/login-page'))
 const NotFound = lazy(() => import('@/features/not-found'))
+const OfflinePage = lazy(() => import('@/features/offline/offline-page'))
 
 // --- Home ---
 const Home = lazy(() => import('@/features/home/home-page'))
@@ -151,6 +152,7 @@ export function App() {
           <Route path="/empresa/:id/config/apariencia" element={<ConfigApariencia />} />
         </Route>
 
+        <Route path="/offline" element={<OfflinePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
