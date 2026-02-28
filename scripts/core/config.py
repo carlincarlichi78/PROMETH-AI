@@ -1,4 +1,5 @@
 """Cargador y validador de configuracion por cliente."""
+import re
 import yaml
 from pathlib import Path
 from typing import Optional
@@ -27,10 +28,23 @@ def _normalizar_cif(cif: str) -> str:
     return re.sub(r'[\s\.\-/]', '', cif).upper()
 
 
+def _slugificar(nombre: str) -> str:
+    """Convierte nombre a slug (minusculas, guiones, sin acentos)."""
+    slug = nombre.lower().strip()
+    slug = re.sub(r'[áà]', 'a', slug)
+    slug = re.sub(r'[éè]', 'e', slug)
+    slug = re.sub(r'[íì]', 'i', slug)
+    slug = re.sub(r'[óò]', 'o', slug)
+    slug = re.sub(r'[úù]', 'u', slug)
+    slug = re.sub(r'[ñ]', 'n', slug)
+    slug = re.sub(r'[^a-z0-9]+', '-', slug)
+    return slug.strip('-')
+
+
 class ConfigCliente:
     """Configuracion cargada y validada de un cliente."""
 
-    def __init__(self, data: dict, ruta: Path):
+    def __init__(self, data: dict, ruta: Path, repo=None, empresa_bd_id: int = None):
         self.data = data
         self.ruta = ruta
         self.empresa = data.get("empresa", {})
@@ -43,6 +57,8 @@ class ConfigCliente:
             "confianza_minima": 85
         })
         self._tipo_entidad = None
+        self._repo = repo
+        self._empresa_bd_id = empresa_bd_id
 
     @property
     def nombre(self) -> str:
@@ -94,8 +110,32 @@ class ConfigCliente:
     def libros_obligatorios(self) -> list:
         return self.obligaciones.get("libros_obligatorios", [])
 
+    def _overlay_a_dict(self, overlay) -> dict:
+        """Convierte overlay SQLAlchemy a dict compatible con interfaz YAML."""
+        nombre_corto = _slugificar(overlay.nombre)
+        return {
+            "cif": overlay.cif,
+            "nombre_fs": overlay.nombre,
+            "pais": overlay.pais or "ESP",
+            "divisa": "EUR",
+            "subcuenta": overlay.subcuenta_gasto or "",
+            "codimpuesto": overlay.codimpuesto or "IVA21",
+            "regimen": overlay.regimen or "general",
+            "aliases": overlay.aliases or [],
+            "_nombre_corto": nombre_corto,
+        }
+
     def buscar_proveedor_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca proveedor en config por CIF (normalizado)."""
+        """Busca proveedor por CIF. BD primero, fallback YAML."""
+        if self._repo and self._empresa_bd_id:
+            cif_norm = _normalizar_cif(cif)
+            if cif_norm:
+                overlay = self._repo.buscar_overlay_por_cif(
+                    self._empresa_bd_id, cif_norm, "proveedor"
+                )
+                if overlay:
+                    return self._overlay_a_dict(overlay)
+        # Fallback YAML
         cif_norm = _normalizar_cif(cif)
         for nombre, datos in self.proveedores.items():
             if _normalizar_cif(datos.get("cif", "")) == cif_norm:
@@ -103,7 +143,17 @@ class ConfigCliente:
         return None
 
     def buscar_proveedor_por_nombre(self, nombre: str) -> Optional[dict]:
-        """Busca proveedor por nombre o aliases."""
+        """Busca proveedor por nombre o aliases. BD primero, fallback YAML."""
+        if self._repo and self._empresa_bd_id:
+            from sfce.db.repositorio import Repositorio
+            resultado = self._repo.buscar_directorio_por_nombre(nombre)
+            if resultado:
+                overlay = self._repo.buscar_overlay_por_cif(
+                    self._empresa_bd_id, resultado.cif or "", "proveedor"
+                )
+                if overlay:
+                    return self._overlay_a_dict(overlay)
+        # Fallback YAML
         nombre_upper = nombre.upper()
         for clave, datos in self.proveedores.items():
             if clave.upper() == nombre_upper:
@@ -116,11 +166,54 @@ class ConfigCliente:
         return None
 
     def buscar_cliente_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca cliente en config por CIF (normalizado)."""
+        """Busca cliente por CIF. BD primero, fallback YAML."""
         cif_norm = _normalizar_cif(cif)
+        if not cif_norm:
+            return None
+        if self._repo and self._empresa_bd_id:
+            overlay = self._repo.buscar_overlay_por_cif(
+                self._empresa_bd_id, cif_norm, "cliente"
+            )
+            if overlay:
+                return self._overlay_a_dict(overlay)
+        # Fallback YAML
         for nombre, datos in self.clientes.items():
-            if _normalizar_cif(datos.get("cif", "")) == cif_norm:
+            cif_config = _normalizar_cif(datos.get("cif", ""))
+            if cif_config and cif_config == cif_norm:
                 return {**datos, "_nombre_corto": nombre}
+        return None
+
+    def buscar_cliente_por_nombre(self, nombre: str) -> Optional[dict]:
+        """Busca cliente por nombre o aliases. BD primero, fallback YAML."""
+        if self._repo and self._empresa_bd_id:
+            resultado = self._repo.buscar_directorio_por_nombre(nombre)
+            if resultado:
+                overlay = self._repo.buscar_overlay_por_cif(
+                    self._empresa_bd_id, resultado.cif or "", "cliente"
+                )
+                if overlay:
+                    return self._overlay_a_dict(overlay)
+        # Fallback YAML
+        nombre_upper = nombre.upper()
+        for clave, datos in self.clientes.items():
+            if clave.upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            if datos.get("nombre_fs", "").upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            for alias in datos.get("aliases", []):
+                if alias.upper() in nombre_upper or nombre_upper in alias.upper():
+                    return {**datos, "_nombre_corto": clave}
+        return None
+
+    def buscar_cliente_fallback_sin_cif(self) -> Optional[dict]:
+        """Devuelve el cliente marcado como fallback_sin_cif (ej: CLIENTES VARIOS).
+
+        Se usa cuando una FV no tiene receptor CIF identificable.
+        Criterio RD 1619/2012: facturas simplificadas y operaciones sin NIF receptor.
+        """
+        for clave, datos in self.clientes.items():
+            if datos.get("fallback_sin_cif"):
+                return {**datos, "_nombre_corto": clave}
         return None
 
     def es_intracomunitario(self, nombre_prov: str) -> bool:

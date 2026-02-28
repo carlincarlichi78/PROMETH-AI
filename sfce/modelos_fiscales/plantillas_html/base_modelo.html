@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 10px; color: #000; background: #fff; padding: 15mm; }
+  .cabecera { border: 2px solid #003366; background: #003366; color: #fff; padding: 8px 12px; margin-bottom: 10px; }
+  .cabecera h1 { font-size: 16px; font-weight: bold; }
+  .cabecera .subtitulo { font-size: 11px; margin-top: 3px; }
+  .datos-empresa { border: 1px solid #999; padding: 6px 10px; margin-bottom: 10px; display: flex; gap: 20px; }
+  .dato { flex: 1; }
+  .dato label { font-weight: bold; font-size: 9px; color: #555; text-transform: uppercase; }
+  .dato .valor { font-size: 11px; border-bottom: 1px solid #ccc; min-height: 16px; padding: 1px 0; }
+  .seccion-titulo { background: #e8edf2; border: 1px solid #003366; padding: 4px 8px;
+                    font-weight: bold; font-size: 10px; margin: 8px 0 4px 0; color: #003366; }
+  table.casillas { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.casillas th { background: #dce8f0; border: 1px solid #aaa; padding: 3px 5px;
+                       font-size: 9px; text-align: left; }
+  table.casillas td { border: 1px solid #ccc; padding: 3px 5px; font-size: 10px; vertical-align: top; }
+  table.casillas td.num-casilla { font-weight: bold; color: #003366; width: 50px; text-align: center; }
+  table.casillas td.descripcion { color: #333; }
+  table.casillas td.valor { text-align: right; font-weight: bold; width: 120px; }
+  table.casillas tr.resultado { background: #fff9e0; }
+  table.casillas tr.resultado td { font-weight: bold; }
+  .pie { margin-top: 15px; border-top: 1px solid #999; padding-top: 8px; font-size: 9px; color: #555; display: flex; justify-content: space-between; }
+  .aviso { font-size: 8px; color: #888; margin-top: 10px; font-style: italic; }
+  .sello { border: 1px solid #ccc; width: 120px; height: 50px; display: inline-block;
+           text-align: center; padding-top: 18px; font-size: 9px; color: #999; }
+</style>
+</head>
+<body>
+
+<div class="cabecera">
+  <h1>MODELO {{ modelo }} — {{ nombre_modelo }}</h1>
+  <div class="subtitulo">
+    Agencia Estatal de Administración Tributaria &nbsp;|&nbsp;
+    Ejercicio {{ ejercicio }} &nbsp;|&nbsp;
+    Período {{ periodo_nombre }}
+  </div>
+</div>
+
+<div class="datos-empresa">
+  <div class="dato" style="flex:2">
+    <label>Apellidos y nombre / Razón social</label>
+    <div class="valor">{{ empresa.get('nombre', '') }}</div>
+  </div>
+  <div class="dato">
+    <label>NIF</label>
+    <div class="valor">{{ empresa.get('nif', '') }}</div>
+  </div>
+  <div class="dato">
+    <label>Periodo</label>
+    <div class="valor">{{ periodo }}</div>
+  </div>
+  <div class="dato">
+    <label>Ejercicio</label>
+    <div class="valor">{{ ejercicio }}</div>
+  </div>
+</div>
+
+{% for seccion in secciones %}
+<div class="seccion-titulo">{{ seccion.titulo }}</div>
+<table class="casillas">
+  <thead>
+    <tr>
+      <th style="width:50px">Casilla</th>
+      <th>Concepto</th>
+      <th style="width:130px; text-align:right">Importe (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for casilla in seccion.casillas %}
+    <tr {% if casilla.destacada %}class="resultado"{% endif %}>
+      <td class="num-casilla">[{{ casilla.numero }}]</td>
+      <td class="descripcion">{{ casilla.descripcion }}</td>
+      <td class="valor">{{ casilla.valor_fmt }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+
+<div class="pie">
+  <div>
+    <strong>Fecha generación:</strong> {{ fecha_generacion }}<br>
+    <em>Generado por SFCE — Sistema de Contabilidad Evolutiva</em>
+  </div>
+  <div class="sello">Sello y firma</div>
+</div>
+
+<p class="aviso">
+  Este documento es una representación visual del modelo fiscal para archivo y revisión.
+  Para presentación ante la AEAT utilice el fichero de formato BOE generado conjuntamente.
+</p>
+
+</body>
+</html>

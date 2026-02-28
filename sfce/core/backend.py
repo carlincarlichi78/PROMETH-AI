@@ -51,9 +51,14 @@ class Backend:
 
     def actualizar_factura(self, endpoint: str, data: dict) -> dict:
         """Actualiza factura (ej: marcar pagada)."""
+        resultado = data
         if self.modo in ("fs", "dual"):
-            return self._api_put(endpoint, data)
-        return data
+            resultado = self._api_put(endpoint, data)
+
+        if self.modo in ("local", "dual") and self.repo:
+            self._actualizar_factura_local(endpoint, data)
+
+        return resultado
 
     def obtener_facturas(self, tipo: str = "proveedores", params: dict = None) -> list:
         """Obtiene facturas. tipo: 'proveedores' o 'clientes'."""
@@ -67,11 +72,17 @@ class Backend:
         return []
 
     # --- Asientos ---
-    def crear_asiento(self, data: dict) -> dict:
-        """Crea asiento contable."""
+    def crear_asiento(self, data: dict, solo_local: bool = False) -> dict:
+        """Crea asiento contable. Retorna dict con datos FS + _asiento_local_id.
+
+        Args:
+            data: datos del asiento
+            solo_local: si True, solo guarda en BD local (para sync de asientos
+                        que ya existen en FS, ej: generados por crearFactura*)
+        """
         resultado = {}
 
-        if self.modo in ("fs", "dual"):
+        if not solo_local and self.modo in ("fs", "dual"):
             try:
                 resultado = self._api_post("asientos", data)
             except Exception as e:
@@ -81,8 +92,9 @@ class Backend:
                 else:
                     raise
 
-        if self.modo in ("local", "dual") and self.repo and self.empresa_id:
-            self._guardar_asiento_local(data, resultado)
+        if self.repo and self.empresa_id:
+            asiento_local_id = self._guardar_asiento_local(data, resultado)
+            resultado["_asiento_local_id"] = asiento_local_id
 
         return resultado
 
@@ -93,17 +105,34 @@ class Backend:
         return []
 
     # --- Partidas ---
-    def crear_partida(self, data: dict) -> dict:
-        """Crea partida (linea de asiento)."""
-        if self.modo in ("fs", "dual"):
-            return self._api_post("partidas", data)
-        return data
+    def crear_partida(self, data: dict, asiento_local_id: int | None = None,
+                      solo_local: bool = False) -> dict:
+        """Crea partida (linea de asiento).
+
+        Args:
+            data: datos de la partida
+            asiento_local_id: FK al asiento en BD local
+            solo_local: si True, solo guarda en BD local (para sync)
+        """
+        resultado = data
+        if not solo_local and self.modo in ("fs", "dual"):
+            resultado = self._api_post("partidas", data)
+
+        if self.repo and asiento_local_id:
+            self._guardar_partida_local(data, resultado, asiento_local_id)
+
+        return resultado
 
     def actualizar_partida(self, idpartida: int, data: dict) -> dict:
         """Actualiza partida existente."""
+        resultado = data
         if self.modo in ("fs", "dual"):
-            return self._api_put(f"partidas/{idpartida}", data)
-        return data
+            resultado = self._api_put(f"partidas/{idpartida}", data)
+
+        if self.modo in ("local", "dual") and self.repo:
+            self._actualizar_partida_local(idpartida, data)
+
+        return resultado
 
     def obtener_partidas(self, params: dict = None) -> list:
         """Obtiene partidas con filtros."""
@@ -176,19 +205,32 @@ class Backend:
         return {"sincronizados": 0, "errores": 0}
 
     # --- Helpers privados ---
-    def _guardar_asiento_local(self, data: dict, resultado_fs: dict):
-        """Guarda asiento en BD local."""
-        from sfce.db.modelos import Asiento, Partida
+    def _guardar_asiento_local(self, data: dict, resultado_fs: dict) -> int | None:
+        """Guarda asiento en BD local. Retorna ID local del asiento."""
+        from sfce.db.modelos import Asiento
 
-        idasiento_fs = None
-        if resultado_fs and not resultado_fs.get("_pendiente_sync"):
-            # Parsear respuesta FS
+        idasiento_fs = data.get("_idasiento_fs")  # explícito para sync
+        if not idasiento_fs and resultado_fs and not resultado_fs.get("_pendiente_sync"):
             if "data" in resultado_fs:
                 idasiento_fs = resultado_fs["data"].get("idasiento")
 
+        fecha_str = data.get("fecha")
+        if fecha_str and isinstance(fecha_str, str):
+            try:
+                from datetime import datetime as dt
+                # Formato FS: DD-MM-YYYY o YYYY-MM-DD
+                if "-" in fecha_str and len(fecha_str.split("-")[0]) == 4:
+                    fecha = dt.strptime(fecha_str, "%Y-%m-%d").date()
+                else:
+                    fecha = dt.strptime(fecha_str, "%d-%m-%Y").date()
+            except ValueError:
+                fecha = date.today()
+        else:
+            fecha = date.today()
+
         asiento = Asiento(
             empresa_id=self.empresa_id,
-            fecha=date.today(),
+            fecha=fecha,
             concepto=data.get("concepto", ""),
             ejercicio=data.get("codejercicio", ""),
             idasiento_fs=idasiento_fs,
@@ -196,6 +238,7 @@ class Backend:
             sincronizado_fs=idasiento_fs is not None,
         )
         self.repo.crear(asiento)
+        return asiento.id
 
     def _guardar_factura_local(self, data: dict, resultado_fs: dict):
         """Guarda factura en BD local."""
@@ -237,3 +280,71 @@ class Backend:
             self.repo.crear(cli)
         except Exception:
             pass  # Duplicado, ignorar
+
+    def _guardar_partida_local(self, data: dict, resultado_fs: dict,
+                                asiento_local_id: int):
+        """Guarda partida en BD local."""
+        from sfce.db.modelos import Partida
+        from decimal import Decimal
+
+        idpartida_fs = None
+        if isinstance(resultado_fs, dict):
+            idpartida_fs = resultado_fs.get("idpartida") or resultado_fs.get("id")
+
+        partida = Partida(
+            asiento_id=asiento_local_id,
+            subcuenta=data.get("codsubcuenta", ""),
+            debe=Decimal(str(data.get("debe", 0))),
+            haber=Decimal(str(data.get("haber", 0))),
+            concepto=data.get("concepto", ""),
+            codimpuesto=data.get("codimpuesto", ""),
+            idpartida_fs=idpartida_fs,
+        )
+        try:
+            self.repo.crear(partida)
+        except Exception as e:
+            logger.warning(f"No se pudo guardar partida local: {e}")
+
+    def _actualizar_partida_local(self, idpartida_fs: int, data: dict):
+        """Actualiza partida en BD local por idpartida_fs."""
+        from sfce.db.modelos import Partida
+        try:
+            sesion = self.repo.sesion_factory()
+            with sesion:
+                partida = sesion.query(Partida).filter(
+                    Partida.idpartida_fs == idpartida_fs
+                ).first()
+                if partida:
+                    if "codsubcuenta" in data:
+                        partida.subcuenta = data["codsubcuenta"]
+                    if "debe" in data:
+                        partida.debe = Decimal(str(data["debe"]))
+                    if "haber" in data:
+                        partida.haber = Decimal(str(data["haber"]))
+                    sesion.commit()
+        except Exception as e:
+            logger.warning(f"No se pudo actualizar partida local (fs={idpartida_fs}): {e}")
+
+    def _actualizar_factura_local(self, endpoint: str, data: dict):
+        """Actualiza factura en BD local (ej: pagada)."""
+        from sfce.db.modelos import Factura
+        # Extraer idfactura del endpoint: "facturaproveedores/123" o "facturaclientes/123"
+        partes = endpoint.rstrip("/").split("/")
+        if len(partes) < 2:
+            return
+        try:
+            idfactura_fs = int(partes[-1])
+        except (ValueError, IndexError):
+            return
+
+        try:
+            sesion = self.repo.sesion_factory()
+            with sesion:
+                factura = sesion.query(Factura).filter(
+                    Factura.idfactura_fs == idfactura_fs
+                ).first()
+                if factura and "pagada" in data:
+                    factura.pagada = bool(int(data["pagada"]))
+                    sesion.commit()
+        except Exception as e:
+            logger.warning(f"No se pudo actualizar factura local (fs={idfactura_fs}): {e}")

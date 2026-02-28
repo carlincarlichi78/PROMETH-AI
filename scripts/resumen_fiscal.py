@@ -37,6 +37,9 @@ TRIMESTRES = {
 EMPRESAS = {
     1: {"nombre": "PASTORINO COSTA DEL SOL S.L.", "tipo": "sl"},
     2: {"nombre": "G. GONZALEZ (Gerardo Gonzalez Callejon)", "tipo": "autonomo"},
+    3: {"nombre": "EMPRESA PRUEBA S.L.", "tipo": "sl"},
+    4: {"nombre": "CHIRINGUITO SOL Y ARENA S.L.", "tipo": "sl"},
+    5: {"nombre": "ELENA NAVARRO PRECIADOS", "tipo": "autonomo"},
 }
 
 

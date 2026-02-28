@@ -1,0 +1,281 @@
+modelo: "100"
+version: "2025"
+descripcion: "IRPF — Declaracion de la Renta anual (datos de actividades economicas del negocio)"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 2000
+
+registros:
+  - tipo: identificacion
+    repetible: false
+    campos:
+      # --- Cabecera ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "100"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante (DNI o NIE)"
+
+      - nombre: apellido1_nombre
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Primer apellido y nombre (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "0A"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: tipo_tributacion
+        posicion: [60, 60]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_tributacion"
+        descripcion: "I=individual, C=conjunta matrimonial"
+
+  - tipo: actividades_economicas
+    repetible: false
+    campos:
+      # --- Rendimientos actividades economicas — estimacion directa ---
+      - nombre: casilla_0120
+        posicion: [68, 84]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0120"
+        descripcion: "Ingresos de explotacion (actividades economicas)"
+
+      - nombre: casilla_0121
+        posicion: [85, 101]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0121"
+        descripcion: "Consumos de explotacion (compras y variacion existencias)"
+
+      - nombre: casilla_0122
+        posicion: [102, 118]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0122"
+        descripcion: "Sueldos y salarios (personal)"
+
+      - nombre: casilla_0123
+        posicion: [119, 135]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0123"
+        descripcion: "Seguridad Social a cargo de la empresa"
+
+      - nombre: casilla_0124
+        posicion: [136, 152]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0124"
+        descripcion: "Arrendamientos y canones"
+
+      - nombre: casilla_0125
+        posicion: [153, 169]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0125"
+        descripcion: "Reparaciones y conservacion"
+
+      - nombre: casilla_0126
+        posicion: [170, 186]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0126"
+        descripcion: "Servicios de profesionales independientes"
+
+      - nombre: casilla_0127
+        posicion: [187, 203]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0127"
+        descripcion: "Otros servicios exteriores"
+
+      - nombre: casilla_0128
+        posicion: [204, 220]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0128"
+        descripcion: "Tributos fiscalmente deducibles"
+
+      - nombre: casilla_0129
+        posicion: [221, 237]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0129"
+        descripcion: "Gastos financieros"
+
+      - nombre: casilla_0130
+        posicion: [238, 254]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0130"
+        descripcion: "Amortizaciones fiscalmente deducibles"
+
+      - nombre: casilla_0131
+        posicion: [255, 271]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0131"
+        descripcion: "Otros gastos fiscalmente deducibles"
+
+      - nombre: casilla_0132
+        posicion: [272, 288]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0132"
+        descripcion: "Gastos de dificil justificacion (5% del rendimiento neto previo)"
+
+      - nombre: casilla_0138
+        posicion: [289, 305]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0138"
+        descripcion: "Rendimiento neto de actividades economicas previo (0120 - suma gastos)"
+
+      - nombre: casilla_0139
+        posicion: [306, 322]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0139"
+        descripcion: "Rendimiento neto de actividades economicas (definitivo)"
+
+  - tipo: liquidacion
+    repetible: false
+    campos:
+      # --- Base imponible general ---
+      - nombre: casilla_0435
+        posicion: [323, 339]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0435"
+        descripcion: "Base imponible general"
+
+      - nombre: casilla_0445
+        posicion: [340, 356]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0445"
+        descripcion: "Base imponible del ahorro"
+
+      - nombre: casilla_0500
+        posicion: [357, 373]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0500"
+        descripcion: "Base liquidable general"
+
+      - nombre: casilla_0510
+        posicion: [374, 390]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0510"
+        descripcion: "Base liquidable del ahorro"
+
+      - nombre: casilla_0545
+        posicion: [391, 407]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0545"
+        descripcion: "Cuota integra estatal"
+
+      - nombre: casilla_0546
+        posicion: [408, 424]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0546"
+        descripcion: "Cuota integra autonomica"
+
+      - nombre: casilla_0595
+        posicion: [425, 441]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0595"
+        descripcion: "Cuota liquida estatal"
+
+      - nombre: casilla_0596
+        posicion: [442, 458]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0596"
+        descripcion: "Cuota liquida autonomica"
+
+      - nombre: casilla_0598
+        posicion: [459, 475]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0598"
+        descripcion: "Cuota liquida total (estatal + autonomica)"
+
+      # --- Retenciones y pagos a cuenta ---
+      - nombre: casilla_0600
+        posicion: [476, 492]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0600"
+        descripcion: "Retenciones e ingresos a cuenta (trabajo, actividades, etc.)"
+
+      - nombre: casilla_0610
+        posicion: [493, 509]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0610"
+        descripcion: "Pagos fraccionados (Mod. 130 o 131)"
+
+      - nombre: casilla_0611
+        posicion: [510, 526]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0611"
+        descripcion: "Cuota diferencial (0598 - 0600 - 0610)"
+
+      - nombre: casilla_0698
+        posicion: [527, 543]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.0698"
+        descripcion: "Resultado de la declaracion (a ingresar o a devolver)"
+
+      - nombre: blancos_544_2000
+        posicion: [544, 2000]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_0598 == casilla_0595 + casilla_0596"
+    nivel: error
+    mensaje: "Cuota liquida total (0598) debe ser la suma de cuota estatal y autonomica"
+
+  - regla: "casilla_0611 == casilla_0598 - casilla_0600 - casilla_0610"
+    nivel: error
+    mensaje: "Cuota diferencial (0611) = cuota liquida - retenciones - pagos fraccionados"
+
+  - regla: "casilla_0138 == casilla_0120 - casilla_0121 - casilla_0122 - casilla_0123 - casilla_0124 - casilla_0125 - casilla_0126 - casilla_0127 - casilla_0128 - casilla_0129 - casilla_0130 - casilla_0131"
+    nivel: error
+    mensaje: "Rendimiento neto previo (0138) no coincide con ingresos menos gastos"
+
+  - regla: "casilla_0435 >= 0"
+    nivel: advertencia
+    mensaje: "Base imponible general negativa — revisar si hay bases negativas de ejercicios anteriores"

@@ -1,5 +1,121 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-28 — Sesion: Dashboard Rewrite Stream A (ejecutar plan)
+
+**Objetivo**: Ejecutar Stream A del plan de implementacion del dashboard rewrite.
+
+**Trabajo realizado**:
+- A1-A7: Dependencias, path alias, Zustand stores, API client, React Query, formatters, layout system (AppShell, Header, Sidebar, Breadcrumbs), componentes compartidos (KPICard, ChartCard, DataTable, PageHeader, EstadoVacio), stubs de todas las paginas
+- A8: Home page — selector empresa (tarjetas con CIF/forma juridica/regimen IVA), KPIs (ingresos/gastos/resultado/IVA/cobros/pagos), AreaChart evolucion mensual, PieChart gastos por categoria, timeline actividad reciente
+- A9: Contabilidad 8 paginas — PyG, Balance, Diario (tabla expandible partidas), Plan Cuentas, Conciliacion (stub), Amortizaciones, Cierre (stepper), Apertura
+- A10: Facturacion 5 paginas — Emitidas, Recibidas, Cobros/Pagos aging (4 buckets), Presupuestos (stub), Contratos (stub)
+- A11: Fiscal 4 paginas — Calendario, Modelos, Generar, Historico
+- A12: Documentos 4 paginas — Inbox, Pipeline (Progress bars), Cuarentena, Archivo
+- A13: RRHH 2 paginas — Nominas (masa salarial), Trabajadores (DataTable)
+- A14: Borrar 20 archivos src/pages/ (paginas antiguas)
+- A15: Dark mode — hook useThemeEffect, toggle Header, variables CSS .dark ya existian
+- A16: TypeScript 0 errores, vite build OK (4.07s)
+- Fix: stubs Stream B (economico/) usaban prop `empresaId` en lugar de `useParams` → corregido
+- Fix: errores TS en configuracion/ (integraciones, usuarios) → corregido
+- Fix: errores TS en copilot/ → corregido
+
+**Estado final**: 40 paginas en 13 modulos, TypeScript limpio, build OK, push a GitHub.
+**Commits**: 10 commits en feat/sfce-v2-fase-e (A1-A16 + fix + docs)
+
+---
+
+## 2026-02-27 — Sesion: Dashboard Rewrite Design + FS Admin Setup
+
+**Objetivo**: Auditar dashboard actual, disenar rewrite completo como producto SaaS, configurar admin en FacturaScripts.
+
+**Trabajo realizado**:
+- Auditoria completa dashboard (frontend 19 paginas ~5700 LOC + backend 35 endpoints)
+- Brainstorming interactivo: stack, arquitectura, 38 paginas en 10 secciones
+- Modulo economico-financiero: 30+ ratios, KPIs sectoriales, tesoreria, centros coste, scoring
+- Copiloto IA: 6 capas (prompt, RAG, function calling, knowledge base, feedback, respuestas enriquecidas)
+- Design doc completo: `docs/plans/2026-02-27-dashboard-rewrite-design.md` (590 lineas)
+- FacturaScripts: creado usuario `carloscanetegomez` (admin nivel 99) + empresa 6 "GESTORIA CARLOS CANETE"
+- CLAUDE.md reducido de 468 a 132 lineas
+
+**Stack aprobado**: shadcn/ui + Recharts + React Query + Zustand + React Hook Form + Zod + Tailwind v4
+
+**Pendiente**: plan de implementacion (writing-plans skill), luego ejecucion rewrite
+
+**Commit**: 35ed2fe en `feat/sfce-v2-fase-e`
+
+---
+
+## 2026-02-27 — Sesion: Dual Backend FS+BD local + Dashboard operativo
+
+**Objetivo**: Pipeline actualice automaticamente la BD local (dashboard) al registrar en FS, sin migracion manual.
+
+**Trabajo realizado**:
+- Implementado dual backend (`sfce/core/backend.py`) con 3 modos: fs, local, dual
+- Pipeline instancia `Backend(modo="dual")` y lo pasa a registration/correction/asientos_directos
+- `_sincronizar_asientos_factura_a_bd()` captura asientos post-correcciones en BD local
+- Param `solo_local=True` para sync sin reenviar a FS
+- Migradas 5 empresas a SQLite (205 asientos empresa 5)
+- Dashboard operativo: API FastAPI (8000) + Vite dev (3000) con proxy
+- `resumen_fiscal.py` ampliado con empresas 3, 4, 5
+- Fix `launch.json`: Vite dev server en vez de static serve (proxy necesario)
+
+**Verificacion**:
+- Pipeline 1 SUM (EMASAGRA) → asiento sincronizado a BD (id=391, idasiento_fs=2131, 3 partidas)
+- Antes: 205 asientos, despues: 207 asientos en empresa 5
+
+**Archivos modificados**: backend.py, registration.py, correction.py, asientos_directos.py, pipeline.py, resumen_fiscal.py, launch.json
+
+**Commit**: f0c8909 en `feat/sfce-v2-fase-e`
+
+---
+
+## 2026-02-27 — Sesion: E2E dry-run elena-navarro + pipeline fix
+
+**Objetivo**: Ejecutar pipeline SFCE contra elena-navarro (generador v2) para validar ingesta multi-tipo.
+
+**Trabajo realizado**:
+- Creado config.yaml elena-navarro desde empresas.yaml (10 proveedores, 3 clientes, 1 trabajador)
+- Creado .env con API keys (FS, Mistral, OpenAI, Gemini) — anadido a .gitignore
+- Muestra estratificada 30% (60/199 PDFs) en inbox_muestra/ para controlar costes OCR
+- Dry-run exitoso: 41 procesados, 19 cuarentena, score 100%
+
+**Bug fix**:
+- `PatronRecurrente` (dataclass) no serializable a JSON en pipeline.py → `dataclasses.asdict()`
+
+**Hallazgos**:
+- FC/BAN/NOM/RLC/IMP: 100% deteccion
+- FV: 27% — clientes sin CIF van a cuarentena (problema sistemico)
+- SUM: 0% → proveedores faltaban en config (Endesa, Emasagra, Movistar, Mapfre anadidos post-test)
+- GPT-4o rate limited (30K TPM) → Tier 1 degradado frecuentemente
+- OCR Tiers: T0=10 (24%), T1=30 (73%), T2=1 (2%)
+
+**Propuesta proxima sesion**: Directorio empresas — BD compartida proveedores/clientes con auto-resolve CIF
+
+**Commit**: d6bca4e en `feat/sfce-v2-fase-e`
+
+---
+
+## 2026-02-27 — Sesion: SFCE v2 Fase E (Ingesta Inteligente)
+
+**Objetivo**: Implementar Fase E del plan SFCE Evolucion v2 (Tasks 38-46).
+
+**Fase E completada (Tasks 38-46)**:
+- T38: nombres.py — convencion naming carpetas/documentos (30 tests)
+- T39: cache_ocr.py — cache .ocr.json junto al PDF con SHA256 (31 tests)
+- T40: duplicados.py — deteccion duplicados seguro/posible/ninguno (32 tests)
+- T41: detectar_trabajador + agregar_trabajador con persistencia YAML (11 tests)
+- T42: ingesta_email.py — IMAP, adjuntos PDF, enrutamiento por remitente (34 tests)
+- T43: notificaciones.py — 7 tipos, gestor multicanal log/email/websocket (59 tests)
+- T44: recurrentes.py — patrones facturas recurrentes + alertas faltantes (32 tests)
+- T45: generar_periodicas.py — asientos automaticos amortizaciones/provisiones (49 tests)
+- T46: tests integracion Fase E — 8 escenarios cross-modulo (31 tests)
+
+**Infra**: PR #1 mergeada, branch feat/sfce-v2-fase-e creada desde main
+**Tests totales**: 954 PASS (+309 nuevos)
+**Progreso plan v2**: 46/46 tasks (100%) — PLAN COMPLETADO
+
+---
+
 ## 2026-02-27 — Sesion: SFCE v2 Fase D (API + Dashboard + Infra GitHub)
 
 **Objetivo**: Implementar Fase D del plan SFCE Evolucion v2.

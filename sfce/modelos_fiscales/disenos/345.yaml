@@ -1,0 +1,158 @@
+modelo: "345"
+version: "2025"
+descripcion: "Planes, fondos de pensiones y sistemas alternativos — declaracion anual de participes"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion registro tipo 1 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "345"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del plan o fondo de pensiones declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Denominacion del plan o fondo de pensiones (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "0A"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: clave_tipo_plan
+        posicion: [61, 62]
+        tipo: alfanumerico
+        fuente: "casillas.clave_tipo_plan"
+        descripcion: "Tipo de plan: 01=plan pensiones, 02=mutualidad, 03=seguro colectivo, 04=plan prevision asegurado"
+
+      - nombre: num_participes
+        posicion: [63, 69]
+        tipo: numerico
+        fuente: "casillas.num_participes"
+        descripcion: "Numero total de participes declarados"
+
+      - nombre: total_aportaciones
+        posicion: [70, 86]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_aportaciones"
+        descripcion: "Total de aportaciones del ejercicio"
+
+      - nombre: blancos_87_500
+        posicion: [87, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: participe
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=participe)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "345"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del plan declarante"
+
+      - nombre: nif_participe
+        posicion: [18, 26]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF o NIE del participe"
+
+      - nombre: nombre_participe
+        posicion: [27, 66]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Apellidos y nombre del participe (40 chars)"
+
+      - nombre: aportaciones_participe
+        posicion: [67, 83]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.aportaciones_participe"
+        descripcion: "Aportaciones del propio participe en el ejercicio"
+
+      - nombre: aportaciones_empresa
+        posicion: [84, 100]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.aportaciones_empresa"
+        descripcion: "Aportaciones de la empresa promotora en nombre del participe"
+
+      - nombre: rescates_prestaciones
+        posicion: [101, 117]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.rescates_prestaciones"
+        descripcion: "Prestaciones o rescates percibidos en el ejercicio"
+
+      - nombre: blancos_118_500
+        posicion: [118, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "num_participes >= 1"
+    nivel: error
+    mensaje: "Debe haber al menos un participe declarado"
+
+  - regla: "total_aportaciones >= 0"
+    nivel: error
+    mensaje: "El total de aportaciones no puede ser negativo"
+
+  - regla: "clave_tipo_plan in ['01', '02', '03', '04']"
+    nivel: error
+    mensaje: "Clave de tipo de plan debe ser 01, 02, 03 o 04"

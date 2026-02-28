@@ -1,0 +1,225 @@
+modelo: "349"
+version: "2025"
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: tipo1
+    repetible: false
+    campos:
+      # --- Identificacion del registro cabecera ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro cabecera (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "349"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: apellidos_nombre
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 caracteres)"
+
+      - nombre: telefono
+        posicion: [58, 66]
+        tipo: telefono
+        fuente: "empresa.telefono"
+        descripcion: "Telefono de contacto"
+
+      - nombre: periodo
+        posicion: [67, 68]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T/2T/3T/4T o 01-12 (mensual) o AN (anual)"
+
+      - nombre: indicador_complementaria
+        posicion: [69, 69]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "C si es complementaria, espacio si no"
+
+      - nombre: indicador_sustitutiva
+        posicion: [70, 70]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "S si es sustitutiva, espacio si no"
+
+      - nombre: num_justificante_anterior
+        posicion: [71, 83]
+        tipo: numerico
+        valor_fijo: "0000000000000"
+        descripcion: "Num. justificante declaracion anterior (complementaria/sustitutiva)"
+
+      - nombre: num_declarados
+        posicion: [84, 92]
+        tipo: numerico
+        fuente: "meta.num_declarados"
+        descripcion: "Numero total de operadores declarados"
+
+      - nombre: importe_total_entregas
+        posicion: [93, 107]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_entregas"
+        decimales: 2
+        descripcion: "Importe total de entregas (operaciones E y T)"
+
+      - nombre: importe_total_adquisiciones
+        posicion: [108, 122]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_adquisiciones"
+        decimales: 2
+        descripcion: "Importe total de adquisiciones (operaciones A)"
+
+      - nombre: importe_total_servicios_prestados
+        posicion: [123, 137]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_servicios_prestados"
+        decimales: 2
+        descripcion: "Importe total servicios prestados intracomunitarios (S)"
+
+      - nombre: importe_total_servicios_recibidos
+        posicion: [138, 152]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_servicios_recibidos"
+        decimales: 2
+        descripcion: "Importe total servicios recibidos intracomunitarios (I)"
+
+      - nombre: importe_total_triangulares
+        posicion: [153, 167]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_triangulares"
+        decimales: 2
+        descripcion: "Importe total operaciones triangulares (T)"
+
+      - nombre: relleno
+        posicion: [168, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Relleno hasta longitud 500"
+
+  - tipo: tipo2
+    repetible: true
+    campos:
+      # --- Registro detalle por operador intracomunitario ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro detalle (siempre 2)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "349"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nif_operador
+        posicion: [18, 29]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "VAT number del operador intracomunitario (con prefijo pais, max 12)"
+
+      - nombre: nombre_operador
+        posicion: [30, 69]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre o razon social del operador (40 caracteres)"
+
+      - nombre: clave_operacion
+        posicion: [70, 70]
+        tipo: alfanumerico
+        fuente: "declarado.clave_operacion"
+        descripcion: "Clave: E=entrega bienes, A=adquisicion bienes, S=prestacion servicios, I=recepcion servicios, T=operacion triangular"
+
+      - nombre: indicador_rectificativa
+        posicion: [71, 71]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "R si es rectificativa, espacio si no"
+
+      - nombre: periodo_rectificado
+        posicion: [72, 73]
+        tipo: alfanumerico
+        valor_fijo: "  "
+        descripcion: "Periodo que se rectifica (solo si indicador_rectificativa=R)"
+
+      - nombre: ejercicio_rectificado
+        posicion: [74, 77]
+        tipo: numerico
+        valor_fijo: "0000"
+        descripcion: "Ejercicio que se rectifica (solo si rectificativa)"
+
+      - nombre: base_imponible
+        posicion: [78, 92]
+        tipo: numerico_signo
+        fuente: "declarado.base_imponible"
+        decimales: 2
+        descripcion: "Importe de la operacion (base imponible en EUR)"
+
+      - nombre: base_imponible_rectificada
+        posicion: [93, 107]
+        tipo: numerico_signo
+        valor_fijo: "000000000000000"
+        decimales: 2
+        descripcion: "Importe rectificado (solo si rectificativa)"
+
+      - nombre: relleno
+        posicion: [108, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Relleno hasta longitud 500"
+
+validaciones:
+  - regla: "sum(tipo2.base_imponible donde clave_operacion in ['E','T']) == importe_total_entregas"
+    nivel: error
+    mensaje: "La suma de entregas e intracomunitarias triangulares (tipo2) no coincide con el total de entregas (tipo1)"
+
+  - regla: "sum(tipo2.base_imponible donde clave_operacion == 'A') == importe_total_adquisiciones"
+    nivel: error
+    mensaje: "La suma de adquisiciones (tipo2) no coincide con el total de adquisiciones (tipo1)"
+
+  - regla: "sum(tipo2.base_imponible donde clave_operacion == 'S') == importe_total_servicios_prestados"
+    nivel: error
+    mensaje: "La suma de servicios prestados (tipo2) no coincide con el total declarado (tipo1)"
+
+  - regla: "sum(tipo2.base_imponible donde clave_operacion == 'I') == importe_total_servicios_recibidos"
+    nivel: error
+    mensaje: "La suma de servicios recibidos (tipo2) no coincide con el total declarado (tipo1)"
+
+  - regla: "count(tipo2) == num_declarados"
+    nivel: error
+    mensaje: "El numero de registros tipo2 no coincide con num_declarados del tipo1"
+
+  - regla: "clave_operacion in ['E', 'A', 'S', 'I', 'T']"
+    nivel: error
+    mensaje: "Clave de operacion invalida: debe ser E, A, S, I o T"

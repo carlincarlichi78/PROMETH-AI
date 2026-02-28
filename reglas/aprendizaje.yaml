@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-02-27T10:53:49.655094'
+ultima_actualizacion: '2026-02-27T22:06:54.511547'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -11,7 +11,7 @@ patrones:
   - ANT
   aprendido: '2026-02-26'
   exitos: 4
-  fallos: 10
+  fallos: 18
   origen: manual
   descripcion: Proveedor/cliente no existe en FS — crear desde datos OCR
 - id: base_002
@@ -445,3 +445,94 @@ patrones:
   origen: auto
   error_original: No se encontro entidad en FS para 20251103 Gerardo Evocare Electrodos
     ESTÉTICA.pdf
+- id: auto_20260227_195714
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-02\-03_alumnos\-clases\-de\-pilates_2ALUM\-2025\-0002\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:57:14.873272'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-02-03_alumnos-clases-de-pilates_2ALUM-2025-0002.pdf
+- id: auto_20260227_195716
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-02\-06_pacientes\-fisioterapia\-exento_2PACI\-2025\-0002\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:57:16.160535'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-02-06_pacientes-fisioterapia-exento_2PACI-2025-0002.pdf
+- id: auto_20260227_195726
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-03\-13_alumnos\-clases\-de\-pilates_2ALUM\-2025\-0003\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:57:26.306251'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-03-13_alumnos-clases-de-pilates_2ALUM-2025-0003.pdf
+- id: auto_20260227_195754
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-06\-04_alumnos\-clases\-de\-pilates_2ALUM\-2025\-0006\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:57:54.828282'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-06-04_alumnos-clases-de-pilates_2ALUM-2025-0006.pdf
+- id: auto_20260227_195758
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-06\-26_pacientes\-fisioterapia\-exento_2PACI\-2025\-0006\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:57:58.608235'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-06-26_pacientes-fisioterapia-exento_2PACI-2025-0006.pdf
+- id: auto_20260227_195806
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-07\-08_pacientes\-fisioterapia\-exento_2PACI\-2025\-0007\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:58:06.320136'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-07-08_pacientes-fisioterapia-exento_2PACI-2025-0007.pdf
+- id: auto_20260227_195819
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-09\-23_alumnos\-clases\-de\-pilates_2ALUM\-2025\-0009\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:58:19.965341'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-09-23_alumnos-clases-de-pilates_2ALUM-2025-0009.pdf
+- id: auto_20260227_195831
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ 2025\-11\-14_alumnos\-clases\-de\-pilates_2ALUM\-2025\-0011\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-02-27T19:58:31.333002'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para 2025-11-14_alumnos-clases-de-pilates_2ALUM-2025-0011.pdf
+- id: auto_20260227_195842
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://contabilidad\.lemonfresh\-tuc\.com/api/3/asientos
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - RLC
+  aprendido: '2026-02-27T19:58:42.241732'
+  exitos: 11
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://contabilidad.lemonfresh-tuc.com/api/3/asientos'
+  ultimo_exito: '2026-02-27T21:15:14.647035'

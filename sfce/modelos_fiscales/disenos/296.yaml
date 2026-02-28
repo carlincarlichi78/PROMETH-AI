@@ -1,0 +1,167 @@
+modelo: "296"
+version: "2025"
+descripcion: "IRNR — Resumen anual de retenciones e ingresos a cuenta a no residentes sin EP"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion registro tipo 1 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "296"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del retenedor o pagador"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos o razon social del retenedor (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "0A"
+        descripcion: "Periodo (0A = resumen anual)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Totales del resumen ---
+      - nombre: total_perceptores
+        posicion: [68, 74]
+        tipo: numerico
+        fuente: "casillas.total_perceptores"
+        descripcion: "Total numero de perceptores declarados"
+
+      - nombre: total_base
+        posicion: [75, 91]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_base"
+        descripcion: "Suma total de bases de retencion"
+
+      - nombre: total_retenciones
+        posicion: [92, 108]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_retenciones"
+        descripcion: "Suma total de retenciones e ingresos a cuenta"
+
+      - nombre: blancos_109_500
+        posicion: [109, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: declarado
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=declarado no residente)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "296"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del retenedor"
+
+      - nombre: nif_no_residente
+        posicion: [18, 26]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF/NIE del no residente"
+
+      - nombre: nombre_no_residente
+        posicion: [27, 66]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre del no residente (40 chars)"
+
+      - nombre: pais_residencia
+        posicion: [67, 68]
+        tipo: alfanumerico
+        fuente: "declarado.codigo_pais"
+        descripcion: "Codigo pais de residencia"
+
+      - nombre: clave_naturaleza_renta
+        posicion: [69, 70]
+        tipo: alfanumerico
+        fuente: "declarado.clave_renta"
+        descripcion: "Clave de la naturaleza de la renta (01-24)"
+
+      - nombre: base_retencion
+        posicion: [71, 87]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.base_retencion"
+        descripcion: "Base de retencion de este perceptor"
+
+      - nombre: retencion_ingresada
+        posicion: [88, 104]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.retencion"
+        descripcion: "Retencion o ingreso a cuenta practicado"
+
+      - nombre: blancos_105_500
+        posicion: [105, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "total_perceptores >= 1"
+    nivel: error
+    mensaje: "Debe existir al menos un perceptor no residente declarado"
+
+  - regla: "total_base >= 0"
+    nivel: error
+    mensaje: "La base total no puede ser negativa"

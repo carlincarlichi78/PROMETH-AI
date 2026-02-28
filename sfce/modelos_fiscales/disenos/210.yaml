@@ -1,0 +1,141 @@
+modelo: "210"
+version: "2025"
+descripcion: "IRNR — Impuesto sobre la Renta de No Residentes sin establecimiento permanente"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "210"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_retenedor
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del retenedor o pagador (declarante)"
+
+      - nombre: nombre_retenedor
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos/razon social del retenedor"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T, 2T, 3T, 4T o mes (01-12)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Datos del no residente ---
+      - nombre: nif_no_residente
+        posicion: [68, 76]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF o NIE del no residente"
+
+      - nombre: nombre_no_residente
+        posicion: [77, 116]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre o razon social del no residente (40 chars)"
+
+      - nombre: pais_residencia
+        posicion: [117, 118]
+        tipo: alfanumerico
+        fuente: "declarado.codigo_pais"
+        descripcion: "Codigo de pais de residencia fiscal"
+
+      # --- Liquidacion ---
+      - nombre: clave_naturaleza_renta
+        posicion: [119, 120]
+        tipo: alfanumerico
+        fuente: "casillas.clave_naturaleza_renta"
+        descripcion: "Clave naturaleza renta: 01=dividendos, 02=intereses, 07=arrendamiento, 24=otras"
+
+      - nombre: casilla_04
+        posicion: [121, 137]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Base imponible de la renta"
+
+      - nombre: casilla_05
+        posicion: [138, 140]
+        tipo: numerico
+        fuente: "casillas.05"
+        descripcion: "Tipo de gravamen aplicado (% * 100, ej: 19% -> 1900)"
+
+      - nombre: casilla_06
+        posicion: [141, 157]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.06"
+        descripcion: "Cuota (base * tipo / 100)"
+
+      - nombre: casilla_07
+        posicion: [158, 174]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.07"
+        descripcion: "Deducciones por convenio de doble imposicion"
+
+      - nombre: casilla_08
+        posicion: [175, 191]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.08"
+        descripcion: "Retenciones practicadas"
+
+      - nombre: casilla_09
+        posicion: [192, 208]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.09"
+        descripcion: "Resultado (cuota - deducciones - retenciones)"
+
+      - nombre: blancos_209_500
+        posicion: [209, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_06 == casilla_04 * casilla_05 / 10000"
+    nivel: error
+    mensaje: "Cuota (06) debe ser base (04) por tipo (05) dividido entre 10000"
+
+  - regla: "casilla_09 == casilla_06 - casilla_07 - casilla_08"
+    nivel: error
+    mensaje: "Resultado (09) debe ser cuota menos deducciones y retenciones"

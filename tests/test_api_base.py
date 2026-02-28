@@ -345,9 +345,10 @@ class TestContabilidad:
         resp = client.get("/api/contabilidad/1/diario")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 2
-        # Primer asiento tiene 2 partidas
-        asiento1 = data[0]
+        # El endpoint devuelve respuesta paginada: {"asientos": [...], "total": N, ...}
+        assert "asientos" in data
+        assert data["total"] == 2
+        asiento1 = data["asientos"][0]
         assert asiento1["numero"] == 1
         assert len(asiento1["partidas"]) == 2
 
@@ -355,20 +356,20 @@ class TestContabilidad:
         resp = client.get("/api/contabilidad/1/diario?limit=1&offset=0")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 1
-        assert data[0]["numero"] == 1
+        assert len(data["asientos"]) == 1
+        assert data["asientos"][0]["numero"] == 1
 
         resp2 = client.get("/api/contabilidad/1/diario?limit=1&offset=1")
         data2 = resp2.json()
-        assert len(data2) == 1
-        assert data2[0]["numero"] == 2
+        assert len(data2["asientos"]) == 1
+        assert data2["asientos"][0]["numero"] == 2
 
     def test_diario_filtro_fecha(self, client, datos_base):
         resp = client.get("/api/contabilidad/1/diario?desde=2025-01-16&hasta=2025-01-31")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 1
-        assert data[0]["numero"] == 2
+        assert len(data["asientos"]) == 1
+        assert data["asientos"][0]["numero"] == 2
 
     def test_diario_empresa_404(self, client):
         resp = client.get("/api/contabilidad/999/diario")

@@ -1,0 +1,213 @@
+modelo: "036"
+version: "2025"
+descripcion: "Censo de empresarios, profesionales y retenedores — declaracion censal completa"
+periodicidad: aperiodico
+tipo_formato: posicional
+longitud_registro: 2000
+
+registros:
+  - tipo: identificacion
+    repetible: false
+    campos:
+      # --- Cabecera del registro ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "036"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio de presentacion (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "00"
+        descripcion: "Periodo (00 = aperiodico)"
+
+      # --- Tipo de declaracion ---
+      - nombre: tipo_declaracion
+        posicion: [60, 60]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_declaracion"
+        descripcion: "A=alta, M=modificacion, B=baja"
+
+      - nombre: causa_presentacion
+        posicion: [61, 62]
+        tipo: alfanumerico
+        fuente: "casillas.causa_presentacion"
+        descripcion: "Causa de presentacion (01=inicio actividad, 02=modificacion datos, etc.)"
+
+      # --- Datos identificativos del declarante ---
+      - nombre: fecha_nacimiento_constitucion
+        posicion: [63, 70]
+        tipo: fecha
+        fuente: "casillas.fecha_nacimiento_constitucion"
+        descripcion: "Fecha nacimiento (PF) o constitucion (PJ) AAAAMMDD"
+
+      - nombre: codigo_pais_residencia
+        posicion: [71, 72]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_pais_residencia"
+        descripcion: "Codigo pais de residencia (ES para Espana)"
+
+      - nombre: tipo_entidad
+        posicion: [73, 74]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_entidad"
+        descripcion: "Forma juridica: 01=SA, 02=SL, 03=autonomo, 04=comunidad bienes, etc."
+
+      # --- Domicilio fiscal ---
+      - nombre: tipo_via_fiscal
+        posicion: [75, 76]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_via_fiscal"
+        descripcion: "Tipo de via del domicilio fiscal (CL, AV, PL, etc.)"
+
+      - nombre: nombre_via_fiscal
+        posicion: [77, 116]
+        tipo: alfanumerico
+        fuente: "casillas.nombre_via_fiscal"
+        descripcion: "Nombre de la via del domicilio fiscal (40 chars)"
+
+      - nombre: numero_via_fiscal
+        posicion: [117, 121]
+        tipo: alfanumerico
+        fuente: "casillas.numero_via_fiscal"
+        descripcion: "Numero en la via"
+
+      - nombre: codigo_postal_fiscal
+        posicion: [122, 126]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_postal_fiscal"
+        descripcion: "Codigo postal domicilio fiscal"
+
+      - nombre: municipio_fiscal
+        posicion: [127, 166]
+        tipo: alfanumerico
+        fuente: "casillas.municipio_fiscal"
+        descripcion: "Municipio del domicilio fiscal (40 chars)"
+
+      - nombre: provincia_fiscal
+        posicion: [167, 168]
+        tipo: alfanumerico
+        fuente: "casillas.provincia_fiscal"
+        descripcion: "Codigo de provincia (01-52)"
+
+      # --- Actividad economica ---
+      - nombre: indicador_actividad_economica
+        posicion: [169, 169]
+        tipo: alfanumerico
+        fuente: "casillas.indicador_actividad_economica"
+        descripcion: "S=si ejerce actividad economica, N=no"
+
+      - nombre: codigo_iae_principal
+        posicion: [170, 173]
+        tipo: alfanumerico
+        fuente: "casillas.codigo_iae_principal"
+        descripcion: "Codigo IAE actividad principal (4 digits)"
+
+      - nombre: fecha_inicio_actividad
+        posicion: [174, 181]
+        tipo: fecha
+        fuente: "casillas.fecha_inicio_actividad"
+        descripcion: "Fecha inicio actividad principal AAAAMMDD"
+
+      # --- Regimen IVA ---
+      - nombre: regimen_iva_general
+        posicion: [182, 182]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_iva_general"
+        descripcion: "S=inscrito en regimen general IVA"
+
+      - nombre: regimen_iva_simplificado
+        posicion: [183, 183]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_iva_simplificado"
+        descripcion: "S=inscrito en regimen simplificado IVA (modulos)"
+
+      - nombre: regimen_recargo_equivalencia
+        posicion: [184, 184]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_recargo_equivalencia"
+        descripcion: "S=inscrito en recargo de equivalencia"
+
+      - nombre: regimen_iva_especial_agricultura
+        posicion: [185, 185]
+        tipo: alfanumerico
+        fuente: "casillas.regimen_iva_especial_agricultura"
+        descripcion: "S=inscrito en REAG (regimen especial agricultura)"
+
+      # --- Obligaciones periodicas ---
+      - nombre: obligado_303
+        posicion: [186, 186]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_303"
+        descripcion: "S=obligado a presentar Mod. 303 (IVA trimestral)"
+
+      - nombre: obligado_111
+        posicion: [187, 187]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_111"
+        descripcion: "S=obligado a presentar Mod. 111 (retenciones trabajo)"
+
+      - nombre: obligado_130
+        posicion: [188, 188]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_130"
+        descripcion: "S=obligado a presentar Mod. 130 (pago fraccionado IRPF)"
+
+      - nombre: obligado_115
+        posicion: [189, 189]
+        tipo: alfanumerico
+        fuente: "casillas.obligado_115"
+        descripcion: "S=obligado a presentar Mod. 115 (retenciones alquiler)"
+
+      # --- Datos de contacto ---
+      - nombre: telefono
+        posicion: [190, 198]
+        tipo: telefono
+        fuente: "casillas.telefono"
+        descripcion: "Telefono de contacto (9 digits)"
+
+      - nombre: email
+        posicion: [199, 258]
+        tipo: alfanumerico
+        fuente: "casillas.email"
+        descripcion: "Correo electronico de contacto (60 chars)"
+
+      - nombre: blancos_259_2000
+        posicion: [259, 2000]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "tipo_declaracion in ['A', 'M', 'B']"
+    nivel: error
+    mensaje: "Tipo declaracion debe ser A (alta), M (modificacion) o B (baja)"
+
+  - regla: "indicador_actividad_economica in ['S', 'N']"
+    nivel: error
+    mensaje: "Indicador actividad economica debe ser S o N"

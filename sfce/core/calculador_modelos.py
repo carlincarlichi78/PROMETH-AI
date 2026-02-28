@@ -159,6 +159,221 @@ class CalculadorModelos:
             "tipo": "automatico",
         }
 
+    # ==================== RETENCIONES (115, 180, 123, 193) ====================
+
+    def calcular_115(self, retenciones_alquileres: float,
+                     trimestre: str, ejercicio: int) -> dict:
+        """Modelo 115 — retenciones arrendamientos (trimestral)."""
+        return {
+            "modelo": "115",
+            "trimestre": trimestre,
+            "ejercicio": ejercicio,
+            "casilla_01": 1,  # num arrendadores (minimo 1)
+            "casilla_02": round(retenciones_alquileres / 0.19, 2) if retenciones_alquileres else 0,
+            "casilla_03": round(retenciones_alquileres, 2),
+            "casilla_04": round(retenciones_alquileres, 2),
+            "tipo": "automatico",
+        }
+
+    def calcular_180(self, datos_anuales: list[dict], ejercicio: int) -> dict:
+        """Modelo 180 — resumen anual retenciones alquileres.
+
+        Args:
+            datos_anuales: [{nif_arrendador, nombre, importe, retencion,
+                            referencia_catastral, direccion}]
+        """
+        total_base = round(sum(d.get("importe", 0) for d in datos_anuales), 2)
+        total_retencion = round(sum(d.get("retencion", 0) for d in datos_anuales), 2)
+        return {
+            "modelo": "180",
+            "ejercicio": ejercicio,
+            "num_arrendadores": len(datos_anuales),
+            "total_base": total_base,
+            "total_retencion": total_retencion,
+            "declarados": datos_anuales,
+            "tipo": "automatico",
+        }
+
+    def calcular_123(self, rendimientos_capital: float, retenciones: float,
+                     trimestre: str, ejercicio: int) -> dict:
+        """Modelo 123 — retenciones capital mobiliario (trimestral)."""
+        return {
+            "modelo": "123",
+            "trimestre": trimestre,
+            "ejercicio": ejercicio,
+            "casilla_01": 1 if rendimientos_capital else 0,
+            "casilla_02": round(rendimientos_capital, 2),
+            "casilla_03": round(retenciones, 2),
+            "casilla_04": round(retenciones, 2),
+            "tipo": "automatico",
+        }
+
+    def calcular_193(self, datos_anuales: list[dict], ejercicio: int) -> dict:
+        """Modelo 193 — resumen anual capital mobiliario.
+
+        Args:
+            datos_anuales: [{nif_perceptor, nombre, clave_tipo, base,
+                            porcentaje, retencion}]
+        """
+        total_base = round(sum(d.get("base", 0) for d in datos_anuales), 2)
+        total_retencion = round(sum(d.get("retencion", 0) for d in datos_anuales), 2)
+        return {
+            "modelo": "193",
+            "ejercicio": ejercicio,
+            "num_perceptores": len(datos_anuales),
+            "total_base": total_base,
+            "total_retencion": total_retencion,
+            "declarados": datos_anuales,
+            "tipo": "automatico",
+        }
+
+    # ==================== IRPF MODULOS + IS (131, 202) ====================
+
+    def calcular_131(self, rendimiento_modulos: float, pagos_anteriores: float,
+                     trimestre: str, ejercicio: int) -> dict:
+        """Modelo 131 — pago fraccionado IRPF regimen objetivos/modulos.
+
+        El rendimiento en modulos se calcula como porcentaje del rendimiento
+        neto de modulos anual, aplicado proporcionalmente al trimestre.
+        """
+        # 2% del rendimiento neto de modulos (porcentaje minimo legal)
+        porcentaje = 0.02
+        cuota = round(max(rendimiento_modulos * porcentaje, 0), 2)
+        resultado = round(max(cuota - pagos_anteriores, 0), 2)
+        return {
+            "modelo": "131",
+            "trimestre": trimestre,
+            "ejercicio": ejercicio,
+            "rendimiento_modulos": round(rendimiento_modulos, 2),
+            "porcentaje": porcentaje * 100,
+            "cuota": cuota,
+            "pagos_anteriores": round(pagos_anteriores, 2),
+            "resultado": resultado,
+            "tipo": "automatico",
+        }
+
+    def calcular_202(self, cuota_is_anterior: float, base_imponible_acumulada: float,
+                     modalidad: str, ejercicio: int) -> dict:
+        """Modelo 202 — pagos fraccionados IS (trimestral).
+
+        Args:
+            cuota_is_anterior: cuota IS del ultimo ejercicio cerrado
+            base_imponible_acumulada: base imponible acumulada del periodo actual
+            modalidad: 'art40.2' (cuota anterior * 18%) | 'art40.3' (base * 17%)
+            ejercicio: ano fiscal
+        """
+        if modalidad == "art40.2":
+            pago = round(max(cuota_is_anterior * 0.18, 0), 2)
+        else:  # art40.3
+            pago = round(max(base_imponible_acumulada * 0.17, 0), 2)
+
+        return {
+            "modelo": "202",
+            "ejercicio": ejercicio,
+            "modalidad": modalidad,
+            "cuota_is_anterior": round(cuota_is_anterior, 2),
+            "base_imponible_acumulada": round(base_imponible_acumulada, 2),
+            "pago_fraccionado": pago,
+            "tipo": "automatico",
+        }
+
+    # ==================== NO RESIDENTES + ESPECIALES (349, 420, 210, 216) ====================
+
+    def calcular_349(self, operaciones: list[dict],
+                     periodo: str, ejercicio: int) -> dict:
+        """Modelo 349 — declaracion recapitulativa operaciones intracomunitarias.
+
+        Args:
+            operaciones: [{cif, nombre, pais, importe, tipo_operacion}]
+                tipo_operacion: E (entregas), A (adquisiciones), S (servicios prestados),
+                                I (servicios recibidos), T (triangulares), M (montas/simplif.)
+        """
+        por_tipo: dict[str, float] = {}
+        declarados = []
+
+        for op in operaciones:
+            tipo = op.get("tipo_operacion", "E")
+            importe = float(op.get("importe", 0))
+            por_tipo[tipo] = round(por_tipo.get(tipo, 0) + importe, 2)
+            declarados.append({
+                "cif": op.get("cif", ""),
+                "nombre": op.get("nombre", ""),
+                "pais": op.get("pais", ""),
+                "importe": round(importe, 2),
+                "tipo_operacion": tipo,
+            })
+
+        return {
+            "modelo": "349",
+            "periodo": periodo,
+            "ejercicio": ejercicio,
+            "num_declarados": len(declarados),
+            "total_entregas": por_tipo.get("E", 0),
+            "total_adquisiciones": por_tipo.get("A", 0),
+            "total_servicios_prestados": por_tipo.get("S", 0),
+            "total_servicios_recibidos": por_tipo.get("I", 0),
+            "total_triangulares": por_tipo.get("T", 0),
+            "declarados": declarados,
+            "tipo": "automatico",
+        }
+
+    def calcular_420(self, igic_repercutido: float, igic_soportado: float,
+                     trimestre: str, ejercicio: int,
+                     compensacion_anterior: float = 0) -> dict:
+        """Modelo 420 — IGIC Canarias (equivalente al 303 con tipos IGIC).
+
+        Tipos IGIC 2025: 0%, 3% (reducido), 7% (general), 9.5% (incrementado), 35% (especial)
+        """
+        resultado = round(igic_repercutido - igic_soportado, 2)
+        resultado_liquidacion = round(resultado - compensacion_anterior, 2)
+        return {
+            "modelo": "420",
+            "trimestre": trimestre,
+            "ejercicio": ejercicio,
+            "igic_repercutido": round(igic_repercutido, 2),
+            "igic_soportado": round(igic_soportado, 2),
+            "resultado": resultado,
+            "compensacion_anterior": round(compensacion_anterior, 2),
+            "resultado_liquidacion": resultado_liquidacion,
+            "tipo": "automatico",
+        }
+
+    def calcular_210(self, tipo_renta: str, base_imponible: float,
+                     tipo_gravamen: float, ejercicio: int) -> dict:
+        """Modelo 210 — IRNR sin establecimiento permanente.
+
+        Args:
+            tipo_renta: 'dividendos' | 'intereses' | 'royalties' | 'inmuebles' | 'otros'
+            base_imponible: base antes de deducciones
+            tipo_gravamen: tipo aplicable segun convenio (ej: 19.0 para UE/EEE)
+            ejercicio: ano fiscal
+        """
+        cuota = round(base_imponible * tipo_gravamen / 100, 2)
+        return {
+            "modelo": "210",
+            "ejercicio": ejercicio,
+            "tipo_renta": tipo_renta,
+            "base_imponible": round(base_imponible, 2),
+            "tipo_gravamen": tipo_gravamen,
+            "cuota_integra": cuota,
+            "resultado": cuota,
+            "tipo": "automatico",
+        }
+
+    def calcular_216(self, retenciones_no_residentes: float,
+                     trimestre: str, ejercicio: int) -> dict:
+        """Modelo 216 — retenciones e ingresos a cuenta no residentes (trimestral)."""
+        return {
+            "modelo": "216",
+            "trimestre": trimestre,
+            "ejercicio": ejercicio,
+            "num_perceptores": 1 if retenciones_no_residentes else 0,
+            "base_retenciones": round(retenciones_no_residentes / 0.19, 2) if retenciones_no_residentes else 0,
+            "total_retenciones": round(retenciones_no_residentes, 2),
+            "resultado": round(retenciones_no_residentes, 2),
+            "tipo": "automatico",
+        }
+
     # ==================== SEMI-AUTOMATICOS ====================
 
     def borrador_200(self, resultado_contable: float,

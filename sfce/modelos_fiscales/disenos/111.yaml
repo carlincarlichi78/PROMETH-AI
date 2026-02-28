@@ -1,0 +1,258 @@
+modelo: "111"
+version: "2025"
+descripcion: "Retenciones e ingresos a cuenta — Rendimientos trabajo y actividades"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "111"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "periodo"
+        descripcion: "Periodo (1T/2T/3T/4T)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte (T=telematico)"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        longitud: 7
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Rendimientos del trabajo ---
+      - nombre: casilla_01
+        posicion: [68, 74]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.01"
+        descripcion: "Num perceptores rendimientos trabajo"
+
+      - nombre: casilla_02
+        posicion: [75, 91]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Base retenciones trabajo"
+
+      - nombre: casilla_03
+        posicion: [92, 108]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Retenciones e ingresos a cuenta trabajo"
+
+      # --- Rendimientos actividades economicas (profesionales) ---
+      - nombre: casilla_04
+        posicion: [109, 115]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.04"
+        descripcion: "Num perceptores actividades economicas"
+
+      - nombre: casilla_05
+        posicion: [116, 132]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.05"
+        descripcion: "Base retenciones actividades economicas"
+
+      - nombre: casilla_06
+        posicion: [133, 149]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.06"
+        descripcion: "Retenciones e ingresos a cuenta actividades economicas"
+
+      # --- Premios ---
+      - nombre: casilla_07
+        posicion: [150, 156]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.07"
+        descripcion: "Num perceptores premios"
+
+      - nombre: casilla_08
+        posicion: [157, 173]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.08"
+        descripcion: "Base premios"
+
+      - nombre: casilla_09
+        posicion: [174, 190]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.09"
+        descripcion: "Retenciones e ingresos a cuenta premios"
+
+      # --- Ganancias por aprovechamiento forestal ---
+      - nombre: casilla_10
+        posicion: [191, 197]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.10"
+        descripcion: "Num perceptores ganancias forestales"
+
+      - nombre: casilla_11
+        posicion: [198, 214]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.11"
+        descripcion: "Base ganancias forestales"
+
+      - nombre: casilla_12
+        posicion: [215, 231]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.12"
+        descripcion: "Retenciones ganancias forestales"
+
+      # --- Contraprestaciones por cesion imagen ---
+      - nombre: casilla_13
+        posicion: [232, 238]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.13"
+        descripcion: "Num perceptores cesion imagen"
+
+      - nombre: casilla_14
+        posicion: [239, 255]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.14"
+        descripcion: "Base cesion imagen"
+
+      - nombre: casilla_15
+        posicion: [256, 272]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.15"
+        descripcion: "Retenciones cesion imagen"
+
+      # --- Actividades agricolas, ganaderas y forestales ---
+      - nombre: casilla_25
+        posicion: [273, 279]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.25"
+        descripcion: "Num perceptores actividades agricolas"
+
+      - nombre: casilla_26
+        posicion: [280, 296]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.26"
+        descripcion: "Base actividades agricolas"
+
+      - nombre: casilla_27
+        posicion: [297, 313]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.27"
+        descripcion: "Retenciones actividades agricolas"
+
+      # --- Totales ---
+      - nombre: casilla_28
+        posicion: [314, 330]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.28"
+        descripcion: "Total retenciones e ingresos a cuenta"
+
+      - nombre: casilla_29
+        posicion: [331, 347]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.29"
+        descripcion: "Ingresos a cuenta del periodo anterior"
+
+      - nombre: casilla_30
+        posicion: [348, 364]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.30"
+        descripcion: "Resultado (28 - 29)"
+
+      - nombre: blancos_365_500
+        posicion: [365, 500]
+        tipo: alfanumerico
+        longitud: 136
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_28 == casilla_03 + casilla_06 + casilla_09 + casilla_12 + casilla_15 + casilla_27"
+    nivel: error
+    mensaje: "Casilla 28 debe ser la suma de todas las retenciones parciales"
+
+  - regla: "casilla_30 == casilla_28 - casilla_29"
+    nivel: error
+    mensaje: "Casilla 30 (resultado) debe ser 28 menos 29"
+
+  - regla: "casilla_02 >= 0"
+    nivel: error
+    mensaje: "La base de retenciones del trabajo no puede ser negativa"
+
+  - regla: "casilla_03 >= 0"
+    nivel: error
+    mensaje: "Las retenciones del trabajo no pueden ser negativas"

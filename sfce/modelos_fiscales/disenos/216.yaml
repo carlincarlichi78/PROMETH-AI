@@ -1,0 +1,114 @@
+modelo: "216"
+version: "2025"
+descripcion: "Retenciones e ingresos a cuenta IRNR sin establecimiento permanente — trimestral/mensual"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "216"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del retenedor o pagador"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos o razon social del retenedor (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1T, 2T, 3T, 4T o mes (01-12)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Datos de la retencion ---
+      - nombre: casilla_01
+        posicion: [68, 74]
+        tipo: numerico
+        fuente: "casillas.01"
+        descripcion: "Numero de perceptores no residentes"
+
+      - nombre: casilla_02
+        posicion: [75, 91]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Base de las retenciones e ingresos a cuenta"
+
+      - nombre: casilla_03
+        posicion: [92, 108]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Retenciones e ingresos a cuenta practicados"
+
+      # --- Resultado ---
+      - nombre: casilla_04
+        posicion: [109, 125]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Ingresos a cuenta del periodo o periodos anteriores del mismo ejercicio"
+
+      - nombre: casilla_06
+        posicion: [126, 142]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.06"
+        descripcion: "Resultado de la declaracion (03 - 04)"
+
+      - nombre: blancos_143_500
+        posicion: [143, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_06 == casilla_03 - casilla_04"
+    nivel: error
+    mensaje: "Resultado (06) debe ser retenciones (03) menos ingresos previos (04)"
+
+  - regla: "casilla_01 > 0"
+    nivel: error
+    mensaje: "Debe haber al menos un perceptor no residente"
+
+  - regla: "casilla_02 >= 0"
+    nivel: error
+    mensaje: "La base de retenciones no puede ser negativa"

@@ -1,0 +1,261 @@
+modelo: "347"
+version: "2025"
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: tipo1
+    repetible: false
+    campos:
+      # --- Identificacion del registro cabecera ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro cabecera (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "347"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: apellidos_nombre
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 caracteres)"
+
+      - nombre: telefono
+        posicion: [58, 66]
+        tipo: telefono
+        fuente: "empresa.telefono"
+        descripcion: "Telefono de contacto"
+
+      - nombre: contacto
+        posicion: [67, 106]
+        tipo: alfanumerico
+        fuente: "empresa.contacto"
+        descripcion: "Nombre de la persona de contacto (40 caracteres)"
+
+      - nombre: indicador_complementaria
+        posicion: [107, 107]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "C si es complementaria, espacio si no"
+
+      - nombre: indicador_sustitutiva
+        posicion: [108, 108]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "S si es sustitutiva, espacio si no"
+
+      - nombre: num_justificante_anterior
+        posicion: [109, 121]
+        tipo: numerico
+        valor_fijo: "0000000000000"
+        descripcion: "Num. justificante declaracion anterior (complementaria/sustitutiva)"
+
+      - nombre: num_declarados
+        posicion: [122, 130]
+        tipo: numerico
+        fuente: "meta.num_declarados"
+        descripcion: "Numero total de personas/entidades declaradas"
+
+      - nombre: importe_total
+        posicion: [131, 145]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total"
+        decimales: 2
+        descripcion: "Importe total de todas las operaciones declaradas"
+
+      - nombre: importe_total_adquisiciones_bi
+        posicion: [146, 160]
+        tipo: numerico_signo
+        fuente: "casillas.importe_total_adquisiciones_bi"
+        decimales: 2
+        descripcion: "Importe total adquisiciones bienes inmuebles (clave B)"
+
+      - nombre: indicador_3005
+        posicion: [161, 161]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "I si solo se declaran entidades por encima del umbral 3005,06"
+
+      - nombre: relleno
+        posicion: [162, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Relleno hasta longitud 500"
+
+  - tipo: tipo2
+    repetible: true
+    campos:
+      # --- Registro detalle por persona o entidad ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro detalle (siempre 2)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "347"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nif_declarado
+        posicion: [18, 26]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF del declarado"
+
+      - nombre: nombre_declarado
+        posicion: [27, 66]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Apellidos y nombre o razon social del declarado (40 caracteres)"
+
+      - nombre: provincia
+        posicion: [67, 68]
+        tipo: numerico
+        fuente: "declarado.provincia"
+        descripcion: "Codigo de provincia (01-52, 99 extranjero)"
+
+      - nombre: pais
+        posicion: [69, 71]
+        tipo: alfanumerico
+        fuente: "declarado.pais"
+        descripcion: "Codigo ISO pais (ESP si es espanol, otro si extranjero)"
+
+      - nombre: clave_operacion
+        posicion: [72, 72]
+        tipo: alfanumerico
+        fuente: "declarado.clave_operacion"
+        descripcion: "B=entregas bienes inmuebles, A=adquisiciones, E=subvenciones, G=seguros, F=agencias de viajes"
+
+      - nombre: importe_anual
+        posicion: [73, 87]
+        tipo: numerico_signo
+        fuente: "declarado.importe_anual"
+        decimales: 2
+        descripcion: "Importe total anual de operaciones con el declarado"
+
+      - nombre: indicador_operacion_seguro
+        posicion: [88, 88]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "B si es entidad aseguradora, espacio si no"
+
+      - nombre: indicador_arrendamiento
+        posicion: [89, 89]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "A si hay arrendamiento de local de negocio, espacio si no"
+
+      - nombre: importe_1t
+        posicion: [90, 104]
+        tipo: numerico_signo
+        fuente: "declarado.importe_1t"
+        decimales: 2
+        descripcion: "Importe operaciones primer trimestre"
+
+      - nombre: importe_2t
+        posicion: [105, 119]
+        tipo: numerico_signo
+        fuente: "declarado.importe_2t"
+        decimales: 2
+        descripcion: "Importe operaciones segundo trimestre"
+
+      - nombre: importe_3t
+        posicion: [120, 134]
+        tipo: numerico_signo
+        fuente: "declarado.importe_3t"
+        decimales: 2
+        descripcion: "Importe operaciones tercer trimestre"
+
+      - nombre: importe_4t
+        posicion: [135, 149]
+        tipo: numerico_signo
+        fuente: "declarado.importe_4t"
+        decimales: 2
+        descripcion: "Importe operaciones cuarto trimestre"
+
+      - nombre: nif_representante
+        posicion: [150, 158]
+        tipo: alfanumerico
+        valor_fijo: "         "
+        descripcion: "NIF del representante (si aplica, 9 caracteres)"
+
+      - nombre: indicador_bi
+        posicion: [159, 159]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "B si es operacion de bienes inmuebles"
+
+      - nombre: referencia_catastral
+        posicion: [160, 179]
+        tipo: alfanumerico
+        valor_fijo: "                    "
+        descripcion: "Referencia catastral del inmueble (20 caracteres, si clave=B)"
+
+      - nombre: situacion_inmueble
+        posicion: [180, 180]
+        tipo: alfanumerico
+        valor_fijo: " "
+        descripcion: "Situacion del inmueble: 1=con ref catastral, 2=sin ref catastral, 3=extranjero"
+
+      - nombre: relleno
+        posicion: [181, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Relleno hasta longitud 500"
+
+validaciones:
+  - regla: "importe_anual == importe_1t + importe_2t + importe_3t + importe_4t"
+    nivel: error
+    mensaje: "El importe anual del declarado no coincide con la suma de importes trimestrales"
+
+  - regla: "sum(tipo2.importe_anual) == importe_total"
+    nivel: error
+    mensaje: "La suma de importes anuales de los declarados (tipo2) no coincide con el importe total del tipo1"
+
+  - regla: "count(tipo2) == num_declarados"
+    nivel: error
+    mensaje: "El numero de registros de detalle (tipo2) no coincide con num_declarados del tipo1"
+
+  - regla: "importe_anual >= 3005.06"
+    nivel: advertencia
+    mensaje: "Declarado con importe anual inferior al umbral de 3.005,06 EUR obligatorio para modelo 347"
+
+  - regla: "clave_operacion in ['B', 'A', 'E', 'G', 'F']"
+    nivel: error
+    mensaje: "Clave de operacion invalida: debe ser B, A, E, G o F"
+
+  - regla: "provincia >= 1 and provincia <= 99"
+    nivel: error
+    mensaje: "Codigo de provincia fuera de rango (01-52 para provincias espanolas, 99 para extranjero)"

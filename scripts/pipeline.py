@@ -26,6 +26,15 @@ from scripts.core.config import cargar_config
 from scripts.core.confidence import calcular_nivel
 from scripts.core.errors import CatalogoErrores
 from scripts.core.logger import AuditoriaLogger, crear_logger
+from sfce.core.recurrentes import generar_alertas_recurrentes
+
+# Importacion condicional del repositorio BD (puede fallar en modo offline/tests)
+try:
+    from sfce.db.base import crear_motor, crear_sesion, inicializar_bd
+    from sfce.db.repositorio import Repositorio
+    _BD_DISPONIBLE = True
+except ImportError:
+    _BD_DISPONIBLE = False
 
 from scripts.phases.intake import ejecutar_intake
 from scripts.phases.pre_validation import ejecutar_pre_validacion
@@ -236,6 +245,41 @@ def main():
     if args.ejercicio:
         config.empresa["ejercicio_activo"] = args.ejercicio
 
+    # Inicializar repositorio BD (opcional — si falla, pipeline sigue funcionando)
+    repo = None
+    empresa_bd_id = None
+    if _BD_DISPONIBLE:
+        try:
+            ruta_bd = RAIZ / "sfce.db"
+            engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": str(ruta_bd)})
+            inicializar_bd(engine)
+            sesion_factory = crear_sesion(engine)
+            repo = Repositorio(sesion_factory)
+            # Buscar empresa en BD por CIF
+            empresa_bd = repo.buscar_empresa_por_cif(config.cif)
+            if empresa_bd:
+                empresa_bd_id = empresa_bd.id
+                logger.info(f"BD directorio activa (empresa_id={empresa_bd_id})")
+            else:
+                logger.info("BD directorio activa (empresa no migrada aun, usando YAML)")
+        except Exception as exc:
+            logger.warning(f"No se pudo inicializar BD directorio: {exc}. Usando solo YAML.")
+            repo = None
+            empresa_bd_id = None
+
+    # Inyectar repo en config para que busquedas usen BD cuando este disponible
+    config._repo = repo
+    config._empresa_bd_id = empresa_bd_id
+
+    # Inicializar Backend doble destino (FS + BD local)
+    from sfce.core.backend import Backend
+    backend = Backend(
+        modo="dual" if repo and empresa_bd_id else "fs",
+        repo=repo,
+        empresa_id=empresa_bd_id
+    )
+    logger.info(f"Backend modo={backend.modo}")
+
     ejercicio = config.ejercicio
     interactivo = not args.no_interactivo
 
@@ -293,7 +337,8 @@ def main():
             "descripcion": "Fase 2: Registro en FacturaScripts",
             "ejecutar": lambda: ejecutar_registro(config, ruta_cliente,
                                                     auditoria=auditoria,
-                                                    motor=motor),
+                                                    motor=motor,
+                                                    backend=backend),
             "dry_run_skip": True,
         },
         {
@@ -311,7 +356,8 @@ def main():
             "ejecutar": lambda: ejecutar_correccion(config, ruta_cliente,
                                                       catalogo=catalogo,
                                                       auditoria=auditoria,
-                                                      motor=motor),
+                                                      motor=motor,
+                                                      backend=backend),
             "dry_run_skip": True,
         },
         {
@@ -400,8 +446,46 @@ def main():
     estado.data["confianza_global"] = confianza
     estado.guardar()
 
-    # Resumen por tipo de documento
+    # Analisis de facturas recurrentes faltantes
     resultados_acum = estado.obtener_resultados_acumulados()
+    alertas_recurrentes = {"patrones": [], "faltantes": [], "total_patrones": 0, "total_faltantes": 0}
+    intake_data = resultados_acum.get("intake", {})
+    docs_intake = intake_data.get("documentos", [])
+    if docs_intake:
+        facturas_para_recurrentes = []
+        for doc in docs_intake:
+            if doc.get("tipo") in ("FC", "FV", "NC", "SUM"):
+                datos = doc.get("datos_extraidos", {})
+                facturas_para_recurrentes.append({
+                    "cif_emisor": doc.get("entidad_cif", ""),
+                    "nombre_emisor": doc.get("entidad", ""),
+                    "fecha": datos.get("fecha", ""),
+                    "total": datos.get("total") or datos.get("importe", 0),
+                })
+        if facturas_para_recurrentes:
+            try:
+                alertas_recurrentes = generar_alertas_recurrentes(facturas_para_recurrentes)
+                if alertas_recurrentes["total_faltantes"] > 0:
+                    logger.warning(f"Facturas recurrentes faltantes: {alertas_recurrentes['total_faltantes']}")
+                    for falt in alertas_recurrentes["faltantes"]:
+                        logger.warning(f"  - {falt['proveedor_nombre']}: esperada {falt['fecha_esperada']}, "
+                                      f"{falt['dias_retraso']}d retraso, ~{falt['importe_estimado']:.2f} EUR")
+            except Exception as e:
+                logger.warning(f"Error analizando recurrentes: {e}")
+
+    # Serializar PatronRecurrente (dataclass) a dict para JSON
+    from dataclasses import asdict
+    alertas_serializables = {
+        "patrones": [asdict(p) if hasattr(p, '__dataclass_fields__') else p
+                     for p in alertas_recurrentes.get("patrones", [])],
+        "faltantes": alertas_recurrentes.get("faltantes", []),
+        "total_patrones": alertas_recurrentes.get("total_patrones", 0),
+        "total_faltantes": alertas_recurrentes.get("total_faltantes", 0),
+    }
+    estado.data["alertas_recurrentes"] = alertas_serializables
+    estado.guardar()
+
+    # Resumen por tipo de documento
     pre_val = resultados_acum.get("pre_validacion", {})
     docs_validados = pre_val.get("validados", [])
     docs_excluidos = pre_val.get("excluidos", [])
@@ -438,6 +522,19 @@ def main():
     if n_resueltos or n_aprendidos:
         logger.info(f"  Aprendizaje: {n_resueltos} problemas auto-resueltos, "
                     f"{n_aprendidos} patrones nuevos, {n_patrones} en base conocimiento")
+
+    # Duplicados de negocio
+    dup_negocio = intake_data.get("duplicados_negocio", {})
+    n_dup_seg = dup_negocio.get("seguros", 0)
+    n_dup_pos = dup_negocio.get("posibles", 0)
+    if n_dup_seg or n_dup_pos:
+        logger.info(f"  Duplicados: {n_dup_seg} seguros, {n_dup_pos} posibles")
+
+    # Recurrentes
+    if alertas_recurrentes["total_patrones"] > 0:
+        logger.info(f"  Recurrentes: {alertas_recurrentes['total_patrones']} patrones, "
+                    f"{alertas_recurrentes['total_faltantes']} faltantes")
+
     logger.info("=" * 60)
 
     auditoria.registrar("pipeline", "info",

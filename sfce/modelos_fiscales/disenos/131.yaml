@@ -1,0 +1,274 @@
+modelo: "131"
+version: "2025"
+descripcion: "Pago fraccionado IRPF — Estimacion objetiva (modulos)"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "131"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "periodo"
+        descripcion: "Periodo (1T/2T/3T/4T)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte (T=telematico)"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        longitud: 7
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Actividades en estimacion objetiva (modulos) ---
+      # Actividad 1 (epigr 1)
+      - nombre: casilla_01_epigrafe
+        posicion: [68, 72]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "casillas.01_epigrafe"
+        descripcion: "Epigrafe IAE actividad 1"
+
+      - nombre: casilla_01_rendimiento
+        posicion: [73, 89]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.01_rendimiento"
+        descripcion: "Rendimiento neto previo actividad 1 (suma modulos)"
+
+      - nombre: casilla_01_indice
+        posicion: [90, 93]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "casillas.01_indice"
+        descripcion: "Indice corrector actividad 1 (formato NNDD)"
+
+      - nombre: casilla_01_cuota
+        posicion: [94, 110]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.01_cuota"
+        descripcion: "Cuota actividad 1 (rendimiento x indice)"
+
+      # Actividad 2 (epigr 2)
+      - nombre: casilla_02_epigrafe
+        posicion: [111, 115]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "casillas.02_epigrafe"
+        descripcion: "Epigrafe IAE actividad 2 (si aplica)"
+
+      - nombre: casilla_02_rendimiento
+        posicion: [116, 132]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02_rendimiento"
+        descripcion: "Rendimiento neto previo actividad 2"
+
+      - nombre: casilla_02_indice
+        posicion: [133, 136]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "casillas.02_indice"
+        descripcion: "Indice corrector actividad 2"
+
+      - nombre: casilla_02_cuota
+        posicion: [137, 153]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02_cuota"
+        descripcion: "Cuota actividad 2"
+
+      # Actividad 3 (epigr 3)
+      - nombre: casilla_03_epigrafe
+        posicion: [154, 158]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "casillas.03_epigrafe"
+        descripcion: "Epigrafe IAE actividad 3 (si aplica)"
+
+      - nombre: casilla_03_rendimiento
+        posicion: [159, 175]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03_rendimiento"
+        descripcion: "Rendimiento neto previo actividad 3"
+
+      - nombre: casilla_03_indice
+        posicion: [176, 179]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "casillas.03_indice"
+        descripcion: "Indice corrector actividad 3"
+
+      - nombre: casilla_03_cuota
+        posicion: [180, 196]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03_cuota"
+        descripcion: "Cuota actividad 3"
+
+      # Actividad 4 (epigr 4 — por si hay mas de 3)
+      - nombre: casilla_04_epigrafe
+        posicion: [197, 201]
+        tipo: alfanumerico
+        longitud: 5
+        fuente: "casillas.04_epigrafe"
+        descripcion: "Epigrafe IAE actividad 4 (si aplica)"
+
+      - nombre: casilla_04_rendimiento
+        posicion: [202, 218]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.04_rendimiento"
+        descripcion: "Rendimiento neto previo actividad 4"
+
+      - nombre: casilla_04_indice
+        posicion: [219, 222]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "casillas.04_indice"
+        descripcion: "Indice corrector actividad 4"
+
+      - nombre: casilla_04_cuota
+        posicion: [223, 239]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.04_cuota"
+        descripcion: "Cuota actividad 4"
+
+      # --- Totalizacion ---
+      - nombre: casilla_12
+        posicion: [240, 256]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.12"
+        descripcion: "Total cuotas actividades (suma cuotas 01+02+03+04)"
+
+      - nombre: casilla_13
+        posicion: [257, 260]
+        tipo: numerico
+        longitud: 4
+        decimales: 2
+        fuente: "casillas.13"
+        descripcion: "Porcentaje de pago fraccionado aplicable (4% agricolas, otros segun tabla)"
+
+      - nombre: casilla_14
+        posicion: [261, 277]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.14"
+        descripcion: "Pago fraccionado (12 x 13 / 100)"
+
+      - nombre: casilla_15
+        posicion: [278, 294]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.15"
+        descripcion: "Minoración por incentivos y reducciones (nueva empresa, etc.)"
+
+      - nombre: casilla_16
+        posicion: [295, 311]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.16"
+        descripcion: "Retenciones e ingresos a cuenta soportados del trimestre"
+
+      - nombre: casilla_17
+        posicion: [312, 328]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.17"
+        descripcion: "Pagos fraccionados ingresados en periodos anteriores del mismo ejercicio"
+
+      - nombre: casilla_18
+        posicion: [329, 345]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.18"
+        descripcion: "Resultado (14 - 15 - 16 - 17)"
+
+      - nombre: blancos_346_500
+        posicion: [346, 500]
+        tipo: alfanumerico
+        longitud: 155
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_12 == casilla_01_cuota + casilla_02_cuota + casilla_03_cuota + casilla_04_cuota"
+    nivel: error
+    mensaje: "Casilla 12 debe ser la suma de cuotas de todas las actividades"
+
+  - regla: "casilla_14 == round(casilla_12 * casilla_13 / 100, 2)"
+    nivel: error
+    mensaje: "Casilla 14 debe ser casilla 12 por el porcentaje (casilla 13)"
+
+  - regla: "casilla_18 == casilla_14 - casilla_15 - casilla_16 - casilla_17"
+    nivel: error
+    mensaje: "Casilla 18 (resultado) debe ser 14 menos deducciones y pagos previos"
+
+  - regla: "casilla_13 in [200, 400, 200]"
+    nivel: advertencia
+    mensaje: "El porcentaje (casilla 13) suele ser 2% o 4% segun tipo de actividad"

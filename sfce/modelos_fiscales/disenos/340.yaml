@@ -1,0 +1,198 @@
+modelo: "340"
+version: "2025"
+descripcion: "Declaracion informativa Libros Registro IVA — SII (Suministro Inmediato Informacion)"
+periodicidad: mensual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion registro tipo 1 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "340"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Nombre o razon social (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo mensual (01-12) o 1T/2T/3T/4T"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      - nombre: num_registros_facturas
+        posicion: [68, 74]
+        tipo: numerico
+        fuente: "casillas.num_registros_facturas"
+        descripcion: "Total de registros de facturas incluidos"
+
+      - nombre: total_base_emitidas
+        posicion: [75, 91]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_base_emitidas"
+        descripcion: "Total base imponible facturas emitidas"
+
+      - nombre: total_cuota_emitidas
+        posicion: [92, 108]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_cuota_emitidas"
+        descripcion: "Total cuota IVA facturas emitidas"
+
+      - nombre: total_base_recibidas
+        posicion: [109, 125]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_base_recibidas"
+        descripcion: "Total base imponible facturas recibidas"
+
+      - nombre: total_cuota_recibidas
+        posicion: [126, 142]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_cuota_recibidas"
+        descripcion: "Total cuota IVA facturas recibidas"
+
+      - nombre: blancos_143_500
+        posicion: [143, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: registro_factura
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=factura)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "340"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: clave_libro_registro
+        posicion: [18, 18]
+        tipo: alfanumerico
+        fuente: "declarado.clave_libro"
+        descripcion: "E=facturas emitidas, R=facturas recibidas, I=bienes inversion, U=operaciones intracomunitarias"
+
+      - nombre: clave_tipo_factura
+        posicion: [19, 20]
+        tipo: alfanumerico
+        fuente: "declarado.clave_tipo_factura"
+        descripcion: "F1=factura completa, F2=simplificada, R1-R5=rectificativa, F3=suma simplificadas"
+
+      - nombre: fecha_factura
+        posicion: [21, 28]
+        tipo: fecha
+        fuente: "declarado.fecha_factura"
+        descripcion: "Fecha de emision/recepcion AAAAMMDD"
+
+      - nombre: numero_factura
+        posicion: [29, 58]
+        tipo: alfanumerico
+        fuente: "declarado.numero_factura"
+        descripcion: "Numero o serie de la factura (30 chars)"
+
+      - nombre: nif_contraparte
+        posicion: [59, 67]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF del cliente (emitidas) o proveedor (recibidas)"
+
+      - nombre: nombre_contraparte
+        posicion: [68, 107]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre del cliente o proveedor (40 chars)"
+
+      - nombre: base_imponible
+        posicion: [108, 124]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.base_imponible"
+        descripcion: "Base imponible de la operacion"
+
+      - nombre: tipo_iva
+        posicion: [125, 127]
+        tipo: numerico
+        fuente: "declarado.tipo_iva"
+        descripcion: "Tipo IVA (210=21%, 100=10%, 40=4%, 0=exenta)"
+
+      - nombre: cuota_iva
+        posicion: [128, 144]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.cuota_iva"
+        descripcion: "Cuota de IVA devengada o soportada"
+
+      - nombre: blancos_145_500
+        posicion: [145, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "num_registros_facturas >= 1"
+    nivel: advertencia
+    mensaje: "Declaracion sin registros de facturas"
+
+  - regla: "total_cuota_emitidas >= 0"
+    nivel: error
+    mensaje: "Total cuota emitidas no puede ser negativo (usar NC para abonos)"

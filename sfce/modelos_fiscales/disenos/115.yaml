@@ -1,0 +1,120 @@
+modelo: "115"
+version: "2025"
+descripcion: "Retenciones e ingresos a cuenta — Rentas o rendimientos procedentes del arrendamiento de inmuebles urbanos"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "115"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        longitud: 4
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        longitud: 9
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        longitud: 40
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        longitud: 2
+        fuente: "periodo"
+        descripcion: "Periodo (1T/2T/3T/4T)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        longitud: 1
+        valor_fijo: "T"
+        descripcion: "Tipo soporte (T=telematico)"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        longitud: 7
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Datos de la liquidacion ---
+      - nombre: casilla_01
+        posicion: [68, 74]
+        tipo: numerico
+        longitud: 7
+        fuente: "casillas.01"
+        descripcion: "Numero de arrendadores (perceptores)"
+
+      - nombre: casilla_02
+        posicion: [75, 91]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Base de retenciones e ingresos a cuenta"
+
+      - nombre: casilla_03
+        posicion: [92, 108]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Retenciones e ingresos a cuenta (19% de casilla 02)"
+
+      - nombre: casilla_04
+        posicion: [109, 125]
+        tipo: numerico_signo
+        longitud: 17
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Resultado de la liquidacion (= casilla 03)"
+
+      - nombre: blancos_126_500
+        posicion: [126, 500]
+        tipo: alfanumerico
+        longitud: 375
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_03 == round(casilla_02 * 0.19, 2)"
+    nivel: advertencia
+    mensaje: "Casilla 03 deberia ser el 19% de casilla 02 (tipo general retencion alquileres)"
+
+  - regla: "casilla_04 == casilla_03"
+    nivel: error
+    mensaje: "Casilla 04 (resultado) debe ser igual a casilla 03 (retenciones)"
+
+  - regla: "casilla_01 >= 1"
+    nivel: error
+    mensaje: "Debe haber al menos un arrendador si se presenta el modelo"
+
+  - regla: "casilla_02 > 0"
+    nivel: error
+    mensaje: "La base de retenciones debe ser positiva"

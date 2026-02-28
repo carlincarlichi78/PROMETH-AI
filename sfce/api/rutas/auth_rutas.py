@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
 
+from sfce.api.audit import auditar, AuditAccion, ip_desde_request
 from sfce.api.auth import (
     crear_token,
     hashear_password,
@@ -52,33 +53,50 @@ class UsuarioResponse(BaseModel):
 def login(body: LoginRequest, request: Request):
     """Autenticacion: devuelve token JWT si credenciales validas."""
     sf = request.app.state.sesion_factory
+    ip = ip_desde_request(request)
+
     with sf() as sesion:
         usuario = sesion.query(Usuario).filter(
             Usuario.email == body.email,
             Usuario.activo == True,
         ).first()
 
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas",
-        )
+        if not usuario or not verificar_password(body.password, usuario.hash_password):
+            auditar(
+                sesion, AuditAccion.LOGIN_FAILED, "auth",
+                email_usuario=body.email,
+                ip_origen=ip,
+                resultado="error",
+                detalles={"motivo": "credenciales_invalidas"},
+            )
+            sesion.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales invalidas",
+            )
 
-    if not verificar_password(body.password, usuario.hash_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas",
-        )
+        # Capturar valores antes de commit (evita DetachedInstanceError en SQLAlchemy 2.0)
+        u_id, u_email, u_nombre, u_rol = usuario.id, usuario.email, usuario.nombre, usuario.rol
 
-    token = crear_token({"sub": usuario.email, "rol": usuario.rol})
+        auditar(
+            sesion, AuditAccion.LOGIN, "auth",
+            usuario_id=u_id,
+            email_usuario=u_email,
+            rol=u_rol,
+            ip_origen=ip,
+            resultado="ok",
+        )
+        sesion.commit()
+
+    token = crear_token({"sub": u_email, "rol": u_rol})
     return {
         "access_token": token,
         "token_type": "bearer",
         "usuario": {
-            "id": usuario.id,
-            "email": usuario.email,
-            "nombre": usuario.nombre,
-            "rol": usuario.rol,
+            "id": u_id,
+            "email": u_email,
+            "nombre": u_nombre,
+            "rol": u_rol,
         },
     }
 

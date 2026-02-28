@@ -1,15 +1,42 @@
-"""SFCE DB — Modelos SQLAlchemy (15 tablas)."""
+"""SFCE DB — Modelos SQLAlchemy (24 tablas)."""
 
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    Numeric, String, Text, JSON, UniqueConstraint, Index
+    Boolean, Column, Date, DateTime, Float, ForeignKey, Integer,
+    Numeric, String, Text, JSON, UniqueConstraint, Index, func
 )
 from sqlalchemy.orm import relationship
 
 from sfce.db.base import Base
+
+
+class DirectorioEntidad(Base):
+    """Directorio maestro global de entidades (proveedores/clientes)."""
+    __tablename__ = "directorio_entidades"
+
+    id = Column(Integer, primary_key=True)
+    cif = Column(String(20), unique=True, nullable=True)  # nullable para clientes sin CIF
+    nombre = Column(String(200), nullable=False)
+    nombre_comercial = Column(String(200))
+    aliases = Column(JSON, default=list)
+    pais = Column(String(3), default="ESP")
+    tipo_persona = Column(String(10))  # fisica | juridica
+    forma_juridica = Column(String(20))
+    cnae = Column(String(4))
+    sector = Column(String(50))
+    validado_aeat = Column(Boolean, default=False)
+    validado_vies = Column(Boolean, default=False)
+    fecha_alta = Column(DateTime, default=datetime.now)
+    fecha_actualizacion = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    datos_enriquecidos = Column(JSON, default=dict)
+
+    overlays = relationship("ProveedorCliente", back_populates="directorio")
+
+    __table_args__ = (
+        Index("ix_directorio_nombre", "nombre"),
+    )
 
 
 class Empresa(Base):
@@ -55,12 +82,15 @@ class ProveedorCliente(Base):
     persona_fisica = Column(Boolean, default=False)
     aliases = Column(JSON, default=list)  # nombres alternativos
     activo = Column(Boolean, default=True)
+    directorio_id = Column(Integer, ForeignKey("directorio_entidades.id"), nullable=True)
 
     empresa = relationship("Empresa", back_populates="proveedores_clientes")
+    directorio = relationship("DirectorioEntidad", back_populates="overlays")
 
     __table_args__ = (
         UniqueConstraint("empresa_id", "cif", "tipo", name="uq_empresa_cif_tipo"),
         Index("ix_provcli_cif", "cif"),
+        Index("ix_provcli_directorio", "directorio_id"),
     )
 
 
@@ -209,24 +239,88 @@ class Pago(Base):
     factura = relationship("Factura")
 
 
+class CuentaBancaria(Base):
+    """Cuenta bancaria de una empresa. Origen de movimientos C43."""
+    __tablename__ = "cuentas_bancarias"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    gestoria_id = Column(Integer, nullable=False)  # FK logica, sin constraint para no acoplar BDs
+    banco_codigo = Column(String(10), nullable=False)   # "2100" = CaixaBank
+    banco_nombre = Column(String(100), nullable=False)
+    iban = Column(String(34), nullable=False)
+    alias = Column(String(100), nullable=False, default="")
+    divisa = Column(String(3), nullable=False, default="EUR")
+    activa = Column(Boolean, nullable=False, default=True)
+    email_c43 = Column(String(200), nullable=True)  # email para recepcion automatica futura
+
+    __table_args__ = (
+        UniqueConstraint("empresa_id", "iban", name="uq_cuenta_empresa_iban"),
+    )
+
+    movimientos = relationship("MovimientoBancario", back_populates="cuenta")
+
+
 class MovimientoBancario(Base):
-    """Movimiento bancario importado."""
+    """Movimiento bancario importado desde C43 u otras fuentes."""
     __tablename__ = "movimientos_bancarios"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Multi-tenant
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    cuenta_id = Column(Integer, ForeignKey("cuentas_bancarias.id"), nullable=True)
+
+    # Fechas
     fecha = Column(Date, nullable=False)
-    concepto = Column(String(500))
+    fecha_valor = Column(Date, nullable=True)
+
+    # Importes
     importe = Column(Numeric(12, 2), nullable=False)
-    saldo = Column(Numeric(12, 2))
-    referencia = Column(String(100))
-    conciliado = Column(Boolean, default=False)
-    asiento_id = Column(Integer, ForeignKey("asientos.id"))
-    cuenta_bancaria = Column(String(30))  # IBAN o numero
+    divisa = Column(String(3), nullable=False, default="EUR")
+    importe_eur = Column(Numeric(12, 2), nullable=True)  # siempre en EUR para informes
+    tipo_cambio = Column(Numeric(10, 6), nullable=True)
+    saldo = Column(Numeric(12, 2), nullable=True)  # saldo tras el movimiento
+
+    # Clasificacion
+    signo = Column(String(1), nullable=False, default="D")  # 'D' cargo | 'H' abono
+    concepto_comun = Column(String(5), nullable=False, default="")   # codigo AEB
+    concepto_propio = Column(String(500), nullable=False, default="")
+    referencia_1 = Column(String(100), nullable=False, default="")
+    referencia_2 = Column(String(100), nullable=False, default="")
+    nombre_contraparte = Column(String(200), nullable=False, default="")
+
+    # Estado
+    tipo_clasificado = Column(String(20), nullable=True)  # TPV|PROVEEDOR|NOMINA|IMPUESTO|COMISION|OTRO
+    estado_conciliacion = Column(String(15), nullable=False, default="pendiente")  # pendiente|conciliado|revision|manual
+    asiento_id = Column(Integer, ForeignKey("asientos.id"), nullable=True)
+
+    # Deduplicacion: SHA256(iban + fecha + importe + referencia + num_orden)
+    hash_unico = Column(String(64), nullable=False, unique=True)
 
     __table_args__ = (
         Index("ix_movbanco_empresa_fecha", "empresa_id", "fecha"),
+        Index("ix_movbanco_estado", "estado_conciliacion"),
     )
+
+    cuenta = relationship("CuentaBancaria", back_populates="movimientos")
+
+
+class ArchivoIngestado(Base):
+    """Registro de archivos bancarios procesados. Hash garantiza idempotencia."""
+    __tablename__ = "archivos_ingestados"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hash_archivo = Column(String(64), nullable=False, unique=True)
+    nombre_original = Column(String(300), nullable=False)
+    fuente = Column(String(20), nullable=False)   # 'email' | 'manual'
+    tipo = Column(String(20), nullable=False)      # 'c43' | 'ticket_z' | 'factura'
+    empresa_id = Column(Integer, nullable=False)
+    gestoria_id = Column(Integer, nullable=False)
+    fecha_proceso = Column(DateTime, nullable=False)
+    movimientos_totales = Column(Integer, nullable=False, default=0)
+    movimientos_nuevos = Column(Integer, nullable=False, default=0)
+    movimientos_duplicados = Column(Integer, nullable=False, default=0)
 
 
 class ActivoFijo(Base):
@@ -324,3 +418,135 @@ class AprendizajeLog(Base):
     __table_args__ = (
         Index("ix_aprend_clave", "patron_tipo", "clave"),
     )
+
+
+class ModeloFiscalGenerado(Base):
+    """Registro de modelos fiscales generados."""
+    __tablename__ = "modelos_fiscales_generados"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    modelo = Column(String(10), nullable=False)
+    ejercicio = Column(String(4), nullable=False)
+    periodo = Column(String(10), nullable=False)
+    casillas_json = Column(Text)  # JSON con todas las casillas
+    ruta_boe = Column(String(500))
+    ruta_pdf = Column(String(500))
+    estado = Column(String(20), default="generado")  # generado | presentado
+    fecha_generacion = Column(DateTime, default=datetime.now)
+    fecha_presentacion = Column(DateTime, nullable=True)
+    valido = Column(Boolean, default=True)
+    notas = Column(Text, nullable=True)
+
+    empresa = relationship("Empresa")
+
+    __table_args__ = (
+        Index("ix_mfg_empresa_ejercicio", "empresa_id", "ejercicio"),
+    )
+
+
+# --- Tablas nuevas para dashboard rewrite ---
+
+class Presupuesto(Base):
+    """Presupuesto anual por partida contable."""
+    __tablename__ = "presupuestos"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    ejercicio = Column(String(4), nullable=False)
+    subcuenta = Column(String(20), nullable=False)
+    descripcion = Column(String(200))
+    importe_mensual = Column(JSON)  # {"01": 1000, "02": 1000, ...}
+    importe_total = Column(Float, default=0)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class CentroCoste(Base):
+    """Centro de coste (departamento, proyecto, sucursal)."""
+    __tablename__ = "centros_coste"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    nombre = Column(String(100), nullable=False)
+    tipo = Column(String(50))  # departamento | proyecto | sucursal | obra
+    activo = Column(Boolean, default=True)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class AsignacionCoste(Base):
+    """Asignacion de gasto a centro de coste."""
+    __tablename__ = "asignaciones_coste"
+
+    id = Column(Integer, primary_key=True)
+    centro_id = Column(Integer, ForeignKey("centros_coste.id"), nullable=False)
+    partida_id = Column(Integer, ForeignKey("partidas.id"), nullable=False)
+    porcentaje = Column(Float, default=100)
+    fecha_asignacion = Column(DateTime, server_default=func.now())
+
+
+class ScoringHistorial(Base):
+    """Historial de scoring de clientes/proveedores."""
+    __tablename__ = "scoring_historial"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    entidad_tipo = Column(String(20))  # proveedor | cliente
+    entidad_id = Column(Integer, nullable=False)
+    puntuacion = Column(Integer)  # 0-100
+    factores = Column(JSON)
+    fecha = Column(DateTime, server_default=func.now())
+
+
+class CopilotConversacion(Base):
+    """Conversacion del copiloto IA."""
+    __tablename__ = "copilot_conversaciones"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    usuario_id = Column(Integer, nullable=False)
+    titulo = Column(String(200))
+    mensajes = Column(JSON, default=list)  # [{rol, contenido, timestamp}]
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now())
+
+
+class CopilotFeedback(Base):
+    """Feedback del usuario sobre respuestas del copiloto."""
+    __tablename__ = "copilot_feedback"
+
+    id = Column(Integer, primary_key=True)
+    conversacion_id = Column(Integer, ForeignKey("copilot_conversaciones.id"), nullable=False)
+    mensaje_idx = Column(Integer, nullable=False)
+    valoracion = Column(Integer)  # 1 (dislike) | 5 (like)
+    correccion = Column(Text)
+    fecha = Column(DateTime, server_default=func.now())
+
+
+class InformeProgramado(Base):
+    """Informe programado para generacion automatica."""
+    __tablename__ = "informes_programados"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    nombre = Column(String(200), nullable=False)
+    plantilla = Column(String(50))  # mensual | trimestral | anual | adhoc
+    secciones = Column(JSON)  # ["pyg", "balance", "ratios", ...]
+    periodicidad = Column(String(20))  # mensual | trimestral | anual | manual
+    email_destino = Column(String(200))
+    activo = Column(Boolean, default=True)
+    ultimo_generado = Column(DateTime)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+class VistaUsuario(Base):
+    """Vista personalizada de filtros guardada por usuario."""
+    __tablename__ = "vistas_usuario"
+
+    id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, nullable=False)
+    pagina = Column(String(100), nullable=False)  # ej: "facturas-emitidas"
+    nombre = Column(String(100), nullable=False)
+    filtros = Column(JSON, default=dict)
+    columnas = Column(JSON)  # columnas visibles y orden
+    es_default = Column(Boolean, default=False)
+    fecha_creacion = Column(DateTime, server_default=func.now())

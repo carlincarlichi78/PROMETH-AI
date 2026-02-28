@@ -1,0 +1,460 @@
+modelo: "390"
+version: "2025"
+tipo_formato: posicional
+longitud_registro: 13000
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion del registro ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: numerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: numerico
+        valor_fijo: "390"
+        descripcion: "Identificador del modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: apellidos_nombre
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social (40 caracteres)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "AN"
+        descripcion: "Periodo anual (siempre AN)"
+
+      # --- Seccion 1: IVA devengado tipo general 21% ---
+      - nombre: casilla_01
+        posicion: [60, 75]
+        tipo: numerico_signo
+        fuente: "casillas.01"
+        decimales: 2
+        descripcion: "Base imponible tipo general (21%) — suma anual"
+
+      - nombre: casilla_02
+        posicion: [76, 78]
+        tipo: numerico
+        valor_fijo: "210"
+        decimales: 2
+        descripcion: "Tipo general (21,00)"
+
+      - nombre: casilla_03
+        posicion: [79, 94]
+        tipo: numerico_signo
+        fuente: "casillas.03"
+        decimales: 2
+        descripcion: "Cuota tipo general — suma anual"
+
+      # --- Tipo reducido 10% ---
+      - nombre: casilla_04
+        posicion: [95, 110]
+        tipo: numerico_signo
+        fuente: "casillas.04"
+        decimales: 2
+        descripcion: "Base imponible tipo reducido (10%) — suma anual"
+
+      - nombre: casilla_05
+        posicion: [111, 113]
+        tipo: numerico
+        valor_fijo: "100"
+        decimales: 2
+        descripcion: "Tipo reducido (10,00)"
+
+      - nombre: casilla_06
+        posicion: [114, 129]
+        tipo: numerico_signo
+        fuente: "casillas.06"
+        decimales: 2
+        descripcion: "Cuota tipo reducido — suma anual"
+
+      # --- Tipo superreducido 4% ---
+      - nombre: casilla_07
+        posicion: [130, 145]
+        tipo: numerico_signo
+        fuente: "casillas.07"
+        decimales: 2
+        descripcion: "Base imponible tipo superreducido (4%) — suma anual"
+
+      - nombre: casilla_08
+        posicion: [146, 148]
+        tipo: numerico
+        valor_fijo: "40"
+        decimales: 2
+        descripcion: "Tipo superreducido (4,00)"
+
+      - nombre: casilla_09
+        posicion: [149, 164]
+        tipo: numerico_signo
+        fuente: "casillas.09"
+        decimales: 2
+        descripcion: "Cuota tipo superreducido — suma anual"
+
+      # --- Adquisiciones intracomunitarias bienes ---
+      - nombre: casilla_10
+        posicion: [165, 180]
+        tipo: numerico_signo
+        fuente: "casillas.10"
+        decimales: 2
+        descripcion: "Base adq. intracomunitarias bienes — suma anual"
+
+      - nombre: casilla_11
+        posicion: [181, 183]
+        tipo: numerico
+        fuente: "casillas.11"
+        decimales: 2
+        descripcion: "Tipo % adq. intracomunitarias bienes"
+
+      - nombre: casilla_12
+        posicion: [184, 199]
+        tipo: numerico_signo
+        fuente: "casillas.12"
+        decimales: 2
+        descripcion: "Cuota adq. intracomunitarias bienes — suma anual"
+
+      # --- Adquisiciones intracomunitarias servicios ---
+      - nombre: casilla_13
+        posicion: [200, 215]
+        tipo: numerico_signo
+        fuente: "casillas.13"
+        decimales: 2
+        descripcion: "Base adq. intracomunitarias servicios — suma anual"
+
+      - nombre: casilla_14
+        posicion: [216, 218]
+        tipo: numerico
+        fuente: "casillas.14"
+        decimales: 2
+        descripcion: "Tipo % adq. intracomunitarias servicios"
+
+      - nombre: casilla_15
+        posicion: [219, 234]
+        tipo: numerico_signo
+        fuente: "casillas.15"
+        decimales: 2
+        descripcion: "Cuota adq. intracomunitarias servicios — suma anual"
+
+      # --- Recargo de equivalencia tipo general ---
+      - nombre: casilla_16
+        posicion: [235, 250]
+        tipo: numerico_signo
+        fuente: "casillas.16"
+        decimales: 2
+        descripcion: "Base recargo equivalencia 5,2%"
+
+      - nombre: casilla_17
+        posicion: [251, 253]
+        tipo: numerico
+        valor_fijo: "052"
+        decimales: 2
+        descripcion: "Tipo recargo equivalencia 5,2% general"
+
+      - nombre: casilla_18
+        posicion: [254, 269]
+        tipo: numerico_signo
+        fuente: "casillas.18"
+        decimales: 2
+        descripcion: "Cuota recargo equivalencia 5,2%"
+
+      # --- Recargo de equivalencia tipo reducido ---
+      - nombre: casilla_19
+        posicion: [270, 285]
+        tipo: numerico_signo
+        fuente: "casillas.19"
+        decimales: 2
+        descripcion: "Base recargo equivalencia 1,4%"
+
+      - nombre: casilla_20
+        posicion: [286, 288]
+        tipo: numerico
+        valor_fijo: "014"
+        decimales: 2
+        descripcion: "Tipo recargo equivalencia 1,4% reducido"
+
+      - nombre: casilla_21
+        posicion: [289, 304]
+        tipo: numerico_signo
+        fuente: "casillas.21"
+        decimales: 2
+        descripcion: "Cuota recargo equivalencia 1,4%"
+
+      # --- Recargo de equivalencia tipo superreducido ---
+      - nombre: casilla_22
+        posicion: [305, 320]
+        tipo: numerico_signo
+        fuente: "casillas.22"
+        decimales: 2
+        descripcion: "Base recargo equivalencia 0,5%"
+
+      - nombre: casilla_23
+        posicion: [321, 323]
+        tipo: numerico
+        valor_fijo: "005"
+        decimales: 2
+        descripcion: "Tipo recargo equivalencia 0,5% superreducido"
+
+      - nombre: casilla_24
+        posicion: [324, 339]
+        tipo: numerico_signo
+        fuente: "casillas.24"
+        decimales: 2
+        descripcion: "Cuota recargo equivalencia 0,5%"
+
+      # --- Modificaciones de bases y cuotas ---
+      - nombre: casilla_25
+        posicion: [340, 355]
+        tipo: numerico_signo
+        fuente: "casillas.25"
+        decimales: 2
+        descripcion: "Modificacion bases imponibles concurso acreedores / BAI"
+
+      - nombre: casilla_26
+        posicion: [356, 371]
+        tipo: numerico_signo
+        fuente: "casillas.26"
+        decimales: 2
+        descripcion: "Modificacion cuotas concurso acreedores / BAI"
+
+      # --- IVA diferido importaciones ---
+      - nombre: casilla_77
+        posicion: [372, 387]
+        tipo: numerico_signo
+        fuente: "casillas.77"
+        decimales: 2
+        descripcion: "Cuotas IVA diferido importaciones — suma anual"
+
+      # --- Total cuotas devengadas ---
+      - nombre: casilla_27
+        posicion: [388, 403]
+        tipo: numerico_signo
+        fuente: "casillas.27"
+        decimales: 2
+        descripcion: "Total cuotas IVA devengado — suma anual"
+
+      # --- Seccion 2: IVA deducible ---
+      - nombre: casilla_28
+        posicion: [404, 419]
+        tipo: numerico_signo
+        fuente: "casillas.28"
+        decimales: 2
+        descripcion: "Base IVA soportado deducible bienes/servicios corrientes"
+
+      - nombre: casilla_29
+        posicion: [420, 435]
+        tipo: numerico_signo
+        fuente: "casillas.29"
+        decimales: 2
+        descripcion: "Cuota IVA soportado deducible bienes/servicios corrientes"
+
+      - nombre: casilla_30
+        posicion: [436, 451]
+        tipo: numerico_signo
+        fuente: "casillas.30"
+        decimales: 2
+        descripcion: "Base IVA soportado deducible bienes de inversion"
+
+      - nombre: casilla_31
+        posicion: [452, 467]
+        tipo: numerico_signo
+        fuente: "casillas.31"
+        decimales: 2
+        descripcion: "Cuota IVA soportado deducible bienes de inversion"
+
+      - nombre: casilla_32
+        posicion: [468, 483]
+        tipo: numerico_signo
+        fuente: "casillas.32"
+        decimales: 2
+        descripcion: "Base importaciones bienes corrientes deducible"
+
+      - nombre: casilla_33
+        posicion: [484, 499]
+        tipo: numerico_signo
+        fuente: "casillas.33"
+        decimales: 2
+        descripcion: "Cuota importaciones bienes corrientes deducible"
+
+      - nombre: casilla_34
+        posicion: [500, 515]
+        tipo: numerico_signo
+        fuente: "casillas.34"
+        decimales: 2
+        descripcion: "Base importaciones bienes de inversion"
+
+      - nombre: casilla_35
+        posicion: [516, 531]
+        tipo: numerico_signo
+        fuente: "casillas.35"
+        decimales: 2
+        descripcion: "Cuota importaciones bienes de inversion"
+
+      - nombre: casilla_36
+        posicion: [532, 547]
+        tipo: numerico_signo
+        fuente: "casillas.36"
+        decimales: 2
+        descripcion: "Cuota adq. intracomunitarias bienes corrientes deducible"
+
+      # --- Regularizacion bienes de inversion ---
+      - nombre: casilla_40
+        posicion: [548, 563]
+        tipo: numerico_signo
+        fuente: "casillas.40"
+        decimales: 2
+        descripcion: "Regularizacion cuotas deducidas bienes de inversion"
+
+      # --- Regularizacion por prorrata ---
+      - nombre: casilla_41
+        posicion: [564, 579]
+        tipo: numerico_signo
+        fuente: "casillas.41"
+        decimales: 2
+        descripcion: "Regularizacion por aplicacion porcentaje definitivo prorrata"
+
+      # --- Sumas de deduccion ---
+      - nombre: casilla_42
+        posicion: [580, 595]
+        tipo: numerico_signo
+        fuente: "casillas.42"
+        decimales: 2
+        descripcion: "Regularizacion acumulada cuotas soportadas (suma de correcciones)"
+
+      - nombre: casilla_43
+        posicion: [596, 611]
+        tipo: numerico_signo
+        fuente: "casillas.43"
+        decimales: 2
+        descripcion: "Regularizacion acumulada deducciones"
+
+      # --- Total a deducir ---
+      - nombre: casilla_37
+        posicion: [612, 627]
+        tipo: numerico_signo
+        fuente: "casillas.37"
+        decimales: 2
+        descripcion: "Total IVA deducible"
+
+      # --- Diferencia y resultado ---
+      - nombre: casilla_45
+        posicion: [628, 643]
+        tipo: numerico_signo
+        fuente: "casillas.45"
+        decimales: 2
+        descripcion: "Diferencia: casilla_27 - casilla_37"
+
+      # --- Prorrata ---
+      - nombre: casilla_84
+        posicion: [644, 646]
+        tipo: numerico
+        fuente: "casillas.84"
+        decimales: 0
+        descripcion: "Porcentaje prorrata general definitiva (%)"
+
+      - nombre: casilla_85
+        posicion: [647, 649]
+        tipo: numerico
+        fuente: "casillas.85"
+        decimales: 0
+        descripcion: "Porcentaje prorrata especial definitiva (%) sector 1"
+
+      - nombre: casilla_86
+        posicion: [650, 652]
+        tipo: numerico
+        fuente: "casillas.86"
+        decimales: 0
+        descripcion: "Porcentaje prorrata especial definitiva (%) sector 2"
+
+      # --- Sectores diferenciados (por si existen) ---
+      - nombre: casilla_95
+        posicion: [653, 668]
+        tipo: numerico_signo
+        fuente: "casillas.95"
+        decimales: 2
+        descripcion: "Suma cuotas IVA devengado sectores diferenciados"
+
+      - nombre: casilla_96
+        posicion: [669, 684]
+        tipo: numerico_signo
+        fuente: "casillas.96"
+        decimales: 2
+        descripcion: "Suma cuotas IVA soportado sectores diferenciados"
+
+      # --- Resultado final ---
+      - nombre: casilla_65
+        posicion: [685, 700]
+        tipo: numerico_signo
+        fuente: "casillas.65"
+        decimales: 2
+        descripcion: "Resultado del ejercicio (casilla_45 ajustada)"
+
+      - nombre: casilla_66
+        posicion: [701, 716]
+        tipo: numerico_signo
+        fuente: "casillas.66"
+        decimales: 2
+        descripcion: "Suma resultados autoliquidaciones trimestrales ingresadas"
+
+      - nombre: casilla_67
+        posicion: [717, 732]
+        tipo: numerico_signo
+        fuente: "casillas.67"
+        decimales: 2
+        descripcion: "Resultado liquidacion complementaria (casilla_65 - casilla_66)"
+
+      # --- Datos adicionales del declarante ---
+      - nombre: telefono
+        posicion: [733, 741]
+        tipo: telefono
+        fuente: "empresa.telefono"
+        descripcion: "Telefono de contacto del declarante"
+
+      - nombre: relleno
+        posicion: [742, 13000]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Relleno hasta longitud 13000"
+
+validaciones:
+  - regla: "casilla_27 == casilla_03 + casilla_06 + casilla_09 + casilla_12 + casilla_15 + casilla_18 + casilla_21 + casilla_24 + casilla_26 + casilla_77"
+    nivel: error
+    mensaje: "Total cuotas devengadas (casilla 27) no cuadra con la suma de cuotas por tipo"
+
+  - regla: "casilla_37 == casilla_29 + casilla_31 + casilla_33 + casilla_35 + casilla_36 + casilla_40 + casilla_41"
+    nivel: error
+    mensaje: "Total a deducir (casilla 37) no coincide con la suma de cuotas soportadas mas regularizaciones"
+
+  - regla: "casilla_45 == casilla_27 - casilla_37"
+    nivel: error
+    mensaje: "Diferencia (casilla 45) no es casilla_27 menos casilla_37"
+
+  - regla: "casilla_65 == casilla_45"
+    nivel: advertencia
+    mensaje: "Resultado final (casilla 65) deberia coincidir con la diferencia (casilla 45) salvo regularizaciones adicionales"
+
+  - regla: "casilla_67 == casilla_65 - casilla_66"
+    nivel: error
+    mensaje: "Resultado complementario (casilla 67) no es casilla_65 menos la suma de trimestres ingresados"
+
+  - regla: "casilla_84 >= 0 and casilla_84 <= 100"
+    nivel: error
+    mensaje: "Porcentaje de prorrata (casilla 84) debe estar entre 0 y 100"

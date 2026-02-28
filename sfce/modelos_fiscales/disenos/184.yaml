@@ -1,0 +1,190 @@
+modelo: "184"
+version: "2025"
+descripcion: "Entidades en regimen de atribucion de rentas — informativa anual"
+periodicidad: anual
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: cabecera
+    repetible: false
+    campos:
+      # --- Identificacion registro tipo 1 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (1=cabecera)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "184"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_entidad
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF de la entidad en regimen de atribucion"
+
+      - nombre: nombre_entidad
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Nombre de la entidad (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "0A"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: tipo_entidad_atribucion
+        posicion: [61, 62]
+        tipo: alfanumerico
+        fuente: "casillas.tipo_entidad_atribucion"
+        descripcion: "01=sociedad civil, 02=comunidad bienes, 03=herencia yacente, 04=otras"
+
+      - nombre: num_miembros
+        posicion: [63, 67]
+        tipo: numerico
+        fuente: "casillas.num_miembros"
+        descripcion: "Numero de miembros de la entidad"
+
+      # --- Totales rentas atribuidas ---
+      - nombre: total_rendimientos_capital_inmobiliario
+        posicion: [68, 84]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_rendimientos_capital_inmobiliario"
+        descripcion: "Total rendimientos capital inmobiliario atribuidos"
+
+      - nombre: total_rendimientos_capital_mobiliario
+        posicion: [85, 101]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_rendimientos_capital_mobiliario"
+        descripcion: "Total rendimientos capital mobiliario atribuidos"
+
+      - nombre: total_rendimientos_actividades_economicas
+        posicion: [102, 118]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_rendimientos_actividades_economicas"
+        descripcion: "Total rendimientos actividades economicas atribuidos"
+
+      - nombre: total_ganancias_patrimoniales
+        posicion: [119, 135]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.total_ganancias_patrimoniales"
+        descripcion: "Total ganancias y perdidas patrimoniales atribuidas"
+
+      - nombre: blancos_136_500
+        posicion: [136, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+  - tipo: miembro
+    repetible: true
+    campos:
+      # --- Identificacion registro tipo 2 ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "2"
+        descripcion: "Tipo de registro (2=miembro)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "184"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal"
+
+      - nombre: nif_entidad
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF de la entidad declarante"
+
+      - nombre: nif_miembro
+        posicion: [18, 26]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF del miembro o participe"
+
+      - nombre: nombre_miembro
+        posicion: [27, 66]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre del miembro (40 chars)"
+
+      - nombre: porcentaje_participacion
+        posicion: [67, 72]
+        tipo: numerico
+        decimales: 4
+        fuente: "declarado.porcentaje_participacion"
+        descripcion: "Porcentaje de participacion en la entidad (4 decimales)"
+
+      - nombre: rendimientos_capital_inmobiliario
+        posicion: [73, 89]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.rendimientos_capital_inmobiliario"
+        descripcion: "Rendimientos capital inmobiliario atribuidos al miembro"
+
+      - nombre: rendimientos_capital_mobiliario
+        posicion: [90, 106]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.rendimientos_capital_mobiliario"
+        descripcion: "Rendimientos capital mobiliario atribuidos al miembro"
+
+      - nombre: rendimientos_actividades_economicas
+        posicion: [107, 123]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.rendimientos_actividades_economicas"
+        descripcion: "Rendimientos actividades economicas atribuidos al miembro"
+
+      - nombre: ganancias_patrimoniales
+        posicion: [124, 140]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "declarado.ganancias_patrimoniales"
+        descripcion: "Ganancias o perdidas patrimoniales atribuidas al miembro"
+
+      - nombre: blancos_141_500
+        posicion: [141, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "num_miembros >= 2"
+    nivel: advertencia
+    mensaje: "Una entidad en atribucion de rentas normalmente tiene al menos 2 miembros"
+
+  - regla: "tipo_entidad_atribucion in ['01', '02', '03', '04']"
+    nivel: error
+    mensaje: "Tipo de entidad debe ser 01 (SC), 02 (CB), 03 (herencia) o 04 (otras)"

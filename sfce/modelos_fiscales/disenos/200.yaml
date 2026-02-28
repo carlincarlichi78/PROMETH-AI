@@ -1,0 +1,240 @@
+modelo: "200"
+version: "2025"
+descripcion: "Impuesto sobre Sociedades — declaracion anual"
+periodicidad: anual
+tipo_formato: xml
+longitud_registro: 0
+
+registros:
+  - tipo: identificacion
+    repetible: false
+    campos:
+      - nombre: nif
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del sujeto pasivo"
+
+      - nombre: nombre_razon_social
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Razon social o denominacion"
+
+      - nombre: ejercicio
+        posicion: [0, 0]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: periodo
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo (0A = anual)"
+
+      - nombre: tipo_declaracion
+        posicion: [0, 0]
+        tipo: alfanumerico
+        valor_fijo: "I"
+        descripcion: "Tipo declaracion: I=individual, C=consolidacion"
+
+      - nombre: codigo_cnae
+        posicion: [0, 0]
+        tipo: alfanumerico
+        fuente: "empresa.cnae"
+        descripcion: "Codigo CNAE actividad principal"
+
+  - tipo: balance_activo
+    repetible: false
+    campos:
+      - nombre: activo_no_corriente
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_activo_nc"
+        decimales: 2
+        descripcion: "Total activo no corriente"
+
+      - nombre: activo_corriente
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_activo_c"
+        decimales: 2
+        descripcion: "Total activo corriente"
+
+      - nombre: total_activo
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_total_activo"
+        decimales: 2
+        descripcion: "Total activo"
+
+  - tipo: balance_pasivo
+    repetible: false
+    campos:
+      - nombre: patrimonio_neto
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_patrimonio_neto"
+        decimales: 2
+        descripcion: "Total patrimonio neto"
+
+      - nombre: pasivo_no_corriente
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_pasivo_nc"
+        decimales: 2
+        descripcion: "Total pasivo no corriente"
+
+      - nombre: pasivo_corriente
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_pasivo_c"
+        decimales: 2
+        descripcion: "Total pasivo corriente"
+
+      - nombre: total_pasivo_pn
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.balance_total_pasivo"
+        decimales: 2
+        descripcion: "Total pasivo + patrimonio neto"
+
+  - tipo: pyg
+    repetible: false
+    campos:
+      - nombre: importe_neto_cifra_negocios
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.pyg_cifra_negocios"
+        decimales: 2
+        descripcion: "Importe neto cifra de negocios"
+
+      - nombre: resultado_explotacion
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.pyg_resultado_explotacion"
+        decimales: 2
+        descripcion: "Resultado de explotacion"
+
+      - nombre: resultado_financiero
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.pyg_resultado_financiero"
+        decimales: 2
+        descripcion: "Resultado financiero"
+
+      - nombre: resultado_antes_impuestos
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.pyg_resultado_antes_impuestos"
+        decimales: 2
+        descripcion: "Resultado antes de impuestos"
+
+  - tipo: liquidacion
+    repetible: false
+    campos:
+      - nombre: casilla_500
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.500"
+        decimales: 2
+        descripcion: "Resultado contable antes impuesto (antes ajustes)"
+
+      - nombre: casilla_501
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.501"
+        decimales: 2
+        descripcion: "Aumentos por diferencias permanentes y temporarias"
+
+      - nombre: casilla_502
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.502"
+        decimales: 2
+        descripcion: "Disminuciones por diferencias permanentes y temporarias"
+
+      - nombre: casilla_547
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.547"
+        decimales: 2
+        descripcion: "Compensacion bases imponibles negativas de ejercicios anteriores"
+
+      - nombre: casilla_550
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.550"
+        decimales: 2
+        descripcion: "Base imponible (positiva o negativa)"
+
+      - nombre: casilla_552
+        posicion: [0, 0]
+        tipo: numerico
+        fuente: "casillas.552"
+        decimales: 2
+        descripcion: "Tipo de gravamen (%)"
+
+      - nombre: casilla_560
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.560"
+        decimales: 2
+        descripcion: "Cuota integra"
+
+      - nombre: casilla_562
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.562"
+        decimales: 2
+        descripcion: "Deducciones por doble imposicion y bonificaciones"
+
+      - nombre: casilla_570
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.570"
+        decimales: 2
+        descripcion: "Deducciones por incentivos a la inversion"
+
+      - nombre: casilla_580
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.580"
+        decimales: 2
+        descripcion: "Retenciones e ingresos a cuenta"
+
+      - nombre: casilla_595
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.595"
+        decimales: 2
+        descripcion: "Cuota liquida positiva"
+
+      - nombre: casilla_599
+        posicion: [0, 0]
+        tipo: numerico_signo
+        fuente: "casillas.599"
+        decimales: 2
+        descripcion: "Resultado declaracion (a ingresar o a devolver)"
+
+validaciones:
+  - regla: "casilla_550 == casilla_500 + casilla_501 - casilla_502 - casilla_547"
+    nivel: error
+    mensaje: "Base imponible (550) no cuadra con resultado contable mas ajustes"
+
+  - regla: "casilla_560 == casilla_550 * casilla_552 / 100"
+    nivel: error
+    mensaje: "Cuota integra (560) no coincide con base por tipo de gravamen"
+
+  - regla: "casilla_595 == casilla_560 - casilla_562 - casilla_570"
+    nivel: error
+    mensaje: "Cuota liquida (595) debe ser cuota integra menos deducciones"
+
+  - regla: "casilla_599 == casilla_595 - casilla_580"
+    nivel: error
+    mensaje: "Resultado (599) debe ser cuota liquida menos retenciones"
+
+  - regla: "total_activo == total_pasivo_pn"
+    nivel: error
+    mensaje: "Balance no cuadra: total activo debe igualar total pasivo + patrimonio neto"

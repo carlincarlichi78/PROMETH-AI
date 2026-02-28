@@ -1,0 +1,126 @@
+modelo: "202"
+version: "2025"
+descripcion: "Pago fraccionado Impuesto sobre Sociedades — trimestral"
+periodicidad: trimestral
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro (siempre 1)"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "202"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio fiscal (AAAA)"
+
+      - nombre: nif_declarante
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del declarante"
+
+      - nombre: nombre_declarante
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Apellidos y nombre o razon social"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        fuente: "periodo"
+        descripcion: "Periodo: 1P/2P/3P"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "Tipo soporte (T=telematico)"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Datos del ultimo IS presentado ---
+      - nombre: casilla_01
+        posicion: [68, 84]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.01"
+        descripcion: "Base del ultimo Impuesto sobre Sociedades presentado"
+
+      - nombre: casilla_02
+        posicion: [85, 101]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.02"
+        descripcion: "Cuota del ultimo Impuesto sobre Sociedades presentado"
+
+      # --- Calculo del pago fraccionado ---
+      - nombre: casilla_03
+        posicion: [102, 104]
+        tipo: numerico
+        valor_fijo: "180"
+        descripcion: "Porcentaje aplicable (18% → almacenado como 180 con 1 decimal)"
+
+      - nombre: casilla_04
+        posicion: [105, 121]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Pago fraccionado previo (02 * 18%)"
+
+      # --- Retenciones y pagos previos ---
+      - nombre: casilla_10
+        posicion: [122, 138]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.10"
+        descripcion: "Retenciones e ingresos a cuenta practicados"
+
+      - nombre: casilla_12
+        posicion: [139, 155]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.12"
+        descripcion: "Pagos fraccionados ingresados periodos anteriores del mismo ejercicio"
+
+      # --- Resultado ---
+      - nombre: casilla_14
+        posicion: [156, 172]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.14"
+        descripcion: "Resultado (04 - 10 - 12); si negativo: 0"
+
+      - nombre: blancos_173_500
+        posicion: [173, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_04 == casilla_02 * 0.18"
+    nivel: advertencia
+    mensaje: "Pago fraccionado (04) deberia ser el 18% de la cuota del ultimo IS (02)"
+
+  - regla: "casilla_14 >= 0"
+    nivel: advertencia
+    mensaje: "Resultado (14) no puede ser negativo; si el calculo da negativo se consigna 0"

@@ -1,0 +1,138 @@
+modelo: "211"
+version: "2025"
+descripcion: "Retencion e ingreso a cuenta IRNR — adquisicion bienes inmuebles a no residentes"
+periodicidad: aperiodico
+tipo_formato: posicional
+longitud_registro: 500
+
+registros:
+  - tipo: principal
+    repetible: false
+    campos:
+      # --- Identificacion ---
+      - nombre: tipo_registro
+        posicion: [1, 1]
+        tipo: alfanumerico
+        valor_fijo: "1"
+        descripcion: "Tipo de registro"
+
+      - nombre: modelo
+        posicion: [2, 4]
+        tipo: alfanumerico
+        valor_fijo: "211"
+        descripcion: "Numero de modelo"
+
+      - nombre: ejercicio
+        posicion: [5, 8]
+        tipo: numerico
+        fuente: "ejercicio"
+        descripcion: "Ejercicio (AAAA)"
+
+      - nombre: nif_adquirente
+        posicion: [9, 17]
+        tipo: alfanumerico
+        fuente: "nif_declarante"
+        descripcion: "NIF del adquirente (quien retiene)"
+
+      - nombre: nombre_adquirente
+        posicion: [18, 57]
+        tipo: alfanumerico
+        fuente: "nombre_declarante"
+        descripcion: "Nombre o razon social del adquirente (40 chars)"
+
+      - nombre: periodo
+        posicion: [58, 59]
+        tipo: alfanumerico
+        valor_fijo: "00"
+        descripcion: "Periodo (00 = aperiodico)"
+
+      - nombre: tipo_soporte
+        posicion: [60, 60]
+        tipo: alfanumerico
+        valor_fijo: "T"
+        descripcion: "T=telematico"
+
+      - nombre: blancos_61_67
+        posicion: [61, 67]
+        tipo: alfanumerico
+        valor_fijo: "       "
+        descripcion: "Blancos"
+
+      # --- Datos del transmitente no residente ---
+      - nombre: nif_transmitente
+        posicion: [68, 76]
+        tipo: alfanumerico
+        fuente: "declarado.nif"
+        descripcion: "NIF o NIE del transmitente no residente"
+
+      - nombre: nombre_transmitente
+        posicion: [77, 116]
+        tipo: alfanumerico
+        fuente: "declarado.nombre"
+        descripcion: "Nombre o razon social del transmitente (40 chars)"
+
+      - nombre: pais_residencia_transmitente
+        posicion: [117, 118]
+        tipo: alfanumerico
+        fuente: "declarado.codigo_pais"
+        descripcion: "Codigo de pais de residencia del transmitente"
+
+      # --- Datos del inmueble ---
+      - nombre: referencia_catastral
+        posicion: [119, 138]
+        tipo: alfanumerico
+        fuente: "casillas.referencia_catastral"
+        descripcion: "Referencia catastral del inmueble (20 chars)"
+
+      - nombre: fecha_transmision
+        posicion: [139, 146]
+        tipo: fecha
+        fuente: "casillas.fecha_transmision"
+        descripcion: "Fecha de transmision AAAAMMDD"
+
+      # --- Liquidacion ---
+      - nombre: casilla_01
+        posicion: [147, 163]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.01"
+        descripcion: "Valor de transmision (precio de venta)"
+
+      - nombre: casilla_02
+        posicion: [164, 166]
+        tipo: numerico
+        valor_fijo: "300"
+        descripcion: "Tipo de retencion: 3% (300 con 2 decimales)"
+
+      - nombre: casilla_03
+        posicion: [167, 183]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.03"
+        descripcion: "Importe de la retencion (01 * 3%)"
+
+      - nombre: casilla_04
+        posicion: [184, 200]
+        tipo: numerico_signo
+        decimales: 2
+        fuente: "casillas.04"
+        descripcion: "Resultado a ingresar"
+
+      - nombre: blancos_201_500
+        posicion: [201, 500]
+        tipo: alfanumerico
+        valor_fijo: ""
+        descripcion: "Blancos hasta fin de registro"
+
+validaciones:
+  - regla: "casilla_03 == casilla_01 * 0.03"
+    nivel: error
+    mensaje: "Retencion (03) debe ser el 3% del valor de transmision (01)"
+
+  - regla: "casilla_04 == casilla_03"
+    nivel: advertencia
+    mensaje: "Resultado (04) normalmente coincide con la retencion (03)"
+
+  - regla: "casilla_01 > 0"
+    nivel: error
+    mensaje: "El valor de transmision (01) debe ser positivo"

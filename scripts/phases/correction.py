@@ -504,7 +504,7 @@ def _check_irpf_factura_cliente(asiento_data: dict, config) -> list:
     return problemas
 
 
-def _aplicar_correccion(correccion: dict) -> bool:
+def _aplicar_correccion(correccion: dict, backend=None) -> bool:
     """Aplica una correccion automatica via API PUT.
 
     Returns:
@@ -517,35 +517,33 @@ def _aplicar_correccion(correccion: dict) -> bool:
     if not idpartida:
         return False
 
+    def _put_partida(idp, data_dict):
+        if backend:
+            return bool(backend.actualizar_partida(idp, data_dict))
+        return bool(api_put(f"partidas/{idp}", data_dict))
+
     try:
         if tipo == "divisa_sin_convertir":
             campo = datos["campo"]
-            return bool(api_put(f"partidas/{idpartida}",
-                                {campo: datos["importe_correcto"]}))
+            return _put_partida(idpartida, {campo: datos["importe_correcto"]})
 
         elif tipo == "nc_sin_invertir":
             corr = datos.get("correccion", {})
-            return bool(api_put(f"partidas/{idpartida}", corr))
+            return _put_partida(idpartida, corr)
 
         elif tipo == "subcuenta_incorrecta":
-            return bool(api_put(f"partidas/{idpartida}",
-                                {"codsubcuenta": datos["subcuenta_esperada"]}))
+            return _put_partida(idpartida, {"codsubcuenta": datos["subcuenta_esperada"]})
 
         elif tipo == "regla_especial_reclasificar":
-            return bool(api_put(f"partidas/{idpartida}",
-                                {"codsubcuenta": datos["subcuenta_destino"]}))
+            return _put_partida(idpartida, {"codsubcuenta": datos["subcuenta_destino"]})
 
         elif tipo == "regla_especial_iva_extranjero":
             # 1. Reducir partida 600 (quitar importe IVA ADUANA)
-            ok_600 = api_put(f"partidas/{idpartida}",
-                             {"debe": datos["debe_nuevo"]})
+            ok_600 = _put_partida(idpartida, {"debe": datos["debe_nuevo"]})
             if not ok_600:
                 return False
 
             # 2. Crear partida nueva en 4709 (IVA extranjero)
-            import requests
-            url = "https://contabilidad.lemonfresh-tuc.com/api/3/partidas"
-            headers = {"Token": "iOXmrA1Bbn8RDWXLv91L"}
             nueva_partida = {
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": datos["subcuenta_destino"],
@@ -553,8 +551,12 @@ def _aplicar_correccion(correccion: dict) -> bool:
                 "haber": 0,
                 "concepto": "IVA extranjero - suplido aduanero",
             }
-            resp = requests.post(url, data=nueva_partida, headers=headers)
-            return resp.status_code in (200, 201)
+            if backend:
+                backend.crear_partida(nueva_partida)
+            else:
+                from scripts.core.fs_api import api_post as _api_post
+                _api_post("partidas", nueva_partida)
+            return True
 
     except Exception as e:
         logger.error(f"Error aplicando correccion {tipo}: {e}")
@@ -576,7 +578,8 @@ def ejecutar_correccion(
     ruta_cliente: Path,
     catalogo: CatalogoErrores = None,
     auditoria=None,
-    motor=None
+    motor=None,
+    backend=None
 ) -> ResultadoFase:
     """Ejecuta la fase 4 de correccion automatica.
 
@@ -684,7 +687,7 @@ def ejecutar_correccion(
 
             if es_auto:
                 logger.info(f"  Corrigiendo: {problema['descripcion']}")
-                exito = _aplicar_correccion(problema)
+                exito = _aplicar_correccion(problema, backend=backend)
                 if exito:
                     correcciones_aplicadas.append(problema)
                     resultado.correccion(

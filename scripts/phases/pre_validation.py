@@ -94,7 +94,14 @@ def _validar_entidad_existe(doc: dict, tipo_doc: str,
         cif = (datos.get("receptor_cif") or "").upper()
         entidad = config.buscar_cliente_por_cif(cif) if cif else None
         if not entidad:
-            return f"Cliente CIF '{cif}' no encontrado en config.yaml"
+            nombre = datos.get("receptor_nombre", "")
+            entidad = config.buscar_cliente_por_nombre(nombre) if nombre else None
+        if not entidad:
+            # Verificar si hay fallback CLIENTES VARIOS (RD 1619/2012)
+            fallback = config.buscar_cliente_fallback_sin_cif()
+            if fallback:
+                return None  # No bloquear: se usara fallback en registration
+            return f"Cliente CIF '{cif}' / nombre '{datos.get('receptor_nombre', '')}' no encontrado en config.yaml"
 
     return None
 
@@ -462,10 +469,21 @@ def ejecutar_pre_validacion(
             # Facturas compra/suplidos: CIF del emisor (proveedor)
             cif_entidad = datos.get("emisor_cif") or ""
             entidad = config.buscar_proveedor_por_cif(cif_entidad) if cif_entidad else None
+            # Fallback: buscar por nombre del emisor (OCR no extrajo CIF)
+            if not entidad:
+                nombre_emisor = datos.get("emisor_nombre") or ""
+                entidad = config.buscar_proveedor_por_nombre(nombre_emisor) if nombre_emisor else None
+                # Si encontrado por nombre, usar CIF del config para validaciones
+                if entidad and entidad.get("cif") and not cif_entidad:
+                    cif_entidad = entidad["cif"]
         elif tipo_doc in ("FV", "REC"):
             # Facturas venta: CIF del receptor (cliente)
             cif_entidad = datos.get("receptor_cif") or ""
             entidad = config.buscar_cliente_por_cif(cif_entidad) if cif_entidad else None
+            # Fallback: buscar por nombre del receptor (clientes sin CIF)
+            if not entidad:
+                nombre_receptor = datos.get("receptor_nombre") or ""
+                entidad = config.buscar_cliente_por_nombre(nombre_receptor) if nombre_receptor else None
         elif tipo_doc in ("NOM", "RLC"):
             # Nominas y SS: CIF empresa propia (emisor), siempre valido
             cif_entidad = datos.get("emisor_cif") or config.empresa.get("cif", "")
@@ -480,11 +498,13 @@ def ejecutar_pre_validacion(
         pais_entidad = entidad.get("pais", "ESP") if entidad else "ESP"
 
         # Check 1: CIF formato (no bloquear NOM/BAN/RLC/IMP si falta CIF)
+        # Tambien no bloquear si entidad encontrada por nombre con CIF vacio en config
         tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
+        entidad_sin_cif = entidad and not entidad.get("cif", "").strip()
         err = _validar_cif_formato(cif_entidad, pais_entidad)
         if err:
-            if tipo_doc in tipos_cif_opcional:
-                avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
+            if tipo_doc in tipos_cif_opcional or entidad_sin_cif:
+                avisos_doc.append(f"[CHECK 1] {err} (no bloqueante: {'entidad sin CIF en config' if entidad_sin_cif else tipo_doc})")
             else:
                 errores_doc.append(f"[CHECK 1] {err}")
 
@@ -650,6 +670,50 @@ def ejecutar_pre_validacion(
             aviso = _check_rlc_cuota(datos)
             if aviso:
                 avisos_doc.append(aviso)
+
+        # CHECK 14: FV sin CIF receptor — clasificacion fiscal RD 1619/2012
+        if tipo_doc == "FV":
+            cif_receptor = (datos.get("receptor_cif") or "").strip()
+            if not cif_receptor:
+                fallback = config.buscar_cliente_fallback_sin_cif()
+                total = float(datos.get("total") or datos.get("base_imponible") or 0)
+                # Sectores donde se admite factura simplificada hasta 3.000 EUR
+                # (hosteleria, transporte, aparcamientos, peajes — RD 1619/2012 art.4)
+                desc_lineas = " ".join(
+                    l.get("descripcion", "") for l in datos.get("lineas", [])
+                ).lower()
+                sectores_simplificada = [
+                    "pilates", "fisioterapi", "sesion", "clase", "tratamiento",
+                    "consulta", "terapia", "rehabilit",
+                ]
+                es_sector_simplificada = any(s in desc_lineas for s in sectores_simplificada)
+
+                if total <= 400 or (total <= 3000 and es_sector_simplificada):
+                    tipo_factura = "SIMPLIFICADA"
+                    razon = f"<= {total:.0f} EUR"
+                    if es_sector_simplificada:
+                        razon = f"sector servicios personales, {total:.0f} EUR"
+                    avisos_doc.append(
+                        f"[CHECK 14] FV sin CIF receptor: FACTURA {tipo_factura} "
+                        f"({razon}) — valida sin NIF receptor (RD 1619/2012 art.4)"
+                        + (f", se usara '{fallback.get('nombre_fs', 'CLIENTES VARIOS')}'" if fallback else "")
+                    )
+                else:
+                    razon_legal = (
+                        "factura completa requiere NIF receptor (RD 1619/2012 art.6)"
+                    )
+                    if fallback:
+                        avisos_doc.append(
+                            f"[CHECK 14] FV sin CIF receptor ({total:.2f} EUR): "
+                            f"{razon_legal} — se usara '{fallback.get('nombre_fs', 'CLIENTES VARIOS')}' "
+                            f"(receptor no podra deducir IVA soportado)"
+                        )
+                    else:
+                        avisos_doc.append(
+                            f"[CHECK 14] FV sin CIF receptor ({total:.2f} EUR): "
+                            f"{razon_legal} — considera anadir 'clientes-varios' con "
+                            f"fallback_sin_cif: true en config.yaml"
+                        )
 
         # Evaluar resultado
         if errores_doc:

@@ -27,6 +27,13 @@ import yaml
 from openai import OpenAI
 
 from ..core.aritmetica import ejecutar_checks_aritmeticos
+try:
+    from sfce.core.cache_ocr import guardar_cache_ocr, obtener_cache_ocr
+    _CACHE_OCR_DISPONIBLE = True
+except ImportError:
+    _CACHE_OCR_DISPONIBLE = False
+    def obtener_cache_ocr(_ruta): return None  # noqa: E731
+    def guardar_cache_ocr(_ruta, _datos): return ""  # noqa: E731
 from ..core.confidence import DocumentoConfianza, calcular_nivel
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
@@ -308,6 +315,13 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
     elif tipo_doc == "FV":
         cif = (datos_gpt.get("receptor_cif") or "").upper()
         entidad = config.buscar_cliente_por_cif(cif) if cif else None
+        # Fallback: buscar por nombre del receptor (clientes sin CIF)
+        if not entidad:
+            nombre_receptor = datos_gpt.get("receptor_nombre") or ""
+            if nombre_receptor:
+                entidad = config.buscar_cliente_por_nombre(nombre_receptor)
+                if entidad:
+                    logger.info(f"FV: cliente encontrado por nombre '{nombre_receptor}': {entidad.get('_nombre_corto')}")
         return entidad
 
     return None
@@ -400,6 +414,35 @@ def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
         yaml.dump(config_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
     logger.info(f"Nueva entidad registrada en config: {nombre_corto} ({cif}) como {tipo_relacion}")
+
+    # Grabar en directorio BD si hay repo disponible (opcional — no bloquea si falla)
+    if config._repo and config._empresa_bd_id:
+        try:
+            cif_para_bd = cif if cif != "DESCONOCIDO" else None
+            dir_ent, _ = config._repo.obtener_o_crear_directorio(
+                cif=cif_para_bd,
+                nombre=nombre_fs,
+                pais=pais,
+                aliases=[nombre_corto],
+            )
+            cif_dir = cif_para_bd or ""
+            existente_overlay = config._repo.buscar_overlay_por_cif(
+                config._empresa_bd_id, cif_dir, tipo_relacion
+            ) if cif_dir else None
+            if not existente_overlay:
+                config._repo.crear_overlay(
+                    empresa_id=config._empresa_bd_id,
+                    directorio_id=dir_ent.id,
+                    tipo=tipo_relacion,
+                    subcuenta_gasto=subcuenta,
+                    codimpuesto=codimpuesto,
+                    regimen=regimen,
+                    pais=pais,
+                    aliases=[nombre_corto],
+                )
+            logger.info(f"Entidad {nombre_corto} grabada en directorio BD (id={dir_ent.id})")
+        except Exception as exc_bd:
+            logger.warning(f"No se pudo grabar {nombre_corto} en directorio BD: {exc_bd}")
 
     return {**nueva_entidad, "_nombre_corto": nombre_corto}
 
@@ -746,6 +789,17 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     logger.info(f"Procesando: {nombre_archivo}")
     avisos = []
 
+    # 0. Verificar cache OCR (evita llamadas costosas a APIs si el PDF no cambio)
+    try:
+        cached = obtener_cache_ocr(str(ruta_pdf))
+        if cached and isinstance(cached, dict) and cached.get("archivo"):
+            cached["_ruta_completa"] = str(ruta_pdf)
+            tier_cached = cached.get("_ocr_tier", 0)
+            logger.info(f"  [{nombre_archivo}] Cache OCR hit (Tier {tier_cached}) — sin costo API")
+            return {"doc": cached, "hash": hash_pdf, "avisos": [], "tier": tier_cached}
+    except Exception as e_cache:
+        logger.debug(f"  [{nombre_archivo}] Cache check fallido (ignorado): {e_cache}")
+
     # 1. Extraer texto con pdfplumber
     try:
         texto_raw = _extraer_texto_pdf(ruta_pdf)
@@ -936,6 +990,15 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_carpeta_origen": carpeta_origen,
         "_ruta_completa": str(ruta_pdf),
     }
+
+    # Guardar en cache OCR para reutilizar en futuras ejecuciones
+    try:
+        doc_resultado["motor_ocr"] = ",".join(motores_usados)
+        doc_resultado["tier_ocr"] = ocr_tier
+        guardar_cache_ocr(str(ruta_pdf), doc_resultado)
+        logger.debug(f"  [{nombre_archivo}] Cache OCR guardado")
+    except Exception as e_save:
+        logger.debug(f"  [{nombre_archivo}] No se pudo guardar cache OCR: {e_save}")
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
 
