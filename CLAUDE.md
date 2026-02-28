@@ -147,7 +147,17 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Build dashboard**: OK sin errores TS
 - **Siguiente**: Plan contabilidad rewrite (ver item 1)
 
-### 1. **PENDIENTE (baja prioridad)**
+### 1. **Seguridad Sesion 2 COMPLETADA — rama: feat/backend-seguridad**
+- **Task 1 Rate limiting**: `sfce/api/rate_limiter.py` — VentanaFijaLimiter (sin Redis, per-IP/user). 5 login/min, 100 auth/min. Configurable via `crear_app(limite_login=N, limite_usuario=M)`. 6 tests.
+- **Task 2 2FA TOTP**: `POST /api/auth/2fa/setup|verify|confirm`. pyotp + qrcode. Login devuelve 202+temp_token si 2FA activo. Campos `totp_secret`, `totp_habilitado` en Usuario. 9 tests.
+- **Task 3 Lockout**: Login devuelve 423+Retry-After tras 5 intentos fallidos (30min). Campos `failed_attempts`, `locked_until` en Usuario. Migracion 003 (SQLite+PG). 6 tests.
+- **Task 5 RGPD**: `POST /api/empresas/{id}/exportar-datos` + `GET /api/rgpd/descargar/{token}`. ZIP con facturas/asientos/partidas CSV. Token uso unico 24h via nonce. 7 tests.
+- **Task 4**: PENDIENTE (espera confirmacion migracion SQLite→PostgreSQL de Sesion 1)
+- **Total**: 39 tests seguridad, 1706 tests resto sin regresiones.
+- **Ejecutar migración en producción**: `python sfce/db/migraciones/003_account_lockout.py`
+
+### 2. **PENDIENTE (baja prioridad)**
+- Task 4: Migracion SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
 - Merge a main (PR #2 abierto)
