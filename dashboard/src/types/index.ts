@@ -134,3 +134,101 @@ export interface LoginResponse {
   access_token: string
   token_type: string
 }
+
+// --- PyG enriquecido (Task 5/6) ---
+
+export interface PyGDetalleSubcuenta {
+  subcuenta: string
+  nombre: string
+  importe: number
+}
+
+export interface PyGLinea {
+  id: string
+  descripcion: string
+  importe: number
+  pct_ventas: number | null
+  tipo: 'ingreso' | 'gasto' | 'subtotal_positivo' | 'subtotal_destacado' | 'resultado_final'
+  detalle: PyGDetalleSubcuenta[]
+}
+
+export interface PyGWaterfallItem {
+  nombre: string
+  valor: number
+  offset: number
+  tipo: 'inicio' | 'negativo' | 'positivo' | 'subtotal' | 'final'
+}
+
+export interface PyGResumen {
+  ventas_netas: number
+  margen_bruto: number
+  margen_bruto_pct: number
+  ebitda: number
+  ebitda_pct: number
+  ebit: number
+  ebit_pct: number
+  resultado: number
+  resultado_pct: number
+}
+
+export interface PyGEvolucionMes {
+  mes: string
+  ingresos: number
+  gastos: number
+  resultado: number
+}
+
+export interface PyG2 {
+  periodo: { desde: string; hasta: string }
+  resumen: PyGResumen
+  lineas: PyGLinea[]
+  waterfall: PyGWaterfallItem[]
+  evolucion_mensual: PyGEvolucionMes[]
+}
+
+// --- Balance enriquecido (Task 8/9) ---
+
+export interface BalanceLinea {
+  id: string
+  descripcion: string
+  importe: number
+  badge?: string
+  detalle?: Array<{ subcuenta: string; nombre: string; importe: number }>
+}
+
+export interface BalanceSeccion {
+  total: number
+  lineas: BalanceLinea[]
+}
+
+export interface BalanceRatios {
+  fondo_maniobra: number
+  liquidez_corriente: number
+  acid_test: number
+  endeudamiento: number
+  autonomia_financiera: number
+  pmc_dias: number | null
+  pmp_dias: number | null
+  nof: number
+  roe: number | null
+  roa: number | null
+}
+
+export interface BalanceAlerta {
+  codigo: string
+  nivel: 'critical' | 'warning' | 'info'
+  mensaje: string
+  valor_actual?: number
+  benchmark?: number
+}
+
+export interface Balance2 {
+  fecha_corte: string
+  ejercicio_abierto: boolean
+  activo: { total: number; no_corriente: BalanceSeccion; corriente: BalanceSeccion }
+  patrimonio_neto: { total: number; lineas: BalanceLinea[] }
+  pasivo: { total: number; no_corriente: BalanceSeccion; corriente: BalanceSeccion }
+  ratios: BalanceRatios
+  alertas: BalanceAlerta[]
+  cuadre: { ok: boolean; diferencia: number }
+}
