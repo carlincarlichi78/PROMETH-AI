@@ -21,7 +21,7 @@ export function SelectorEmpresa() {
 
   const handleSeleccionar = (empresa: Empresa) => {
     setEmpresaActiva(empresa)
-    navigate(`/empresa/${empresa.id}`)
+    navigate(`/empresa/${empresa.id}/pyg`)
   }
 
   if (isLoading) {
