@@ -52,6 +52,7 @@ class Empresa(Base):
     idempresa_fs = Column(Integer)  # ID en FacturaScripts (nullable si solo BD local)
     codejercicio_fs = Column(String(10))
     activa = Column(Boolean, default=True)
+    gestoria_id = Column(Integer, ForeignKey("gestorias.id"), nullable=True)
     fecha_alta = Column(Date, nullable=False, default=date.today)
     config_extra = Column(JSON, default=dict)  # datos adicionales del config.yaml
 
