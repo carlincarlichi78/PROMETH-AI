@@ -540,3 +540,24 @@ class BalanceOut2(BaseModel):
     ratios: BalanceRatios
     alertas: list[BalanceAlerta]
     cuadre: BalanceCuadre
+
+
+# --- Diario paginado (Task 10) ---
+
+class DiarioAsientoOut(BaseModel):
+    id: int
+    numero: Optional[int] = None
+    fecha: Optional[str] = None
+    concepto: Optional[str] = None
+    origen: Optional[str] = None
+    total_debe: float = 0.0
+    total_haber: float = 0.0
+    cuadrado: bool = True
+    partidas: list[dict] = []
+
+
+class DiarioPaginadoOut(BaseModel):
+    total: int
+    offset: int
+    limite: int
+    asientos: list[DiarioAsientoOut]

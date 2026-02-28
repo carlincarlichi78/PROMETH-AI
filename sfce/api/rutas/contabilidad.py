@@ -23,6 +23,7 @@ from sfce.api.schemas import (
     BalanceOut2, BalanceLinea, BalanceSeccion, BalanceActivo,
     BalancePasivoOut, BalancePatrimonio, BalanceRatios,
     BalanceAlerta, BalanceCuadre,
+    DiarioAsientoOut, DiarioPaginadoOut,
 )
 from sfce.db.modelos import (
     Asiento, ActivoFijo, Empresa, Factura, Partida,
@@ -514,21 +515,63 @@ def obtener_balance2(
     )
 
 
-@router.get("/{empresa_id}/diario", response_model=list[AsientoOut])
+@router.get("/{empresa_id}/diario/total")
+def diario_total(
+    empresa_id: int,
+    desde: Optional[date] = None,
+    hasta: Optional[date] = None,
+    busqueda: Optional[str] = None,
+    origen: Optional[str] = None,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Cuenta total de asientos para paginación."""
+    with sesion_factory() as s:
+        q = select(func.count(Asiento.id)).where(Asiento.empresa_id == empresa_id)
+        if desde:
+            q = q.where(Asiento.fecha >= desde)
+        if hasta:
+            q = q.where(Asiento.fecha <= hasta)
+        if busqueda:
+            q = q.where(Asiento.concepto.ilike(f"%{busqueda}%"))
+        if origen:
+            q = q.where(Asiento.origen == origen)
+        total = s.execute(q).scalar() or 0
+    return {"total": total}
+
+
+@router.get("/{empresa_id}/diario", response_model=DiarioPaginadoOut)
 def listar_diario(
     empresa_id: int,
     desde: Optional[date] = None,
     hasta: Optional[date] = None,
-    limit: int = 50,
+    limit: int = 200,
     offset: int = 0,
+    busqueda: Optional[str] = None,
+    origen: Optional[str] = None,
+    subcuenta: Optional[str] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
-    """Libro diario: asientos con partidas (paginado)."""
+    """Libro diario paginado con filtros full-text, origen y subcuenta."""
+    from sfce.core.pgc_nombres import obtener_nombre
+
     with sesion_factory() as s:
         empresa = s.get(Empresa, empresa_id)
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
+        # Total (para paginación)
+        q_total = select(func.count(Asiento.id)).where(Asiento.empresa_id == empresa_id)
+        if desde:
+            q_total = q_total.where(Asiento.fecha >= desde)
+        if hasta:
+            q_total = q_total.where(Asiento.fecha <= hasta)
+        if busqueda:
+            q_total = q_total.where(Asiento.concepto.ilike(f"%{busqueda}%"))
+        if origen:
+            q_total = q_total.where(Asiento.origen == origen)
+        total = s.execute(q_total).scalar() or 0
+
+        # Asientos paginados
         q = (
             select(Asiento)
             .options(selectinload(Asiento.partidas))
@@ -538,30 +581,98 @@ def listar_diario(
             q = q.where(Asiento.fecha >= desde)
         if hasta:
             q = q.where(Asiento.fecha <= hasta)
+        if busqueda:
+            q = q.where(Asiento.concepto.ilike(f"%{busqueda}%"))
+        if origen:
+            q = q.where(Asiento.origen == origen)
         q = q.order_by(Asiento.fecha, Asiento.numero).offset(offset).limit(limit)
 
         asientos = s.scalars(q).unique().all()
         resultado = []
         for a in asientos:
-            partidas = [
-                PartidaOut(
-                    id=p.id,
-                    subcuenta=p.subcuenta,
-                    debe=float(p.debe or 0),
-                    haber=float(p.haber or 0),
-                    concepto=p.concepto,
-                )
-                for p in a.partidas
-            ]
-            resultado.append(AsientoOut(
+            partidas_a = list(a.partidas)
+
+            if subcuenta:
+                partidas_a = [p for p in partidas_a if p.subcuenta.startswith(subcuenta)]
+                if not partidas_a:
+                    continue
+
+            total_debe = round(sum(float(p.debe or 0) for p in partidas_a), 2)
+            total_haber = round(sum(float(p.haber or 0) for p in partidas_a), 2)
+
+            resultado.append(DiarioAsientoOut(
                 id=a.id,
                 numero=a.numero,
-                fecha=a.fecha,
+                fecha=a.fecha.isoformat() if a.fecha else None,
                 concepto=a.concepto,
                 origen=a.origen,
-                partidas=partidas,
+                total_debe=total_debe,
+                total_haber=total_haber,
+                cuadrado=abs(total_debe - total_haber) < 0.01,
+                partidas=[
+                    {
+                        "subcuenta": p.subcuenta,
+                        "nombre": obtener_nombre(p.subcuenta),
+                        "debe": round(float(p.debe or 0), 2),
+                        "haber": round(float(p.haber or 0), 2),
+                    }
+                    for p in partidas_a
+                ],
             ))
-        return resultado
+
+        return DiarioPaginadoOut(total=total, offset=offset, limite=limit, asientos=resultado)
+
+
+@router.get("/{empresa_id}/libro-mayor/{subcuenta}")
+def libro_mayor(
+    empresa_id: int,
+    subcuenta: str,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Libro Mayor de una subcuenta: movimientos ordenados con saldo acumulado."""
+    from sfce.core.pgc_nombres import obtener_nombre
+
+    with sesion_factory() as s:
+        rows = s.execute(
+            select(Partida, Asiento)
+            .join(Asiento, Partida.asiento_id == Asiento.id)
+            .where(
+                Asiento.empresa_id == empresa_id,
+                Partida.subcuenta.like(f"{subcuenta}%"),
+            )
+            .order_by(Asiento.fecha, Asiento.numero)
+        ).all()
+
+    movimientos = []
+    saldo_acumulado = 0.0
+    total_debe = 0.0
+    total_haber = 0.0
+
+    for p, a in rows:
+        debe = round(float(p.debe or 0), 2)
+        haber = round(float(p.haber or 0), 2)
+        saldo_acumulado = round(saldo_acumulado + debe - haber, 2)
+        total_debe += debe
+        total_haber += haber
+        movimientos.append({
+            "asiento_id": a.id,
+            "numero": a.numero,
+            "fecha": a.fecha.isoformat() if a.fecha else None,
+            "concepto": a.concepto,
+            "debe": debe,
+            "haber": haber,
+            "saldo_acumulado": saldo_acumulado,
+        })
+
+    return {
+        "subcuenta": subcuenta,
+        "nombre": obtener_nombre(subcuenta),
+        "saldo_final": round(saldo_acumulado, 2),
+        "total_debe": round(total_debe, 2),
+        "total_haber": round(total_haber, 2),
+        "num_movimientos": len(movimientos),
+        "movimientos": movimientos,
+    }
 
 
 @router.get("/{empresa_id}/saldo/{subcuenta}", response_model=SaldoSubcuentaOut)
