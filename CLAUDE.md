@@ -122,13 +122,10 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 1. Dashboard — merge a main
-Branch `feat/sfce-v2-fase-e` tiene el rewrite completo (Stream A + B). Hacer merge o PR cuando sea el momento.
-
-### 2. Pipeline E2E elena-navarro (60 PDFs)
+### 1. Pipeline E2E elena-navarro (60 PDFs)
 `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 
-### 3. Operaciones puntuales
+### 2. Operaciones puntuales
 - Tests E2E dashboard (Playwright)
 - Pipeline generador v2 (2343 PDFs)
 - Migrar directorio pastorino
