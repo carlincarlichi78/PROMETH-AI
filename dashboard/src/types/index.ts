@@ -186,6 +186,34 @@ export interface PyG2 {
   evolucion_mensual: PyGEvolucionMes[]
 }
 
+// --- Diario paginado (Task 10/11) ---
+
+export interface DiarioPartida {
+  subcuenta: string
+  nombre: string
+  debe: number
+  haber: number
+}
+
+export interface DiarioAsiento {
+  id: number
+  numero: number | null
+  fecha: string | null
+  concepto: string | null
+  origen: string | null
+  total_debe: number
+  total_haber: number
+  cuadrado: boolean
+  partidas: DiarioPartida[]
+}
+
+export interface DiarioPaginado {
+  total: number
+  offset: number
+  limite: number
+  asientos: DiarioAsiento[]
+}
+
 // --- Balance enriquecido (Task 8/9) ---
 
 export interface BalanceLinea {
