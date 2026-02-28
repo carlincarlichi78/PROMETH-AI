@@ -420,3 +420,123 @@ class BackupOut(BaseModel):
     fecha: str
     tamano: str
     tipo: str  # manual | automatico
+
+
+# --- PyG enriquecido (Task 5) ---
+
+class PyGDetalleSubcuenta(BaseModel):
+    subcuenta: str
+    nombre: str
+    importe: float
+
+
+class PyGLineaOut(BaseModel):
+    id: str                       # "L1", "L4", "MB", "EBITDA", "EBIT", "RES"
+    descripcion: str
+    importe: float
+    pct_ventas: Optional[float] = None
+    tipo: str                     # "ingreso"|"gasto"|"subtotal_positivo"|"subtotal_destacado"|"resultado_final"
+    detalle: list[PyGDetalleSubcuenta] = []
+
+
+class PyGWaterfallItem(BaseModel):
+    nombre: str
+    valor: float
+    offset: float
+    tipo: str                     # "inicio"|"negativo"|"positivo"|"subtotal"|"final"
+
+
+class PyGResumen(BaseModel):
+    ventas_netas: float
+    margen_bruto: float
+    margen_bruto_pct: float
+    ebitda: float
+    ebitda_pct: float
+    ebit: float
+    ebit_pct: float
+    resultado: float
+    resultado_pct: float
+
+
+class PyGEvolucionMes(BaseModel):
+    mes: str                      # "2022-01"
+    ingresos: float
+    gastos: float
+    resultado: float
+
+
+class PyGOut2(BaseModel):
+    periodo: dict[str, str]
+    resumen: PyGResumen
+    lineas: list[PyGLineaOut]
+    waterfall: list[PyGWaterfallItem]
+    evolucion_mensual: list[PyGEvolucionMes]
+
+
+# --- Balance enriquecido (Task 8) ---
+
+class BalanceLinea(BaseModel):
+    id: str
+    descripcion: str
+    importe: float
+    badge: Optional[str] = None
+    detalle: list[dict] = []
+
+
+class BalanceSeccion(BaseModel):
+    total: float
+    lineas: list[BalanceLinea]
+
+
+class BalanceActivo(BaseModel):
+    total: float
+    no_corriente: BalanceSeccion
+    corriente: BalanceSeccion
+
+
+class BalancePasivoOut(BaseModel):
+    total: float
+    no_corriente: BalanceSeccion
+    corriente: BalanceSeccion
+
+
+class BalancePatrimonio(BaseModel):
+    total: float
+    lineas: list[BalanceLinea]
+
+
+class BalanceRatios(BaseModel):
+    fondo_maniobra: float
+    liquidez_corriente: float
+    acid_test: float
+    endeudamiento: float
+    autonomia_financiera: float
+    pmc_dias: Optional[int] = None
+    pmp_dias: Optional[int] = None
+    nof: float
+    roe: Optional[float] = None
+    roa: Optional[float] = None
+
+
+class BalanceAlerta(BaseModel):
+    codigo: str
+    nivel: str                    # "critical"|"warning"|"info"
+    mensaje: str
+    valor_actual: Optional[float] = None
+    benchmark: Optional[float] = None
+
+
+class BalanceCuadre(BaseModel):
+    ok: bool
+    diferencia: float
+
+
+class BalanceOut2(BaseModel):
+    fecha_corte: str
+    ejercicio_abierto: bool
+    activo: BalanceActivo
+    patrimonio_neto: BalancePatrimonio
+    pasivo: BalancePasivoOut
+    ratios: BalanceRatios
+    alertas: list[BalanceAlerta]
+    cuadre: BalanceCuadre

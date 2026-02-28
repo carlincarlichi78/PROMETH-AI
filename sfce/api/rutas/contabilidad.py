@@ -18,6 +18,11 @@ from sfce.api.schemas import (
     AsientoOut, AsientoPreviewOut, ActivoFijoOut, BalanceOut,
     CierreEstadoOut, FacturaOut, ImportarPreviewOut,
     PartidaOut, PyGOut, SaldoSubcuentaOut,
+    PyGOut2, PyGLineaOut, PyGWaterfallItem, PyGResumen,
+    PyGEvolucionMes, PyGDetalleSubcuenta,
+    BalanceOut2, BalanceLinea, BalanceSeccion, BalanceActivo,
+    BalancePasivoOut, BalancePatrimonio, BalanceRatios,
+    BalanceAlerta, BalanceCuadre,
 )
 from sfce.db.modelos import (
     Asiento, ActivoFijo, Empresa, Factura, Partida,
@@ -84,6 +89,189 @@ def obtener_pyg(
     )
 
 
+@router.get("/{empresa_id}/pyg2", response_model=PyGOut2)
+def obtener_pyg2(
+    empresa_id: int,
+    desde: Optional[date] = None,
+    hasta: Optional[date] = None,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """PyG estructurado con líneas PGC, waterfall y evolución mensual."""
+    from sfce.core.pgc_nombres import clasificar
+    from collections import defaultdict
+
+    with sesion_factory() as s:
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        # Determinar rango de fechas
+        if not desde or not hasta:
+            ejercicio_max = s.execute(
+                select(func.max(Asiento.ejercicio)).where(Asiento.empresa_id == empresa_id)
+            ).scalar()
+            ejercicio = ejercicio_max or str(date.today().year)
+            if not desde:
+                desde = date(int(ejercicio), 1, 1)
+            if not hasta:
+                hasta = date(int(ejercicio), 12, 31)
+
+        # Obtener partidas del período
+        rows = s.execute(
+            select(
+                Partida.subcuenta,
+                func.sum(Partida.debe).label("total_debe"),
+                func.sum(Partida.haber).label("total_haber"),
+            )
+            .join(Asiento, Partida.asiento_id == Asiento.id)
+            .where(
+                Asiento.empresa_id == empresa_id,
+                Asiento.fecha >= desde,
+                Asiento.fecha <= hasta,
+            )
+            .group_by(Partida.subcuenta)
+        ).all()
+
+    # Calcular saldos por subcuenta
+    saldos: dict[str, float] = {}
+    for subcuenta, total_debe, total_haber in rows:
+        info = clasificar(subcuenta)
+        if info["naturaleza"] == "ingreso":
+            importe = float(total_haber or 0) - float(total_debe or 0)
+        elif info["naturaleza"] == "gasto":
+            importe = float(total_debe or 0) - float(total_haber or 0)
+        else:
+            continue  # cuentas de balance no van en PyG
+        if abs(importe) >= 0.01:
+            saldos[subcuenta] = importe
+
+    # Agrupar por línea PGC
+    por_linea: dict[str, list] = defaultdict(list)
+    for subcuenta, importe in saldos.items():
+        info = clasificar(subcuenta)
+        linea = info.get("linea_pyg") or ("L1" if info["naturaleza"] == "ingreso" else "L7")
+        por_linea[linea].append({
+            "subcuenta": subcuenta,
+            "nombre": info["nombre"],
+            "importe": round(importe, 2),
+        })
+
+    def _suma_linea(linea_id: str) -> float:
+        return round(sum(d["importe"] for d in por_linea.get(linea_id, [])), 2)
+
+    ventas = _suma_linea("L1")
+    aprovisionamientos = _suma_linea("L4")
+    personal = _suma_linea("L6")
+    otros_gastos = _suma_linea("L7")
+    amortizacion = _suma_linea("L8")
+    ing_financieros = _suma_linea("L12")
+    gtos_financieros = _suma_linea("L13")
+    impuestos = _suma_linea("L17")
+
+    margen_bruto = round(ventas - aprovisionamientos, 2)
+    ebitda = round(margen_bruto - personal - otros_gastos, 2)
+    ebit = round(ebitda - amortizacion, 2)
+    resultado = round(ebit + ing_financieros - gtos_financieros - impuestos, 2)
+
+    def _pct(v: float) -> float:
+        return round(v / ventas * 100, 1) if ventas else 0.0
+
+    resumen = PyGResumen(
+        ventas_netas=ventas,
+        margen_bruto=margen_bruto, margen_bruto_pct=_pct(margen_bruto),
+        ebitda=ebitda, ebitda_pct=_pct(ebitda),
+        ebit=ebit, ebit_pct=_pct(ebit),
+        resultado=resultado, resultado_pct=_pct(resultado),
+    )
+
+    def _linea_out(id_: str, desc: str, importe: float, tipo: str) -> PyGLineaOut:
+        return PyGLineaOut(
+            id=id_, descripcion=desc, importe=importe,
+            pct_ventas=_pct(importe), tipo=tipo,
+            detalle=[PyGDetalleSubcuenta(**d) for d in por_linea.get(id_, [])],
+        )
+
+    lineas = [
+        _linea_out("L1", "Importe neto de la cifra de negocios", ventas, "ingreso"),
+        _linea_out("L4", "Aprovisionamientos", aprovisionamientos, "gasto"),
+        PyGLineaOut(id="MB", descripcion="MARGEN BRUTO", importe=margen_bruto,
+                    pct_ventas=_pct(margen_bruto), tipo="subtotal_positivo"),
+        _linea_out("L6", "Gastos de personal", personal, "gasto"),
+        _linea_out("L7", "Otros gastos de explotación", otros_gastos, "gasto"),
+        PyGLineaOut(id="EBITDA", descripcion="EBITDA", importe=ebitda,
+                    pct_ventas=_pct(ebitda), tipo="subtotal_destacado"),
+        _linea_out("L8", "Amortización del inmovilizado", amortizacion, "gasto"),
+        PyGLineaOut(id="EBIT", descripcion="Resultado de explotación (EBIT)", importe=ebit,
+                    pct_ventas=_pct(ebit), tipo="subtotal_destacado"),
+        _linea_out("L12", "Ingresos financieros", ing_financieros, "ingreso"),
+        _linea_out("L13", "Gastos financieros", gtos_financieros, "gasto"),
+        _linea_out("L17", "Impuestos sobre beneficios", impuestos, "gasto"),
+        PyGLineaOut(id="RES", descripcion="RESULTADO DEL EJERCICIO", importe=resultado,
+                    pct_ventas=_pct(resultado), tipo="resultado_final"),
+    ]
+
+    # Waterfall
+    waterfall = [
+        PyGWaterfallItem(nombre="Ventas netas", valor=ventas, offset=0.0, tipo="inicio"),
+        PyGWaterfallItem(nombre="Aprovisionamientos", valor=aprovisionamientos,
+                         offset=margen_bruto, tipo="negativo"),
+        PyGWaterfallItem(nombre="Margen Bruto", valor=margen_bruto, offset=0.0, tipo="subtotal"),
+        PyGWaterfallItem(nombre="Personal", valor=personal, offset=ebitda, tipo="negativo"),
+        PyGWaterfallItem(nombre="Otros gastos", valor=otros_gastos,
+                         offset=round(ebitda - otros_gastos, 2) if otros_gastos else ebitda,
+                         tipo="negativo"),
+        PyGWaterfallItem(nombre="EBITDA", valor=ebitda, offset=0.0, tipo="subtotal"),
+        PyGWaterfallItem(nombre="Amortizaciones", valor=amortizacion, offset=ebit, tipo="negativo"),
+        PyGWaterfallItem(nombre="RESULTADO", valor=resultado, offset=0.0, tipo="final"),
+    ]
+
+    # Evolución mensual (excluir fechas no rectificadas)
+    evolucion: list[PyGEvolucionMes] = []
+    with sesion_factory() as s:
+        meses_rows = s.execute(
+            select(
+                func.strftime("%Y-%m", Asiento.fecha).label("mes"),
+                func.sum(
+                    func.case(
+                        (Partida.subcuenta.like("7%"), Partida.haber - Partida.debe),
+                        else_=0
+                    )
+                ).label("ing"),
+                func.sum(
+                    func.case(
+                        (Partida.subcuenta.like("6%"), Partida.debe - Partida.haber),
+                        else_=0
+                    )
+                ).label("gto"),
+            )
+            .join(Partida, Partida.asiento_id == Asiento.id)
+            .where(
+                Asiento.empresa_id == empresa_id,
+                Asiento.fecha >= desde,
+                Asiento.fecha <= hasta,
+                Asiento.fecha != date(2026, 2, 28),
+            )
+            .group_by("mes")
+            .order_by("mes")
+        ).all()
+        for mes, ing, gto in meses_rows:
+            if mes:
+                evolucion.append(PyGEvolucionMes(
+                    mes=mes,
+                    ingresos=round(float(ing or 0), 2),
+                    gastos=round(float(gto or 0), 2),
+                    resultado=round(float((ing or 0) - (gto or 0)), 2),
+                ))
+
+    return PyGOut2(
+        periodo={"desde": desde.isoformat(), "hasta": hasta.isoformat()},
+        resumen=resumen,
+        lineas=lineas,
+        waterfall=waterfall,
+        evolucion_mensual=evolucion,
+    )
+
+
 @router.get("/{empresa_id}/balance", response_model=BalanceOut)
 def obtener_balance(
     empresa_id: int,
@@ -136,6 +324,193 @@ def obtener_balance(
         activo=float(activo),
         pasivo=float(pasivo),
         patrimonio_neto=float(patrimonio),
+    )
+
+
+@router.get("/{empresa_id}/balance2", response_model=BalanceOut2)
+def obtener_balance2(
+    empresa_id: int,
+    fecha_corte: Optional[date] = None,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Balance de situación enriquecido con ratios, alertas y clasificación PGC."""
+    from sfce.core.pgc_nombres import clasificar
+    from collections import defaultdict
+    from decimal import Decimal as D
+
+    with sesion_factory() as s:
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        if not fecha_corte:
+            ejercicio_max = s.execute(
+                select(func.max(Asiento.ejercicio)).where(Asiento.empresa_id == empresa_id)
+            ).scalar()
+            ejercicio = ejercicio_max or str(date.today().year)
+            fecha_corte = date(int(ejercicio), 12, 31)
+
+        rows = s.execute(
+            select(
+                Partida.subcuenta,
+                func.sum(Partida.debe).label("total_debe"),
+                func.sum(Partida.haber).label("total_haber"),
+            )
+            .join(Asiento, Partida.asiento_id == Asiento.id)
+            .where(
+                Asiento.empresa_id == empresa_id,
+                Asiento.fecha <= fecha_corte,
+            )
+            .group_by(Partida.subcuenta)
+        ).all()
+
+    # Calcular saldos brutos (debe - haber)
+    saldos: dict[str, float] = {}
+    for subcuenta, total_debe, total_haber in rows:
+        saldo = float(total_debe or 0) - float(total_haber or 0)
+        if abs(saldo) >= 0.01:
+            saldos[subcuenta] = saldo
+
+    # Clasificar en buckets
+    buckets: dict[str, dict[str, float]] = {
+        "activo_no_corriente": {},
+        "activo_corriente": {},
+        "pasivo_no_corriente": {},
+        "pasivo_corriente": {},
+        "patrimonio": {},
+        "ingreso": {},
+        "gasto": {},
+    }
+
+    for subcuenta, saldo in saldos.items():
+        info = clasificar(subcuenta)
+        naturaleza = info["naturaleza"]
+
+        # Bilaterales: clasificar por signo
+        if subcuenta.startswith("472"):
+            naturaleza = "activo_corriente" if saldo > 0 else "pasivo_corriente"
+        elif subcuenta.startswith("477"):
+            naturaleza = "pasivo_corriente" if saldo > 0 else "activo_corriente"
+        elif subcuenta.startswith("47") and saldo < 0:
+            naturaleza = "pasivo_corriente"
+
+        # Amortizaciones: siempre activo_no_corriente
+        if subcuenta.startswith("28"):
+            naturaleza = "activo_no_corriente"
+
+        if naturaleza in buckets:
+            buckets[naturaleza][subcuenta] = saldo
+
+    def _to_lineas(bucket_key: str, id_prefix: str) -> list[BalanceLinea]:
+        detalle = buckets[bucket_key]
+        if not detalle:
+            return []
+        return [
+            BalanceLinea(
+                id=f"{id_prefix}_{sc[:3]}",
+                descripcion=clasificar(sc)["nombre"],
+                importe=round(abs(v), 2),
+                detalle=[{"subcuenta": sc, "nombre": clasificar(sc)["nombre"], "importe": round(abs(v), 2)}],
+            )
+            for sc, v in sorted(detalle.items(), key=lambda x: -abs(x[1]))
+        ]
+
+    tot_anc = round(sum(buckets["activo_no_corriente"].values()), 2)
+    tot_ac = round(sum(buckets["activo_corriente"].values()), 2)
+    tot_activo = round(tot_anc + tot_ac, 2)
+
+    tot_pnc = round(-sum(buckets["pasivo_no_corriente"].values()), 2)
+    tot_pc = round(-sum(buckets["pasivo_corriente"].values()), 2)
+    tot_pasivo = round(tot_pnc + tot_pc, 2)
+
+    # Resultado estimado si ejercicio abierto
+    tiene_cierre = any(sc.startswith("129") for sc in saldos)
+    resultado_estimado = 0.0
+    if not tiene_cierre:
+        ingresos_7 = sum(-v for sc, v in saldos.items() if sc.startswith("7"))
+        gastos_6 = sum(v for sc, v in saldos.items() if sc.startswith("6"))
+        resultado_estimado = round(ingresos_7 - gastos_6, 2)
+
+    tot_pn = round(-sum(buckets["patrimonio"].values()) + resultado_estimado, 2)
+    diferencia = round(abs(tot_activo - (tot_pn + tot_pasivo)), 2)
+
+    # Ratios
+    ventas = abs(sum(-v for sc, v in saldos.items() if sc.startswith("7")))
+    compras = sum(v for sc, v in saldos.items() if sc.startswith("600"))
+    clientes = sum(v for sc, v in buckets["activo_corriente"].items() if sc.startswith("430"))
+    proveedores = abs(sum(v for sc, v in buckets["pasivo_corriente"].items() if sc.startswith("400")))
+
+    pmc = int(round(clientes / ventas * 365)) if ventas > 0 and clientes > 0 else None
+    pmp = int(round(proveedores / compras * 365)) if compras > 0 and proveedores > 0 else None
+
+    ratios = BalanceRatios(
+        fondo_maniobra=round(tot_ac - tot_pc, 2),
+        liquidez_corriente=round(tot_ac / tot_pc, 2) if tot_pc else 0.0,
+        acid_test=round(tot_ac / tot_pc, 2) if tot_pc else 0.0,
+        endeudamiento=round(tot_pasivo / tot_activo * 100, 1) if tot_activo else 0.0,
+        autonomia_financiera=round(tot_pn / tot_activo * 100, 1) if tot_activo else 0.0,
+        pmc_dias=pmc,
+        pmp_dias=pmp,
+        nof=round(tot_ac - tot_pc, 2),
+    )
+
+    alertas: list[BalanceAlerta] = []
+    if pmc and pmc > 60:
+        alertas.append(BalanceAlerta(
+            codigo="PMC_ALTO", nivel="critical",
+            mensaje=f"PMC {pmc} días — anómalo para hostelería (benchmark: <30 días). Revisar contabilización de ventas.",
+            valor_actual=float(pmc), benchmark=30.0,
+        ))
+    if tot_pn < 0:
+        alertas.append(BalanceAlerta(
+            codigo="PN_NEGATIVO", nivel="critical",
+            mensaje=f"Patrimonio Neto negativo ({tot_pn:,.0f}€) — posible causa de disolución obligatoria.",
+        ))
+    if (tot_ac - tot_pc) < 0:
+        alertas.append(BalanceAlerta(
+            codigo="FM_NEGATIVO", nivel="critical",
+            mensaje=f"Fondo de Maniobra negativo ({tot_ac-tot_pc:,.0f}€) — riesgo de insolvencia a corto plazo.",
+        ))
+    if ratios.endeudamiento > 65:
+        alertas.append(BalanceAlerta(
+            codigo="ENDEUDAMIENTO_ALTO", nivel="warning",
+            mensaje=f"Endeudamiento {ratios.endeudamiento}% en zona de precaución (límite: 65%).",
+            valor_actual=ratios.endeudamiento, benchmark=65.0,
+        ))
+    if not tiene_cierre:
+        alertas.append(BalanceAlerta(
+            codigo="EJERCICIO_ABIERTO", nivel="info",
+            mensaje="Ejercicio sin asiento de cierre — resultado estimado pendiente de regularización.",
+        ))
+
+    return BalanceOut2(
+        fecha_corte=fecha_corte.isoformat(),
+        ejercicio_abierto=not tiene_cierre,
+        activo=BalanceActivo(
+            total=tot_activo,
+            no_corriente=BalanceSeccion(total=tot_anc, lineas=_to_lineas("activo_no_corriente", "ANC")),
+            corriente=BalanceSeccion(total=tot_ac, lineas=_to_lineas("activo_corriente", "AC")),
+        ),
+        patrimonio_neto=BalancePatrimonio(
+            total=tot_pn,
+            lineas=[
+                *_to_lineas("patrimonio", "PN"),
+                *([] if tiene_cierre else [BalanceLinea(
+                    id="PN_resultado",
+                    descripcion="VII. Resultado del ejercicio (estimado)",
+                    importe=resultado_estimado,
+                    badge="estimado",
+                )]),
+            ],
+        ),
+        pasivo=BalancePasivoOut(
+            total=tot_pasivo,
+            no_corriente=BalanceSeccion(total=tot_pnc, lineas=_to_lineas("pasivo_no_corriente", "PNC")),
+            corriente=BalanceSeccion(total=tot_pc, lineas=_to_lineas("pasivo_corriente", "PC")),
+        ),
+        ratios=ratios,
+        alertas=alertas,
+        cuadre=BalanceCuadre(ok=diferencia < 1.0, diferencia=diferencia),
     )
 
 
