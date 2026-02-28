@@ -18,7 +18,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 - **Uptime Kuma**: Docker `127.0.0.1:3001`. Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N`
 - **Firewall**: ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior
 - **Seguridad nginx**: `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts
-- **Backups**: Restic cron 02:00 diario → `/etc/cron.d/sfce-backup`. Activar: rellenar `.env` con Hetzner S3 creds + `backup.sh --init`
+- **Backups TOTAL**: `/opt/apps/sfce/backup_total.sh` cron 02:00 diario. Cubre 6 PG + 2 MariaDB + configs + SSL + Vaultwarden → Hetzner Helsinki (`hel1.your-objectstorage.com/sfce-backups`). Retención 7d/4w/12m. Credenciales en ACCESOS.md sec.22.
 - **Scripts infra**: `scripts/infra/backup.sh`, `scripts/infra/docker-user-firewall.sh`
 - **Templates nginx**: `infra/nginx/00-security.conf`, `infra/nginx/uptime-kuma.conf` (activar con dominio)
 
@@ -117,13 +117,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 4 commits.
-- `.claude/launch.json` configurado: api (puerto 8000, autoPort:false) + dashboard (puerto 3000)
+- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 5 commits.
+- `.claude/launch.json` configurado con env vars inline (SFCE_JWT_SECRET, etc.) — `preview_start` funciona directamente
+- `iniciar_dashboard.bat` en raíz para arranque manual alternativo
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify**
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
 - **Backend extendido**: 66+ rutas, 25 tablas BD.
-- **PR abierto**: https://github.com/carlincarlichi78/SPICE/pull/2
-- **Pendiente**: tests E2E dashboard (Playwright), merge a main, activar VITE_VAPID_PUBLIC_KEY para push real
+- **Mergeado a main**: PR #3 cerrado (28/02/2026). Main = estado actual.
+- **Bug corregido**: `contabilidad.py` — `int(codejercicio)` con "C422" y `func.case()` SQLAlchemy 2.x
+- **Pendiente**: tests E2E dashboard (Playwright), activar VITE_VAPID_PUBLIC_KEY + endpoint `/api/notificaciones/suscribir`
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/

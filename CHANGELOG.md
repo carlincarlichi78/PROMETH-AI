@@ -1,5 +1,18 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-28 — Sesion: Fix arranque dashboard + bugs contabilidad
+
+**Objetivo**: Arrancar el dashboard local y corregir errores en módulo de contabilidad.
+
+**Completado**:
+- `.claude/launch.json` actualizado con env vars (`SFCE_JWT_SECRET`, `SFCE_CORS_ORIGINS`, etc.) para que `preview_start` arranque la API correctamente
+- `iniciar_dashboard.bat` creado para arranque rápido manual
+- **Fix `contabilidad.py`**: `int(ejercicio)` reventaba con codejercicio tipo `"C422"` → sustituido por `func.strftime("%Y", Asiento.fecha)` en `pyg2` y `balance2`
+- **Fix `contabilidad.py`**: `func.case()` no existe en SQLAlchemy 2.x → sustituido por `case()` importado directamente
+- Commit: `4b34691`
+
+---
+
 ## 2026-02-28 — Sesion: Dashboard Rewrite Stream A (ejecutar plan)
 
 **Objetivo**: Ejecutar Stream A del plan de implementacion del dashboard rewrite.
