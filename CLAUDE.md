@@ -126,12 +126,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROXIMA SESION: Ejecutar Fase 1 — Nucleo Bancario + Multi-tenant**
+### 0. **COMPLETADO (sesion 28/02): Seguridad base SaaS**
+- **T1**: JWT fail-hard (`_validar_config_seguridad()` en startup), CORS restrictivo (`_leer_cors_origins()`)
+- **T2**: Tabla `audit_log_seguridad` (renombrada — `audit_log` ya existia en modelos.py), helper `auditar()`, integrado en `/api/auth/login`
+- **T3**: `_leer_config_bd()` — BD configurable por env (`SFCE_DB_TYPE=sqlite|postgresql`)
+- **Tag**: `seguridad-base-saas`, 11 tests seguridad + 44 tests auth/api OK
+- **Variables .env**: `SFCE_JWT_SECRET`, `SFCE_CORS_ORIGINS`, `SFCE_DB_TYPE`, `SFCE_DB_PATH` ya añadidas
+
+### 1. **PROXIMA SESION: Ejecutar Fase 1 — Nucleo Bancario + Multi-tenant**
 - **Plan**: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
 - **Design doc validado**: `docs/plans/2026-02-28-spice-producto-modular-design.md`
 - **9 tasks con TDD**: Gestoria, CuentaBancaria, MovimientoBancario extendido, ArchivoIngestado, parser C43, ingesta, motor conciliacion, API, dashboard
 - **Usar skill**: `superpowers:executing-plans` en nueva sesion
-- **Migracion BD**: `python sfce/db/migraciones/001_multi_tenant.py` (crear antes de arrancar API)
+- **Migracion BD**: `python sfce/db/migraciones/002_multi_tenant.py` (renombrada — 001 es seguridad_base)
 - **Archivo C43 prueba**: `C:\Users\carli\Downloads\_Trabajo\TT181225.754.txt`
 
 ### 1. **Fallos menores pendientes dashboard**
