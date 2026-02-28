@@ -7,9 +7,20 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 ## Infraestructura (compartida para todos los clientes)
 - **FacturaScripts**: https://contabilidad.lemonfresh-tuc.com
 - **API REST**: base URL `https://contabilidad.lemonfresh-tuc.com/api/3/`, Header: `Token: iOXmrA1Bbn8RDWXLv91L`
-- **Servidor**: 65.108.60.69 (Hetzner), user: carli
-- **Docker**: /opt/apps/facturascripts/ (app PHP/Apache + MariaDB 10.11)
+- **Servidor**: 65.108.60.69 (Hetzner), user: carli (root SSH con clave)
+- **Docker**: /opt/apps/facturascripts/ (app PHP/Apache + MariaDB 10.11) — NO TOCAR
+- **Nginx**: Docker, conf en `/opt/infra/nginx/conf.d/`. Reload: `docker exec nginx nginx -s reload`
 - **Credenciales**: PROYECTOS/ACCESOS.md, seccion 19
+
+## Infraestructura SFCE (rama infra/servidor-seguro, completada 28/02/2026)
+- **PostgreSQL 16**: Docker `/opt/apps/sfce/`, puerto `127.0.0.1:5433`, BD `sfce_prod`, user `sfce_user`
+- **DSN**: `postgresql://sfce_user:[pass]@127.0.0.1:5433/sfce_prod` (pass en `/opt/apps/sfce/.env`)
+- **Uptime Kuma**: Docker `127.0.0.1:3001`. Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N`
+- **Firewall**: ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior
+- **Seguridad nginx**: `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts
+- **Backups**: Restic cron 02:00 diario → `/etc/cron.d/sfce-backup`. Activar: rellenar `.env` con Hetzner S3 creds + `backup.sh --init`
+- **Scripts infra**: `scripts/infra/backup.sh`, `scripts/infra/docker-user-firewall.sh`
+- **Templates nginx**: `infra/nginx/00-security.conf`, `infra/nginx/uptime-kuma.conf` (activar con dominio)
 
 ## API Keys del SFCE
 | Variable | Servicio | Rol |

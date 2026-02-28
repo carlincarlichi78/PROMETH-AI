@@ -1,0 +1,50 @@
+# SFCE — Servicios de infraestructura propios
+# PostgreSQL 16 + Uptime Kuma
+# Solo accesibles desde localhost (puertos vinculados a 127.0.0.1)
+# Credenciales en .env (NO en git)
+
+services:
+
+  sfce_db:
+    image: postgres:16-alpine
+    container_name: sfce_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sfce_prod
+      POSTGRES_USER: sfce_user
+      POSTGRES_PASSWORD: ${SFCE_DB_PASSWORD}
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    ports:
+      # Solo localhost — no expuesto al exterior
+      # Puerto 5433 para no conflicto con sistema PG14 en 5432
+      - "127.0.0.1:5433:5432"
+    networks:
+      - sfce_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfce_user -d sfce_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  uptime_kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime_kuma
+    restart: unless-stopped
+    volumes:
+      - ./uptime_data:/app/data
+    ports:
+      # Solo localhost — acceso externo via nginx proxy
+      - "127.0.0.1:3001:3001"
+    networks:
+      - sfce_internal
+      - nginx_default  # Para que nginx pueda proxiar via nombre de contenedor
+    depends_on:
+      sfce_db:
+        condition: service_healthy
+
+networks:
+  sfce_internal:
+    driver: bridge
+  nginx_default:
+    external: true  # Red compartida con el nginx principal
