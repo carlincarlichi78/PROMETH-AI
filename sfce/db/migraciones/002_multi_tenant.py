@@ -84,6 +84,23 @@ def ejecutar():
     except Exception as e:
         print(f"Indice hash ya existia o error: {e}")
 
+    # Tabla archivos_ingestados
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS archivos_ingestados (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hash_archivo TEXT NOT NULL UNIQUE,
+            nombre_original TEXT NOT NULL,
+            fuente TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            empresa_id INTEGER NOT NULL,
+            gestoria_id INTEGER NOT NULL,
+            fecha_proceso TEXT NOT NULL,
+            movimientos_totales INTEGER NOT NULL DEFAULT 0,
+            movimientos_nuevos INTEGER NOT NULL DEFAULT 0,
+            movimientos_duplicados INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
     conn.commit()
     conn.close()
     print("Migracion 002 completada.")

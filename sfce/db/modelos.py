@@ -306,6 +306,23 @@ class MovimientoBancario(Base):
     cuenta = relationship("CuentaBancaria", back_populates="movimientos")
 
 
+class ArchivoIngestado(Base):
+    """Registro de archivos bancarios procesados. Hash garantiza idempotencia."""
+    __tablename__ = "archivos_ingestados"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hash_archivo = Column(String(64), nullable=False, unique=True)
+    nombre_original = Column(String(300), nullable=False)
+    fuente = Column(String(20), nullable=False)   # 'email' | 'manual'
+    tipo = Column(String(20), nullable=False)      # 'c43' | 'ticket_z' | 'factura'
+    empresa_id = Column(Integer, nullable=False)
+    gestoria_id = Column(Integer, nullable=False)
+    fecha_proceso = Column(DateTime, nullable=False)
+    movimientos_totales = Column(Integer, nullable=False, default=0)
+    movimientos_nuevos = Column(Integer, nullable=False, default=0)
+    movimientos_duplicados = Column(Integer, nullable=False, default=0)
+
+
 class ActivoFijo(Base):
     """Activo fijo amortizable."""
     __tablename__ = "activos_fijos"
