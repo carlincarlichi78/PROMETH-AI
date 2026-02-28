@@ -246,14 +246,22 @@ class Migrador:
             self.repo.crear(factura)
             self.stats["facturas"] += 1
 
-    def _parsear_fecha(self, fecha_str) -> date:
-        """Parsea fecha string a date."""
+    def _parsear_fecha(self, fecha_str) -> date | None:
+        """Parsea fecha de FS API (DD-MM-YYYY o ISO YYYY-MM-DD). Devuelve None si vacía."""
         if not fecha_str:
-            return date.today()
+            return None
+        s = str(fecha_str).strip()
+        if not s:
+            return None
         try:
-            return date.fromisoformat(str(fecha_str)[:10])
+            return date.fromisoformat(s[:10])
         except ValueError:
-            return date.today()
+            pass
+        try:
+            from datetime import datetime
+            return datetime.strptime(s[:10], "%d-%m-%Y").date()
+        except ValueError:
+            return None
 
 
 def main():
