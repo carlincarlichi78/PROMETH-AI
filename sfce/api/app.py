@@ -13,6 +13,50 @@ from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en met
 from sfce.api.auth import crear_admin_por_defecto
 
 
+def _leer_config_bd() -> dict:
+    """
+    Lee la configuración de BD desde variables de entorno.
+
+    Variables:
+        SFCE_DB_TYPE:     "sqlite" (default) | "postgresql"
+        SFCE_DB_PATH:     Ruta del archivo SQLite (solo para sqlite)
+        SFCE_DB_HOST:     Host PostgreSQL
+        SFCE_DB_PORT:     Puerto PostgreSQL (default: 5432)
+        SFCE_DB_USER:     Usuario PostgreSQL
+        SFCE_DB_PASSWORD: Password PostgreSQL
+        SFCE_DB_NAME:     Nombre de la base de datos PostgreSQL
+    """
+    tipo = os.environ.get("SFCE_DB_TYPE", "sqlite")
+
+    if tipo == "sqlite":
+        ruta = os.environ.get("SFCE_DB_PATH", str(Path.cwd() / "sfce.db"))
+        return {"tipo_bd": "sqlite", "ruta_bd": ruta}
+
+    if tipo == "postgresql":
+        user = os.environ.get("SFCE_DB_USER")
+        password = os.environ.get("SFCE_DB_PASSWORD")
+        db_name = os.environ.get("SFCE_DB_NAME")
+        missing = [v for v, k in [
+            ("SFCE_DB_USER", user),
+            ("SFCE_DB_PASSWORD", password),
+            ("SFCE_DB_NAME", db_name),
+        ] if not k]
+        if missing:
+            raise RuntimeError(
+                f"Variables de entorno PostgreSQL no configuradas: {', '.join(missing)}"
+            )
+        return {
+            "tipo_bd": "postgresql",
+            "db_host": os.environ.get("SFCE_DB_HOST", "localhost"),
+            "db_port": int(os.environ.get("SFCE_DB_PORT", "5432")),
+            "db_user": user,
+            "db_password": password,
+            "db_name": db_name,
+        }
+
+    raise ValueError(f"SFCE_DB_TYPE invalido: '{tipo}'. Valores validos: sqlite, postgresql")
+
+
 def _leer_cors_origins() -> list[str]:
     """Lee orígenes CORS permitidos desde env. Nunca retorna '*'."""
     env = os.environ.get("SFCE_CORS_ORIGINS", "")
@@ -28,13 +72,15 @@ def _leer_cors_origins() -> list[str]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicializa BD SQLite persistente al arrancar, limpia al cerrar.
+    """Inicializa BD persistente al arrancar, limpia al cerrar.
 
-    Usa la variable de entorno SFCE_DB_PATH para la ruta de la BD.
-    Si no esta definida, usa sfce.db en el directorio de trabajo actual.
+    Usa las variables de entorno SFCE_DB_TYPE y relacionadas para la
+    configuracion de BD. Por defecto usa SQLite con SFCE_DB_PATH.
     """
-    db_path = os.environ.get("SFCE_DB_PATH", str(Path.cwd() / "sfce.db"))
-    engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": db_path})
+    from sfce.api.auth import _validar_config_seguridad
+    _validar_config_seguridad()
+    config_bd = _leer_config_bd()
+    engine = crear_motor(config_bd)
     Base.metadata.create_all(engine)
     sesion_factory = crear_sesion(engine)
     app.state.engine = engine
