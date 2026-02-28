@@ -100,7 +100,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`
-**Tests totales**: 1554 PASS
+**Tests totales**: 1563 PASS (+9 bancario)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -126,7 +126,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 1. **PROXIMA SESION: Ejecutar plan contabilidad rewrite**
+### 0. **PROXIMA SESION: Fase 1 Tasks 5-9 (parser C43, ingesta, motor, API, dashboard)**
+- **Plan**: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
+- **Estado**: Tasks 1-4 COMPLETADAS (Gestoria, CuentaBancaria, MovimientoBancario extendido, ArchivoIngestado)
+- **Pendiente**: Task 5 (parser C43), Task 6 (ingesta+dedup), Task 7 (motor conciliacion), Task 8 (API), Task 9 (dashboard React)
+- **Archivo C43 prueba**: `C:\Users\carli\Downloads\_Trabajo\TT181225.754.txt`
+- **Usar skill**: `superpowers:executing-plans docs/plans/2026-02-28-fase1-bancario-multitenant.md`
+- **Nota Task 8**: fixture test necesita `SFCE_JWT_SECRET` en env (lifespan valida al arrancar)
+- **Migracion**: 002_multi_tenant.py ya ejecutada — BD actualizada
+
+### 1. **Ejecutar plan contabilidad rewrite (alta prioridad)**
 - **Plan**: `docs/plans/2026-02-28-contabilidad-module-rewrite-plan.md` (2864 lineas, 12 tasks TDD)
 - **Design doc**: `docs/plans/2026-02-28-contabilidad-module-rewrite-design.md`
 - **Usar skill**: `superpowers:executing-plans` en nueva sesion
@@ -135,7 +144,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Mejoras**: PyG waterfall+4tabs, Balance formato T+ratios+diagnostico+radar+EFE, Diario virtual scroll 1461 asientos, Libro Mayor
 
 ### 2. **PENDIENTE (baja prioridad)**
-- Fase 1 Nucleo Bancario: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
 - Merge a main
