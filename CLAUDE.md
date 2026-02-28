@@ -106,15 +106,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **REWRITE COMPLETO + navegacion corregida** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode.
-- `.claude/launch.json` configurado con Vite dev server
-- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query + Zustand
+- **Estado actual**: **Contabilidad module rewrite COMPLETO** — Tasks 5-12 implementadas. PyG waterfall, Balance formato T+radar, Diario virtual scroll 1461 asientos, Libro Mayor slide-over.
+- `.claude/launch.json` configurado: api (puerto 8000, autoPort:false) + dashboard (puerto 3000)
+- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
-- **Backend extendido**: 66 rutas, 25 tablas BD, routers economico/copilot/configuracion/portal/informes
-- **Fixes sesion 01/03**: directorio paginado OK, auto-hidratacion empresa desde URL, selector siempre en /, navegacion a /pyg
-- **Sesion 28/02 (cont)**: migrar_fs_a_bd.py ejecutado para empresa 4 — 1461 asientos, 4507 partidas, 1796 facturas en BD local. PyG muestra 2.428.202 ingresos, 954.002 gastos. Dashboard operativo con datos Chiringuito.
-- **Auditoria 28/02 completada**: 8 bugs criticos corregidos (ver proximos pasos). Rutas API economico arregladas (ejercicio_activo, codejercicio, codsubcuenta). Facturas tipo 'FC'->'emitida'/'recibida'. RRHH /rrhh/->/empresas/. Calendario URL fija.
-- **Pendiente**: tests E2E dashboard, merge a main, fallos menores documentados abajo
+- **Backend extendido**: 66+ rutas, 25 tablas BD. Nuevos endpoints: /pyg2, /balance2, /diario (paginado), /libro-mayor/{subcuenta}
+- **Contabilidad rewrite sesion**: PyG (`/pyg2`) estructura PGC 2007 completa + waterfall + EBITDA/EBIT. Balance (`/balance2`) ratios+alertas automaticas. Diario paginado useVirtualizer+useInfiniteQuery. LibroMayor slide-over AreaChart.
+- **PR abierto**: https://github.com/carlincarlichi78/SPICE/pull/2
+- **Pendiente**: tests E2E dashboard (Playwright), merge a main
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -137,15 +136,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Build dashboard**: OK sin errores TS
 - **Siguiente**: Plan contabilidad rewrite (ver item 1)
 
-### 1. **Ejecutar plan contabilidad rewrite (alta prioridad)**
-- **Plan**: `docs/plans/2026-02-28-contabilidad-module-rewrite-plan.md` (2864 lineas, 12 tasks TDD)
-- **Design doc**: `docs/plans/2026-02-28-contabilidad-module-rewrite-design.md`
-- **Usar skill**: `superpowers:executing-plans` en nueva sesion
-- **Task 1 primero**: `sfce/core/pgc_nombres.py` (prerequisito de todo)
-- **Bugs que resuelve**: fechas 2026-02-28, nombre_emisor null en FC, diario 50 asientos, codigos sin nombre
-- **Mejoras**: PyG waterfall+4tabs, Balance formato T+ratios+diagnostico+radar+EFE, Diario virtual scroll 1461 asientos, Libro Mayor
-
-### 2. **PENDIENTE (baja prioridad)**
+### 1. **PENDIENTE (baja prioridad)**
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
-- Merge a main
+- Merge a main (PR #2 abierto)
