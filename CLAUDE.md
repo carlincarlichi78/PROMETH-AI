@@ -103,10 +103,13 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: 15 paginas basicas, pendiente rewrite completo
+- **Estado actual**: **REWRITE COMPLETO** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode
 - `.claude/launch.json` configurado con Vite dev server
-- **Design doc rewrite**: `docs/plans/2026-02-27-dashboard-rewrite-design.md` (38 paginas, modulo economico-financiero, copiloto IA)
-- **Pendiente**: escribir plan de implementacion (writing-plans skill) y ejecutar rewrite
+- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query + Zustand
+- **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
+- **Design doc**: `docs/plans/2026-02-27-dashboard-rewrite-design.md`
+- **Plan implementacion**: `docs/plans/2026-02-27-dashboard-rewrite-plan.md` (ejecutado completamente)
+- **Pendiente**: tests E2E del dashboard, integracion con API backend real
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -118,11 +121,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 1. Dashboard Rewrite (PRIORIDAD)
-Escribir plan de implementacion detallado con writing-plans skill, luego ejecutar rewrite completo.
-Design doc aprobado: `docs/plans/2026-02-27-dashboard-rewrite-design.md`
-
-### 2. Pipeline E2E elena-navarro (60 PDFs)
+### 1. Pipeline E2E elena-navarro (60 PDFs)
 `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 
 ### 3. Operaciones puntuales
