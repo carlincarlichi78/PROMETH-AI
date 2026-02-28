@@ -7,9 +7,20 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 ## Infraestructura (compartida para todos los clientes)
 - **FacturaScripts**: https://contabilidad.lemonfresh-tuc.com
 - **API REST**: base URL `https://contabilidad.lemonfresh-tuc.com/api/3/`, Header: `Token: iOXmrA1Bbn8RDWXLv91L`
-- **Servidor**: 65.108.60.69 (Hetzner), user: carli
-- **Docker**: /opt/apps/facturascripts/ (app PHP/Apache + MariaDB 10.11)
+- **Servidor**: 65.108.60.69 (Hetzner), user: carli (root SSH con clave)
+- **Docker**: /opt/apps/facturascripts/ (app PHP/Apache + MariaDB 10.11) — NO TOCAR
+- **Nginx**: Docker, conf en `/opt/infra/nginx/conf.d/`. Reload: `docker exec nginx nginx -s reload`
 - **Credenciales**: PROYECTOS/ACCESOS.md, seccion 19
+
+## Infraestructura SFCE (rama infra/servidor-seguro, completada 28/02/2026)
+- **PostgreSQL 16**: Docker `/opt/apps/sfce/`, puerto `127.0.0.1:5433`, BD `sfce_prod`, user `sfce_user`
+- **DSN**: `postgresql://sfce_user:[pass]@127.0.0.1:5433/sfce_prod` (pass en `/opt/apps/sfce/.env`)
+- **Uptime Kuma**: Docker `127.0.0.1:3001`. Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N`
+- **Firewall**: ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior
+- **Seguridad nginx**: `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts
+- **Backups**: Restic cron 02:00 diario → `/etc/cron.d/sfce-backup`. Activar: rellenar `.env` con Hetzner S3 creds + `backup.sh --init`
+- **Scripts infra**: `scripts/infra/backup.sh`, `scripts/infra/docker-user-firewall.sh`
+- **Templates nginx**: `infra/nginx/00-security.conf`, `infra/nginx/uptime-kuma.conf` (activar con dominio)
 
 ## API Keys del SFCE
 | Variable | Servicio | Rol |
@@ -106,21 +117,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Contabilidad module rewrite COMPLETO** — Tasks 5-12 implementadas. PyG waterfall, Balance formato T+radar, Diario virtual scroll 1461 asientos, Libro Mayor slide-over.
+- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 4 commits.
 - `.claude/launch.json` configurado: api (puerto 8000, autoPort:false) + dashboard (puerto 3000)
-- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual
+- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify**
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
-- **Backend extendido**: 66+ rutas, 25 tablas BD. Nuevos endpoints: /pyg2, /balance2, /diario (paginado), /libro-mayor/{subcuenta}
-- **Contabilidad rewrite sesion**: PyG (`/pyg2`) estructura PGC 2007 completa + waterfall + EBITDA/EBIT. Balance (`/balance2`) ratios+alertas automaticas. Diario paginado useVirtualizer+useInfiniteQuery. LibroMayor slide-over AreaChart.
+- **Backend extendido**: 66+ rutas, 25 tablas BD.
 - **PR abierto**: https://github.com/carlincarlichi78/SPICE/pull/2
-- **Pendiente**: tests E2E dashboard (Playwright), merge a main
+- **Pendiente**: tests E2E dashboard (Playwright), merge a main, activar VITE_VAPID_PUBLIC_KEY para push real
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
 
 ## GitHub
 - **Repo**: `carlincarlichi78/SPICE` (privado)
-- **Branch activa**: `feat/sfce-v2-fase-e`
+- **Branch activa**: `feat/frontend-pwa`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
 ## Proximos pasos
@@ -136,7 +146,24 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Build dashboard**: OK sin errores TS
 - **Siguiente**: Plan contabilidad rewrite (ver item 1)
 
-### 1. **PENDIENTE (baja prioridad)**
+### 1. **Frontend PWA + Seguridad COMPLETADO — rama: feat/frontend-pwa**
+- **Task 1 PWA**: `vite-plugin-pwa` + manifest SPICE + SW Workbox (cache-first assets, network-first API) + offline page + iconos SVG 192/512.
+- **Task 2 Seguridad**: JWT movido localStorage → `sessionStorage`. Idle timer 30min (eventos mousedown/keydown/touchstart/scroll). `dompurify` instalado. `console.log`/`debugger` eliminados en prod (esbuild drop). 16 archivos migrados.
+- **Task 3 Portal Cliente**: `/portal/:id` con `PortalLayout` propio (sin sidebar gestoría). KPIs shadcn, documentos, botón descarga RGPD. Ruta `/empresa/:id/portal` mantenida para compatibilidad.
+- **Task 4 Notificaciones**: `NotificacionesPanel` en topbar (sustituye Bell placeholder). Suscripcion Web Push con VAPID. `VITE_VAPID_PUBLIC_KEY` en `.env` cuando backend tenga endpoint `/api/notificaciones/suscribir`.
+- **Build**: OK, 86 entradas precacheadas, `dist/sw.js` generado.
+
+### 1b. **Seguridad Backend COMPLETADO — rama: feat/backend-seguridad**
+- **Rate limiting**: `sfce/api/rate_limiter.py` — VentanaFijaLimiter per-IP/user. 5 login/min, 100 auth/min.
+- **2FA TOTP**: `POST /api/auth/2fa/setup|verify|confirm`. pyotp + qrcode. Login devuelve 202+temp_token si 2FA activo.
+- **Lockout**: 423+Retry-After tras 5 intentos fallidos (30min). Migración 003.
+- **RGPD export**: `POST /api/empresas/{id}/exportar-datos`. ZIP CSV, token uso único 24h.
+- **Total**: 39 tests seguridad, 1706 tests resto sin regresiones.
+- **Ejecutar migración**: `python sfce/db/migraciones/003_account_lockout.py`
+
+### 2. **PENDIENTE (baja prioridad)**
+- Task 4 Seguridad: Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
 - Merge a main (PR #2 abierto)
+- Backend: endpoint `/api/notificaciones/suscribir` para push real

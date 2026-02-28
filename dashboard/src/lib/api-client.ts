@@ -8,7 +8,7 @@ export class ApiError extends Error {
 }
 
 async function fetchApi<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem(TOKEN_KEY)
+  const token = sessionStorage.getItem(TOKEN_KEY)
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((opciones.headers as Record<string, string>) ?? {}),
@@ -20,7 +20,7 @@ async function fetchApi<T>(ruta: string, opciones: RequestInit = {}): Promise<T>
   const respuesta = await fetch(ruta, { ...opciones, headers })
 
   if (respuesta.status === 401) {
-    localStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(TOKEN_KEY)
     window.location.href = '/login'
     throw new ApiError(401, 'Sesion expirada')
   }

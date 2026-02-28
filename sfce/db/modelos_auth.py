@@ -45,6 +45,14 @@ class Usuario(Base):
     gestoria_id = Column(Integer, ForeignKey("gestorias.id"), nullable=True)
     empresas_asignadas = Column(JSON, nullable=False, default=list)
 
+    # Bloqueo de cuenta por intentos fallidos
+    failed_attempts = Column(Integer, nullable=False, default=0)
+    locked_until = Column(DateTime, nullable=True)
+
+    # 2FA TOTP
+    totp_secret = Column(String(64), nullable=True)
+    totp_habilitado = Column(Boolean, nullable=False, default=False)
+
     gestoria = relationship("Gestoria", back_populates="usuarios")
 
 

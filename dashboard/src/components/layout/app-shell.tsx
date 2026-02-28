@@ -20,7 +20,7 @@ export function AppShell() {
     if (!match) return
     const id = Number(match[1])
     if (empresaActiva?.id === id) return
-    const token = localStorage.getItem('sfce_token')
+    const token = sessionStorage.getItem('sfce_token')
     fetch(`/api/empresas/${id}`, {
       headers: { Authorization: token ? `Bearer ${token}` : '' },
     })
