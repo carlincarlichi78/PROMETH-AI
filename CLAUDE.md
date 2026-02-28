@@ -113,7 +113,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Backend extendido**: 66 rutas, 25 tablas BD, routers economico/copilot/configuracion/portal/informes
 - **Fixes sesion 01/03**: directorio paginado OK, auto-hidratacion empresa desde URL, selector siempre en /, navegacion a /pyg
 - **Sesion 28/02 (cont)**: migrar_fs_a_bd.py ejecutado para empresa 4 — 1461 asientos, 4507 partidas, 1796 facturas en BD local. PyG muestra 2.428.202 ingresos, 954.002 gastos. Dashboard operativo con datos Chiringuito.
-- **Pendiente**: auditoria completa de fallos dashboard con empresa 4, tests E2E, merge a main
+- **Auditoria 28/02 completada**: 8 bugs criticos corregidos (ver proximos pasos). Rutas API economico arregladas (ejercicio_activo, codejercicio, codsubcuenta). Facturas tipo 'FC'->'emitida'/'recibida'. RRHH /rrhh/->/empresas/. Calendario URL fija.
+- **Pendiente**: tests E2E dashboard, merge a main, fallos menores documentados abajo
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -132,11 +133,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - Enfoque A: producto modular completo primero, luego clientes
 - Despues de cuestionar: writing-plans para plan de implementacion fase 1
 
-### 1. **PROXIMA SESION: Auditoria de fallos dashboard — empresa 4 (CHIRINGUITO)**
-- Navegar TODAS las secciones del dashboard con empresa 4
-- Documentar cada fallo: pantalla, descripcion, endpoint API afectado
-- Priorizar por impacto y corregir los criticos
-- Dashboard en: `http://localhost:3000/empresa/4/pyg` (iniciar servidores primero)
+### 1. **PROXIMA SESION: Fallos menores pendientes dashboard**
+Bugs conocidos no criticos (datos/implementacion futura):
+- **PyG-1**: Grafico solo muestra Gastos, no Ingresos (barra verde ausente)
+- **PyG-2/3**: Eje X y tablas muestran codigos numericos (640000000x) sin nombre de cuenta
+- **Diario**: Solo 50/1461 asientos visibles (sin paginacion en UI). Limite hardcodeado API `limit=50`
+- **Balance**: Sin desglose activo corriente/no corriente — solo 3 totales en API
+- **Plan de Cuentas**: Endpoint /subcuentas no existe — derivar de Partida.subcuenta
+- **Fechas facturas/asientos**: Todas muestran "28 feb 2026" (fecha migracion, no fecha real)
+- **Nombres clientes FC**: nombre_emisor=null en facturas emitidas
+- **Amortizaciones/Nominas**: 0 registros (tablas activos_fijos/trabajadores vacias — no migradas)
 
 ### 2. Backups automaticos BD FacturaScripts
 ### 3. Tests E2E dashboard (Playwright)
