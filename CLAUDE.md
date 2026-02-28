@@ -112,7 +112,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
 - **Backend extendido**: 66 rutas, 25 tablas BD, routers economico/copilot/configuracion/portal/informes
 - **Fixes sesion 01/03**: directorio paginado OK, auto-hidratacion empresa desde URL, selector siempre en /, navegacion a /pyg
-- **Pendiente**: tests E2E del dashboard, integracion con API backend real, merge a main
+- **Sesion 28/02 (cont)**: migrar_fs_a_bd.py ejecutado para empresa 4 — 1461 asientos, 4507 partidas, 1796 facturas en BD local. PyG muestra 2.428.202 ingresos, 954.002 gastos. Dashboard operativo con datos Chiringuito.
+- **Pendiente**: auditoria completa de fallos dashboard con empresa 4, tests E2E, merge a main
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -131,7 +132,12 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - Enfoque A: producto modular completo primero, luego clientes
 - Despues de cuestionar: writing-plans para plan de implementacion fase 1
 
-### 1. Backups automaticos BD FacturaScripts
-### 2. Tests E2E dashboard (Playwright)
-### 3. Merge a main
-### 4. Verificar dashboard con datos chiringuito (empresa 4) y localizar fallos
+### 1. **PROXIMA SESION: Auditoria de fallos dashboard — empresa 4 (CHIRINGUITO)**
+- Navegar TODAS las secciones del dashboard con empresa 4
+- Documentar cada fallo: pantalla, descripcion, endpoint API afectado
+- Priorizar por impacto y corregir los criticos
+- Dashboard en: `http://localhost:3000/empresa/4/pyg` (iniciar servidores primero)
+
+### 2. Backups automaticos BD FacturaScripts
+### 3. Tests E2E dashboard (Playwright)
+### 4. Merge a main
