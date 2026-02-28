@@ -10,15 +10,22 @@
 
 SPICE (Sistema de Procesamiento Inteligente de Contabilidad Empresarial) es un SaaS de contabilidad automatizada con IA que cubre desde el autonomo individual hasta la asesoria fiscal con cientos de clientes.
 
-### Tres perspectivas, un solo producto
+### Cuatro roles, un solo producto
 
-| Tier | Usuario | Ve | Hace | Precio orientativo |
-|------|---------|-----|------|-------------------|
-| **SPICE Client** | Empresa / Autonomo | Su negocio | Sube docs, ve dashboard, consulta estado fiscal | 49-99 EUR/mes |
-| **SPICE Gestoria** | Gestoria / Despacho | Todos sus clientes | Gestion contable completa, modelos fiscales, lotes | 149-399 EUR/mes (por gestoria) |
-| **SPICE Asesor** | Asesor fiscal / Consultor | Globalidad: normativa, cumplimiento, alertas cross-client | Supervision estrategica, compliance, advisory | 399-799 EUR/mes |
+| Rol | Usuario | Ve | Hace |
+|-----|---------|-----|------|
+| **Superadmin** | Carlos (unico) | Todo el sistema | Configuracion global, crear cuentas |
+| **Admin Gestoria / Asesor independiente** | Gestoria o autonomo fiscal | Todos sus clientes (y asesores si los tiene) | Gestion contable completa, modelos fiscales, lotes |
+| **Asesor** (dentro de gestoria) | Empleado de la gestoria | Solo sus clientes asignados | Igual que admin gestoria en su scope |
+| **Cliente final** | Empresa o autonomo cliente | Solo su empresa | Subir docs, ver estado fiscal, dashboard limitado |
 
-Las tres perspectivas comparten el mismo nucleo tecnico. La diferencia es la lente (dashboard, permisos, funcionalidades expuestas).
+**Modulos contratables por cuenta:**
+- **Contabilidad** (base): OCR, asientos, modelos fiscales, conciliacion
+- **Asesoramiento** (+): ratios avanzados, alertas, copiloto IA, analisis predictivo
+
+**Pricing**: base por modulos + escala por numero de asesores + escala por tramo de clientes (ver seccion 12.3)
+
+Todos los roles comparten el mismo nucleo tecnico. La diferencia es el scope de datos visible y los modulos contratados.
 
 ---
 
@@ -548,20 +555,67 @@ Para 50+ clientes: plan pagado de al menos Mistral + GPT.
 
 ## 12. Seguridad y acceso
 
-### 12.1 Roles
+### 12.1 Jerarquia de roles
 
-| Rol | Permisos |
-|-----|---------|
-| admin_spice | Todo: configuracion global, tenants |
-| asesor | Lectura total cross-client, reporting, compliance |
-| gestor | CRUD completo sobre sus clientes asignados |
-| cliente | Lectura + subida docs de su empresa unicamente |
-| empleado | Lectura limitada (nomina, fichajes) |
+```
+SUPERADMIN (Carlos)
+    |
+    +-- GESTORIA (organizacion)
+    |       |
+    |       +-- ADMIN_GESTORIA (gestor principal, ve todos sus asesores y clientes)
+    |       |
+    |       +-- ASESOR (mismo acceso que admin_gestoria, solo sus clientes asignados)
+    |
+    +-- ASESOR_INDEPENDIENTE (gestoria de uno, ve todos sus clientes)
+    |
+    +-- CLIENTE_FINAL (solo su empresa)
+```
 
-### 12.2 RBAC
+| Rol | Alcance | Ve | Hace |
+|-----|---------|-----|------|
+| `superadmin` | Global | Todo el sistema | Configuracion global, crear gestorias |
+| `admin_gestoria` | Su gestoria | Todos sus asesores + todos sus clientes | Gestion completa de su gestoria |
+| `asesor` | Sus clientes asignados | Solo clientes que le asigna el admin | Igual que admin_gestoria en su scope |
+| `asesor_independiente` | Sus clientes | Todos sus clientes | Igual que admin_gestoria |
+| `cliente` | Su empresa | Solo su empresa | Ver estado, subir documentos |
+
+**Notas clave:**
+- Un asesor dentro de una gestoria tiene el mismo nivel funcional que el admin_gestoria, pero limitado a sus clientes asignados
+- El asesor independiente es una "gestoria de uno": sin subordinados pero acceso total a sus clientes
+- Los modulos contratados aplican a toda la gestoria: si la gestoria tiene asesoramiento, todos sus asesores tienen asesoramiento
+
+### 12.2 Modulos contratables
+
+| Modulo | Incluye | Sin este modulo |
+|--------|---------|----------------|
+| `contabilidad` | Pipeline OCR, asientos, modelos fiscales, conciliacion bancaria | — (base obligatorio) |
+| `asesoramiento` | Ratios avanzados, alertas, copiloto IA, analisis predictivo, benchmarking | Solo contabilidad operativa |
+
+Los modulos se contratan a nivel de gestoría/asesor_independiente. Todos los usuarios de esa cuenta comparten los mismos modulos.
+
+### 12.3 Modelo de pricing
+
+**Estructura**: Base por modulos + escala por asesores + escala por clientes
+
+| Concepto | Precio orientativo |
+|----------|-------------------|
+| Modulo contabilidad | 49 EUR/mes base |
+| Modulo asesoramiento | +30 EUR/mes adicional |
+| Por cada asesor adicional (tras el primero) | +20 EUR/mes |
+| Tramo 1-10 clientes | incluido |
+| Tramo 11-30 clientes | +25 EUR/mes |
+| Tramo 31-60 clientes | +50 EUR/mes |
+| Tramo 61+ clientes | +100 EUR/mes |
+
+**Ejemplos:**
+- Asesor independiente, solo contabilidad, 8 clientes: 49 EUR/mes
+- Asesor independiente, contabilidad + asesoramiento, 15 clientes: 49 + 30 + 25 = 104 EUR/mes
+- Gestoria con 3 asesores, contabilidad + asesoramiento, 25 clientes: 49 + 30 + (2x20) + 25 = 144 EUR/mes
+
+### 12.4 RBAC
 - Permisos por recurso (empresa, documento, asiento)
-- Herencia: asesor hereda permisos de gestor
-- API: middleware de autorizacion en cada ruta
+- Scope de acceso: `gestoria_id` + `clientes_asignados[]` en el JWT
+- API: middleware de autorizacion en cada ruta verifica scope antes de ejecutar query
 
 ### 12.3 RGPD
 - Datos personales en movimientos bancarios (nombres)
@@ -613,28 +667,20 @@ Paso 5: Importar datos existentes (opcional)
 
 ## 14. Monetizacion
 
-### 14.1 Modelo de pricing propuesto
+### 14.1 Modelo de pricing (ver detalle en seccion 12.3)
 
-**SPICE Client** (empresa/autonomo directo):
-- Starter: 49 EUR/mes — 1 empresa, 50 docs/mes, contabilidad basica
-- Pro: 99 EUR/mes — 1 empresa, 200 docs/mes, + conciliacion + modulo vertical
-- Business: 149 EUR/mes — ilimitado, + alertas + prevision
+Pricing dinamico basado en tres ejes:
+1. **Modulos contratados**: contabilidad (base) + asesoramiento (opcional)
+2. **Numero de asesores**: +20 EUR/mes por cada asesor adicional al primero
+3. **Tramo de clientes**: incluido hasta 10, escalado en tramos de 20/50/ilimitado
 
-**SPICE Gestoria** (gestoria/despacho):
-- Base: 149 EUR/mes — hasta 10 clientes
-- Pro: 299 EUR/mes — hasta 30 clientes, procesamiento lotes
-- Enterprise: 499 EUR/mes — ilimitado, calendario fiscal, white-label
+Este modelo premia la eficiencia: una gestoria grande con muchos clientes por asesor paga proporcionalmente menos que multiples asesores con pocos clientes cada uno.
 
-**SPICE Asesor** (asesor fiscal):
-- Pro: 399 EUR/mes — supervision hasta 5 gestorias
-- Enterprise: 799 EUR/mes — ilimitado, compliance, benchmarking
+### 14.2 Opciones adicionales
 
-### 14.2 Alternativas de monetizacion
-
-- **Por documento procesado**: 0,50-1,50 EUR/doc (modelo usage-based)
-- **Por empresa gestionada**: 25-50 EUR/empresa/mes (modelo per-seat)
-- **Freemium**: 1 empresa gratis, limitado a 20 docs/mes (captacion)
-- **Trial**: 30 dias gratis de cualquier plan
+- **Trial**: 30 dias gratis con datos reales
+- **Descuento anual**: 2 meses gratis pagando anual
+- **White-label**: precio a negociar para gestorias que quieran marca propia
 
 ---
 
