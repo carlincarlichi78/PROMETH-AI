@@ -249,7 +249,7 @@ def listar_facturas(
                 numero_factura=f.numero_factura,
                 fecha_factura=f.fecha_factura,
                 cif_emisor=f.cif_emisor,
-                nombre_emisor=f.nombre_emisor,
+                nombre_emisor=f.nombre_receptor if f.tipo == "emitida" else f.nombre_emisor,
                 base_imponible=float(f.base_imponible) if f.base_imponible else None,
                 iva_importe=float(f.iva_importe) if f.iva_importe else None,
                 total=float(f.total) if f.total else None,
