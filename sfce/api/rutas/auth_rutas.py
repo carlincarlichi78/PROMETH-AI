@@ -137,6 +137,7 @@ async def login(body: LoginRequest, request: Request, response: Response):
         u_nombre = usuario.nombre
         u_rol = usuario.rol
         u_totp = usuario.totp_habilitado
+        u_gestoria_id = usuario.gestoria_id
 
         # --- Si 2FA activo: retornar token temporal en lugar de token completo ---
         if u_totp:
@@ -173,7 +174,7 @@ async def login(body: LoginRequest, request: Request, response: Response):
         )
         sesion.commit()
 
-    token = crear_token({"sub": u_email, "rol": u_rol})
+    token = crear_token({"sub": u_email, "rol": u_rol, "gestoria_id": u_gestoria_id})
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -381,9 +382,10 @@ def confirm_2fa(body: Confirm2FARequest, request: Request):
             )
 
         u_id, u_email, u_nombre, u_rol = u.id, u.email, u.nombre, u.rol
+        u_gestoria_id = u.gestoria_id
         sesion.commit()
 
-    token = crear_token({"sub": u_email, "rol": u_rol})
+    token = crear_token({"sub": u_email, "rol": u_rol, "gestoria_id": u_gestoria_id})
     return {
         "access_token": token,
         "token_type": "bearer",
