@@ -239,6 +239,26 @@ class Pago(Base):
     factura = relationship("Factura")
 
 
+class CuentaBancaria(Base):
+    """Cuenta bancaria de una empresa. Origen de movimientos C43."""
+    __tablename__ = "cuentas_bancarias"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    gestoria_id = Column(Integer, nullable=False)  # FK logica, sin constraint para no acoplar BDs
+    banco_codigo = Column(String(10), nullable=False)   # "2100" = CaixaBank
+    banco_nombre = Column(String(100), nullable=False)
+    iban = Column(String(34), nullable=False)
+    alias = Column(String(100), nullable=False, default="")
+    divisa = Column(String(3), nullable=False, default="EUR")
+    activa = Column(Boolean, nullable=False, default=True)
+    email_c43 = Column(String(200), nullable=True)  # email para recepcion automatica futura
+
+    __table_args__ = (
+        UniqueConstraint("empresa_id", "iban", name="uq_cuenta_empresa_iban"),
+    )
+
+
 class MovimientoBancario(Base):
     """Movimiento bancario importado."""
     __tablename__ = "movimientos_bancarios"

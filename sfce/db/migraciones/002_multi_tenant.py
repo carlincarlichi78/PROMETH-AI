@@ -35,6 +35,23 @@ def ejecutar():
     if "empresas_asignadas" not in columnas_existentes:
         cur.execute("ALTER TABLE usuarios ADD COLUMN empresas_asignadas TEXT NOT NULL DEFAULT '[]'")
 
+    # Tabla cuentas_bancarias
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cuentas_bancarias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            empresa_id INTEGER NOT NULL,
+            gestoria_id INTEGER NOT NULL,
+            banco_codigo TEXT NOT NULL,
+            banco_nombre TEXT NOT NULL,
+            iban TEXT NOT NULL,
+            alias TEXT NOT NULL DEFAULT '',
+            divisa TEXT NOT NULL DEFAULT 'EUR',
+            activa INTEGER NOT NULL DEFAULT 1,
+            email_c43 TEXT,
+            UNIQUE(empresa_id, iban)
+        )
+    """)
+
     conn.commit()
     conn.close()
     print("Migracion 002 completada.")
