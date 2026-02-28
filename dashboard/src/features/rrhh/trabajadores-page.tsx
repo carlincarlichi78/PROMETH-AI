@@ -70,7 +70,7 @@ export default function TrabajadoresPage() {
 
   const { data: trabajadores = [], isLoading } = useQuery({
     queryKey: queryKeys.empresas.trabajadores(empresaId),
-    queryFn: () => api.get<Trabajador[]>(`/api/rrhh/${empresaId}/trabajadores`),
+    queryFn: () => api.get<Trabajador[]>(`/api/empresas/${empresaId}/trabajadores`),
     enabled: !isNaN(empresaId),
   })
 

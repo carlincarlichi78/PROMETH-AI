@@ -105,7 +105,7 @@ export default function EmitidasPage() {
   })
 
   const facturas = useMemo(
-    () => todasFacturas.filter((f) => f.tipo === 'FC'),
+    () => todasFacturas.filter((f) => f.tipo === 'emitida'),
     [todasFacturas]
   )
 

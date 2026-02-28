@@ -114,7 +114,7 @@ export default function RecibidasPage() {
   })
 
   const facturas = useMemo(
-    () => todasFacturas.filter((f) => f.tipo !== 'FC'),
+    () => todasFacturas.filter((f) => f.tipo === 'recibida'),
     [todasFacturas]
   )
 

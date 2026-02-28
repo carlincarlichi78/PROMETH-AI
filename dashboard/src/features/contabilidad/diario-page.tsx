@@ -51,7 +51,7 @@ export default function DiarioPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.contabilidad.diario(empresaId),
-    queryFn: () => api.get<Asiento[]>(`/api/contabilidad/${empresaId}/asientos`),
+    queryFn: () => api.get<Asiento[]>(`/api/contabilidad/${empresaId}/diario`),
   })
 
   const asientosFiltrados = useMemo(() => {

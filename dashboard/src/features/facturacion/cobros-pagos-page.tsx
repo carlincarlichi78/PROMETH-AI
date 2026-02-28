@@ -64,7 +64,7 @@ const COLUMNAS_AGING: ColumnaTabla<Factura>[] = [
     header: 'Tipo',
     render: (f) => (
       <Badge variant="outline" className="text-xs font-mono">
-        {f.tipo === 'FC' ? 'Cobro' : 'Pago'}
+        {f.tipo === 'emitida' ? 'Cobro' : 'Pago'}
       </Badge>
     ),
   },
@@ -82,9 +82,9 @@ const COLUMNAS_AGING: ColumnaTabla<Factura>[] = [
     render: (f) => (
       <Badge
         variant="outline"
-        className={f.tipo === 'FC' ? 'text-amber-600 border-amber-400' : 'text-red-600 border-red-400'}
+        className={f.tipo === 'emitida' ? 'text-amber-600 border-amber-400' : 'text-red-600 border-red-400'}
       >
-        {f.tipo === 'FC' ? 'Pendiente cobro' : 'Pendiente pago'}
+        {f.tipo === 'emitida' ? 'Pendiente cobro' : 'Pendiente pago'}
       </Badge>
     ),
   },
@@ -121,11 +121,11 @@ export default function CobrosPagosPage() {
   })
 
   const pendientesCobro = useMemo(
-    () => facturas.filter((f) => f.tipo === 'FC' && !f.pagada),
+    () => facturas.filter((f) => f.tipo === 'emitida' && !f.pagada),
     [facturas]
   )
   const pendientesPago = useMemo(
-    () => facturas.filter((f) => f.tipo !== 'FC' && !f.pagada),
+    () => facturas.filter((f) => f.tipo === 'recibida' && !f.pagada),
     [facturas]
   )
 

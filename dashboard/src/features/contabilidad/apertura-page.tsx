@@ -26,7 +26,7 @@ export default function AperturaPage() {
     queryKey: ['contabilidad', empresaId, 'asientos-apertura'],
     queryFn: async () => {
       try {
-        const todos = await api.get<Asiento[]>(`/api/contabilidad/${empresaId}/asientos`)
+        const todos = await api.get<Asiento[]>(`/api/contabilidad/${empresaId}/diario`)
         return todos.filter(
           (a) =>
             a.concepto?.toLowerCase().includes('apertura') ||

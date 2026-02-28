@@ -73,7 +73,7 @@ export default function CalendarioPage() {
 
   const { data: eventos, isLoading } = useQuery({
     queryKey: queryKeys.modelos.calendario(empresaId),
-    queryFn: () => api.get<EventoFiscal[]>(`/api/modelos/${empresaId}/calendario`),
+    queryFn: () => api.get<EventoFiscal[]>(`/api/modelos/calendario/${empresaId}/${new Date().getFullYear()}`),
     enabled: !isNaN(empresaId),
   })
 

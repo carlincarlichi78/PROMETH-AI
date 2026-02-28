@@ -23,11 +23,22 @@ router = APIRouter(prefix="/api/economico", tags=["economico"])
 
 # --- Helpers de calculo ---
 
+def _ejercicio_activo(sesion, empresa_id: int) -> str:
+    """Devuelve el ejercicio mas reciente con asientos para la empresa."""
+    result = sesion.execute(
+        select(Asiento.ejercicio)
+        .where(Asiento.empresa_id == empresa_id)
+        .order_by(Asiento.ejercicio.desc())
+        .limit(1)
+    ).fetchone()
+    return result[0] if result else str(date.today().year)
+
+
 def _saldo_rango(partidas: list, prefijos: list[str], tipo: str = "haber_menos_debe") -> float:
     """Suma saldos de partidas cuya subcuenta empieza por alguno de los prefijos."""
     total = 0.0
     for p in partidas:
-        cod = p.codsubcuenta or ""
+        cod = p.subcuenta or ""
         if any(cod.startswith(pre) for pre in prefijos):
             if tipo == "haber_menos_debe":
                 total += float(p.haber or 0) - float(p.debe or 0)
@@ -188,14 +199,14 @@ def obtener_ratios(
             from fastapi import HTTPException
             raise HTTPException(404, "Empresa no encontrada")
 
-        ej = ejercicio or empresa.ejercicio_activo or str(date.today().year)
+        ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
 
         # Obtener todas las partidas del ejercicio via asientos
         stmt = (
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         )
         partidas = sesion.execute(stmt).scalars().all()
 
@@ -223,12 +234,12 @@ def obtener_kpis(
             raise HTTPException(404, "Empresa no encontrada")
 
         # KPIs genericos para cualquier empresa — en produccion se filtran por CNAE
-        ej = empresa.ejercicio_activo or str(date.today().year)
+        ej = _ejercicio_activo(sesion, empresa_id)
         stmt = (
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         )
         partidas = sesion.execute(stmt).scalars().all()
         partidas = list(partidas)
@@ -269,12 +280,12 @@ def obtener_tesoreria(
             from fastapi import HTTPException
             raise HTTPException(404, "Empresa no encontrada")
 
-        ej = empresa.ejercicio_activo or str(date.today().year)
+        ej = _ejercicio_activo(sesion, empresa_id)
         stmt = (
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         )
         partidas = list(sesion.execute(stmt).scalars().all())
 
@@ -309,13 +320,13 @@ def obtener_cashflow(
             from fastapi import HTTPException
             raise HTTPException(404, "Empresa no encontrada")
 
-        ej = empresa.ejercicio_activo or str(date.today().year)
+        ej = _ejercicio_activo(sesion, empresa_id)
         stmt = (
             select(Asiento, Partida)
             .join(Partida, Partida.asiento_id == Asiento.id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
-            .where(Partida.codsubcuenta.like("57%"))
+            .where(Asiento.ejercicio == ej)
+            .where(Partida.subcuenta.like("57%"))
         )
         rows = sesion.execute(stmt).all()
 
@@ -379,7 +390,7 @@ def obtener_presupuesto(
             from fastapi import HTTPException
             raise HTTPException(404, "Empresa no encontrada")
 
-        ej = ejercicio or empresa.ejercicio_activo or str(date.today().year)
+        ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
 
         presupuestos = sesion.execute(
             select(Presupuesto)
@@ -391,7 +402,7 @@ def obtener_presupuesto(
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         ).scalars().all())
 
         lineas = []
@@ -433,9 +444,8 @@ def obtener_comparativa(
 
         ej_actuales = ejercicios.split(",") if ejercicios else []
         if not ej_actuales:
-            ej_actual = empresa.ejercicio_activo or str(date.today().year)
-            ej_anterior = str(int(ej_actual) - 1)
-            ej_actuales = [ej_anterior, ej_actual]
+            ej_actual = _ejercicio_activo(sesion, empresa_id)
+            ej_actuales = [ej_actual]
 
         conceptos = ["Ventas", "Resultado", "Activo", "Patrimonio Neto"]
         prefijos_map = {
@@ -454,7 +464,7 @@ def obtener_comparativa(
                     select(Partida)
                     .join(Asiento, Asiento.id == Partida.asiento_id)
                     .where(Asiento.empresa_id == empresa_id)
-                    .where(Asiento.codejercicio == ej)
+                    .where(Asiento.ejercicio == ej)
                 ).scalars().all())
                 v = _saldo_rango(partidas, prefijos, tipo)
                 valores[ej] = round(abs(v), 2)
