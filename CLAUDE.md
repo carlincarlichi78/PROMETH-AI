@@ -117,21 +117,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Contabilidad module rewrite COMPLETO** — Tasks 5-12 implementadas. PyG waterfall, Balance formato T+radar, Diario virtual scroll 1461 asientos, Libro Mayor slide-over.
+- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 4 commits.
 - `.claude/launch.json` configurado: api (puerto 8000, autoPort:false) + dashboard (puerto 3000)
-- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual
+- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify**
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
-- **Backend extendido**: 66+ rutas, 25 tablas BD. Nuevos endpoints: /pyg2, /balance2, /diario (paginado), /libro-mayor/{subcuenta}
-- **Contabilidad rewrite sesion**: PyG (`/pyg2`) estructura PGC 2007 completa + waterfall + EBITDA/EBIT. Balance (`/balance2`) ratios+alertas automaticas. Diario paginado useVirtualizer+useInfiniteQuery. LibroMayor slide-over AreaChart.
+- **Backend extendido**: 66+ rutas, 25 tablas BD.
 - **PR abierto**: https://github.com/carlincarlichi78/SPICE/pull/2
-- **Pendiente**: tests E2E dashboard (Playwright), merge a main
+- **Pendiente**: tests E2E dashboard (Playwright), merge a main, activar VITE_VAPID_PUBLIC_KEY para push real
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
 
 ## GitHub
 - **Repo**: `carlincarlichi78/SPICE` (privado)
-- **Branch activa**: `feat/sfce-v2-fase-e`
+- **Branch activa**: `feat/frontend-pwa`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
 ## Proximos pasos
@@ -147,7 +146,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Build dashboard**: OK sin errores TS
 - **Siguiente**: Plan contabilidad rewrite (ver item 1)
 
-### 1. **PENDIENTE (baja prioridad)**
+### 1. **Frontend PWA + Seguridad COMPLETADO — rama: feat/frontend-pwa**
+- **Task 1 PWA**: `vite-plugin-pwa` + manifest SPICE + SW Workbox (cache-first assets, network-first API) + offline page + iconos SVG 192/512.
+- **Task 2 Seguridad**: JWT movido localStorage → `sessionStorage`. Idle timer 30min (eventos mousedown/keydown/touchstart/scroll). `dompurify` instalado. `console.log`/`debugger` eliminados en prod (esbuild drop). 16 archivos migrados.
+- **Task 3 Portal Cliente**: `/portal/:id` con `PortalLayout` propio (sin sidebar gestoría). KPIs shadcn, documentos, botón descarga RGPD. Ruta `/empresa/:id/portal` mantenida para compatibilidad.
+- **Task 4 Notificaciones**: `NotificacionesPanel` en topbar (sustituye Bell placeholder). Suscripcion Web Push con VAPID. `VITE_VAPID_PUBLIC_KEY` en `.env` cuando backend tenga endpoint `/api/notificaciones/suscribir`.
+- **Build**: OK, 86 entradas precacheadas, `dist/sw.js` generado.
+
+### 2. **PENDIENTE (baja prioridad)**
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
 - Merge a main (PR #2 abierto)
+- Backend: endpoint `/api/notificaciones/suscribir` para push real
