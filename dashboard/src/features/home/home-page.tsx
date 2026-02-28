@@ -31,8 +31,6 @@ const COLORES_PIE = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06
 
 export default function HomePage() {
   const { id } = useParams<{ id: string }>()
-  const empresaActiva = useEmpresaStore((s) => s.empresaActiva)
-
   // / siempre muestra el selector; el dashboard de empresa solo con :id en URL
   if (!id) {
     return <SelectorEmpresa />
