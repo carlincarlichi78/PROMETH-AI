@@ -137,7 +137,18 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
+### 0. **Plataforma Unificada — Plan listo, PENDIENTE ejecucion**
+- **Sesion 28/02/2026**: Analisis profundo de 3 proyectos: CAP-WEB (email SaaS) + CertiGestor/findiur (certs digitales + AAPP) + SPICE
+- **Plan**: `docs/plans/2026-02-28-plataforma-unificada-integracion.md` — 14 tasks, 4 fases, TDD
+- **Fase 1** (9 tasks): Modulo correo SPICE — IMAP+Graph, clasificacion 3 niveles, extractor enlaces, renombrado post-OCR, API REST, frontend
+- **Fase 2** (3 tasks): Bridge CertiGestor — cliente HTTP, webhook receiver AAPP, scrapers→inbox SPICE
+- **Fase 3** (1 task): Portal cliente unificado SPICE+CertiGestor
+- **Fase 4** (1 task): Exportacion iCal plazos fiscales
+- **Variables .env nuevas**: `SFCE_FERNET_KEY`, `CERTIGESTOR_URL`, `CERTIGESTOR_API_KEY`, `CERTIGESTOR_WEBHOOK_SECRET`
+- **Deps nuevas**: `pip install cryptography lxml`
+- **Sinergia clave**: scrapers AAPP CertiGestor Desktop → inbox SPICE → OCR triple → asiento → modelo 303. Nadie mas tiene esto en Espana.
+
+### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
 - **Parsers**: `sfce/conectores/bancario/parser_c43.py` (Norma 43 TXT + CaixaBank extendido auto-detect) + `parser_xls.py` (CaixaBank XLS)
 - **Fix parser C43**: detecta formato CaixaBank (R22 80 chars, prefijo 8 chars antes de fechas). Signo inferido de concepto_común. 44 tests incluyendo 7 contra archivo real TT191225.208.txt.
