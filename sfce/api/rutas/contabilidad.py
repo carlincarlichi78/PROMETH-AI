@@ -13,7 +13,7 @@ from sqlalchemy import select, func, case
 from sqlalchemy.orm import selectinload
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import (
     AsientoOut, AsientoPreviewOut, ActivoFijoOut, BalanceOut,
     CierreEstadoOut, FacturaOut, ImportarPreviewOut,
@@ -35,15 +35,15 @@ router = APIRouter(prefix="/api/contabilidad", tags=["contabilidad"])
 @router.get("/{empresa_id}/pyg", response_model=PyGOut)
 def obtener_pyg(
     empresa_id: int,
+    request: Request,
     ejercicio: Optional[str] = None,
     hasta_fecha: Optional[date] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Cuenta de Perdidas y Ganancias."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     # Calcular PyG usando query directa (misma logica que Repositorio.pyg)
     with sesion_factory() as s:
@@ -93,6 +93,7 @@ def obtener_pyg(
 @router.get("/{empresa_id}/pyg2", response_model=PyGOut2)
 def obtener_pyg2(
     empresa_id: int,
+    request: Request,
     desde: Optional[date] = None,
     hasta: Optional[date] = None,
     sesion_factory=Depends(get_sesion_factory),
@@ -101,10 +102,9 @@ def obtener_pyg2(
     from sfce.core.pgc_nombres import clasificar
     from collections import defaultdict
 
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
         # Determinar rango de fechas (usar año de fecha, no codejercicio que puede ser "C422")
         if not desde or not hasta:
@@ -276,14 +276,14 @@ def obtener_pyg2(
 @router.get("/{empresa_id}/balance", response_model=BalanceOut)
 def obtener_balance(
     empresa_id: int,
+    request: Request,
     hasta_fecha: Optional[date] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Balance de situacion."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     with sesion_factory() as s:
         q = (
@@ -331,6 +331,7 @@ def obtener_balance(
 @router.get("/{empresa_id}/balance2", response_model=BalanceOut2)
 def obtener_balance2(
     empresa_id: int,
+    request: Request,
     fecha_corte: Optional[date] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
@@ -339,10 +340,9 @@ def obtener_balance2(
     from collections import defaultdict
     from decimal import Decimal as D
 
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
         if not fecha_corte:
             anyo_max = s.execute(
@@ -518,6 +518,7 @@ def obtener_balance2(
 @router.get("/{empresa_id}/diario/total")
 def diario_total(
     empresa_id: int,
+    request: Request,
     desde: Optional[date] = None,
     hasta: Optional[date] = None,
     busqueda: Optional[str] = None,
@@ -525,7 +526,9 @@ def diario_total(
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Cuenta total de asientos para paginación."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         q = select(func.count(Asiento.id)).where(Asiento.empresa_id == empresa_id)
         if desde:
             q = q.where(Asiento.fecha >= desde)
@@ -542,6 +545,7 @@ def diario_total(
 @router.get("/{empresa_id}/diario", response_model=DiarioPaginadoOut)
 def listar_diario(
     empresa_id: int,
+    request: Request,
     desde: Optional[date] = None,
     hasta: Optional[date] = None,
     limit: int = 200,
@@ -554,10 +558,9 @@ def listar_diario(
     """Libro diario paginado con filtros full-text, origen y subcuenta."""
     from sfce.core.pgc_nombres import obtener_nombre
 
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
         # Total (para paginación)
         q_total = select(func.count(Asiento.id)).where(Asiento.empresa_id == empresa_id)
@@ -627,12 +630,15 @@ def listar_diario(
 def libro_mayor(
     empresa_id: int,
     subcuenta: str,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Libro Mayor de una subcuenta: movimientos ordenados con saldo acumulado."""
     from sfce.core.pgc_nombres import obtener_nombre
 
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         rows = s.execute(
             select(Partida, Asiento)
             .join(Asiento, Partida.asiento_id == Asiento.id)
@@ -679,14 +685,14 @@ def libro_mayor(
 def obtener_saldo(
     empresa_id: int,
     subcuenta: str,
+    request: Request,
     hasta_fecha: Optional[date] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Saldo de una subcuenta (debe - haber)."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     with sesion_factory() as s:
         q = (
@@ -711,15 +717,15 @@ def obtener_saldo(
 @router.get("/{empresa_id}/facturas", response_model=list[FacturaOut])
 def listar_facturas(
     empresa_id: int,
+    request: Request,
     tipo: Optional[str] = None,
     pagada: Optional[bool] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Lista facturas con filtros opcionales."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
         q = select(Factura).where(Factura.empresa_id == empresa_id)
         if tipo:
@@ -746,12 +752,11 @@ def listar_facturas(
 
 
 @router.get("/{empresa_id}/activos", response_model=list[ActivoFijoOut])
-def listar_activos(empresa_id: int, sesion_factory=Depends(get_sesion_factory)):
+def listar_activos(empresa_id: int, request: Request, sesion_factory=Depends(get_sesion_factory)):
     """Lista activos fijos activos."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
         activos = s.scalars(
             select(ActivoFijo).where(
@@ -780,12 +785,16 @@ async def importar_libro_diario(
     empresa_id: int,
     archivo: UploadFile = File(...),
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     usuario=Depends(obtener_usuario_actual),
 ):
     """Importa libro diario desde CSV o Excel. Devuelve preview para confirmacion."""
     from sfce.core.importador import Importador
     import tempfile
     import os
+
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     contenido = await archivo.read()
     importar_id = str(uuid.uuid4())
@@ -856,9 +865,12 @@ async def confirmar_importacion(
     empresa_id: int,
     importar_id: str,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     usuario=Depends(obtener_usuario_actual),
 ):
     """Confirma y persiste la importacion previamente enviada."""
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
     pending = getattr(request.app.state, "importar_pending", {})
     datos = pending.get(importar_id)
 
@@ -893,6 +905,9 @@ async def exportar_contabilidad(
 ):
     """Exporta libro diario, facturas o balance en CSV o Excel."""
     from sfce.core.exportador import Exportador
+
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     try:
         exportador = Exportador()
@@ -1144,9 +1159,12 @@ async def obtener_cierre(
     empresa_id: int,
     ejercicio: str,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     usuario=Depends(obtener_usuario_actual),
 ):
     """Retorna el estado de los 10 pasos del cierre de ejercicio."""
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
     repo = request.app.state.repo
 
     estados_guardados: dict[int, str] = {}
@@ -1180,9 +1198,12 @@ async def actualizar_paso_cierre(
     numero: int,
     body: dict,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     usuario=Depends(obtener_usuario_actual),
 ):
     """Actualiza el estado de un paso del cierre."""
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
     estado = body.get("estado", "pendiente")
     if estado not in ("pendiente", "completado", "no_aplica"):
         raise HTTPException(status_code=422, detail="Estado invalido. Valores: pendiente, completado, no_aplica")

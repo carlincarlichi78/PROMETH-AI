@@ -8,7 +8,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
-from sfce.api.app import get_repo
+from sfce.api.app import get_repo, get_sesion_factory
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import (
     CalendarioFiscalOut, CasillaOut, GenerarModeloIn,
     HistoricoModeloOut, ModeloFiscalCalcOut, ResultadoValidacionOut,
@@ -219,10 +220,15 @@ def generar_pdf(
 def calendario_fiscal(
     empresa_id: int,
     ejercicio: str,
+    request: Request,
     tipo_empresa: str = "sl",
+    sesion_factory=Depends(get_sesion_factory),
     servicio: ServicioFiscal = Depends(_get_servicio_fiscal),
 ):
     """Calendario de obligaciones fiscales para una empresa."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
     try:
         entradas = servicio.calendario_fiscal(empresa_id, ejercicio, tipo_empresa)
         return [CalendarioFiscalOut(**e) for e in entradas]
@@ -233,11 +239,16 @@ def calendario_fiscal(
 @router.get("/historico/{empresa_id}", response_model=list[HistoricoModeloOut])
 def historico_modelos(
     empresa_id: int,
+    request: Request,
     ejercicio: Optional[str] = None,
     modelo: Optional[str] = None,
+    sesion_factory=Depends(get_sesion_factory),
     repo: Repositorio = Depends(get_repo),
 ):
     """Modelos fiscales generados anteriormente (requiere T25 para persistencia)."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
     try:
         from sfce.db.modelos import ModeloFiscalGenerado
         from sqlalchemy import select

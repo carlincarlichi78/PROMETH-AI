@@ -3,11 +3,12 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import CuarentenaOut, DocumentoOut, ResolverCuarentenaIn
 from sfce.db.modelos import Cuarentena, Documento, Empresa
 
@@ -17,15 +18,15 @@ router = APIRouter(prefix="/api/documentos", tags=["documentos"])
 @router.get("/{empresa_id}", response_model=list[DocumentoOut])
 def listar_documentos(
     empresa_id: int,
+    request: Request,
     estado: Optional[str] = None,
     tipo_doc: Optional[str] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Lista documentos de una empresa con filtros opcionales."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
         q = select(Documento).where(Documento.empresa_id == empresa_id)
         if estado:
             q = q.where(Documento.estado == estado)
@@ -37,12 +38,11 @@ def listar_documentos(
 
 
 @router.get("/{empresa_id}/cuarentena", response_model=list[CuarentenaOut])
-def listar_cuarentena(empresa_id: int, sesion_factory=Depends(get_sesion_factory)):
+def listar_cuarentena(empresa_id: int, request: Request, sesion_factory=Depends(get_sesion_factory)):
     """Lista documentos en cuarentena pendientes de resolver."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresa = s.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        verificar_acceso_empresa(usuario, empresa_id, s)
         items = s.scalars(
             select(Cuarentena).where(
                 Cuarentena.empresa_id == empresa_id,
@@ -56,10 +56,13 @@ def listar_cuarentena(empresa_id: int, sesion_factory=Depends(get_sesion_factory
 def obtener_documento(
     empresa_id: int,
     doc_id: int,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Obtiene un documento por ID."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         doc = s.scalar(
             select(Documento).where(
                 Documento.id == doc_id,
@@ -76,10 +79,13 @@ def resolver_cuarentena(
     empresa_id: int,
     cuarentena_id: int,
     body: ResolverCuarentenaIn,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Resuelve un item de cuarentena con la respuesta del usuario."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         item = s.scalar(
             select(Cuarentena).where(
                 Cuarentena.id == cuarentena_id,

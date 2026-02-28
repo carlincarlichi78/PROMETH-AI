@@ -8,12 +8,13 @@ API bancaria:
 """
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.params import Query
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from sfce.api.app import get_sesion_factory
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes
 from sfce.core.motor_conciliacion import MotorConciliacion
 from sfce.db.modelos import CuentaBancaria, MovimientoBancario
@@ -69,9 +70,12 @@ class MovimientoOut(BaseModel):
 def crear_cuenta(
     empresa_id: int,
     datos: CuentaBancariaIn,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         iban_limpio = datos.iban.replace(" ", "")
         existente = session.query(CuentaBancaria).filter_by(
             empresa_id=empresa_id, iban=iban_limpio
@@ -80,7 +84,7 @@ def crear_cuenta(
             raise HTTPException(409, "Ya existe una cuenta con este IBAN para esta empresa")
         cuenta = CuentaBancaria(
             empresa_id=empresa_id,
-            gestoria_id=0,      # TODO: extraer del JWT en Fase 4
+            gestoria_id=usuario.gestoria_id or 0,
             banco_codigo=datos.banco_codigo,
             banco_nombre=datos.banco_nombre,
             iban=iban_limpio,
@@ -98,9 +102,12 @@ def crear_cuenta(
 @router.get("/{empresa_id}/cuentas", response_model=List[CuentaBancariaOut])
 def listar_cuentas(
     empresa_id: int,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         return (
             session.query(CuentaBancaria)
             .filter_by(empresa_id=empresa_id, activa=True)
@@ -115,6 +122,7 @@ def listar_cuentas(
 @router.post("/{empresa_id}/ingestar")
 def ingestar_extracto(
     empresa_id: int,
+    request: Request,
     cuenta_iban: str = Query(..., description="IBAN de la cuenta destino"),
     archivo: UploadFile = File(..., description="Archivo C43 (TXT) o XLS (CaixaBank)"),
     sesion_factory=Depends(get_sesion_factory),
@@ -124,9 +132,11 @@ def ingestar_extracto(
       - .xls / .xlsx → Parser CaixaBank XLS
       - .txt / .c43  → Parser Norma 43 AEB
     """
+    usuario = obtener_usuario_actual(request)
     contenido = archivo.file.read()
     nombre = archivo.filename or "archivo"
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         iban_limpio = cuenta_iban.replace(" ", "")
         cuenta = session.query(CuentaBancaria).filter_by(
             empresa_id=empresa_id, iban=iban_limpio
@@ -152,12 +162,15 @@ def ingestar_extracto(
 @router.get("/{empresa_id}/movimientos", response_model=List[MovimientoOut])
 def listar_movimientos(
     empresa_id: int,
+    request: Request,
     estado: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         q = session.query(MovimientoBancario).filter_by(empresa_id=empresa_id)
         if estado:
             q = q.filter_by(estado_conciliacion=estado)
@@ -185,9 +198,12 @@ def listar_movimientos(
 @router.post("/{empresa_id}/conciliar")
 def ejecutar_conciliacion(
     empresa_id: int,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         motor = MotorConciliacion(session, empresa_id=empresa_id)
         matches = motor.conciliar()
         return {
@@ -200,9 +216,12 @@ def ejecutar_conciliacion(
 @router.get("/{empresa_id}/estado_conciliacion")
 def estado_conciliacion(
     empresa_id: int,
+    request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
         total = session.query(MovimientoBancario).filter_by(empresa_id=empresa_id).count()
         conciliados = session.query(MovimientoBancario).filter_by(
             empresa_id=empresa_id, estado_conciliacion="conciliado"
