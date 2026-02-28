@@ -75,25 +75,28 @@ def login(body: LoginRequest, request: Request):
                 detail="Credenciales invalidas",
             )
 
+        # Capturar valores antes de commit (evita DetachedInstanceError en SQLAlchemy 2.0)
+        u_id, u_email, u_nombre, u_rol = usuario.id, usuario.email, usuario.nombre, usuario.rol
+
         auditar(
             sesion, AuditAccion.LOGIN, "auth",
-            usuario_id=usuario.id,
-            email_usuario=usuario.email,
-            rol=usuario.rol,
+            usuario_id=u_id,
+            email_usuario=u_email,
+            rol=u_rol,
             ip_origen=ip,
             resultado="ok",
         )
         sesion.commit()
 
-    token = crear_token({"sub": usuario.email, "rol": usuario.rol})
+    token = crear_token({"sub": u_email, "rol": u_rol})
     return {
         "access_token": token,
         "token_type": "bearer",
         "usuario": {
-            "id": usuario.id,
-            "email": usuario.email,
-            "nombre": usuario.nombre,
-            "rol": usuario.rol,
+            "id": u_id,
+            "email": u_email,
+            "nombre": u_nombre,
+            "rol": u_rol,
         },
     }
 
