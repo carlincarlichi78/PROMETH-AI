@@ -126,14 +126,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. REVISAR Y CUESTIONAR design doc SPICE producto modular
-- **Doc**: `docs/plans/2026-02-28-spice-producto-modular-design.md`
-- **ANTES de implementar**: cuestionar cada decision, buscar agujeros, validar supuestos
-- Sesion 28/02: brainstorming completo (valoracion, arquitectura conectores C43, perfiles negocio, conciliacion, tiers Client/Gestoria/Asesor)
-- Enfoque A: producto modular completo primero, luego clientes
-- Despues de cuestionar: writing-plans para plan de implementacion fase 1
+### 0. **PROXIMA SESION: Ejecutar Fase 1 — Nucleo Bancario + Multi-tenant**
+- **Plan**: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
+- **Design doc validado**: `docs/plans/2026-02-28-spice-producto-modular-design.md`
+- **9 tasks con TDD**: Gestoria, CuentaBancaria, MovimientoBancario extendido, ArchivoIngestado, parser C43, ingesta, motor conciliacion, API, dashboard
+- **Usar skill**: `superpowers:executing-plans` en nueva sesion
+- **Migracion BD**: `python sfce/db/migraciones/001_multi_tenant.py` (crear antes de arrancar API)
+- **Archivo C43 prueba**: `C:\Users\carli\Downloads\_Trabajo\TT181225.754.txt`
 
-### 1. **PROXIMA SESION: Fallos menores pendientes dashboard**
+### 1. **Fallos menores pendientes dashboard**
 Bugs conocidos no criticos (datos/implementacion futura):
 - **PyG-1**: Grafico solo muestra Gastos, no Ingresos (barra verde ausente)
 - **PyG-2/3**: Eje X y tablas muestran codigos numericos (640000000x) sin nombre de cuenta
