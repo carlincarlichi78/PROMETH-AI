@@ -7,7 +7,7 @@ from sfce.api.app import get_repo
 from sfce.api.schemas import DirectorioEntidadOut, DirectorioEntidadIn, DirectorioOverlayOut
 from sfce.db.repositorio import Repositorio
 from sfce.db.modelos import DirectorioEntidad, ProveedorCliente
-from sqlalchemy import select
+from sqlalchemy import select, or_, func
 
 router = APIRouter(prefix="/api/directorio", tags=["directorio"])
 
@@ -21,24 +21,48 @@ def listar_directorio(
     return repo.listar_directorio(pais=pais)
 
 
-@router.get("/buscar", response_model=DirectorioEntidadOut | None)
+@router.get("/buscar")
 def buscar_directorio(
-    cif: Optional[str] = Query(None),
-    nombre: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, description="Texto libre (nombre, CIF)"),
+    cif: Optional[str] = Query(None, description="Busqueda exacta por CIF"),
+    nombre: Optional[str] = Query(None, description="Busqueda exacta por nombre"),
+    limit: int = Query(25, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     repo: Repositorio = Depends(get_repo),
 ):
-    """Busca entidad por CIF o nombre."""
-    if cif:
-        resultado = repo.buscar_directorio_por_cif(cif.strip().upper())
-        if resultado:
-            return resultado
-    if nombre:
-        resultado = repo.buscar_directorio_por_nombre(nombre.strip())
-        if resultado:
-            return resultado
-    if not cif and not nombre:
-        raise HTTPException(status_code=400, detail="Proporcionar cif o nombre")
-    return None
+    """Busqueda paginada del directorio. Con q→busqueda libre; con cif/nombre→busqueda exacta."""
+    # Modo exacto (retrocompatibilidad: cif o nombre sin paginacion)
+    if cif or nombre:
+        if cif:
+            resultado = repo.buscar_directorio_por_cif(cif.strip().upper())
+            if resultado:
+                return resultado
+        if nombre:
+            resultado = repo.buscar_directorio_por_nombre(nombre.strip())
+            if resultado:
+                return resultado
+        return None
+
+    # Modo paginado con busqueda libre (usado por el dashboard)
+    with repo._sesion() as s:
+        stmt = select(DirectorioEntidad)
+        if q:
+            termino = f"%{q.strip().upper()}%"
+            stmt = stmt.where(
+                or_(
+                    func.upper(DirectorioEntidad.nombre).like(termino),
+                    func.upper(DirectorioEntidad.cif).like(termino),
+                    func.upper(DirectorioEntidad.nombre_comercial).like(termino),
+                )
+            )
+        total = s.scalar(select(func.count()).select_from(stmt.subquery()))
+        entidades = s.scalars(
+            stmt.order_by(DirectorioEntidad.nombre).limit(limit).offset(offset)
+        ).all()
+        return {
+            "entidades": [DirectorioEntidadOut.model_validate(e) for e in entidades],
+            "total": total or 0,
+        }
 
 
 @router.post("/", response_model=DirectorioEntidadOut, status_code=201)
