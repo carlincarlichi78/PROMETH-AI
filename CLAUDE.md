@@ -103,13 +103,12 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **REWRITE COMPLETO** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode. Stream A + Stream B completados.
+- **Estado actual**: **REWRITE COMPLETO + navegacion corregida** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode.
 - `.claude/launch.json` configurado con Vite dev server
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query + Zustand
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
 - **Backend extendido**: 66 rutas, 25 tablas BD, routers economico/copilot/configuracion/portal/informes
-- **Design doc**: `docs/plans/2026-02-27-dashboard-rewrite-design.md`
-- **Plan implementacion**: `docs/plans/2026-02-27-dashboard-rewrite-plan.md` (B1-B12 completados, A completado)
+- **Fixes sesion 01/03**: directorio paginado OK, auto-hidratacion empresa desde URL, selector siempre en /, navegacion a /pyg
 - **Pendiente**: tests E2E del dashboard, integracion con API backend real, merge a main
 
 ## SPICE Landing Page
@@ -123,3 +122,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ## Proximos pasos
 
 ### 1. Backups automaticos BD FacturaScripts
+### 2. Pipeline E2E elena-navarro (60 PDFs)
+`export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
+### 3. Tests E2E dashboard (Playwright)
+### 4. Merge a main
