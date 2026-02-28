@@ -44,7 +44,7 @@ Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 | GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado, carpetas creadas |
 | EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 3 | Pipeline 46/46 OK |
 | CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | Pipeline 104/105 (99%). FS limpiada, lista para nuevo ciclo |
-| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | Dry-run 60/60 OK. Pendiente pipeline real |
+| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | Pipeline completado |
 
 ## Scripts principales
 | Script | Uso |
@@ -121,8 +121,13 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
+### 0. REVISAR Y CUESTIONAR design doc SPICE producto modular
+- **Doc**: `docs/plans/2026-02-28-spice-producto-modular-design.md`
+- **ANTES de implementar**: cuestionar cada decision, buscar agujeros, validar supuestos
+- Sesion 28/02: brainstorming completo (valoracion, arquitectura conectores C43, perfiles negocio, conciliacion, tiers Client/Gestoria/Asesor)
+- Enfoque A: producto modular completo primero, luego clientes
+- Despues de cuestionar: writing-plans para plan de implementacion fase 1
+
 ### 1. Backups automaticos BD FacturaScripts
-### 2. Pipeline E2E elena-navarro (60 PDFs)
-`export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
-### 3. Tests E2E dashboard (Playwright)
-### 4. Merge a main
+### 2. Tests E2E dashboard (Playwright)
+### 3. Merge a main
