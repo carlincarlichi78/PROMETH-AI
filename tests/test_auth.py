@@ -399,11 +399,12 @@ class TestEndpointsExistentes:
         resp = client.get("/api/empresas")
         assert resp.status_code == 401
 
-    def test_documentos_sin_auth_404(self, client):
-        # 404 porque no hay empresa 1, pero NO 401
+    def test_documentos_sin_auth_401(self, client):
+        # ahora requiere autenticacion → 401
         resp = client.get("/api/documentos/1")
-        assert resp.status_code == 404
+        assert resp.status_code == 401
 
-    def test_contabilidad_sin_auth_404(self, client):
+    def test_contabilidad_sin_auth_401(self, client):
+        # ahora requiere autenticacion → 401
         resp = client.get("/api/contabilidad/1/pyg")
-        assert resp.status_code == 404
+        assert resp.status_code == 401

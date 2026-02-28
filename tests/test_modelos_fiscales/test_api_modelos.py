@@ -1,10 +1,15 @@
 """Tests API /api/modelos/ — T16-T17."""
+import os
 import pytest
 from fastapi.testclient import TestClient
 
+os.environ.setdefault("SFCE_JWT_SECRET", "a" * 32)
+
 from sfce.api.app import crear_app
+from sfce.api.auth import hashear_password
 from sfce.db.base import crear_motor, crear_sesion, inicializar_bd
 from sfce.db.modelos import Empresa
+from sfce.db.modelos_auth import Usuario
 
 
 @pytest.fixture(scope="module")
@@ -12,7 +17,7 @@ def client():
     engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": ":memory:"})
     inicializar_bd(engine)
     Session = crear_sesion(engine)
-    # Crear empresa de prueba
+    # Crear empresa de prueba y usuario superadmin
     with Session() as s:
         emp = Empresa(
             cif="B12345678", nombre="TEST SL",
@@ -20,10 +25,27 @@ def client():
             regimen_iva="general",
         )
         s.add(emp)
+        u = Usuario(
+            email="sadmin@modelos.test",
+            nombre="SuperAdmin",
+            hash_password=hashear_password("pass"),
+            rol="superadmin",
+            activo=True,
+            gestoria_id=None,
+            empresas_asignadas=[],
+        )
+        s.add(u)
         s.commit()
     app = crear_app(sesion_factory=Session)
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(scope="module")
+def token_superadmin(client):
+    """Token JWT de superadmin para tests que requieren auth."""
+    resp = client.post("/api/auth/login", json={"email": "sadmin@modelos.test", "password": "pass"})
+    return resp.json()["access_token"]
 
 
 class TestSchemasModelos:
