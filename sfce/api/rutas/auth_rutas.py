@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
 
+from sfce.api.audit import auditar, AuditAccion, ip_desde_request
 from sfce.api.auth import (
     crear_token,
     hashear_password,
@@ -52,23 +53,37 @@ class UsuarioResponse(BaseModel):
 def login(body: LoginRequest, request: Request):
     """Autenticacion: devuelve token JWT si credenciales validas."""
     sf = request.app.state.sesion_factory
+    ip = ip_desde_request(request)
+
     with sf() as sesion:
         usuario = sesion.query(Usuario).filter(
             Usuario.email == body.email,
             Usuario.activo == True,
         ).first()
 
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas",
-        )
+        if not usuario or not verificar_password(body.password, usuario.hash_password):
+            auditar(
+                sesion, AuditAccion.LOGIN_FAILED, "auth",
+                email_usuario=body.email,
+                ip_origen=ip,
+                resultado="error",
+                detalles={"motivo": "credenciales_invalidas"},
+            )
+            sesion.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales invalidas",
+            )
 
-    if not verificar_password(body.password, usuario.hash_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas",
+        auditar(
+            sesion, AuditAccion.LOGIN, "auth",
+            usuario_id=usuario.id,
+            email_usuario=usuario.email,
+            rol=usuario.rol,
+            ip_origen=ip,
+            resultado="ok",
         )
+        sesion.commit()
 
     token = crear_token({"sub": usuario.email, "rol": usuario.rol})
     return {
