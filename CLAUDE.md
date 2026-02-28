@@ -174,9 +174,17 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Total**: 39 tests seguridad, 1706 tests resto sin regresiones.
 - **Ejecutar migración**: `python sfce/db/migraciones/003_account_lockout.py`
 
+### 1c. **Multi-Tenant COMPLETADO — rama: feat/frontend-pwa**
+- **Tasks 1-4** (sesion anterior): migracion 004 gestoria_id en empresas, JWT incluye gestoria_id, helper verificar_acceso_empresa, listar_empresas filtra por gestoria.
+- **Tasks 5-7** (esta sesion): todos los endpoints con empresa_id protegidos, gestorias asignadas a BD real, test E2E aislamiento 4/4 PASS.
+- **BD real**: Gestoria Principal (id=1) creada, 5 empresas asignadas.
+- **Tests**: 1660 passed, 0 failed. Rama: `feat/frontend-pwa`, 7 commits multi-tenant.
+- **Pendiente**: añadir `sfce.db`, `tmp/`, `.coverage` a `.gitignore` (se colaron en commit).
+
 ### 2. **PENDIENTE (baja prioridad)**
-- Task 4 Seguridad: Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
+- Limpiar `.gitignore`: excluir `sfce.db`, `tmp/`, `.coverage`, `*.tmp.*`
+- Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
-- Merge a main (PR #2 abierto)
+- Merge a main (PR pendiente)
 - Backend: endpoint `/api/notificaciones/suscribir` para push real
