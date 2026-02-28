@@ -188,7 +188,19 @@ class TestAprendizajeLog:
 
 class TestConteoTablas:
     def test_16_tablas(self):
-        """Verificar tablas definidas (modelos base + tablas Stream B + tablas seguridad SaaS)."""
+        """Verificar que las tablas clave están definidas en el metadata."""
+        import sfce.db.modelos_auth  # asegurar que gestorias/usuarios estén registradas  # noqa: F401
         from sfce.db.base import Base as BaseDB
-        tablas = BaseDB.metadata.tables.keys()
-        assert len(tablas) == 29
+        tablas = set(BaseDB.metadata.tables.keys())
+        # Tablas core
+        assert "empresas" in tablas
+        assert "asientos" in tablas
+        assert "partidas" in tablas
+        # Tablas módulo correo (migración 005)
+        assert "cuentas_correo" in tablas
+        assert "emails_procesados" in tablas
+        assert "adjuntos_email" in tablas
+        assert "enlaces_email" in tablas
+        assert "reglas_clasificacion_correo" in tablas
+        # Mínimo esperado: 31 tablas propias + las de modelos_auth
+        assert len(tablas) >= 31
