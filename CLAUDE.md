@@ -97,19 +97,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`
-**Tests totales**: 1453+ PASS
+**Tests totales**: 1554 PASS
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **REWRITE COMPLETO** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode
+- **Estado actual**: **REWRITE COMPLETO** — 40 paginas, shadcn/ui, Recharts, React Query, Zustand, dark mode. Stream A + Stream B completados.
 - `.claude/launch.json` configurado con Vite dev server
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query + Zustand
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
+- **Backend extendido**: 66 rutas, 25 tablas BD, routers economico/copilot/configuracion/portal/informes
 - **Design doc**: `docs/plans/2026-02-27-dashboard-rewrite-design.md`
-- **Plan implementacion**: `docs/plans/2026-02-27-dashboard-rewrite-plan.md` (ejecutado completamente)
-- **Pendiente**: tests E2E del dashboard, integracion con API backend real
+- **Plan implementacion**: `docs/plans/2026-02-27-dashboard-rewrite-plan.md` (B1-B12 completados, A completado)
+- **Pendiente**: tests E2E del dashboard, integracion con API backend real, merge a main
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -121,10 +122,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 1. Pipeline E2E elena-navarro (60 PDFs)
+### 1. Dashboard — merge a main
+Branch `feat/sfce-v2-fase-e` tiene el rewrite completo (Stream A + B). Hacer merge o PR cuando sea el momento.
+
+### 2. Pipeline E2E elena-navarro (60 PDFs)
 `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 
 ### 3. Operaciones puntuales
+- Tests E2E dashboard (Playwright)
 - Pipeline generador v2 (2343 PDFs)
 - Migrar directorio pastorino
 - Backups automaticos BD FacturaScripts
