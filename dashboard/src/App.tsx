@@ -57,6 +57,7 @@ const Informes = lazy(() => import('@/features/economico/informes-page'))
 
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
+const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
 const Directorio = lazy(() => import('@/features/directorio/directorio-page'))
 const ConfigEmpresa = lazy(() => import('@/features/configuracion/empresa-page'))
 const ConfigUsuarios = lazy(() => import('@/features/configuracion/usuarios-page'))
@@ -150,6 +151,11 @@ export function App() {
           <Route path="/empresa/:id/config/backup" element={<ConfigBackup />} />
           <Route path="/empresa/:id/config/licencia" element={<ConfigLicencia />} />
           <Route path="/empresa/:id/config/apariencia" element={<ConfigApariencia />} />
+        </Route>
+
+        {/* Portal Cliente — layout propio, sin AppShell */}
+        <Route element={<PortalLayout />}>
+          <Route path="/portal/:id" element={<Portal />} />
         </Route>
 
         <Route path="/offline" element={<OfflinePage />} />
