@@ -60,10 +60,10 @@ def migrar_cliente(ruta_cliente: Path, repo: Repositorio) -> dict:
         else:
             stats["ya_existentes"] += 1
 
-        # Crear overlay si no existe
+        # Crear overlay si no existe (buscar siempre, incluso con CIF vacio)
         existente = repo.buscar_overlay_por_cif(
             empresa.id, dir_ent.cif or "", "proveedor"
-        ) if dir_ent.cif else None
+        )
         if not existente:
             repo.crear_overlay(
                 empresa_id=empresa.id, directorio_id=dir_ent.id,
@@ -96,7 +96,7 @@ def migrar_cliente(ruta_cliente: Path, repo: Repositorio) -> dict:
 
         existente = repo.buscar_overlay_por_cif(
             empresa.id, dir_ent.cif or "", "cliente"
-        ) if dir_ent.cif else None
+        )
         if not existente:
             repo.crear_overlay(
                 empresa_id=empresa.id, directorio_id=dir_ent.id,
