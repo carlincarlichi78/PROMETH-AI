@@ -25,7 +25,7 @@
 
 **Files:**
 - Modify: `sfce/db/modelos_auth.py`
-- Create: `sfce/db/migraciones/001_multi_tenant.py`
+- Create: `sfce/db/migraciones/002_multi_tenant.py`
 - Create: `tests/test_bancario/test_multi_tenant.py`
 
 **Step 1: Escribir el test que falla**
@@ -137,10 +137,10 @@ Y cambiar el campo `rol` para documentar los valores nuevos (no es una restricci
 **Step 4: Crear script de migracion para BD existente**
 
 ```python
-# sfce/db/migraciones/001_multi_tenant.py
+# sfce/db/migraciones/002_multi_tenant.py
 """
 Migracion 001: añadir tabla gestorias + columnas multi-tenant a usuarios
-Ejecutar UNA sola vez: python sfce/db/migraciones/001_multi_tenant.py
+Ejecutar UNA sola vez: python sfce/db/migraciones/002_multi_tenant.py
 """
 import sqlite3
 import os
@@ -192,14 +192,14 @@ Esperado: `3 passed`
 
 ```bash
 export $(grep -v '^#' .env | xargs)
-python sfce/db/migraciones/001_multi_tenant.py
+python sfce/db/migraciones/002_multi_tenant.py
 ```
 Esperado: `Migracion 001 completada.`
 
 **Step 7: Commit**
 
 ```bash
-git add sfce/db/modelos_auth.py sfce/db/migraciones/001_multi_tenant.py tests/test_bancario/test_multi_tenant.py
+git add sfce/db/modelos_auth.py sfce/db/migraciones/002_multi_tenant.py tests/test_bancario/test_multi_tenant.py
 git commit -m "feat: tabla Gestoria + campos multi-tenant en Usuario"
 ```
 
@@ -209,7 +209,7 @@ git commit -m "feat: tabla Gestoria + campos multi-tenant en Usuario"
 
 **Files:**
 - Modify: `sfce/db/modelos.py`
-- Modify: `sfce/db/migraciones/001_multi_tenant.py` (añadir tabla al mismo script)
+- Modify: `sfce/db/migraciones/002_multi_tenant.py` (añadir tabla al mismo script)
 - Create: `tests/test_bancario/test_cuenta_bancaria.py`
 
 **Step 1: Escribir el test que falla**
@@ -306,7 +306,7 @@ Esperado: `2 passed`
 
 **Step 5: Añadir tabla al script de migracion**
 
-En `sfce/db/migraciones/001_multi_tenant.py`, dentro de `ejecutar()`, añadir:
+En `sfce/db/migraciones/002_multi_tenant.py`, dentro de `ejecutar()`, añadir:
 
 ```python
     cur.execute("""
@@ -328,13 +328,13 @@ En `sfce/db/migraciones/001_multi_tenant.py`, dentro de `ejecutar()`, añadir:
 
 Ejecutar de nuevo (es idempotente):
 ```bash
-python sfce/db/migraciones/001_multi_tenant.py
+python sfce/db/migraciones/002_multi_tenant.py
 ```
 
 **Step 6: Commit**
 
 ```bash
-git add sfce/db/modelos.py sfce/db/migraciones/001_multi_tenant.py tests/test_bancario/test_cuenta_bancaria.py
+git add sfce/db/modelos.py sfce/db/migraciones/002_multi_tenant.py tests/test_bancario/test_cuenta_bancaria.py
 git commit -m "feat: tabla CuentaBancaria con IBAN unico por empresa"
 ```
 
@@ -344,7 +344,7 @@ git commit -m "feat: tabla CuentaBancaria con IBAN unico por empresa"
 
 **Files:**
 - Modify: `sfce/db/modelos.py` — clase `MovimientoBancario`
-- Modify: `sfce/db/migraciones/001_multi_tenant.py`
+- Modify: `sfce/db/migraciones/002_multi_tenant.py`
 - Create: `tests/test_bancario/test_movimiento_bancario.py`
 
 **Step 1: Escribir el test que falla**
@@ -470,7 +470,7 @@ class MovimientoBancario(Base):
 
 **Step 4: Añadir al script de migracion**
 
-En `sfce/db/migraciones/001_multi_tenant.py`, añadir tras las otras migraciones:
+En `sfce/db/migraciones/002_multi_tenant.py`, añadir tras las otras migraciones:
 
 ```python
     # Extender movimientos_bancarios con campos nuevos
@@ -508,7 +508,7 @@ En `sfce/db/migraciones/001_multi_tenant.py`, añadir tras las otras migraciones
 ```
 
 ```bash
-python sfce/db/migraciones/001_multi_tenant.py
+python sfce/db/migraciones/002_multi_tenant.py
 ```
 
 **Step 5: Ejecutar test para verificar que pasa**
@@ -521,7 +521,7 @@ Esperado: `2 passed`
 **Step 6: Commit**
 
 ```bash
-git add sfce/db/modelos.py sfce/db/migraciones/001_multi_tenant.py tests/test_bancario/test_movimiento_bancario.py
+git add sfce/db/modelos.py sfce/db/migraciones/002_multi_tenant.py tests/test_bancario/test_movimiento_bancario.py
 git commit -m "feat: extender MovimientoBancario — hash_unico, cuenta_id, estado_conciliacion"
 ```
 
@@ -531,7 +531,7 @@ git commit -m "feat: extender MovimientoBancario — hash_unico, cuenta_id, esta
 
 **Files:**
 - Modify: `sfce/db/modelos.py`
-- Modify: `sfce/db/migraciones/001_multi_tenant.py`
+- Modify: `sfce/db/migraciones/002_multi_tenant.py`
 - Create: `tests/test_bancario/test_archivo_ingestado.py`
 
 **Step 1: Escribir el test que falla**
@@ -626,7 +626,7 @@ class ArchivoIngestado(Base):
 ```
 
 ```bash
-python sfce/db/migraciones/001_multi_tenant.py
+python sfce/db/migraciones/002_multi_tenant.py
 ```
 
 **Step 5: Ejecutar test para verificar que pasa**
@@ -639,7 +639,7 @@ Esperado: `5 passed`
 **Step 6: Commit**
 
 ```bash
-git add sfce/db/modelos.py sfce/db/migraciones/001_multi_tenant.py tests/test_bancario/test_archivo_ingestado.py
+git add sfce/db/modelos.py sfce/db/migraciones/002_multi_tenant.py tests/test_bancario/test_archivo_ingestado.py
 git commit -m "feat: tabla ArchivoIngestado — idempotencia por hash"
 ```
 
