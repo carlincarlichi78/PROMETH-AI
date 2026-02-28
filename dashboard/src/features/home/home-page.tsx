@@ -33,12 +33,12 @@ export default function HomePage() {
   const { id } = useParams<{ id: string }>()
   const empresaActiva = useEmpresaStore((s) => s.empresaActiva)
 
-  // Si no hay empresa activa ni ID en URL, mostrar selector
-  if (!id && !empresaActiva) {
+  // / siempre muestra el selector; el dashboard de empresa solo con :id en URL
+  if (!id) {
     return <SelectorEmpresa />
   }
 
-  return <DashboardEmpresa empresaId={Number(id ?? empresaActiva?.id)} />
+  return <DashboardEmpresa empresaId={Number(id)} />
 }
 
 function DashboardEmpresa({ empresaId }: { empresaId: number }) {
