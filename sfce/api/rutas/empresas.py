@@ -1,10 +1,11 @@
 """SFCE API — Rutas de empresas."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
+from sfce.api.auth import obtener_usuario_actual
 from sfce.api.schemas import EmpresaOut, ProveedorClienteOut, TrabajadorOut
 from sfce.db.modelos import Empresa, ProveedorCliente, Trabajador
 
@@ -12,12 +13,14 @@ router = APIRouter(prefix="/api/empresas", tags=["empresas"])
 
 
 @router.get("", response_model=list[EmpresaOut])
-def listar_empresas(sesion_factory=Depends(get_sesion_factory)):
-    """Lista todas las empresas activas."""
+def listar_empresas(request: Request, sesion_factory=Depends(get_sesion_factory)):
+    """Lista empresas activas filtradas por gestoría del usuario autenticado."""
+    usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
-        empresas = s.scalars(
-            select(Empresa).where(Empresa.activa == True)
-        ).all()
+        q = select(Empresa).where(Empresa.activa == True)
+        if usuario.gestoria_id is not None:
+            q = q.where(Empresa.gestoria_id == usuario.gestoria_id)
+        empresas = s.scalars(q).all()
         return [EmpresaOut.model_validate(e) for e in empresas]
 
 

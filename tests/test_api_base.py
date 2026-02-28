@@ -13,12 +13,17 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import os
+os.environ.setdefault("SFCE_JWT_SECRET", "a" * 32)
+
 from sfce.db.base import Base
 from sfce.db.modelos import (
     Empresa, ProveedorCliente, Trabajador, Documento, Asiento,
     Partida, Factura, ActivoFijo, Cuarentena,
 )
+from sfce.db.modelos_auth import Usuario
 from sfce.api.app import crear_app
+from sfce.api.auth import hashear_password
 
 
 @pytest.fixture
@@ -45,6 +50,27 @@ def client(sesion_factory):
     """TestClient con BD inyectada."""
     app = crear_app(sesion_factory=sesion_factory)
     return TestClient(app)
+
+
+@pytest.fixture
+def token_superadmin(sesion_factory, client):
+    """Crea usuario superadmin (gestoria_id=None) y devuelve su token JWT."""
+    with sesion_factory() as s:
+        u = Usuario(
+            email="superadmin@test.com",
+            nombre="SuperAdmin",
+            hash_password=hashear_password("pass"),
+            rol="superadmin",
+            activo=True,
+            gestoria_id=None,
+            empresas_asignadas=[],
+        )
+        s.add(u)
+        s.commit()
+    resp = client.post("/api/auth/login", json={
+        "email": "superadmin@test.com", "password": "pass"
+    })
+    return resp.json()["access_token"]
 
 
 @pytest.fixture
@@ -180,13 +206,13 @@ def datos_base(sesion_factory):
 class TestEmpresas:
     """Tests para /api/empresas."""
 
-    def test_listar_empresas_vacio(self, client):
-        resp = client.get("/api/empresas")
+    def test_listar_empresas_vacio(self, client, token_superadmin):
+        resp = client.get("/api/empresas", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_listar_empresas(self, client, datos_base):
-        resp = client.get("/api/empresas")
+    def test_listar_empresas(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/empresas", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
