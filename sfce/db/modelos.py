@@ -552,3 +552,122 @@ class VistaUsuario(Base):
     columnas = Column(JSON)  # columnas visibles y orden
     es_default = Column(Boolean, default=False)
     fecha_creacion = Column(DateTime, server_default=func.now())
+
+
+# ---------------------------------------------------------------------------
+# Módulo de correo (migración 005)
+# ---------------------------------------------------------------------------
+
+class CuentaCorreo(Base):
+    """Cuenta de correo IMAP o Microsoft Graph configurada por empresa."""
+    __tablename__ = "cuentas_correo"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    nombre = Column(String(200), nullable=False)
+    protocolo = Column(String(10), nullable=False)   # 'imap' | 'graph'
+    servidor = Column(String(200))
+    puerto = Column(Integer, default=993)
+    ssl = Column(Boolean, default=True)
+    usuario = Column(String(200), nullable=False)
+    contrasena_enc = Column(Text)
+    oauth_token_enc = Column(Text)
+    oauth_refresh_enc = Column(Text)
+    oauth_expires_at = Column(String(50))
+    carpeta_entrada = Column(String(100), default="INBOX")
+    ultimo_uid = Column(Integer, default=0)
+    activa = Column(Boolean, default=True)
+    polling_intervalo_segundos = Column(Integer, default=120)
+    created_at = Column(DateTime, default=datetime.now)
+
+    emails = relationship("EmailProcesado", back_populates="cuenta",
+                          cascade="all, delete-orphan")
+
+
+class EmailProcesado(Base):
+    """Email recibido y procesado por el módulo de correo."""
+    __tablename__ = "emails_procesados"
+
+    id = Column(Integer, primary_key=True)
+    cuenta_id = Column(Integer, ForeignKey("cuentas_correo.id"), nullable=False)
+    uid_servidor = Column(String(100), nullable=False)
+    message_id = Column(String(200))
+    remitente = Column(String(200), nullable=False)
+    asunto = Column(String(500), default="")
+    fecha_email = Column(String(50))
+    # PENDIENTE | CLASIFICADO | CUARENTENA | PROCESADO | ERROR | IGNORADO
+    estado = Column(String(20), nullable=False, default="PENDIENTE")
+    # REGLA | IA | MANUAL
+    nivel_clasificacion = Column(String(10))
+    empresa_destino_id = Column(Integer, ForeignKey("empresas.id"))
+    confianza_ia = Column(Float)
+    procesado_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.now)
+
+    __table_args__ = (UniqueConstraint("cuenta_id", "uid_servidor"),)
+
+    cuenta = relationship("CuentaCorreo", back_populates="emails")
+    adjuntos = relationship("AdjuntoEmail", back_populates="email",
+                            cascade="all, delete-orphan")
+    enlaces = relationship("EnlaceEmail", back_populates="email",
+                           cascade="all, delete-orphan")
+
+
+class AdjuntoEmail(Base):
+    """Adjunto PDF/imagen extraído de un email procesado."""
+    __tablename__ = "adjuntos_email"
+
+    id = Column(Integer, primary_key=True)
+    email_id = Column(Integer, ForeignKey("emails_procesados.id"), nullable=False)
+    nombre_original = Column(String(300), nullable=False)
+    nombre_renombrado = Column(String(300))
+    ruta_archivo = Column(String(500))
+    mime_type = Column(String(100), default="application/pdf")
+    tamano_bytes = Column(Integer, default=0)
+    documento_id = Column(Integer)   # FK lógica a documentos del pipeline
+    # PENDIENTE | OCR_OK | OCR_ERROR | DUPLICADO
+    estado = Column(String(20), nullable=False, default="PENDIENTE")
+    created_at = Column(DateTime, default=datetime.now)
+
+    email = relationship("EmailProcesado", back_populates="adjuntos")
+
+
+class EnlaceEmail(Base):
+    """Enlace extraído del cuerpo HTML de un email."""
+    __tablename__ = "enlaces_email"
+
+    id = Column(Integer, primary_key=True)
+    email_id = Column(Integer, ForeignKey("emails_procesados.id"), nullable=False)
+    url = Column(Text, nullable=False)
+    dominio = Column(String(200))
+    # AEAT | BANCO | SUMINISTRO | CLOUD | OTRO
+    patron_detectado = Column(String(20), default="OTRO")
+    # PENDIENTE | DESCARGANDO | DESCARGADO | ERROR | IGNORADO
+    estado = Column(String(20), nullable=False, default="PENDIENTE")
+    nombre_archivo = Column(String(300))
+    ruta_archivo = Column(String(500))
+    tamano_bytes = Column(Integer)
+    adjunto_id = Column(Integer, ForeignKey("adjuntos_email.id"))
+    created_at = Column(DateTime, default=datetime.now)
+
+    email = relationship("EmailProcesado", back_populates="enlaces")
+
+
+class ReglaClasificacionCorreo(Base):
+    """Regla de clasificación automática de emails entrantes."""
+    __tablename__ = "reglas_clasificacion_correo"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"))
+    # REMITENTE_EXACTO | DOMINIO | ASUNTO_CONTIENE | COMPOSITE
+    tipo = Column(String(30), nullable=False)
+    condicion_json = Column(Text, nullable=False, default="{}")
+    # CLASIFICAR | IGNORAR | APROBAR_MANUAL
+    accion = Column(String(20), nullable=False, default="CLASIFICAR")
+    slug_destino = Column(String(100))
+    confianza = Column(Float, default=1.0)
+    # MANUAL | APRENDIZAJE
+    origen = Column(String(15), default="MANUAL")
+    activa = Column(Boolean, default=True)
+    prioridad = Column(Integer, default=100)
+    created_at = Column(DateTime, default=datetime.now)
