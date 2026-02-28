@@ -2,19 +2,25 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 
 os.environ.setdefault("SFCE_JWT_SECRET", "a" * 32)
 
 from sfce.api.app import crear_app
 from sfce.api.auth import hashear_password
-from sfce.db.base import crear_motor, crear_sesion, inicializar_bd
+from sfce.db.base import crear_sesion, inicializar_bd
 from sfce.db.modelos import Empresa
 from sfce.db.modelos_auth import Usuario
 
 
 @pytest.fixture(scope="module")
 def client():
-    engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": ":memory:"})
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     inicializar_bd(engine)
     Session = crear_sesion(engine)
     # Crear empresa de prueba y usuario superadmin
@@ -158,8 +164,9 @@ class TestRouterCalcular:
 
 
 class TestRouterCalendario:
-    def test_calendario_sl(self, client):
-        resp = client.get("/api/modelos/calendario/1/2025?tipo_empresa=sl")
+    def test_calendario_sl(self, client, token_superadmin):
+        resp = client.get("/api/modelos/calendario/1/2025?tipo_empresa=sl",
+                          headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         cal = resp.json()
         assert isinstance(cal, list)
@@ -168,15 +175,17 @@ class TestRouterCalendario:
         assert "303" in modelos_cal
         assert "111" in modelos_cal
 
-    def test_calendario_autonomo(self, client):
-        resp = client.get("/api/modelos/calendario/1/2025?tipo_empresa=autonomo")
+    def test_calendario_autonomo(self, client, token_superadmin):
+        resp = client.get("/api/modelos/calendario/1/2025?tipo_empresa=autonomo",
+                          headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         cal = resp.json()
         modelos_cal = [e["modelo"] for e in cal]
         assert "130" in modelos_cal  # autonomo tiene 130
 
-    def test_calendario_estructura(self, client):
-        resp = client.get("/api/modelos/calendario/1/2025")
+    def test_calendario_estructura(self, client, token_superadmin):
+        resp = client.get("/api/modelos/calendario/1/2025",
+                          headers={"Authorization": f"Bearer {token_superadmin}"})
         cal = resp.json()
         if cal:
             entrada = cal[0]
@@ -186,16 +195,18 @@ class TestRouterCalendario:
             assert "fecha_limite" in entrada
             assert "estado" in entrada
 
-    def test_calendario_ordenado_por_fecha(self, client):
-        resp = client.get("/api/modelos/calendario/1/2025")
+    def test_calendario_ordenado_por_fecha(self, client, token_superadmin):
+        resp = client.get("/api/modelos/calendario/1/2025",
+                          headers={"Authorization": f"Bearer {token_superadmin}"})
         cal = resp.json()
         fechas = [e["fecha_limite"] for e in cal]
         assert fechas == sorted(fechas)
 
 
 class TestRouterHistorico:
-    def test_historico_vacio(self, client):
-        resp = client.get("/api/modelos/historico/1")
+    def test_historico_vacio(self, client, token_superadmin):
+        resp = client.get("/api/modelos/historico/1",
+                          headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
