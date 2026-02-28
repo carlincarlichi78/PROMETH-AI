@@ -52,6 +52,38 @@ def ejecutar():
         )
     """)
 
+    # Extender movimientos_bancarios con campos nuevos
+    col_mov = [row[1] for row in cur.execute("PRAGMA table_info(movimientos_bancarios)")]
+    nuevas_columnas_mov = [
+        ("cuenta_id", "INTEGER"),
+        ("fecha_valor", "TEXT"),
+        ("divisa", "TEXT NOT NULL DEFAULT 'EUR'"),
+        ("importe_eur", "REAL"),
+        ("tipo_cambio", "REAL"),
+        ("signo", "TEXT NOT NULL DEFAULT 'D'"),
+        ("concepto_comun", "TEXT NOT NULL DEFAULT ''"),
+        ("referencia_1", "TEXT NOT NULL DEFAULT ''"),
+        ("referencia_2", "TEXT NOT NULL DEFAULT ''"),
+        ("nombre_contraparte", "TEXT NOT NULL DEFAULT ''"),
+        ("tipo_clasificado", "TEXT"),
+        ("estado_conciliacion", "TEXT NOT NULL DEFAULT 'pendiente'"),
+        ("hash_unico", "TEXT"),
+    ]
+    for nombre_col, tipo_col in nuevas_columnas_mov:
+        if nombre_col not in col_mov:
+            cur.execute(f"ALTER TABLE movimientos_bancarios ADD COLUMN {nombre_col} {tipo_col}")
+
+    # Rellenar hash_unico para movimientos existentes (valor temporal unico)
+    cur.execute("""
+        UPDATE movimientos_bancarios
+        SET hash_unico = 'legacy_' || id
+        WHERE hash_unico IS NULL
+    """)
+    try:
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_movbanco_hash ON movimientos_bancarios(hash_unico)")
+    except Exception as e:
+        print(f"Indice hash ya existia o error: {e}")
+
     conn.commit()
     conn.close()
     print("Migracion 002 completada.")

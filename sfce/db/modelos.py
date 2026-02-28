@@ -258,25 +258,52 @@ class CuentaBancaria(Base):
         UniqueConstraint("empresa_id", "iban", name="uq_cuenta_empresa_iban"),
     )
 
+    movimientos = relationship("MovimientoBancario", back_populates="cuenta")
+
 
 class MovimientoBancario(Base):
-    """Movimiento bancario importado."""
+    """Movimiento bancario importado desde C43 u otras fuentes."""
     __tablename__ = "movimientos_bancarios"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Multi-tenant
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    cuenta_id = Column(Integer, ForeignKey("cuentas_bancarias.id"), nullable=True)
+
+    # Fechas
     fecha = Column(Date, nullable=False)
-    concepto = Column(String(500))
+    fecha_valor = Column(Date, nullable=True)
+
+    # Importes
     importe = Column(Numeric(12, 2), nullable=False)
-    saldo = Column(Numeric(12, 2))
-    referencia = Column(String(100))
-    conciliado = Column(Boolean, default=False)
-    asiento_id = Column(Integer, ForeignKey("asientos.id"))
-    cuenta_bancaria = Column(String(30))  # IBAN o numero
+    divisa = Column(String(3), nullable=False, default="EUR")
+    importe_eur = Column(Numeric(12, 2), nullable=True)  # siempre en EUR para informes
+    tipo_cambio = Column(Numeric(10, 6), nullable=True)
+    saldo = Column(Numeric(12, 2), nullable=True)  # saldo tras el movimiento
+
+    # Clasificacion
+    signo = Column(String(1), nullable=False, default="D")  # 'D' cargo | 'H' abono
+    concepto_comun = Column(String(5), nullable=False, default="")   # codigo AEB
+    concepto_propio = Column(String(500), nullable=False, default="")
+    referencia_1 = Column(String(100), nullable=False, default="")
+    referencia_2 = Column(String(100), nullable=False, default="")
+    nombre_contraparte = Column(String(200), nullable=False, default="")
+
+    # Estado
+    tipo_clasificado = Column(String(20), nullable=True)  # TPV|PROVEEDOR|NOMINA|IMPUESTO|COMISION|OTRO
+    estado_conciliacion = Column(String(15), nullable=False, default="pendiente")  # pendiente|conciliado|revision|manual
+    asiento_id = Column(Integer, ForeignKey("asientos.id"), nullable=True)
+
+    # Deduplicacion: SHA256(iban + fecha + importe + referencia + num_orden)
+    hash_unico = Column(String(64), nullable=False, unique=True)
 
     __table_args__ = (
         Index("ix_movbanco_empresa_fecha", "empresa_id", "fecha"),
+        Index("ix_movbanco_estado", "estado_conciliacion"),
     )
+
+    cuenta = relationship("CuentaBancaria", back_populates="movimientos")
 
 
 class ActivoFijo(Base):
