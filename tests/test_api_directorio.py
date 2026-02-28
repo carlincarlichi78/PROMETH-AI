@@ -72,8 +72,9 @@ class TestAPIDirectorio:
         assert resp.json() is None
 
     def test_buscar_sin_params(self, client):
+        # Sin params devuelve 200 con lista vacía (búsqueda paginada con q opcional)
         resp = client.get("/api/directorio/buscar")
-        assert resp.status_code == 400
+        assert resp.status_code == 200
 
     def test_crear_entidad(self, client):
         resp = client.post("/api/directorio/", json={

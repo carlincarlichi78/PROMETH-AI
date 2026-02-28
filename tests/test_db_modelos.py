@@ -188,7 +188,7 @@ class TestAprendizajeLog:
 
 class TestConteoTablas:
     def test_16_tablas(self):
-        """Verificar tablas definidas (modelos base + 8 tablas Stream B: presupuestos, centros_coste, asignaciones_coste, scoring_historial, copilot_*, informes_programados, vistas_usuario)."""
+        """Verificar tablas definidas (modelos base + tablas Stream B + tablas seguridad SaaS)."""
         from sfce.db.base import Base as BaseDB
         tablas = BaseDB.metadata.tables.keys()
-        assert len(tablas) == 25
+        assert len(tablas) == 29
