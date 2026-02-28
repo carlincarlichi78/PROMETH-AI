@@ -9,7 +9,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.orm import selectinload
 
 from sfce.api.app import get_sesion_factory
@@ -106,16 +106,16 @@ def obtener_pyg2(
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
-        # Determinar rango de fechas
+        # Determinar rango de fechas (usar año de fecha, no codejercicio que puede ser "C422")
         if not desde or not hasta:
-            ejercicio_max = s.execute(
-                select(func.max(Asiento.ejercicio)).where(Asiento.empresa_id == empresa_id)
+            anyo_max = s.execute(
+                select(func.max(func.strftime("%Y", Asiento.fecha))).where(Asiento.empresa_id == empresa_id)
             ).scalar()
-            ejercicio = ejercicio_max or str(date.today().year)
+            anyo = int(anyo_max) if anyo_max else date.today().year
             if not desde:
-                desde = date(int(ejercicio), 1, 1)
+                desde = date(anyo, 1, 1)
             if not hasta:
-                hasta = date(int(ejercicio), 12, 31)
+                hasta = date(anyo, 12, 31)
 
         # Obtener partidas del período
         rows = s.execute(
@@ -233,13 +233,13 @@ def obtener_pyg2(
             select(
                 func.strftime("%Y-%m", Asiento.fecha).label("mes"),
                 func.sum(
-                    func.case(
+                    case(
                         (Partida.subcuenta.like("7%"), Partida.haber - Partida.debe),
                         else_=0
                     )
                 ).label("ing"),
                 func.sum(
-                    func.case(
+                    case(
                         (Partida.subcuenta.like("6%"), Partida.debe - Partida.haber),
                         else_=0
                     )
@@ -345,11 +345,11 @@ def obtener_balance2(
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
         if not fecha_corte:
-            ejercicio_max = s.execute(
-                select(func.max(Asiento.ejercicio)).where(Asiento.empresa_id == empresa_id)
+            anyo_max = s.execute(
+                select(func.max(func.strftime("%Y", Asiento.fecha))).where(Asiento.empresa_id == empresa_id)
             ).scalar()
-            ejercicio = ejercicio_max or str(date.today().year)
-            fecha_corte = date(int(ejercicio), 12, 31)
+            anyo = int(anyo_max) if anyo_max else date.today().year
+            fecha_corte = date(anyo, 12, 31)
 
         rows = s.execute(
             select(
