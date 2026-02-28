@@ -1,4 +1,4 @@
-import { Search, Bell, Moon, Sun, Sparkles } from 'lucide-react'
+import { Search, Moon, Sun, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { useUIStore } from '@/stores/ui-store'
 import { Breadcrumbs } from './breadcrumbs'
+import { NotificacionesPanel } from '@/features/notificaciones'
 
 export function Header() {
   const { usuario, logout } = useAuth()
@@ -51,9 +52,7 @@ export function Header() {
         </Button>
 
         {/* Notificaciones */}
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificacionesPanel />
 
         {/* Copiloto IA */}
         <Button
