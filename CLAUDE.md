@@ -126,32 +126,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **COMPLETADO (sesion 28/02): Seguridad base SaaS**
-- **T1**: JWT fail-hard (`_validar_config_seguridad()` en startup), CORS restrictivo (`_leer_cors_origins()`)
-- **T2**: Tabla `audit_log_seguridad` (renombrada — `audit_log` ya existia en modelos.py), helper `auditar()`, integrado en `/api/auth/login`
-- **T3**: `_leer_config_bd()` — BD configurable por env (`SFCE_DB_TYPE=sqlite|postgresql`)
-- **Tag**: `seguridad-base-saas`, 11 tests seguridad + 44 tests auth/api OK
-- **Variables .env**: `SFCE_JWT_SECRET`, `SFCE_CORS_ORIGINS`, `SFCE_DB_TYPE`, `SFCE_DB_PATH` ya añadidas
-
-### 1. **PROXIMA SESION: Ejecutar Fase 1 — Nucleo Bancario + Multi-tenant**
-- **Plan**: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
-- **Design doc validado**: `docs/plans/2026-02-28-spice-producto-modular-design.md`
-- **9 tasks con TDD**: Gestoria, CuentaBancaria, MovimientoBancario extendido, ArchivoIngestado, parser C43, ingesta, motor conciliacion, API, dashboard
+### 1. **PROXIMA SESION: Ejecutar plan contabilidad rewrite**
+- **Plan**: `docs/plans/2026-02-28-contabilidad-module-rewrite-plan.md` (2864 lineas, 12 tasks TDD)
+- **Design doc**: `docs/plans/2026-02-28-contabilidad-module-rewrite-design.md`
 - **Usar skill**: `superpowers:executing-plans` en nueva sesion
-- **Migracion BD**: `python sfce/db/migraciones/002_multi_tenant.py` (renombrada — 001 es seguridad_base)
-- **Archivo C43 prueba**: `C:\Users\carli\Downloads\_Trabajo\TT181225.754.txt`
+- **Task 1 primero**: `sfce/core/pgc_nombres.py` (prerequisito de todo)
+- **Bugs que resuelve**: fechas 2026-02-28, nombre_emisor null en FC, diario 50 asientos, codigos sin nombre
+- **Mejoras**: PyG waterfall+4tabs, Balance formato T+ratios+diagnostico+radar+EFE, Diario virtual scroll 1461 asientos, Libro Mayor
 
-### 1. **Fallos menores pendientes dashboard**
-Bugs conocidos no criticos (datos/implementacion futura):
-- **PyG-1**: Grafico solo muestra Gastos, no Ingresos (barra verde ausente)
-- **PyG-2/3**: Eje X y tablas muestran codigos numericos (640000000x) sin nombre de cuenta
-- **Diario**: Solo 50/1461 asientos visibles (sin paginacion en UI). Limite hardcodeado API `limit=50`
-- **Balance**: Sin desglose activo corriente/no corriente — solo 3 totales en API
-- **Plan de Cuentas**: Endpoint /subcuentas no existe — derivar de Partida.subcuenta
-- **Fechas facturas/asientos**: Todas muestran "28 feb 2026" (fecha migracion, no fecha real)
-- **Nombres clientes FC**: nombre_emisor=null en facturas emitidas
-- **Amortizaciones/Nominas**: 0 registros (tablas activos_fijos/trabajadores vacias — no migradas)
-
-### 2. Backups automaticos BD FacturaScripts
-### 3. Tests E2E dashboard (Playwright)
-### 4. Merge a main
+### 2. **PENDIENTE (baja prioridad)**
+- Fase 1 Nucleo Bancario: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
+- Backups automaticos BD FacturaScripts
+- Tests E2E dashboard (Playwright)
+- Merge a main
