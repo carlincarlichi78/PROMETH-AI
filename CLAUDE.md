@@ -153,7 +153,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Task 4 Notificaciones**: `NotificacionesPanel` en topbar (sustituye Bell placeholder). Suscripcion Web Push con VAPID. `VITE_VAPID_PUBLIC_KEY` en `.env` cuando backend tenga endpoint `/api/notificaciones/suscribir`.
 - **Build**: OK, 86 entradas precacheadas, `dist/sw.js` generado.
 
+### 1b. **Seguridad Backend COMPLETADO — rama: feat/backend-seguridad**
+- **Rate limiting**: `sfce/api/rate_limiter.py` — VentanaFijaLimiter per-IP/user. 5 login/min, 100 auth/min.
+- **2FA TOTP**: `POST /api/auth/2fa/setup|verify|confirm`. pyotp + qrcode. Login devuelve 202+temp_token si 2FA activo.
+- **Lockout**: 423+Retry-After tras 5 intentos fallidos (30min). Migración 003.
+- **RGPD export**: `POST /api/empresas/{id}/exportar-datos`. ZIP CSV, token uso único 24h.
+- **Total**: 39 tests seguridad, 1706 tests resto sin regresiones.
+- **Ejecutar migración**: `python sfce/db/migraciones/003_account_lockout.py`
+
 ### 2. **PENDIENTE (baja prioridad)**
+- Task 4 Seguridad: Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
 - Merge a main (PR #2 abierto)

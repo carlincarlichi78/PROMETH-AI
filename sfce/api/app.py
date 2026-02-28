@@ -91,12 +91,22 @@ async def lifespan(app: FastAPI):
     engine.dispose()
 
 
-def crear_app(sesion_factory=None) -> FastAPI:
+def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 100) -> FastAPI:
     """Crea la aplicacion FastAPI.
 
     Si se pasa sesion_factory, se usa directamente (para tests).
     Si no, el lifespan crea BD SQLite en memoria.
+
+    limite_login: max intentos login por IP por minuto (default 5)
+    limite_usuario: max requests por usuario autenticado por minuto (default 100)
     """
+    from sfce.api.rate_limiter import (
+        crear_login_limiter,
+        crear_usuario_limiter,
+        crear_dependencia_login,
+        crear_dependencia_usuario,
+    )
+
     kwargs = {} if sesion_factory else {"lifespan": lifespan}
     app = FastAPI(
         title="SFCE API",
@@ -112,6 +122,12 @@ def crear_app(sesion_factory=None) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "Accept"],
     )
+
+    # Crear limitadores y guardar dependencias en app.state
+    login_limiter = crear_login_limiter(limite_login)
+    usuario_limiter = crear_usuario_limiter(limite_usuario)
+    app.state.dep_rate_login = crear_dependencia_login(login_limiter)
+    app.state.dep_rate_usuario = crear_dependencia_usuario(usuario_limiter)
 
     # Si se paso sesion_factory externo (tests), inyectarlo en app.state
     if sesion_factory:
@@ -132,6 +148,7 @@ def crear_app(sesion_factory=None) -> FastAPI:
     from sfce.api.rutas.portal import router as portal_router
     from sfce.api.rutas.informes import router as informes_router
     from sfce.api.rutas.bancario import router as bancario_router
+    from sfce.api.rutas.rgpd import router as rgpd_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -147,6 +164,11 @@ def crear_app(sesion_factory=None) -> FastAPI:
     app.include_router(portal_router)
     app.include_router(informes_router)
     app.include_router(bancario_router)
+    app.include_router(rgpd_router)
+
+    # Nonces RGPD usados (token de un solo uso)
+    if not hasattr(app.state, "rgpd_nonces_usados"):
+        app.state.rgpd_nonces_usados = set()
 
     # Referencia global al gestor WebSocket para acceso desde otros modulos
     app.state.gestor_ws = gestor_ws
