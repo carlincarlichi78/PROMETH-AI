@@ -126,14 +126,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROXIMA SESION: Fase 1 Tasks 5-9 (parser C43, ingesta, motor, API, dashboard)**
-- **Plan**: `docs/plans/2026-02-28-fase1-bancario-multitenant.md`
-- **Estado**: Tasks 1-4 COMPLETADAS (Gestoria, CuentaBancaria, MovimientoBancario extendido, ArchivoIngestado)
-- **Pendiente**: Task 5 (parser C43), Task 6 (ingesta+dedup), Task 7 (motor conciliacion), Task 8 (API), Task 9 (dashboard React)
-- **Archivo C43 prueba**: `C:\Users\carli\Downloads\_Trabajo\TT181225.754.txt`
-- **Usar skill**: `superpowers:executing-plans docs/plans/2026-02-28-fase1-bancario-multitenant.md`
-- **Nota Task 8**: fixture test necesita `SFCE_JWT_SECRET` en env (lifespan valida al arrancar)
-- **Migracion**: 002_multi_tenant.py ya ejecutada — BD actualizada
+### 0. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
+- **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
+- **Parsers**: `sfce/conectores/bancario/parser_c43.py` (Norma 43 TXT + CaixaBank extendido auto-detect) + `parser_xls.py` (CaixaBank XLS)
+- **Fix parser C43**: detecta formato CaixaBank (R22 80 chars, prefijo 8 chars antes de fechas). Signo inferido de concepto_común. 44 tests incluyendo 7 contra archivo real TT191225.208.txt.
+- **Ingesta**: `sfce/conectores/bancario/ingesta.py` — `ingestar_movimientos()` (TXT) + `ingestar_archivo_bytes()` (auto-detect TXT/XLS)
+- **Motor**: `sfce/core/motor_conciliacion.py` — match exacto + aproximado (1% tolerancia, 2 dias ventana)
+- **API**: `sfce/api/rutas/bancario.py` — endpoints cuentas, ingesta, movimientos, conciliar, estado
+- **Dashboard**: `dashboard/src/features/conciliacion/` — api.ts, SubirExtracto, TablaMovimientos, pagina KPIs
+- **Build dashboard**: OK sin errores TS
+- **Siguiente**: Plan contabilidad rewrite (ver item 1)
 
 ### 1. **Ejecutar plan contabilidad rewrite (alta prioridad)**
 - **Plan**: `docs/plans/2026-02-28-contabilidad-module-rewrite-plan.md` (2864 lineas, 12 tasks TDD)
