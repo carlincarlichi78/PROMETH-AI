@@ -62,6 +62,7 @@ class Empresa(Base):
     documentos = relationship("Documento", back_populates="empresa")
     asientos = relationship("Asiento", back_populates="empresa")
     activos = relationship("ActivoFijo", back_populates="empresa")
+    gestoria = relationship("Gestoria", foreign_keys=[gestoria_id])
 
 
 class ProveedorCliente(Base):
