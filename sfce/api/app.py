@@ -13,6 +13,19 @@ from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en met
 from sfce.api.auth import crear_admin_por_defecto
 
 
+def _leer_cors_origins() -> list[str]:
+    """Lee orígenes CORS permitidos desde env. Nunca retorna '*'."""
+    env = os.environ.get("SFCE_CORS_ORIGINS", "")
+    if env:
+        return [o.strip() for o in env.split(",") if o.strip()]
+    # Defecto: solo localhost para desarrollo
+    return [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ]
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Inicializa BD SQLite persistente al arrancar, limpia al cerrar.
@@ -46,13 +59,12 @@ def crear_app(sesion_factory=None) -> FastAPI:
         **kwargs,
     )
 
-    # CORS abierto (modo desarrollo)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_leer_cors_origins(),
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
     # Si se paso sesion_factory externo (tests), inyectarlo en app.state

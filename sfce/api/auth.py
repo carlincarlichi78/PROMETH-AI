@@ -14,9 +14,38 @@ from sfce.db.modelos_auth import Usuario
 
 # --- Hashing de passwords ---
 
-JWT_SECRET = os.environ.get("SFCE_JWT_SECRET", "dev-secret-cambiar-en-produccion")
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_MINUTOS = 60 * 24  # 24 horas por defecto
+JWT_EXPIRATION_MINUTOS = int(os.environ.get("SFCE_JWT_EXPIRATION_MINUTOS", str(60 * 24)))
+
+# El secreto se valida en startup, no en import-time
+_JWT_SECRET: str | None = None
+
+
+def _validar_config_seguridad() -> None:
+    """Valida que la configuración de seguridad esté presente. Llamar en startup."""
+    global _JWT_SECRET
+    secret = os.environ.get("SFCE_JWT_SECRET")
+    if not secret:
+        raise RuntimeError(
+            "SFCE_JWT_SECRET no configurado. "
+            "Genera uno con: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    if len(secret) < 32:
+        raise RuntimeError(
+            "SFCE_JWT_SECRET demasiado corto (mínimo 32 caracteres). "
+            "Genera uno con: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    _JWT_SECRET = secret
+
+
+def _get_secret() -> str:
+    """Devuelve el JWT secret. Lazy load si _validar_config_seguridad no fue llamada."""
+    if _JWT_SECRET is None:
+        secret = os.environ.get("SFCE_JWT_SECRET")
+        if not secret:
+            raise RuntimeError("SFCE_JWT_SECRET no configurado")
+        return secret
+    return _JWT_SECRET
 
 
 def hashear_password(password: str) -> str:
@@ -43,13 +72,13 @@ def crear_token(data: dict, expires_delta: timedelta | None = None) -> str:
     else:
         expiracion = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRATION_MINUTOS)
     payload["exp"] = expiracion
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGORITHM)
 
 
 def decodificar_token(token: str) -> dict:
     """Decodifica y valida token JWT. Lanza HTTPException 401 si invalido."""
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, _get_secret(), algorithms=[JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
