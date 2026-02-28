@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import type { Backup } from '@/types/config'
 
 async function apiFetch<T>(url: string, opts?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('sfce_token')
+  const token = sessionStorage.getItem('sfce_token')
   const res = await fetch(url, { ...opts, headers: { Authorization: token ? `Bearer ${token}` : '', ...(opts?.headers ?? {}) } })
   if (!res.ok) throw new Error(`${res.status}`)
   return res.json()

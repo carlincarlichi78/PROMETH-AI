@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import type { CentroCoste } from '@/types/economico'
 
 async function apiFetch<T>(url: string): Promise<T> {
-  const token = localStorage.getItem('sfce_token')
+  const token = sessionStorage.getItem('sfce_token')
   const res = await fetch(url, { headers: { Authorization: token ? `Bearer ${token}` : '' } })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   return res.json()
@@ -36,7 +36,7 @@ export default function CentrosCostePage() {
     if (!nuevoNombre.trim()) return
     setGuardando(true)
     try {
-      const token = localStorage.getItem('sfce_token')
+      const token = sessionStorage.getItem('sfce_token')
       await fetch(`/api/economico/${empresaId}/centros-coste`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },

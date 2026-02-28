@@ -12,7 +12,7 @@ interface ResumenPortal {
 interface DocumentoPortal { id: number; nombre: string; tipo: string; estado: string; fecha: string | null }
 
 async function apiFetch<T>(url: string): Promise<T> {
-  const token = localStorage.getItem('sfce_token')
+  const token = sessionStorage.getItem('sfce_token')
   const res = await fetch(url, { headers: { Authorization: token ? `Bearer ${token}` : '' } })
   if (!res.ok) throw new Error(`${res.status}`)
   return res.json()

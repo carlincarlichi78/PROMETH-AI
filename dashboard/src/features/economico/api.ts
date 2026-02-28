@@ -9,7 +9,7 @@ import type {
 const BASE = '/api/economico'
 
 async function apiFetch<T>(url: string): Promise<T> {
-  const token = localStorage.getItem('sfce_token')
+  const token = sessionStorage.getItem('sfce_token')
   const res = await fetch(url, {
     headers: { Authorization: token ? `Bearer ${token}` : '' },
   })
@@ -45,7 +45,7 @@ export const economicoApi = {
     apiFetch('/api/informes/plantillas'),
 
   generarInforme: (empresaId: number, plantillaId: string, ejercicio?: string): void => {
-    const token = localStorage.getItem('sfce_token')
+    const token = sessionStorage.getItem('sfce_token')
     const ej = ejercicio ? `&ejercicio=${ejercicio}` : ''
     const url = `/api/informes/generar?empresa_id=${empresaId}&plantilla_id=${plantillaId}${ej}`
     // Descarga directa via anchor
