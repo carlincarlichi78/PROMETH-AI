@@ -43,7 +43,7 @@ Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 | PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa |
 | GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado, carpetas creadas |
 | EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 3 | Pipeline 46/46 OK |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | Pipeline 104/105 (99%). FS limpiada, lista para nuevo ciclo |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | **Datos inyectados**: 1200 FC + 596 FV + 112 asientos (nominas/amort/IVA). Ejercicios C422/C423/C424/0004. |
 | ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | Pipeline completado |
 
 ## Scripts principales
@@ -76,6 +76,9 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **PUT lineasfacturaproveedores REGENERA asiento**: hacer reclasificaciones DESPUES
 - **POST asientos response**: `{"ok":"...","data":{"idasiento":"X"}}`
 - **POST asientos**: SIEMPRE pasar `idempresa` explicitamente
+- **crearFacturaCliente 422 por orden cronologico**: testDate() exige numero == orden fecha. Pre-generar todas las fechas del anyo, ordenar ASC, crear en ese orden. Ver `generar_fc()` en inyectar_datos_chiringuito.py.
+- **crearFactura* sin codejercicio**: FS asigna al primer ejercicio que coincide con la fecha (puede ser de otra empresa). SIEMPRE pasar `codejercicio` explicitamente.
+- **Subcuentas PGC no existentes**: 4651→usar 4650; 6811→usar 6810. Error: "idsubcuenta no puede ser nulo". Testear subcuenta con POST de prueba antes de uso masivo.
 
 ## Obligaciones fiscales tipicas
 - **Autonomo**: 303, 130, 111 trimestrales; 390, 100, 347 anuales
@@ -131,3 +134,4 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ### 1. Backups automaticos BD FacturaScripts
 ### 2. Tests E2E dashboard (Playwright)
 ### 3. Merge a main
+### 4. Verificar dashboard con datos chiringuito (empresa 4) y localizar fallos

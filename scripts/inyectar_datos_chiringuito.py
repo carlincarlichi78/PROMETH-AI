@@ -54,9 +54,9 @@ SC = {
     "ss_empresa": "6420000000",
     "irpf_ret":   "4751000000",
     "ss_acred":   "4760000000",
-    "rem_pend":   "4651000000",
+    "rem_pend":   "4650000000",  # 4651 no existe en PGC estandar, usar 4650
     "banco":      "5720000000",
-    "amort_dot":  "6811000000",
+    "amort_dot":  "6810000000",  # 6811 no existe en PGC estandar, usar 6810
     "amort_acum": "2813000000",
     "iva_rep":    "4770000000",
     "iva_sop":    "4720000000",
@@ -208,14 +208,13 @@ def generar_fc(anyo, estado, dry_run=False):
     ticket_medio = ingresos / FC_POR_ANYO
     print(f"\n[FC {anyo}] Generando {FC_POR_ANYO - ya} facturas (ticket medio {ticket_medio:.0f} EUR)...")
 
-    creadas = 0
-    idx = 0
+    # Pre-generar todos los registros del anyo y ordenar por fecha ASC
+    # FacturaScripts exige que numero de factura este en orden cronologico (testDate)
+    random.seed(anyo)  # semilla fija para reproducibilidad al reanudar
+    registros = []
     for mes_idx, num_mes in enumerate(por_mes):
         mes = mes_idx + 1
         for _ in range(num_mes):
-            if idx < ya:
-                idx += 1
-                continue
             es_evento = random.random() < 0.30
             codcliente = "EVENTOS" if es_evento else "VENTASD"
             concepto = ("Servicio catering y organizacion evento privado" if es_evento
@@ -223,31 +222,39 @@ def generar_fc(anyo, estado, dry_run=False):
             factor = random.uniform(1.5, 4.0) if es_evento else random.uniform(0.6, 1.4)
             base = round(ticket_medio * factor * (0.8 if es_evento else 1.0), 2)
             fecha = fecha_aleatoria_mes(anyo, mes)
+            registros.append((fecha, codcliente, concepto, base))
 
-            if dry_run:
-                print(f"  [DRY] FC {anyo}/{mes:02d} {codcliente} {base:.2f}EUR")
-                idx += 1
-                continue
+    # Ordenar estrictamente por fecha ASC: FS exige numero == orden cronologico
+    registros.sort(key=lambda r: r[0])
 
-            lineas = json.dumps([{"descripcion": concepto, "cantidad": 1,
-                                  "pvpunitario": base, "codimpuesto": "IVA10"}])
-            try:
-                resp = api_post_form("crearFacturaCliente", {
-                    "idempresa": IDEMPRESA, "codejercicio": codejercicio,
-                    "codcliente": codcliente, "fecha": fecha.strftime("%d-%m-%Y"),
-                    "coddivisa": "EUR", "lineas": lineas,
-                })
-                idfactura = (resp.get("doc", {}).get("idfactura")
-                             or resp.get("idfactura"))
-                estado["fc"][clave].append({"id": idfactura, "fecha": str(fecha), "base": base})
-                creadas += 1
-                if creadas % 25 == 0:
-                    guardar_estado(estado)
-                    print(f"  ... {creadas + ya} / {FC_POR_ANYO}")
-            except Exception as e:
-                print(f"  ERROR FC {fecha}: {e}")
-            time.sleep(DELAY)
-            idx += 1
+    # Saltar los ya creados (idempotencia)
+    pendientes = registros[ya:]
+    creadas = 0
+
+    for fecha, codcliente, concepto, base in pendientes:
+        if dry_run:
+            print(f"  [DRY] FC {fecha} {codcliente} {base:.2f}EUR")
+            continue
+
+        lineas = json.dumps([{"descripcion": concepto, "cantidad": 1,
+                              "pvpunitario": base, "codimpuesto": "IVA10"}])
+        try:
+            resp = api_post_form("crearFacturaCliente", {
+                "idempresa": IDEMPRESA,
+                "codejercicio": codejercicio,
+                "codcliente": codcliente, "fecha": fecha.strftime("%d-%m-%Y"),
+                "coddivisa": "EUR", "lineas": lineas,
+            })
+            idfactura = (resp.get("doc", {}).get("idfactura")
+                         or resp.get("idfactura"))
+            estado["fc"][clave].append({"id": idfactura, "fecha": str(fecha), "base": base})
+            creadas += 1
+            if creadas % 25 == 0:
+                guardar_estado(estado)
+                print(f"  ... {creadas + ya} / {FC_POR_ANYO}")
+        except Exception as e:
+            print(f"  ERROR FC {fecha}: {e}")
+        time.sleep(DELAY)
 
     guardar_estado(estado)
     print(f"[FC {anyo}] COMPLETADO: {creadas} nuevas (total {len(estado['fc'][clave])})")
@@ -302,7 +309,7 @@ def generar_fv(anyo, estado, dry_run=False):
                                   "pvpunitario": base, "codimpuesto": "IVA21"}])
             try:
                 resp = api_post_form("crearFacturaProveedor", {
-                    "idempresa": IDEMPRESA, "codejercicio": codejercicio,
+                    "idempresa": IDEMPRESA,
                     "codproveedor": cod, "numproveedor": num_factura,
                     "fecha": fecha.strftime("%d-%m-%Y"),
                     "coddivisa": "EUR", "lineas": lineas,
