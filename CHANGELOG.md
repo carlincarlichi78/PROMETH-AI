@@ -1,5 +1,29 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-02-28 — Sesion: Dashboard Rewrite Stream A (ejecutar plan)
+
+**Objetivo**: Ejecutar Stream A del plan de implementacion del dashboard rewrite.
+
+**Trabajo realizado**:
+- A1-A7: Dependencias, path alias, Zustand stores, API client, React Query, formatters, layout system (AppShell, Header, Sidebar, Breadcrumbs), componentes compartidos (KPICard, ChartCard, DataTable, PageHeader, EstadoVacio), stubs de todas las paginas
+- A8: Home page — selector empresa (tarjetas con CIF/forma juridica/regimen IVA), KPIs (ingresos/gastos/resultado/IVA/cobros/pagos), AreaChart evolucion mensual, PieChart gastos por categoria, timeline actividad reciente
+- A9: Contabilidad 8 paginas — PyG, Balance, Diario (tabla expandible partidas), Plan Cuentas, Conciliacion (stub), Amortizaciones, Cierre (stepper), Apertura
+- A10: Facturacion 5 paginas — Emitidas, Recibidas, Cobros/Pagos aging (4 buckets), Presupuestos (stub), Contratos (stub)
+- A11: Fiscal 4 paginas — Calendario, Modelos, Generar, Historico
+- A12: Documentos 4 paginas — Inbox, Pipeline (Progress bars), Cuarentena, Archivo
+- A13: RRHH 2 paginas — Nominas (masa salarial), Trabajadores (DataTable)
+- A14: Borrar 20 archivos src/pages/ (paginas antiguas)
+- A15: Dark mode — hook useThemeEffect, toggle Header, variables CSS .dark ya existian
+- A16: TypeScript 0 errores, vite build OK (4.07s)
+- Fix: stubs Stream B (economico/) usaban prop `empresaId` en lugar de `useParams` → corregido
+- Fix: errores TS en configuracion/ (integraciones, usuarios) → corregido
+- Fix: errores TS en copilot/ → corregido
+
+**Estado final**: 40 paginas en 13 modulos, TypeScript limpio, build OK, push a GitHub.
+**Commits**: 10 commits en feat/sfce-v2-fase-e (A1-A16 + fix + docs)
+
+---
+
 ## 2026-02-27 — Sesion: Dashboard Rewrite Design + FS Admin Setup
 
 **Objetivo**: Auditar dashboard actual, disenar rewrite completo como producto SaaS, configurar admin en FacturaScripts.
