@@ -23,8 +23,9 @@ function fmtEur(n: number): string {
 
 // ─── hook: contador animado ──────────────────────────────────────────────────
 
-function useAnimatedCounter(target: number, duration = 900): number {
+function useAnimatedCounter(target: number, duration = 900, decimals = 0): number {
   const [value, setValue] = useState(0)
+  const factor = Math.pow(10, decimals)
   useEffect(() => {
     if (target === 0) { setValue(0); return }
     const start = Date.now()
@@ -32,11 +33,11 @@ function useAnimatedCounter(target: number, duration = 900): number {
       const elapsed = Date.now() - start
       const progress = Math.min(elapsed / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      setValue(Math.round(target * eased))
+      setValue(Math.round(target * eased * factor) / factor)
       if (progress < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }, [target, duration])
+  }, [target, duration, factor])
   return value
 }
 
@@ -55,7 +56,7 @@ interface KPICardProps {
 }
 
 function KPICard({ label, value, prefix = '', suffix = '', decimals = 0, variacion, icon, benchmark, benchmarkLabel }: KPICardProps) {
-  const animated = useAnimatedCounter(Math.round(value))
+  const animated = useAnimatedCounter(value, 900, decimals)
   const color = variacion !== undefined ? (variacion >= 0 ? 'var(--adv-verde)' : 'var(--adv-rojo)') : 'var(--adv-text)'
 
   return (
@@ -72,7 +73,7 @@ function KPICard({ label, value, prefix = '', suffix = '', decimals = 0, variaci
         <span style={{ color: 'var(--adv-accent)', opacity: 0.8 }}>{icon}</span>
       </div>
       <div style={{ fontFamily: 'var(--adv-font-data)', fontSize: 28, fontWeight: 700, color: 'var(--adv-text)', marginBottom: 6 }}>
-        {prefix}{decimals > 0 ? fmt(value, decimals) : fmt(animated)}{suffix}
+        {prefix}{fmt(animated, decimals)}{suffix}
       </div>
       {variacion !== undefined && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color }}>
@@ -112,7 +113,8 @@ function PulsoHoy({ empresaId }: { empresaId: number }) {
 
   const hoy = data?.hoy ?? { ventas: 0, covers: 0, ticket_medio: 0 }
   const variacion = data?.variacion_vs_ayer_pct ?? 0
-  const revpash = hoy.covers > 0 ? hoy.ventas / (hoy.covers * 8) : 0
+  const HORAS_APERTURA = 8 // horas operativas estandar hosteleria
+  const revpash = hoy.covers > 0 ? hoy.ventas / (hoy.covers * HORAS_APERTURA) : 0
 
   return (
     <Zona titulo="Pulso de Hoy" subtitulo="Tiempo real vs misma franja semana anterior">
