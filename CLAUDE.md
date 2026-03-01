@@ -137,14 +137,27 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROMETH-AI — Brainstorming completo (01/03/2026)**
-- **Brainstorming**: `docs/plans/2026-03-01-brainstorming-prometh-ai-completo.md` — 14 fases, onboarding, importacion historica
-- **Design doc Ingesta 360**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
-- **Rebrand**: SPICE → PROMETH-AI. Dominio `prometh-ai.es`, email `*@prometh-ai.es → Gmail` (ImprovMX)
-- **Plan 28/02 estado real**: Tasks 1-8 COMPLETADAS, Tasks 9-14 pendientes
-- **14 fases**: Fase 0 (seguridad P0) → Fase 1 (onboarding) → Fases 2-6 (correo+gate0+scoring+colas+canales) → Fases 7-11 (importacion historica 5 sub-fases) → Fase 12 (servidor) → Fase 13 (WhatsApp)
-- **Gap critico resuelto**: config.yaml vs BD → hibrido con `generar_config_desde_bd()`
-- **Siguiente paso**: sesion nueva → `writing-plans` Fases 0-6 (primer plan), luego Fases 7-11 (segundo plan)
+### 0. **PROMETH-AI — Planes de implementación listos (SIGUIENTE SESION — PRIORIDAD)**
+- **Estado**: planes escritos y revisados. Listos para ejecutar con `superpowers:executing-plans`.
+- **Plan Fases 0-3**: `docs/plans/2026-03-01-prometh-ai-fases-0-3.md` (21 tasks: seguridad P0, onboarding, correo, Gate 0)
+- **Plan Fases 4-6 + Fase 11**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop)
+- **Design doc**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
+- **Brainstorming**: `docs/plans/2026-03-01-brainstorming-prometh-ai-completo.md`
+
+#### Integraciones planificadas en los planes:
+- **CAP-Web** (`C:/Users/carli/PROYECTOS/CAP-WEB/`) — código fuente de referencia para módulo correo (no integración de servicio). Ver Tasks 7-8 fases-4-6 y Task 12 fases-0-3.
+- **CertiGestor** (`C:/Users/carli/PROYECTOS/proyecto findiur/`) — módulo nativo `CertificadoAAP`+`NotificacionAAP` en SFCE (Task 13), webhook HMAC (Task 14), Desktop fork (Fase 11).
+- **Plataformas**: Web dashboard (gestor) + PWA móvil (cliente final, ya hecha) + Desktop Electron (Fase 11, fork de findiur).
+
+#### DNS / SSL prometh-ai.es:
+- **SSL PENDIENTE**: cuando `dig +short prometh-ai.es @8.8.8.8` = 65.108.60.69, ejecutar:
+  ```bash
+  docker exec certbot certbot certonly --webroot -w /var/www/certbot \
+    -d prometh-ai.es -d www.prometh-ai.es \
+    --email carlincarlichi@gmail.com --agree-tos --non-interactive
+  ```
+- **Nginx HTTP**: `/opt/infra/nginx/conf.d/prometh-ai.conf` ya creado.
+- **Web actual a reemplazar**: landing SPICE en `/opt/apps/spice-landing/`.
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.

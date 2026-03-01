@@ -1,5 +1,50 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 — Sesion: Planes PROMETH-AI revisados + integraciones CAP-Web/CertiGestor/Desktop
+
+**Objetivo**: Revisar y pulir planes de implementación PROMETH-AI con integraciones reales.
+
+**Realizado**:
+- **Planes escritos** (sesión anterior): `fases-0-3.md` (21 tasks) + `fases-4-6.md` (12 tasks)
+- **Crítica de planes**: 20+ problemas identificados (Gate0↔OCR desconectados, webhook sin auth, tests teatro, endpoint `/api/alertas` inexistente, etc.)
+- **CAP-Web analizado** (`C:/Users/carli/PROYECTOS/CAP-WEB/`): email module 1146 líneas vs SFCE 467. Graph/O365 solo en CAP-Web. Identificado como referencia de código, no integración de servicio.
+- **CertiGestor analizado** (`C:/Users/carli/PROYECTOS/proyecto findiur/`): SaaS + Electron full. Scrapers AEAT/DEHú/DGT/eNotum/SS en desktop Electron. API de datos portable.
+- **fases-0-3.md actualizado**:
+  - Task 12: nota CAP-Web email module como referencia + Graph O365 a portar
+  - Task 13: reescrito completamente → módulo nativo `CertificadoAAP`+`NotificacionAAP` (SQLAlchemy, portado de findiur TypeScript)
+  - Task 14: webhook con auth HMAC-SHA256 (`X-CertiGestor-Signature`), guarda en `NotificacionAAP`
+- **fases-4-6.md actualizado**:
+  - Task 7: referencia a `extractor-nif.ts` + `clasificador-emails.ts` de findiur
+  - Task 8: referencia a `imap_service.py` CAP-Web para catch-all polling
+  - **Fase 11 añadida**: PROMETH-AI Desktop — fork de `proyecto findiur/apps/desktop/`, ~1-2 días trabajo (90% reutilizado), 4 tasks (fork, adaptar sync→HMAC, UI config, electron-builder Win/Mac/Linux)
+- **Plataformas definidas**: Web (en construcción) + PWA móvil (ya hecha) + Desktop Electron (Fase 11)
+- **tmpclaude-* limpiados** del directorio, añadidos a .gitignore
+
+**Decisiones arquitectónicas**:
+- CertiGestor Electron no se puede portar a servidor (requiere P12 en máquina gestor)
+- CAP-Web es fuente de código, no servicio a integrar
+- PROMETH-AI Desktop = fork findiur/apps/desktop/ con endpoint → PROMETH-AI API
+
+## 2026-03-01 — Sesion: Dominio prometh-ai.es + preparacion web nueva
+
+**Objetivo**: Conectar dominio prometh-ai.es al servidor Hetzner y preparar para web nueva PROMETH-AI.
+
+**Realizado**:
+- DNS A records configurados en DonDominio: apex + www → 65.108.60.69
+- Eliminados registros parking DonDominio (ANAME apex, wildcard CNAME `*.prometh-ai.es`, www CNAME)
+- Nginx config HTTP creada: `/opt/infra/nginx/conf.d/prometh-ai.conf` (redirect HTTP→HTTPS + ACME challenge)
+- Nginx recargado y verificado funcionando localmente
+- Diagnóstico: dominio registrado hoy (01/03/2026) → nic.es tarda 2-24h en propagar delegación NS (normal para .es nuevo)
+- SSL pendiente: ejecutar certbot cuando dig @8.8.8.8 resuelva
+
+**Pendiente para proxima sesion**:
+1. Verificar propagacion DNS (`dig +short prometh-ai.es @8.8.8.8` = 65.108.60.69)
+2. Ejecutar certbot para SSL
+3. Actualizar nginx con bloque HTTPS
+4. Disenar y construir web nueva PROMETH-AI (objetivo principal)
+
+---
+
 ## 2026-03-01 — Sesion: Brainstorming plan completo PROMETH-AI
 
 **Objetivo**: Revisar design doc Ingesta 360, mapear estado real del proyecto, disenar onboarding + importacion historica.
