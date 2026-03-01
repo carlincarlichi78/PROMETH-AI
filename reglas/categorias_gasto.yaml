@@ -58,8 +58,15 @@ categorias:
     keywords_proveedor: [mercamadrid, mercabarna, mercavalencia, mercabilbao, mercasevilla,
                           distribución alimentaria, mayorista aliment, frutas y verduras,
                           carnicería, pescadería, charcutería, embutidos, lácteos, congelados,
-                          makro, metro cash, sysco, havi, sos cutara]
-    keywords_lineas: [kg, kilo, tonelada, caja frutas, pallet, bandeja, unidades]
+                          makro, metro cash, sysco, havi, sos cutara,
+                          unilever food, nestlé professional, avangard, campofrío, casa tarradellas,
+                          agraz, gros mercat, abordo, distribuciones, productos del mar,
+                          lonja, cooperativa, central lechera, lactalis, danone suministros,
+                          alimentación hostelería, alimentación restauración, proveedores hostelería,
+                          frutas, verduras, fruta, hortaliza]
+    keywords_lineas: [kg, kilo, tonelada, caja frutas, pallet, bandeja, unidades, ud, uds,
+                      carne, ternera, cerdo, pollo, merluza, salmón, gambas, lubina, atún,
+                      queso, yogur, nata, mantequilla, huevo, fruta, verdura, hortaliza]
     base_legal: "Art.91.Uno.1 LIVA"
     notas: "IVA reducido 10% para alimentos en general. Ver compras_alimentacion_basica para artículos al 4%."
 
@@ -80,7 +87,7 @@ categorias:
     notas: "Aplicar cuando las líneas de factura son claramente productos básicos. Aceite 2024: verifícar normativa vigente."
 
   compras_bebidas_alcoholicas:
-    descripcion: "Bebidas alcohólicas: vinos, cervezas, licores, destilados"
+    descripcion: "Bebidas alcohólicas y refrescos: vinos, cervezas, licores, agua, refrescos"
     subcuenta: "6000000000"
     iva_codimpuesto: IVA21
     iva_tasa: 21
@@ -89,11 +96,18 @@ categorias:
     irpf_pct: null
     operaciones_extra: []
     preguntas: []
-    keywords_proveedor: [bodega, viñedos, destilería, licorería, cervecera, winery, bodegas]
+    keywords_proveedor: [bodega, viñedos, destilería, licorería, cervecera, winery, bodegas,
+                          mahou, damm, heineken, estrella galicia, voll-damm, alhambra, san miguel,
+                          coca-cola iberian, cocacola, pepsi, schweppes, nestlé waters, font vella,
+                          agua mineral, refresco, distribuidora bebidas, bebidas y refrescos,
+                          distribuciones bebidas, ron barceló, diego zamora, freixenet, codorniu,
+                          miguel torres, osborne, gonzalez byass, grupo mahou san miguel]
     keywords_lineas: [vino, cerveza, cava, ron, whisky, vodka, gin, licor, champán, sidra, vermut,
-                      brandy, tequila, sake, botella, cajas botellas]
+                      brandy, tequila, sake, botella, cajas botellas, barril, barrica,
+                      refresco, cola, tónica, agua con gas, agua sin gas, zumo, néctar,
+                      litros bebida, pack botellas, envases, consumo]
     base_legal: "Art.90 LIVA"
-    notas: "IVA general 21%. Las bebidas alcohólicas no tienen tipo reducido."
+    notas: "IVA general 21%. Incluye refrescos y agua embotellada — todos al 21% cuando se venden como bebida en hostelería."
 
   # ═══════════════════════════════════════════════════════
   # GRUPO 2: SUMINISTROS (628)
@@ -502,7 +516,7 @@ categorias:
     operaciones_extra: []
     preguntas: []
     keywords_proveedor: [banco santander, bbva, caixabank, sabadell, bankinter, ibercaja, cajamar,
-                          unicaja, kutxabank, openbank, ing, revolut business, wise business,
+                          unicaja, kutxabank, openbank, ing direct, ing bank, revolut business, wise business,
                           stripe, paypal, bizum empresas, redsys, squareup, sumup]
     keywords_lineas: [comisión, mantenimiento cuenta, tarifa, transferencia, orden de pago,
                       cuota tarjeta, cargo, servicio bancario, comisión gestión, comisión custodia]
@@ -564,9 +578,13 @@ categorias:
     operaciones_extra: []
     preguntas: []
     keywords_proveedor: [construcción, reformas, albañilería, electricista, fontanero, pintura,
-                          carpintería, cerrajero, cristalero, instalador, climatización, hvac]
+                          carpintería, cerrajero, cristalero, instalador, climatización, hvac,
+                          impermeabilización, yesero, escayolista, solador, azulejista, pladur,
+                          saneamiento, calefacción, frigorista, soldador, estructuras metálicas]
     keywords_lineas: [obra, reforma, reparación, instalación, pintura, fontanería,
-                      electricidad, carpintería, cristal, suelo, tejado, cubierta]
+                      electricidad, carpintería, cristal, suelo, tejado, cubierta,
+                      mano de obra, materiales obra, certificación obra, partida obra,
+                      demolición, excavación, cimentación, forjado, tabique, enfoscado, revoco]
     base_legal: "Art.90 LIVA"
     notas: "¡OJO! Obras de rehabilitación de inmuebles → posible Inversión del Sujeto Pasivo (ISP) art.84 LIVA. Verificar si supera umbrales de rehabilitación."
 
@@ -584,9 +602,8 @@ categorias:
     irpf_pct: null
     operaciones_extra: []
     preguntas: []
-    keywords_proveedor: [restaurante, bar, cafetería, hotel, hostal, catering, comedor, taberna,
-                          chiringuito, terraza, mesón, venta, parador, meliá, nh hoteles,
-                          room mate, ibis, accor, hilton, marriott]
+    keywords_proveedor: [restaurante, bar, cafetería, catering, comedor, taberna,
+                          chiringuito, terraza, mesón, venta]
     keywords_lineas: [menú, cubierto, almuerzo, cena, desayuno, comida, bebida, servicio mesa,
                       cóctel, aperitivo, habitación hotel, noche, check-in, room service]
     base_legal: "Art.91.Uno.2.i LIVA"
@@ -643,9 +660,16 @@ categorias:
     preguntas: []
     flag_bien_inversion: true
     umbral_bien_inversion: 300
+    keywords_proveedor: [maquinaria hostelería, equipos hostelería, equipos cocina, equipos industriales,
+                          rational, electrolux professional, fagor industrial, sammic, lainox,
+                          frucosol, lacor, bartscher, hendi, berner, winterhalter,
+                          frigorífico industrial, cámara frigorífica, maquinaria construcción,
+                          herramientas industriales, bosch professional, makita, dewalt, hilti]
     keywords_lineas: [maquinaria, equipo industrial, instalación, planta, motor, compresor,
                       frigorífico industrial, cámara frigorífica, horno industrial,
-                      lavaplatos industrial, cortadora, envasadora]
+                      lavaplatos industrial, cortadora, envasadora,
+                      freidora, batidora industrial, picadora, amasadora, salamandra,
+                      plancha industrial, cocina industrial, mesa refrigerada, vitrina exposición]
     base_legal: "Art.90 LIVA, Art.108 LIVA"
     notas: "Bien de inversión. Si base imponible > 3.005,06€ → posible prorrata especial IVA art.108. Amortización según tabla AEAT (8-12% general maquinaria, 10 años)."
 
@@ -659,8 +683,13 @@ categorias:
     irpf_pct: null
     operaciones_extra: []
     preguntas: []
+    keywords_proveedor: [ikea, ikea business, el corte inglés muebles, leroy merlin muebles,
+                          muebles de oficina, mobiliario hostelería, mobiliario comercial,
+                          sillas de hostelería, mesas hostelería, tapicería, decoración hostelería,
+                          muestrario, exposición muebles, madera muebles]
     keywords_lineas: [mesa, silla, estantería, armario, mostrador, mueble, vitrina, expositor,
-                      sofá oficina, sillón, mesa reuniones]
+                      sofá oficina, sillón, mesa reuniones, taburete, barra, banqueta,
+                      mobiliario terraza, silla terraza, mesa terraza, parasol, sombrilla]
     base_legal: "Art.90 LIVA"
     notas: "Bien amortizable. Coeficiente lineal máximo 10% (10 años tabla AEAT)."
 
@@ -818,7 +847,118 @@ categorias:
     notas: "Enseñanza reglada y formación reconocida: exenta. Formación no reglada y consultoría formativa → IVA21. Verificar si el proveedor es entidad reconocida."
 
   # ═══════════════════════════════════════════════════════
-  # GRUPO 15: OPERACIONES ESPECIALES
+  # GRUPO 15: CONSTRUCCIÓN Y MATERIALES
+  # ═══════════════════════════════════════════════════════
+
+  materiales_construccion:
+    descripcion: "Materiales de construcción: cemento, ladrillos, hierro, madera, pintura, sanitarios"
+    subcuenta: "6010000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [leroy merlin, bauhaus, bricomart, bricodepot, aki bricolaje, ferretería,
+                          materiales de construcción, materiales construccion, cemex, lafarge,
+                          saint-gobain, knauf, uralita, sika, basf construction, mapei,
+                          roca sanitarios, grohe, hansgrohe, porcelanosa, keraben, venis,
+                          maderas, carpintería madera, serrería, tablero, hierros, aceros,
+                          perfilería, tubos, tuberías, fontanería materiales, cables, conducciones]
+    keywords_lineas: [cemento, hormigón, ladrillo, bloque, árido, grava, arena, yeso, escayola,
+                      chapa, perfil metálico, tubo, canalización, madera, tablero, viga,
+                      azulejo, baldosa, suelo, pavimento, tejado, teja, pizarra, lámina,
+                      pintura plástica, barniz, esmalte, imprimación, sellante, silicona,
+                      sanitario, grifo, radiador, caldera, tubo pvc]
+    base_legal: "Art.90 LIVA"
+    notas: "Materiales para obra propia → gasto si es reparación, inversión si es mejora. Si se compran para revender → 600. ¡OJO! Obras de rehabilitación → posible ISP art.84.Uno.2.f LIVA."
+
+  alquiler_maquinaria:
+    descripcion: "Alquiler de maquinaria y equipos: andamios, grúas, plataformas, retroexcavadoras"
+    subcuenta: "6210000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [alquiler maquinaria, alquiler grúas, andamiajes, alquiler andamios,
+                          alquiler plataformas, alquiler retroexcavadora, alquiler hormigonera,
+                          layher, harsco, altrad, kiloutou, loxam, cramo, ramirent,
+                          maquinaria de alquiler, alquiler de equipos, alquiler herramientas]
+    keywords_lineas: [alquiler andamio, alquiler plataforma, alquiler grúa, alquiler maquinaria,
+                      retroexcavadora, miniexcavadora, plataforma elevadora, cesta elevadora,
+                      hormigonera, compactador, pisón, dumper, silos, contenedor obra,
+                      días alquiler, semanas alquiler, canon alquiler equipos]
+    base_legal: "Art.90 LIVA"
+    notas: "Arrendamiento de maquinaria sin operario → 6210 (621) no sujeto a retención IRPF. Con operario → servicio (623) con retención si persona física."
+
+  gastos_representacion:
+    descripcion: "Gastos de representación y dietas: comidas negocios, hoteles viaje, regalo clientes"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [hotel, hoteles, aparthotel, hostal, pensión, airbnb, booking,
+                          restaurante, mesón, marisquería, parador, meliá, nh hoteles,
+                          ac hotels, room mate, ibis, accor, hilton, marriott, sheraton,
+                          h10, riu, sol meliá, vincci, barceló hoteles]
+    keywords_lineas: [dieta, manutención, alojamiento, hotel noches, noche hotel, habitación,
+                      desayuno incluido, media pensión, pensión completa, check-in, check-out,
+                      comida negocio, reunión, almuerzo trabajo, cena trabajo,
+                      regalo cliente, obsequio, atención, cortesía]
+    base_legal: "Art.96.1.5 LIVA, Art.26 LIRPF"
+    notas: "Deducible si tiene correlación con la actividad. IS: limite 1% cifra negocios en atenciones a clientes. IRPF autónomos: justificar vinculación con actividad. Hoteles IVA10, restaurantes IVA10."
+
+  packaging_envases:
+    descripcion: "Envases, embalajes y material de presentación: cajas, bolsas, plásticos, etiquetas"
+    subcuenta: "6020000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [envases, embalajes, packaging, cajas cartón, plásticos, celofán,
+                          etiquetas, bolsas, film retráctil, cinta adhesiva, blisters,
+                          tecnicarton, smurfit, ds smith, mondi, saica, nattuplás,
+                          tipografia, imprenta etiquetas, etiquetado, impresión packaging]
+    keywords_lineas: [caja, cajas, bolsa, film, plástico, etiqueta, precinto, cinta embalaje,
+                      envase, bote, frasco, tarro, palé, tarima, retractilado, blíster,
+                      papel embalaje, burbuja, esponja protección, sobres burbuja]
+    base_legal: "Art.90 LIVA"
+    notas: "Envases retornables → subcuenta 406 (depósito). Envases no retornables → 602 materiales auxiliares."
+
+  productos_limpieza_higiene:
+    descripcion: "Productos de limpieza, higiene y desinfección para locales"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [limpieza industrial, productos limpieza, higiene hostelería,
+                          diversey, ecolab, henkel professional, reckitt benckiser,
+                          prodesco, quimicefa, abel, boysen, interclyde,
+                          guantes desechables, material higiene, artículos limpieza]
+    keywords_lineas: [detergente, lejía, desinfectante, lavavajillas industrial, jabón,
+                      papel higiénico, toalla papel, guantes desechables, mascarilla,
+                      bayeta, mopa, fregona, cubo, fregadero, limpia, higienizante,
+                      suavizante, abrillantador, desincrustante, desengrasante]
+    base_legal: "Art.90 LIVA"
+    notas: "Gasto corriente del ejercicio (629 Otros servicios / gastos corrientes)."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 16: OPERACIONES ESPECIALES
   # ═══════════════════════════════════════════════════════
 
   intracomunitario:
