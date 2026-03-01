@@ -137,12 +137,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROMETH-AI — Planes de implementación listos (SIGUIENTE SESION — PRIORIDAD)**
-- **Estado**: planes escritos y revisados. Listos para ejecutar con `superpowers:executing-plans`.
-- **Plan Fases 0-3**: `docs/plans/2026-03-01-prometh-ai-fases-0-3.md` (21 tasks: seguridad P0, onboarding, correo, Gate 0)
-- **Plan Fases 4-6 + Fase 11**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop)
-- **Design doc**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
-- **Brainstorming**: `docs/plans/2026-03-01-brainstorming-prometh-ai-completo.md`
+### 0. **PROMETH-AI — Planes REVISADOS Y LISTOS PARA EJECUTAR (SIGUIENTE SESION — PRIORIDAD)**
+- **Web multi-página**: `spice-landing/` convertida a PROMETH-AI. Deploy OK. SSL pendiente DNS.
+- **SSL PENDIENTE**: cuando `dig +short prometh-ai.es @8.8.8.8` = 65.108.60.69, ejecutar certbot (ver instrucción más abajo).
+- **Planes backend — LEER EN ORDEN**:
+  1. `docs/plans/2026-03-01-prometh-ai-issues-patch.md` ← **LEER PRIMERO** (7 issues + 10 mejoras a aplicar)
+  2. `docs/plans/2026-03-01-prometh-ai-fases-0-3.md` (21 tasks: seguridad P0, onboarding, correo, Gate 0)
+  3. `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop)
+- **Revisión arquitectural completada** (sesion 01/03/2026): 17 parches documentados. Issues críticos: worker OCR, recovery bloqueados, codejercicio en Gate 0, coherencia fiscal, migración aprendizaje.yaml. Importantes: SLA, circuit breakers, accuracy_history, herencia Supplier Rules, Estado del sistema.
+- **Autonomía estimada con todos los parches**: 80-85% tras 6 meses de uso.
 
 #### Integraciones planificadas en los planes:
 - **CAP-Web** (`C:/Users/carli/PROYECTOS/CAP-WEB/`) — código fuente de referencia para módulo correo (no integración de servicio). Ver Tasks 7-8 fases-4-6 y Task 12 fases-0-3.
