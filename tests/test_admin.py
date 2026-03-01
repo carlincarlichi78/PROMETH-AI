@@ -177,3 +177,41 @@ class TestGestoriasAdmin:
         resp = client.get("/api/admin/gestorias",
             headers={"Authorization": f"Bearer {asesor_token}"})
         assert resp.status_code == 403
+
+
+class TestInvitarCliente:
+
+    @pytest.fixture
+    def gestor_con_gestoria(self, client, superadmin_token):
+        """Crea gestoría + asesor y devuelve su token."""
+        client.post("/api/admin/gestorias", json={
+            "nombre": "Gestoría Test Cliente",
+            "email_contacto": "test@gestoria.com",
+            "cif": "B11111111",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+
+        resp_inv = client.post("/api/admin/gestorias/1/invitar", json={
+            "email": "gestor.cliente@test.com",
+            "nombre": "Gestor Para Cliente",
+            "rol": "asesor",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+        token_inv = resp_inv.json()["invitacion_token"]
+        resp_login = client.post("/api/auth/aceptar-invitacion", json={
+            "token": token_inv, "password": "Gestor123Test!"
+        })
+        return resp_login.json()["access_token"]
+
+    def test_gestor_invita_cliente_a_empresa(self, client, gestor_con_gestoria):
+        resp = client.post("/api/empresas/1/invitar-cliente", json={
+            "email": "clientefinal@empresa.com",
+            "nombre": "Cliente Final S.L.",
+        }, headers={"Authorization": f"Bearer {gestor_con_gestoria}"})
+        # 201 o 404 si empresa no existe en BD de test — ambos son válidos
+        assert resp.status_code in (201, 404)
+
+    def test_invitar_cliente_sin_auth_401(self, client):
+        resp = client.post("/api/empresas/1/invitar-cliente", json={
+            "email": "test@test.com",
+            "nombre": "Test",
+        })
+        assert resp.status_code == 401

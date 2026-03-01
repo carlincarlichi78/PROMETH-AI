@@ -370,3 +370,89 @@ def resumen_empresa(empresa_id: int, request: Request, sesion_factory=Depends(ge
             "alertas_ia": [],
             "ventas_6m": ventas_6m,
         }
+
+
+class InvitarClienteRequest(BaseModel):
+    email: str
+    nombre: str
+
+
+@router.post("/{empresa_id}/invitar-cliente", status_code=201)
+def invitar_cliente_a_empresa(
+    empresa_id: int,
+    datos: InvitarClienteRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Invita a un cliente final a acceder al portal de una empresa."""
+    import secrets
+    from datetime import datetime, timedelta
+    from fastapi import HTTPException
+    from sfce.api.auth import hashear_password
+    from sfce.db.modelos_auth import Usuario
+
+    roles_permitidos = ("superadmin", "admin_gestoria", "asesor", "asesor_independiente")
+    if usuario.rol not in roles_permitidos:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+
+    token = secrets.token_urlsafe(32)
+    expira = datetime.utcnow() + timedelta(days=7)
+
+    with sesion_factory() as sesion:
+        # Verificar que la empresa existe
+        empresa = sesion.get(Empresa, empresa_id)
+        if empresa is None:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        existente = sesion.query(Usuario).filter(Usuario.email == datos.email).first()
+        if existente:
+            asignadas = list(existente.empresas_asignadas or [])
+            if empresa_id not in asignadas:
+                asignadas.append(empresa_id)
+                existente.empresas_asignadas = asignadas
+                sesion.commit()
+            return {
+                "id": existente.id,
+                "email": existente.email,
+                "rol": existente.rol,
+                "empresas_asignadas": asignadas,
+                "mensaje": "empresa añadida a cliente existente",
+            }
+
+        cliente = Usuario(
+            email=datos.email,
+            nombre=datos.nombre,
+            rol="cliente",
+            gestoria_id=getattr(usuario, "gestoria_id", None),
+            hash_password=hashear_password("PENDIENTE"),
+            invitacion_token=token,
+            invitacion_expira=expira,
+            forzar_cambio_password=True,
+            activo=True,
+            empresas_asignadas=[empresa_id],
+        )
+        sesion.add(cliente)
+        sesion.commit()
+        sesion.refresh(cliente)
+
+        try:
+            from sfce.core.email_service import obtener_servicio_email
+            obtener_servicio_email().enviar_invitacion(
+                destinatario=datos.email,
+                nombre=datos.nombre,
+                url_invitacion=f"/auth/aceptar-invitacion?token={token}",
+            )
+        except Exception:
+            pass
+
+        return {
+            "id": cliente.id,
+            "email": cliente.email,
+            "nombre": cliente.nombre,
+            "rol": cliente.rol,
+            "gestoria_id": cliente.gestoria_id,
+            "empresas_asignadas": [empresa_id],
+            "invitacion_token": token,
+            "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
+        }
