@@ -20,6 +20,12 @@ class CrearGestoriaRequest(BaseModel):
     plan_clientes_tramo: str = "1-10"
 
 
+class ActualizarGestoriaRequest(BaseModel):
+    nombre: str | None = None
+    activa: bool | None = None
+    plan_asesores: int | None = None
+
+
 class InvitarUsuarioRequest(BaseModel):
     email: EmailStr
     nombre: str
@@ -83,6 +89,91 @@ def listar_gestorias(
                 "activa": g.activa,
             }
             for g in sesion.query(Gestoria).all()
+        ]
+
+
+@router.get("/gestorias/{gestoria_id}")
+def detalle_gestoria(
+    gestoria_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Detalle de una gestoría. Solo superadmin."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as sesion:
+        g = sesion.get(Gestoria, gestoria_id)
+        if not g:
+            raise HTTPException(status_code=404, detail="Gestoría no encontrada")
+        return {
+            "id": g.id,
+            "nombre": g.nombre,
+            "cif": g.cif,
+            "email_contacto": g.email_contacto,
+            "activa": g.activa,
+            "plan_asesores": g.plan_asesores,
+            "plan_clientes_tramo": g.plan_clientes_tramo,
+            "fecha_alta": g.fecha_alta.isoformat() if g.fecha_alta else None,
+        }
+
+
+@router.patch("/gestorias/{gestoria_id}")
+def actualizar_gestoria(
+    gestoria_id: int,
+    datos: ActualizarGestoriaRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Actualiza campos de una gestoría. Solo superadmin."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as sesion:
+        g = sesion.get(Gestoria, gestoria_id)
+        if not g:
+            raise HTTPException(status_code=404, detail="Gestoría no encontrada")
+        if datos.nombre is not None:
+            g.nombre = datos.nombre
+        if datos.activa is not None:
+            g.activa = datos.activa
+        if datos.plan_asesores is not None:
+            g.plan_asesores = datos.plan_asesores
+        sesion.commit()
+        sesion.refresh(g)
+        return {
+            "id": g.id,
+            "nombre": g.nombre,
+            "activa": g.activa,
+            "plan_asesores": g.plan_asesores,
+        }
+
+
+@router.get("/gestorias/{gestoria_id}/usuarios")
+def listar_usuarios_gestoria(
+    gestoria_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Lista usuarios de una gestoría. Superadmin o admin_gestoria propio."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403, detail="Sin acceso")
+    if usuario.rol == "admin_gestoria" and usuario.gestoria_id != gestoria_id:
+        raise HTTPException(status_code=403, detail="Sin acceso a esta gestoría")
+    with sesion_factory() as sesion:
+        usuarios = sesion.query(Usuario).filter(
+            Usuario.gestoria_id == gestoria_id
+        ).all()
+        return [
+            {
+                "id": u.id,
+                "email": u.email,
+                "nombre": u.nombre,
+                "rol": u.rol,
+                "activo": u.activo,
+            }
+            for u in usuarios
         ]
 
 

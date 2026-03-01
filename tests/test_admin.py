@@ -106,3 +106,74 @@ class TestClienteDirecto:
             "nombre": "Cliente New",
         }, headers={"Authorization": f"Bearer {asesor_token}"})
         assert resp.status_code == 403
+
+
+class TestGestoriasAdmin:
+
+    @pytest.fixture
+    def gestoria_id(self, client, superadmin_token):
+        resp = client.post("/api/admin/gestorias", json={
+            "nombre": "Gestoría Norte",
+            "email_contacto": "norte@gestoria.com",
+            "cif": "B87654321",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 201
+        return resp.json()["id"]
+
+    def test_listar_gestorias(self, client, superadmin_token, gestoria_id):
+        resp = client.get("/api/admin/gestorias",
+            headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 200
+        assert len(resp.json()) >= 1
+
+    def test_detalle_gestoria(self, client, superadmin_token, gestoria_id):
+        resp = client.get(f"/api/admin/gestorias/{gestoria_id}",
+            headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["nombre"] == "Gestoría Norte"
+        assert "cif" in data
+        assert "email_contacto" in data
+
+    def test_detalle_gestoria_no_existe_404(self, client, superadmin_token):
+        resp = client.get("/api/admin/gestorias/9999",
+            headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 404
+
+    def test_actualizar_gestoria_activa(self, client, superadmin_token, gestoria_id):
+        resp = client.patch(f"/api/admin/gestorias/{gestoria_id}",
+            json={"activa": False},
+            headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 200
+        assert resp.json()["activa"] is False
+
+    def test_listar_usuarios_gestoria(self, client, superadmin_token, gestoria_id):
+        # Invitar un usuario a la gestoría
+        client.post(f"/api/admin/gestorias/{gestoria_id}/invitar", json={
+            "email": "gestor@norte.com",
+            "nombre": "Gestor Norte",
+            "rol": "asesor",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+
+        resp = client.get(f"/api/admin/gestorias/{gestoria_id}/usuarios",
+            headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 200
+        usuarios = resp.json()
+        assert any(u["email"] == "gestor@norte.com" for u in usuarios)
+
+    def test_sin_superadmin_403_en_detalle(self, client, superadmin_token, gestoria_id):
+        # Crear asesor para probar que no puede ver detalles de otras gestorías
+        resp_inv = client.post(f"/api/admin/gestorias/{gestoria_id}/invitar", json={
+            "email": "asesor403@norte.com",
+            "nombre": "Asesor 403",
+            "rol": "asesor",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+        token_inv = resp_inv.json()["invitacion_token"]
+        resp_login = client.post("/api/auth/aceptar-invitacion", json={
+            "token": token_inv, "password": "Clave403Test!"
+        })
+        asesor_token = resp_login.json()["access_token"]
+
+        resp = client.get("/api/admin/gestorias",
+            headers={"Authorization": f"Bearer {asesor_token}"})
+        assert resp.status_code == 403
