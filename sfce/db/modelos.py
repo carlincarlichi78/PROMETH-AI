@@ -49,6 +49,7 @@ class Empresa(Base):
     forma_juridica = Column(String(50), nullable=False)  # autonomo, sl, sa, cb, sc, coop, asociacion, comunidad, fundacion, slp, slu
     territorio = Column(String(20), nullable=False, default="peninsula")
     regimen_iva = Column(String(30), nullable=False, default="general")
+    slug = Column(String(50), unique=True, nullable=True)  # identificador URL-friendly
     idempresa_fs = Column(Integer)  # ID en FacturaScripts (nullable si solo BD local)
     codejercicio_fs = Column(String(10))
     activa = Column(Boolean, default=True)
@@ -150,6 +151,8 @@ class Documento(Base):
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     tipo_doc = Column(String(10), nullable=False)  # FC, FV, NC, NOM, SUM, BAN, RLC, IMP, ANT, REC
     ruta_pdf = Column(String(500))
+    ruta_disco = Column(String(1000), nullable=True)   # ruta absoluta en disco local
+    cola_id = Column(Integer, ForeignKey("cola_procesamiento.id"), nullable=True)
     hash_pdf = Column(String(64))  # SHA256
     datos_ocr = Column(JSON)  # resultado OCR completo
     ocr_tier = Column(Integer)  # 0, 1, 2
@@ -805,3 +808,21 @@ class SupplierRule(Base):
     nivel = Column(String(20), default="empresa")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ConfigProcesamientoEmpresa(Base):
+    """Configuración del modo de procesamiento automático por empresa."""
+    __tablename__ = "config_procesamiento_empresa"
+
+    id                    = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id            = Column(Integer, ForeignKey("empresas.id"), nullable=False, unique=True)
+    modo                  = Column(String(20), nullable=False, default="revision")  # auto | revision
+    schedule_minutos      = Column(Integer, nullable=True, default=None)  # None = manual
+    ocr_previo            = Column(Boolean, nullable=False, default=True)
+    notif_calidad_cliente = Column(Boolean, nullable=False, default=True)
+    notif_contable_gestor = Column(Boolean, nullable=False, default=True)
+    ultimo_pipeline       = Column(DateTime, nullable=True, default=None)
+    created_at            = Column(DateTime, default=datetime.utcnow)
+    updated_at            = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    empresa = relationship("Empresa", backref="config_procesamiento", uselist=False)
