@@ -137,12 +137,12 @@ class TestRouterValidar:
 
 
 class TestRouterCalcular:
-    def test_calcular_303_empresa_sin_datos(self, client):
+    def test_calcular_303_empresa_sin_datos(self, client, token_superadmin):
         """Con empresa sin asientos, casillas son 0."""
         resp = client.post("/api/modelos/calcular", json={
             "empresa_id": 1, "modelo": "303",
             "ejercicio": "2025", "periodo": "1T",
-        })
+        }, headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert data["modelo"] == "303"
@@ -151,12 +151,12 @@ class TestRouterCalcular:
         assert isinstance(data["casillas"], list)
         assert "validacion" in data
 
-    def test_calcular_con_override(self, client):
+    def test_calcular_con_override(self, client, token_superadmin):
         resp = client.post("/api/modelos/calcular", json={
             "empresa_id": 1, "modelo": "303",
             "ejercicio": "2025", "periodo": "1T",
             "casillas_override": {"27": 5000.0, "69": 5000.0}
-        })
+        }, headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         numeros = [c["numero"] for c in data["casillas"]]

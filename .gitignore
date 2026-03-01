@@ -26,6 +26,12 @@ venv/
 # Archivos temporales
 *.tmp
 *.log
+tmp/
+
+# BD local y cobertura
+sfce.db
+.coverage
+*.tmp.*
 
 # Generador datos prueba (salida)
 tests/datos_prueba/generador/salida/

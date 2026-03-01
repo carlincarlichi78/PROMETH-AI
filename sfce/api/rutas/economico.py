@@ -193,8 +193,7 @@ def obtener_ratios(
     _user=Depends(obtener_usuario_actual),
 ):
     """Calcula ratios financieros PGC desde datos contables de la empresa."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
@@ -225,8 +224,7 @@ def obtener_kpis(
     _user=Depends(obtener_usuario_actual),
 ):
     """KPIs sectoriales basados en CNAE/sector de la empresa."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         # KPIs genericos para cualquier empresa — en produccion se filtran por CNAE
@@ -270,8 +268,7 @@ def obtener_tesoreria(
     _user=Depends(obtener_usuario_actual),
 ):
     """Estado de tesoreria con saldo actual y prevision."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = _ejercicio_activo(sesion, empresa_id)
@@ -308,8 +305,7 @@ def obtener_cashflow(
     _user=Depends(obtener_usuario_actual),
 ):
     """Cash flow historico mensual del ejercicio activo."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = _ejercicio_activo(sesion, empresa_id)
@@ -344,8 +340,7 @@ def obtener_scoring(
     _user=Depends(obtener_usuario_actual),
 ):
     """Credit scoring de clientes y proveedores basado en historial de pagos."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         stmt = (
             select(ScoringHistorial)
@@ -378,8 +373,7 @@ def obtener_presupuesto(
     _user=Depends(obtener_usuario_actual),
 ):
     """Presupuesto vs real por partida contable."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
@@ -428,8 +422,7 @@ def obtener_comparativa(
 
     Parametro ejercicios: coma-separado, ej: "2023,2024,2025"
     """
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej_actuales = ejercicios.split(",") if ejercicios else []

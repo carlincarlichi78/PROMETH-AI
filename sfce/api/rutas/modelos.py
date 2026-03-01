@@ -69,9 +69,14 @@ def listar_modelos():
 @router.post("/calcular", response_model=ModeloFiscalCalcOut)
 def calcular_casillas(
     datos: GenerarModeloIn,
+    request: Request,
     servicio: ServicioFiscal = Depends(_get_servicio_fiscal),
+    sesion_factory=Depends(get_sesion_factory),
 ):
     """Calcula casillas de un modelo desde datos contables."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, datos.empresa_id, s)
     try:
         resultado = servicio.calcular_casillas(
             empresa_id=datos.empresa_id,

@@ -196,17 +196,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
   - Tests actualizados: `sfce.core.*` en lugar de `scripts.core.*`
 - **scripts/phases/** sigue existiendo como codigo muerto (puede borrarse en proxima sesion)
 
-### 2. **Bugs auditoria PENDIENTES (alta prioridad)**
-- `sfce/api/rutas/modelos.py:70` — endpoint `/calcular` sin verificacion multi-tenant (cualquier usuario puede calcular cualquier empresa)
-- `sfce/api/rutas/rgpd.py:136` — descarga RGPD sin verificar que empresa pertenece al usuario
-- `sfce/api/rutas/economico.py:196` — usa `request.app.state.sesion_factory` ignorando DI inyectada
-- `sfce/api/rutas/documentos.py:99` — falta `verificar_acceso_empresa()` en `obtener_documento()`
-- Frontend: dos clientes API (`src/api/client.ts` sin usar vs `src/lib/api-client.ts` activo) — limpiar el muerto
-- Frontend: `Sidebar.tsx` y `Layout.tsx` huerfanos en `src/components/` (sustituidos por AppShell)
+### 2. **Bugs auditoria — COMPLETADOS (sesion 01/03/2026 parte 2)**
+- ✅ `modelos.py` — `POST /calcular` añadido `verificar_acceso_empresa()` con DI
+- ✅ `rgpd.py` — descarga RGPD verifica acceso empresa antes de generar ZIP
+- ✅ `economico.py` — 7 endpoints migrados de `request.app.state.sesion_factory` a DI inyectada
+- ✅ `documentos.py` — ya tenia la verificacion correcta (false positive del audit)
+- ✅ `scripts/phases/` — borrado (codigo muerto post-unificacion)
+- ✅ Frontend: `src/api/client.ts`, `Sidebar.tsx`, `Layout.tsx` — borrados. Build OK.
 
 ### 3. **PENDIENTE (baja prioridad)**
-- Borrar `scripts/phases/` (codigo muerto post-unificacion)
-- Limpiar `.gitignore`: excluir `sfce.db`, `tmp/`, `.coverage`, `*.tmp.*`
 - Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)

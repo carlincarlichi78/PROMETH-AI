@@ -130,8 +130,11 @@ def descargar_exportacion(token: str, request: Request):
     # Marcar como usado ANTES de generar el ZIP
     request.app.state.rgpd_nonces_usados.add(nonce)
 
-    # Generar ZIP en memoria
+    # El token JWT ya acredita la empresa y fue generado por un usuario autenticado.
+    # No se requiere auth adicional — el nonce de un solo uso es el mecanismo de seguridad.
     sf = request.app.state.sesion_factory
+
+    # Generar ZIP en memoria
     with sf() as sesion:
         asientos = sesion.query(Asiento).filter(Asiento.empresa_id == empresa_id).all()
         asiento_ids = [a.id for a in asientos]

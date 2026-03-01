@@ -1,1 +1,0 @@
-"""Fases del pipeline SFCE."""
