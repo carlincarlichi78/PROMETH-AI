@@ -3,10 +3,12 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
+from sfce.core.exportar_ical import generar_ical, DeadlineFiscal
 from sfce.db.modelos import Empresa, Factura, Asiento, Partida
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
@@ -104,3 +106,38 @@ def documentos_portal(
                 for d in docs
             ],
         }
+
+
+@router.get("/{empresa_id}/calendario.ics")
+def calendario_ical(
+    empresa_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Descarga el calendario fiscal de la empresa en formato iCal."""
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
+        ejercicio = empresa.ejercicio_activo or str(date.today().year)
+
+    from sfce.core.servicio_fiscal import ServicioFiscal
+    tipo_empresa = "sl"  # default; podria leerse de config empresa
+    servicio = ServicioFiscal()
+    entradas = servicio.calendario_fiscal(empresa_id, ejercicio, tipo_empresa)
+
+    deadlines = [
+        DeadlineFiscal(
+            titulo=f"Modelo {e['modelo']} ({e['periodo']})",
+            fecha=date.fromisoformat(e["fecha_limite"]),
+            descripcion=e.get("nombre", ""),
+        )
+        for e in entradas
+    ]
+
+    contenido = generar_ical(deadlines, empresa.nombre)
+    return Response(
+        content=contenido,
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="fiscal_{empresa_id}.ics"'},
+    )
