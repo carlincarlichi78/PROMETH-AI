@@ -79,3 +79,66 @@ def test_registrar_resultados(tmp_path):
     assert len(fallos) == 1
     assert "AssertionError" in fallos[0]["error_msg"]
     conn.close()
+
+
+def test_registrar_cobertura(tmp_path):
+    """--registrar-cobertura carga coverage.json por módulo."""
+    db_path = tmp_path / "test_motor.db"
+    r = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--init-sesion", "--db", str(db_path)],
+        capture_output=True, text=True
+    )
+    sesion_id = r.stdout.strip()
+
+    coverage = {
+        "files": {
+            "sfce/core/backend.py": {
+                "summary": {"percent_covered": 85.0, "covered_lines": 85, "num_statements": 100}
+            },
+            "sfce/api/rutas/empresas.py": {
+                "summary": {"percent_covered": 62.0, "covered_lines": 31, "num_statements": 50}
+            },
+        }
+    }
+    cov_path = tmp_path / "coverage.json"
+    cov_path.write_text(json.dumps(coverage))
+
+    r2 = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--registrar-cobertura",
+         "--sesion-id", sesion_id, "--cobertura-json", str(cov_path),
+         "--db", str(db_path)],
+        capture_output=True, text=True
+    )
+    assert r2.returncode == 0
+
+    conn = sqlite3.connect(db_path)
+    filas = conn.execute(
+        "SELECT modulo, pct_cobertura FROM cobertura_modulo WHERE sesion_id=?",
+        (int(sesion_id),)
+    ).fetchall()
+    assert len(filas) == 2
+    modulos = {f[0]: f[1] for f in filas}
+    assert modulos["sfce/core/backend.py"] == 85.0
+    conn.close()
+
+
+def test_finalizar_sesion(tmp_path):
+    """--finalizar-sesion actualiza estado a 'completada'."""
+    db_path = tmp_path / "test_motor.db"
+    r = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--init-sesion", "--db", str(db_path)],
+        capture_output=True, text=True
+    )
+    sesion_id = r.stdout.strip()
+
+    r2 = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--finalizar-sesion",
+         "--sesion-id", sesion_id, "--db", str(db_path)],
+        capture_output=True, text=True
+    )
+    assert r2.returncode == 0
+
+    conn = sqlite3.connect(db_path)
+    sesion = conn.execute("SELECT estado FROM sesiones WHERE id=?", (int(sesion_id),)).fetchone()
+    assert sesion[0] == "completada"
+    conn.close()

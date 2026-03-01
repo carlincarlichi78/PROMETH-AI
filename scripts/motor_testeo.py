@@ -162,6 +162,41 @@ def cmd_registrar_resultados(db_path: Path, sesion_id: int, reporte_json: Path) 
     conn.close()
 
 
+def cmd_registrar_cobertura(db_path: Path, sesion_id: int, cobertura_json: Path) -> None:
+    datos = json.loads(cobertura_json.read_text())
+    conn = _conectar(db_path)
+
+    total_cubiertas = total_lineas = 0
+    for archivo, info in datos.get("files", {}).items():
+        s = info.get("summary", {})
+        pct = s.get("percent_covered", 0.0)
+        cubiertas = s.get("covered_lines", 0)
+        total = s.get("num_statements", 0)
+        conn.execute(
+            """INSERT INTO cobertura_modulo
+               (sesion_id, modulo, pct_cobertura, lineas_cubiertas, lineas_totales)
+               VALUES (?, ?, ?, ?, ?)""",
+            (sesion_id, archivo, pct, cubiertas, total),
+        )
+        total_cubiertas += cubiertas
+        total_lineas += total
+
+    pct_global = (total_cubiertas / total_lineas * 100) if total_lineas else 0.0
+    conn.execute(
+        "UPDATE sesiones SET cobertura_pct=? WHERE id=?",
+        (round(pct_global, 2), sesion_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def cmd_finalizar_sesion(db_path: Path, sesion_id: int) -> None:
+    conn = _conectar(db_path)
+    conn.execute("UPDATE sesiones SET estado='completada' WHERE id=?", (sesion_id,))
+    conn.commit()
+    conn.close()
+
+
 def main():
     argv = sys.argv[1:]
 
@@ -178,6 +213,17 @@ def main():
         sesion_id = int(_get_arg(argv, "--sesion-id"))
         reporte_json = Path(_get_arg(argv, "--reporte-json"))
         cmd_registrar_resultados(db_path, sesion_id, reporte_json)
+        return
+
+    if "--registrar-cobertura" in argv:
+        sesion_id = int(_get_arg(argv, "--sesion-id"))
+        cobertura_json = Path(_get_arg(argv, "--cobertura-json"))
+        cmd_registrar_cobertura(db_path, sesion_id, cobertura_json)
+        return
+
+    if "--finalizar-sesion" in argv:
+        sesion_id = int(_get_arg(argv, "--sesion-id"))
+        cmd_finalizar_sesion(db_path, sesion_id)
         return
 
     print("Uso: motor_testeo.py [--db PATH] --init-sesion")
