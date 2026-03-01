@@ -22,6 +22,7 @@ async def ingestar_documento(
     request: Request,
     archivo: UploadFile = File(...),
     empresa_id: int = Form(...),
+    emisor_cif: str = Form(default=""),
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Punto de entrada unificado para todos los documentos."""
@@ -56,17 +57,31 @@ async def ingestar_documento(
             # Trust level segun rol del usuario
             trust = calcular_trust_level(fuente="portal", rol=getattr(usuario, "rol", ""))
 
+            # Aplicar Supplier Rule si existe y es auto_aplicable
+            campos_prefill: dict = {}
+            supplier_rule_aplicada = False
+            if emisor_cif:
+                try:
+                    from sfce.core.supplier_rules import buscar_regla_aplicable, aplicar_regla
+                    regla = buscar_regla_aplicable(empresa_id, emisor_cif, sesion)
+                    if regla and regla.auto_aplicable:
+                        aplicar_regla(regla, campos_prefill)
+                        supplier_rule_aplicada = True
+                except Exception:
+                    logger.warning("Error al aplicar Supplier Rule para CIF=%s", emisor_cif)
+
             # Score inicial conservador (sin OCR todavia)
             score = calcular_score(
                 confianza_ocr=0.0,
                 trust_level=trust,
-                supplier_rule_aplicada=False,
+                supplier_rule_aplicada=supplier_rule_aplicada,
                 checks_pasados=1,
                 checks_totales=5,
             )
             decision = decidir_destino(score, trust)
 
             # Insertar en cola
+            import json
             from sfce.db.modelos import ColaProcesamiento
             item = ColaProcesamiento(
                 empresa_id=empresa_id,
@@ -77,13 +92,14 @@ async def ingestar_documento(
                 score_final=score,
                 decision=decision.value,
                 sha256=preflight.sha256,
+                hints_json=json.dumps(campos_prefill) if campos_prefill else "{}",
             )
             sesion.add(item)
             sesion.commit()
             sesion.refresh(item)
 
-            logger.info("Documento encolado: %s, score=%.0f, decision=%s",
-                        preflight.nombre_sanitizado, score, decision.value)
+            logger.info("Documento encolado: %s, score=%.0f, decision=%s, regla=%s",
+                        preflight.nombre_sanitizado, score, decision.value, supplier_rule_aplicada)
             return {
                 "cola_id": item.id,
                 "nombre": preflight.nombre_sanitizado,
@@ -91,6 +107,8 @@ async def ingestar_documento(
                 "trust_level": trust.value,
                 "score_inicial": score,
                 "estado": decision.value,
+                "supplier_rule_aplicada": supplier_rule_aplicada,
+                "campos_prefill": campos_prefill,
             }
     except HTTPException:
         raise
