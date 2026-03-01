@@ -90,7 +90,7 @@ export default function PipelinePage() {
           icono={GitBranch}
         />
       ) : (
-        <Card>
+        <Card className="bg-[var(--surface-1)] border-border/50">
           <CardContent className="pt-6 space-y-5">
             {fases.map((fase) => {
               const porcentaje = fase.total > 0 ? Math.round((fase.procesados / fase.total) * 100) : 0

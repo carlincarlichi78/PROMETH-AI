@@ -3,19 +3,12 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import type { Tesoreria, CashflowMensual } from '@/types/economico'
 import { economicoApi } from './api'
-
-function KPIBox({ label, valor, subtext }: { label: string; valor: number; subtext?: string }) {
-  const color = valor >= 0 ? '#16a34a' : '#dc2626'
-  return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 24px', minWidth: 200 }}>
-      <div style={{ fontSize: 13, color: '#6b7280' }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color, marginTop: 4 }}>
-        {valor.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-      </div>
-      {subtext && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{subtext}</div>}
-    </div>
-  )
-}
+import { StatCard } from '@/components/ui/stat-card'
+import { PageTitle } from '@/components/ui/page-title'
+import { ChartWrapper, CHART_COLORS } from '@/components/ui/chart-wrapper'
+import { EmptyState } from '@/components/ui/empty-state'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { Wallet } from 'lucide-react'
 
 export default function TesoreriaPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,46 +26,84 @@ export default function TesoreriaPage() {
       .finally(() => setCargando(false))
   }, [empresaId])
 
-  return (
-    <div style={{ padding: '24px 32px', maxWidth: 1200 }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', margin: 0 }}>Tesoreria</h1>
-        <p style={{ color: '#6b7280', marginTop: 4, fontSize: 14 }}>Estado de caja y prevision de liquidez</p>
+  const formatEur = (v: number) => v.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+
+  if (cargando) {
+    return (
+      <div className="p-6 max-w-5xl">
+        <PageTitle titulo="Tesorería" subtitulo="Estado de caja y previsión de liquidez" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {Array.from({ length: 7 }).map((_, i) => <StatCard key={i} titulo="" valor="" cargando />)}
+        </div>
       </div>
-      {cargando && <p style={{ color: '#9ca3af' }}>Cargando tesoreria...</p>}
-      {error && <p style={{ color: '#dc2626' }}>Error: {error}</p>}
-      {tesorer && (
+    )
+  }
+
+  return (
+    <div className="p-6 max-w-5xl">
+      <PageTitle titulo="Tesorería" subtitulo="Estado de caja y previsión de liquidez" />
+      {error && <p className="text-[var(--state-danger)] text-sm mb-4">Error: {error}</p>}
+
+      {tesorer ? (
         <>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-            <KPIBox label="Saldo Actual" valor={tesorer.saldo_actual} subtext="Cuentas grupo 57" />
-            <KPIBox label="Flujo Operativo" valor={tesorer.flujo_operativo} subtext="Ingresos - Gastos" />
-            <KPIBox label="Flujo Inversion" valor={tesorer.flujo_inversion} subtext="Activos fijos" />
-            <KPIBox label="Flujo Financiacion" valor={tesorer.flujo_financiacion} subtext="Deuda / PN" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              titulo="Saldo Actual"
+              valor={formatEur(tesorer.saldo_actual)}
+              subtitulo="Cuentas grupo 57"
+              variante={tesorer.saldo_actual >= 0 ? 'success' : 'danger'}
+              tendencia={tesorer.saldo_actual >= 0 ? 'up' : 'down'}
+            />
+            <StatCard
+              titulo="Flujo Operativo"
+              valor={formatEur(tesorer.flujo_operativo)}
+              subtitulo="Ingresos - Gastos"
+              variante={tesorer.flujo_operativo >= 0 ? 'success' : 'danger'}
+              tendencia={tesorer.flujo_operativo >= 0 ? 'up' : 'down'}
+            />
+            <StatCard
+              titulo="Flujo Inversión"
+              valor={formatEur(tesorer.flujo_inversion)}
+              subtitulo="Activos fijos"
+            />
+            <StatCard
+              titulo="Flujo Financiación"
+              valor={formatEur(tesorer.flujo_financiacion)}
+              subtitulo="Deuda / PN"
+            />
           </div>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-            <KPIBox label="Prevision 30 dias" valor={tesorer.prevision_30d} />
-            <KPIBox label="Prevision 60 dias" valor={tesorer.prevision_60d} />
-            <KPIBox label="Prevision 90 dias" valor={tesorer.prevision_90d} />
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <StatCard titulo="Previsión 30 días" valor={formatEur(tesorer.prevision_30d)} />
+            <StatCard titulo="Previsión 60 días" valor={formatEur(tesorer.prevision_60d)} />
+            <StatCard titulo="Previsión 90 días" valor={formatEur(tesorer.prevision_90d)} />
           </div>
         </>
+      ) : !error && (
+        <EmptyState
+          icono={<Wallet className="h-8 w-8" />}
+          titulo="Sin datos de tesorería"
+          descripcion="No hay movimientos de caja registrados en este ejercicio."
+        />
       )}
+
       {cashflow && cashflow.cashflow_mensual.length > 0 && (
-        <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Cash Flow Mensual — {cashflow.ejercicio}</h2>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 120 }}>
-            {cashflow.cashflow_mensual.map(({ mes, flujo }) => {
-              const max = Math.max(...cashflow.cashflow_mensual.map((m) => Math.abs(m.flujo)), 1)
-              const h = Math.round((Math.abs(flujo) / max) * 100)
-              return (
-                <div key={mes} title={`${mes}: ${flujo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: '100%', height: `${h}%`, background: flujo >= 0 ? '#4ade80' : '#f87171', borderRadius: 3, minHeight: 4 }} />
-                  <span style={{ fontSize: 10, color: '#9ca3af' }}>{mes.slice(5)}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <ChartWrapper titulo={`Cash Flow Mensual — ${cashflow.ejercicio}`} altura={200}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={cashflow.cashflow_mensual} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+              <XAxis dataKey="mes" tickFormatter={(v: string) => v.slice(5)} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip
+                formatter={(v: number | undefined) => [v !== undefined ? formatEur(v) : '—', 'Flujo'] as [string, string]}
+                contentStyle={{ background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+              />
+              <Bar dataKey="flujo" radius={[3, 3, 0, 0]}>
+                {cashflow.cashflow_mensual.map(({ mes, flujo }) => (
+                  <Cell key={mes} fill={flujo >= 0 ? CHART_COLORS.success : CHART_COLORS.danger} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
       )}
     </div>
   )

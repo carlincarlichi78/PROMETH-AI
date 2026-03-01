@@ -3,12 +3,18 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import type { ScoringEmpresa } from '@/types/economico'
 import { economicoApi } from './api'
+import { PageTitle } from '@/components/ui/page-title'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Shield } from 'lucide-react'
 
 function ScoreBadge({ puntuacion }: { puntuacion: number }) {
-  const color = puntuacion >= 70 ? '#16a34a' : puntuacion >= 40 ? '#ca8a04' : '#dc2626'
-  const bg = puntuacion >= 70 ? '#dcfce7' : puntuacion >= 40 ? '#fef9c3' : '#fee2e2'
+  const cls = puntuacion >= 70
+    ? 'bg-[var(--state-success)]/20 border-[var(--state-success)] text-[var(--state-success)]'
+    : puntuacion >= 40
+    ? 'bg-[var(--state-warning)]/20 border-[var(--state-warning)] text-[var(--state-warning)]'
+    : 'bg-[var(--state-danger)]/20 border-[var(--state-danger)] text-[var(--state-danger)]'
   return (
-    <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color }}>
+    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-[13px] flex-shrink-0 ${cls}`}>
       {puntuacion}
     </div>
   )
@@ -27,34 +33,56 @@ export default function ScoringPage() {
   }, [empresaId, tipo])
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 900 }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', margin: 0 }}>Credit Scoring</h1>
-        <p style={{ color: '#6b7280', marginTop: 4, fontSize: 14 }}>Puntuacion de solvencia de clientes y proveedores</p>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+    <div className="p-6 max-w-3xl">
+      <PageTitle titulo="Credit Scoring" subtitulo="Puntuación de solvencia de clientes y proveedores" />
+
+      <div className="flex gap-2 mb-6">
         {(['proveedor', 'cliente'] as const).map((t) => (
-          <button key={t} onClick={() => setTipo(t)}
-            style={{ padding: '6px 18px', borderRadius: 20, border: '1px solid #e5e7eb', background: tipo === t ? '#1e293b' : '#fff', color: tipo === t ? '#fff' : '#374151', cursor: 'pointer', textTransform: 'capitalize', fontWeight: tipo === t ? 600 : 400 }}>
+          <button
+            key={t}
+            onClick={() => setTipo(t)}
+            className={`px-4 py-1.5 rounded-full text-sm border transition-all ${
+              tipo === t
+                ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                : 'border-border text-muted-foreground hover:border-primary/50'
+            }`}
+          >
             {t === 'proveedor' ? 'Proveedores' : 'Clientes'}
           </button>
         ))}
       </div>
-      {cargando && <p style={{ color: '#9ca3af' }}>Calculando scoring...</p>}
-      {datos && datos.scoring.length === 0 && !cargando && (
-        <p style={{ color: '#9ca3af', fontSize: 14 }}>Sin datos de scoring. Los scores se calculan con historial de pagos.</p>
+
+      {cargando && (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-14 rounded-lg bg-[var(--surface-1)] animate-pulse" />
+          ))}
+        </div>
       )}
-      {datos && datos.scoring.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+      {!cargando && datos?.scoring.length === 0 && (
+        <EmptyState
+          icono={<Shield className="h-8 w-8" />}
+          titulo="Sin datos de scoring"
+          descripcion="Los scores se calculan con historial de pagos. Registra más operaciones para ver puntuaciones."
+        />
+      )}
+
+      {!cargando && datos && datos.scoring.length > 0 && (
+        <div className="space-y-2">
           {datos.scoring.map((s) => (
-            <div key={s.entidad_id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div key={s.entidad_id} className="bg-[var(--surface-1)] border border-border/50 rounded-lg px-4 py-3 flex items-center gap-4">
               <ScoreBadge puntuacion={s.puntuacion} />
-              <div style={{ flex: 1 }}>
-                <span style={{ fontWeight: 600, color: '#1e293b' }}>Entidad #{s.entidad_id}</span>
-                {s.fecha && <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 10 }}>{new Date(s.fecha).toLocaleDateString('es-ES')}</span>}
+              <div className="flex-1 min-w-0">
+                <span className="font-semibold text-sm">Entidad #{s.entidad_id}</span>
+                {s.fecha && (
+                  <span className="text-[12px] text-muted-foreground ml-2">
+                    {new Date(s.fecha).toLocaleDateString('es-ES')}
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: '#6b7280' }}>
-                {Object.entries(s.factores).map(([k, v]) => `${k}: ${v}`).join(' | ') || 'Sin factores'}
+              <div className="text-[12px] text-muted-foreground text-right">
+                {Object.entries(s.factores).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'Sin factores'}
               </div>
             </div>
           ))}
