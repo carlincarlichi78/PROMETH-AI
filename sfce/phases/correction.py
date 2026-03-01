@@ -272,6 +272,54 @@ def _check_reglas_especiales(asiento_data: dict, partidas: list,
                         }
                     })
 
+        elif tipo_regla == "iva_turismo_50":
+            # Art.95.Tres.2 LIVA: vehículo turismo → 50% IVA deducible.
+            # Separar partida IVA soportado (472) en:
+            #   50% deducible → 4720000000
+            #   50% no deducible → 6280000000 (gasto vehículo)
+            partida_472 = None
+            for p in partidas:
+                if (p.get("codsubcuenta", "").startswith("472")
+                        and float(p.get("debe", 0)) > 0):
+                    partida_472 = p
+                    break
+
+            if not partida_472:
+                continue
+
+            iva_total = float(partida_472.get("debe", 0))
+            iva_deducible = round(iva_total * 0.50, 2)
+            iva_no_deducible = round(iva_total - iva_deducible, 2)
+
+            if iva_no_deducible <= 0:
+                continue
+
+            # Verificar que no se haya aplicado ya (evitar duplicados)
+            tiene_6280 = any(
+                p.get("codsubcuenta", "").startswith("6280")
+                and float(p.get("debe", 0)) > 0
+                for p in partidas
+            )
+            if tiene_6280:
+                continue
+
+            correcciones.append({
+                "check": 5,
+                "tipo": "regla_especial_iva_turismo_50",
+                "descripcion": (
+                    f"Art.95.Tres.2 LIVA: IVA vehículo turismo {iva_total:.2f} EUR → "
+                    f"50% deducible ({iva_deducible:.2f}) + 50% gasto 6280 ({iva_no_deducible:.2f})"
+                ),
+                "auto_fix": True,
+                "datos": {
+                    "idpartida": partida_472.get("idpartida"),
+                    "idasiento": partida_472.get("idasiento"),
+                    "iva_total": iva_total,
+                    "iva_deducible": iva_deducible,
+                    "iva_no_deducible": iva_no_deducible,
+                }
+            })
+
         elif tipo_regla == "iva_extranjero":
             # Reclasificar suplidos IVA extranjero de 600 a 4709
             patron = regla.get("patron_linea", "")
@@ -534,6 +582,28 @@ def _aplicar_correccion(correccion: dict) -> bool:
         elif tipo == "regla_especial_reclasificar":
             return bool(api_put(f"partidas/{idpartida}",
                                 {"codsubcuenta": datos["subcuenta_destino"]}))
+
+        elif tipo == "regla_especial_iva_turismo_50":
+            # 1. Reducir partida 472 al 50% deducible
+            ok_472 = api_put(f"partidas/{idpartida}",
+                             {"debe": datos["iva_deducible"]})
+            if not ok_472:
+                return False
+
+            # 2. Crear partida 6280 con el 50% no deducible (gasto vehículo)
+            import requests
+            from ..core.fs_api import API_BASE, obtener_token
+            url = f"{API_BASE}/partidas"
+            headers = {"Token": obtener_token()}
+            nueva = {
+                "idasiento": datos["idasiento"],
+                "codsubcuenta": "6280000000",
+                "debe": datos["iva_no_deducible"],
+                "haber": 0,
+                "concepto": "IVA turismo no deducible 50% — Art.95.Tres.2 LIVA",
+            }
+            resp = requests.post(url, data=nueva, headers=headers)
+            return resp.status_code in (200, 201)
 
         elif tipo == "regla_especial_iva_extranjero":
             # 1. Reducir partida 600 (quitar importe IVA ADUANA)

@@ -326,77 +326,98 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
 def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
                                 archivo: str, config: ConfigCliente,
                                 ruta_config: Path) -> Optional[dict]:
-    """Flujo interactivo para entidades desconocidas.
+    """Flujo interactivo para entidades desconocidas con MCF.
 
-    Pregunta al usuario y anade la entidad a config.yaml.
+    El Motor de Clasificación Fiscal auto-deduce el tratamiento contable/fiscal.
+    Solo pregunta lo que el MCF no puede deducir del OCR.
 
     Returns:
         dict con datos de la nueva entidad, o None si el usuario cancela
     """
+    from ..core.clasificador_fiscal import ClasificadorFiscal
+
     es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
     tipo_relacion = "proveedor" if es_proveedor else "cliente"
 
     cif = (datos_gpt.get("emisor_cif") if es_proveedor
-           else datos_gpt.get("receptor_cif")) or "DESCONOCIDO"
+           else datos_gpt.get("receptor_cif")) or ""
     nombre = (datos_gpt.get("emisor_nombre") if es_proveedor
               else datos_gpt.get("receptor_nombre")) or "DESCONOCIDO"
     total = datos_gpt.get("total", 0)
     divisa = datos_gpt.get("divisa", "EUR")
 
+    # ── 1. Clasificación automática con MCF ─────────────────────────────────
+    clf = ClasificadorFiscal()
+    clasificacion = clf.clasificar(cif, nombre, datos_gpt)
+
     print("\n" + "=" * 60)
-    print("ENTIDAD DESCONOCIDA detectada")
+    print("ENTIDAD DESCONOCIDA — Clasificación automática MCF")
     print(f"  Archivo:  {archivo}")
     print(f"  Nombre:   {nombre}")
-    print(f"  CIF:      {cif}")
+    print(f"  CIF:      {cif or 'SIN CIF'}")
     print(f"  Importe:  {total:,.2f} {divisa}")
-    print(f"  Tipo doc: {tipo_doc}")
-    print(f"  Relacion: {tipo_relacion}")
+    print()
+    print(f"  MCF detectó:  {clasificacion.resumen()}")
+    print(f"  Confianza:    {clasificacion.confianza:.0%}")
+    if clasificacion.razonamiento:
+        print(f"  Razonamiento: {clasificacion.razonamiento}")
     print("=" * 60)
 
     confirmar = input(f"\n¿Dar de alta como {tipo_relacion}? (s/n/saltar): ").strip().lower()
     if confirmar not in ("s", "si"):
         return None
 
-    # Pedir datos
-    nombre_corto = input(f"Nombre corto (clave en config, ej: 'amazon'): ").strip()
+    # ── 2. Preguntas mínimas: solo las que MCF no puede deducir ─────────────
+    _textos_wizard = {
+        "tipo_vehiculo": (
+            "Tipo de vehículo",
+            "turismo/comercial",
+            ["turismo", "comercial"],
+            "turismo",
+        ),
+        "inicio_actividad_autonomo": (
+            "¿Está en inicio de actividad? (IRPF 7% vs 15%)",
+            "si/no",
+            ["si", "no"],
+            "no",
+        ),
+        "pct_afectacion": (
+            "Porcentaje de afectación a la actividad (ej: 40)",
+            "0-100",
+            None,
+            None,
+        ),
+    }
+
+    respuestas: dict[str, str] = {}
+    for pregunta_key in list(clasificacion.preguntas_pendientes):
+        info = _textos_wizard.get(pregunta_key)
+        if not info:
+            continue
+        etiqueta, opciones_str, opciones_validas, default = info
+        prompt = f"  {etiqueta} [{opciones_str}]"
+        if default:
+            prompt += f" (default: {default})"
+        prompt += ": "
+        respuesta = input(prompt).strip().lower() or (default or "")
+        if opciones_validas and respuesta not in opciones_validas:
+            respuesta = default or opciones_validas[0]
+        respuestas[pregunta_key] = respuesta
+
+    clf.aplicar_respuestas(clasificacion, respuestas)
+
+    # ── 3. Nombre corto (único input que MCF no puede deducir) ───────────────
+    nombre_corto_default = nombre.lower().replace(" ", "_")[:20]
+    nombre_corto = input(f"Nombre corto en config [{nombre_corto_default}]: ").strip()
     if not nombre_corto:
-        nombre_corto = nombre.lower().replace(" ", "_")[:20]
+        nombre_corto = nombre_corto_default
 
     nombre_fs = input(f"Nombre en FacturaScripts [{nombre}]: ").strip() or nombre
 
-    regimen = input("Regimen IVA (general/intracomunitario/extracomunitario) [general]: ").strip()
-    if regimen not in ("general", "intracomunitario", "extracomunitario"):
-        regimen = "general"
+    # ── 4. Construir entrada usando MCF ─────────────────────────────────────
+    nueva_entidad = clf.a_entrada_config(nombre_corto, nombre_fs, cif, clasificacion)
 
-    divisa_input = input(f"Divisa habitual [{divisa}]: ").strip().upper()
-    if divisa_input not in ("EUR", "USD", "GBP"):
-        divisa_input = divisa if divisa in ("EUR", "USD", "GBP") else "EUR"
-
-    pais = input("Pais (codigo 3 letras, ej: ESP) [ESP]: ").strip().upper() or "ESP"
-
-    subcuenta_defecto = "600" if es_proveedor else "700"
-    subcuenta = input(f"Subcuenta contable [{subcuenta_defecto}]: ").strip() or subcuenta_defecto
-
-    codimpuesto = input("Codigo IVA (IVA0/IVA4/IVA10/IVA21) [IVA21]: ").strip()
-    if codimpuesto not in ("IVA0", "IVA4", "IVA10", "IVA21"):
-        codimpuesto = "IVA21"
-
-    notas = input("Notas especiales (opcional): ").strip()
-
-    # Construir datos de la entidad
-    nueva_entidad = {
-        "cif": cif,
-        "nombre_fs": nombre_fs,
-        "pais": pais,
-        "divisa": divisa_input,
-        "subcuenta": subcuenta,
-        "codimpuesto": codimpuesto,
-        "regimen": regimen,
-    }
-    if notas:
-        nueva_entidad["notas"] = notas
-
-    # Actualizar config.yaml
+    # ── 5. Guardar en config.yaml ────────────────────────────────────────────
     with open(ruta_config, "r", encoding="utf-8") as f:
         config_data = yaml.safe_load(f)
 
@@ -409,7 +430,10 @@ def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
     with open(ruta_config, "w", encoding="utf-8") as f:
         yaml.dump(config_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
-    logger.info(f"Nueva entidad registrada en config: {nombre_corto} ({cif}) como {tipo_relacion}")
+    logger.info(
+        "Nueva entidad registrada via MCF: %s (%s) como %s — %s",
+        nombre_corto, cif or "sin CIF", tipo_relacion, clasificacion.resumen(),
+    )
 
     return {**nueva_entidad, "_nombre_corto": nombre_corto}
 

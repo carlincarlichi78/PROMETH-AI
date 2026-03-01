@@ -12,8 +12,8 @@ tipos_irpf:
     descripcion: "Profesionales general"
   - porcentaje: 19
     descripcion: "Rendimientos capital mobiliario, arrendamientos"
-  - porcentaje: 24
-    descripcion: "Administradores (base < 100K)"
+  - porcentaje: 19
+    descripcion: "Administradores en entidades con cifra negocios <= 100.000 EUR (Art.101.2 LIRPF)"
   - porcentaje: 35
     descripcion: "Administradores (base >= 100K)"
 

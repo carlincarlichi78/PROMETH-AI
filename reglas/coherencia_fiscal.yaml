@@ -25,9 +25,9 @@ prefijos_cif:
   # UE intracomunitario
   - prefijos: ["PT"]
     pais: PRT
-    regimen: extracomunitario
+    regimen: intracomunitario
     iva_factura: [0]
-    nota: "Portugal — extracomunitario (no aplica intracom para servicios tipicos)"
+    nota: "Portugal — intracomunitario (miembro UE). Corregido: era incorrecto como extracomunitario."
 
   - prefijos: ["DE"]
     pais: DEU

@@ -1,0 +1,880 @@
+# reglas/categorias_gasto.yaml
+# Base de conocimiento fiscal España — categorías de gasto
+# Base legal: LIVA 37/1992, LIRPF 35/2006, LIS 27/2014
+# Vigente: ejercicio 2025
+# Uso: ClasificadorFiscal.clasificar() carga este archivo para determinar
+#      el tratamiento fiscal de cada gasto según keywords + CIF + OCR.
+#
+# Campos por categoría:
+#   descripcion       — texto legible
+#   subcuenta         — código PGC 10 dígitos
+#   iva_codimpuesto   — IVA0 | IVA4 | IVA5 | IVA10 | IVA21
+#   iva_tasa          — porcentaje numérico
+#   iva_deducible_pct — 0 | 50 | 100
+#   exento_art20      — true si exento sin derecho a deducción
+#   irpf_pct          — null o porcentaje retención
+#   irpf_condicion    — condición que activa la retención (null = siempre)
+#   operaciones_extra — lista de operaciones adicionales de correction.py
+#   preguntas         — lista de campos que el wizard debe preguntar
+#   subcategoria_por_respuesta — tratamiento alternativo según respuesta wizard
+#   keywords_proveedor — palabras clave en nombre del proveedor (case-insensitive)
+#   keywords_lineas   — palabras clave en líneas de la factura
+#   base_legal        — artículo legal de referencia
+#   notas             — aclaraciones para el operador
+
+version: "2025-01"
+
+categorias:
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 1: COMPRAS Y MERCANCÍAS (600-609)
+  # ═══════════════════════════════════════════════════════
+
+  compras_mercancias_general:
+    descripcion: "Compra de mercancías y materias primas (régimen general)"
+    subcuenta: "6000000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: []
+    keywords_lineas: []
+    base_legal: "Art.90 LIVA"
+    notas: "Categoría genérica. Ajustar IVA según tipo de mercancía."
+
+  compras_alimentacion_general:
+    descripcion: "Alimentos en general: frutas, verduras, carne, pescado, lácteos, conservas..."
+    subcuenta: "6000000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [mercamadrid, mercabarna, mercavalencia, mercabilbao, mercasevilla,
+                          distribución alimentaria, mayorista aliment, frutas y verduras,
+                          carnicería, pescadería, charcutería, embutidos, lácteos, congelados,
+                          makro, metro cash, sysco, havi, sos cutara]
+    keywords_lineas: [kg, kilo, tonelada, caja frutas, pallet, bandeja, unidades]
+    base_legal: "Art.91.Uno.1 LIVA"
+    notas: "IVA reducido 10% para alimentos en general. Ver compras_alimentacion_basica para artículos al 4%."
+
+  compras_alimentacion_basica:
+    descripcion: "Alimentos básicos: pan, leche, huevos, harina, aceite, cereales, pasta, queso, frutas y verduras frescas"
+    subcuenta: "6000000000"
+    iva_codimpuesto: IVA4
+    iva_tasa: 4
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: []
+    keywords_lineas: [pan, leche, huevos, harina, aceite oliva, cereales, macarrones, espaguetis,
+                      arroz, lentejas, garbanzos, alubias, queso, yogur, mantequilla, pasta alimenticia]
+    base_legal: "Art.91.Dos LIVA"
+    notas: "Aplicar cuando las líneas de factura son claramente productos básicos. Aceite 2024: verifícar normativa vigente."
+
+  compras_bebidas_alcoholicas:
+    descripcion: "Bebidas alcohólicas: vinos, cervezas, licores, destilados"
+    subcuenta: "6000000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [bodega, viñedos, destilería, licorería, cervecera, winery, bodegas]
+    keywords_lineas: [vino, cerveza, cava, ron, whisky, vodka, gin, licor, champán, sidra, vermut,
+                      brandy, tequila, sake, botella, cajas botellas]
+    base_legal: "Art.90 LIVA"
+    notas: "IVA general 21%. Las bebidas alcohólicas no tienen tipo reducido."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 2: SUMINISTROS (628)
+  # ═══════════════════════════════════════════════════════
+
+  suministros_electricidad:
+    descripcion: "Suministro de electricidad para local o negocio"
+    subcuenta: "6280000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [endesa, iberdrola, naturgy, gas natural luz, repsol electricidad, enel,
+                          viesgo, holaluz, factor energia, octopus energy, plenitude, eléctrica,
+                          energía eléctrica, red eléctrica, distribuidora eléctrica]
+    keywords_lineas: [kwh, kw·h, potencia contratada, término fijo, término variable,
+                      electricidad, energía eléctrica, peaje de acceso, bono social]
+    base_legal: "Art.90 LIVA (local comercial)"
+    notas: "IVA21 para locales comerciales. IVA10 para suministro doméstico < 10kW (raro en negocios). Recargo eléctrico temporal eliminado 2024."
+
+  suministros_gas:
+    descripcion: "Suministro de gas natural para local o negocio"
+    subcuenta: "6280000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [naturgy, gas natural, endesa gas, iberdrola gas, repsol gas, nedgia,
+                          enagas, distribuidora gas]
+    keywords_lineas: [kwh gas, m³, metro cubico gas, gas natural, gas butano, propano,
+                      término fijo gas, consumo gas]
+    base_legal: "Art.90 LIVA"
+    notas: "IVA5 temporal 2022-2024 eliminado. Vuelve al 21% general desde 2025."
+
+  suministros_agua:
+    descripcion: "Suministro de agua potable"
+    subcuenta: "6280000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [aguas municipales, canal de isabel ii, emasa, emasesa, aigues, aguas de,
+                          hidraqua, global omnium, sociedad general aguas, aqualia, veolia agua]
+    keywords_lineas: [m³ agua, metro cubico, consumo agua, suministro agua, contador agua,
+                      cuota servicio agua]
+    base_legal: "Art.91.Uno.4 LIVA"
+    notas: "IVA reducido 10% para agua potable. Art.91.Uno.4 LIVA."
+
+  suministros_telefono:
+    descripcion: "Telefonía fija, móvil e internet"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [movistar, vodafone, orange, masmovil, yoigo, digi, simyo, pepephone,
+                          lowi, jazztel, o2, telecomunicaciones, fibra, telecom]
+    keywords_lineas: [gigas, gb, llamadas, sms, internet, fibra, adsl, tarifa plana, roaming,
+                      línea móvil, datos móviles, mbps]
+    base_legal: "Art.90 LIVA"
+    notas: "ISP solo entre operadores (reventas), no para cliente final."
+
+  suministros_combustible:
+    descripcion: "Combustible: gasolina, gasoil, GLP para vehículo de empresa"
+    subcuenta: "6280000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: null
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: [tipo_vehiculo]
+    subcategoria_por_respuesta:
+      turismo:
+        iva_deducible_pct: 50
+        operaciones_extra: [iva_turismo_50]
+        notas: "Art.95.Tres.2 LIVA: vehículo turismo → 50% IVA deducible. Reclasificar 50% de 4720 a 6280."
+      comercial:
+        iva_deducible_pct: 100
+        notas: "Vehículo comercial/industrial → 100% IVA deducible."
+    keywords_proveedor: [repsol, bp, cepsa, galp, shell, esso, campsa, petronor, q8,
+                          gasolinera, estacion de servicio, es coloso, coloso, carrefour fuel,
+                          alcampo fuel, valcarce, disa, saras energía, total energies]
+    keywords_lineas: [litros, gasolina, gasoil, diesel, gasóleo, carburante, combustible,
+                      gas licuado, glp, repostaje, litro, repostado]
+    base_legal: "Art.95.Tres.2 LIVA"
+    notas: "Preguntar tipo de vehículo para determinar deducibilidad. Turismo=50%, Comercial=100%."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 3: ARRENDAMIENTOS (621)
+  # ═══════════════════════════════════════════════════════
+
+  arrendamiento_local:
+    descripcion: "Alquiler de local comercial, nave industrial, oficina, almacén"
+    subcuenta: "6210000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: 19
+    irpf_condicion: "arrendador == persona_fisica"
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [inmobiliaria, arrendamiento, propietario local, gestión patrimonial]
+    keywords_lineas: [alquiler local, arrendamiento local, renta local, alquiler nave,
+                      arrendamiento nave, alquiler oficina, renta mensual local, plaza garaje comercial]
+    base_legal: "Art.90 LIVA, Art.101.6 LIRPF"
+    notas: "Retención 19% IRPF solo si el arrendador es persona física. Si es sociedad, sin retención."
+
+  arrendamiento_vivienda:
+    descripcion: "Alquiler de vivienda para directivo o empleado de empresa"
+    subcuenta: "6210000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: 19
+    irpf_condicion: "arrendador == persona_fisica"
+    operaciones_extra: []
+    preguntas: []
+    keywords_lineas: [alquiler vivienda, renta piso, arrendamiento vivienda, apartamento,
+                      habitación, alquiler habitación]
+    base_legal: "Art.20.Uno.23 LIVA, Art.101.6 LIRPF"
+    notas: "Arrendamiento de vivienda EXENTO de IVA art.20. No hay 472. Sí aplica retención 19% si arrendador es persona física."
+
+  renting_leasing:
+    descripcion: "Renting o leasing de vehículos u otros bienes"
+    subcuenta: "6210000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: null
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: [tipo_vehiculo]
+    subcategoria_por_respuesta:
+      turismo:
+        iva_deducible_pct: 50
+        operaciones_extra: [iva_turismo_50]
+      comercial:
+        iva_deducible_pct: 100
+    keywords_proveedor: [renting, leasing, ald automotive, arval, ayvens, alphabet, leasys,
+                          volkswagen financial, seat financial, renault financial, rci banque,
+                          financiacion vehiculos, gmf financial]
+    keywords_lineas: [cuota renting, cuota leasing, arrendamiento financiero, cuota mensual vehículo]
+    base_legal: "Art.95.Tres.2 LIVA para vehículos"
+    notas: "Mismo criterio deductibilidad que combustible si es vehículo turismo."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 4: SERVICIOS PROFESIONALES (622, 623)
+  # ═══════════════════════════════════════════════════════
+
+  servicios_profesionales_autonomo:
+    descripcion: "Honorarios de profesionales autónomos: asesores, consultores, abogados, arquitectos, informáticos, diseñadores..."
+    subcuenta: "6230000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: 15
+    irpf_condicion: "tipo_persona == fisica AND actividad_profesional == true"
+    operaciones_extra: []
+    preguntas: [inicio_actividad_autonomo]
+    subcategoria_por_respuesta:
+      inicio_actividad:
+        irpf_pct: 7
+        notas: "Nuevo autónomo: retención reducida 7% durante año de inicio y los 2 siguientes."
+      actividad_consolidada:
+        irpf_pct: 15
+        notas: "Retención general 15% para profesionales con más de 2 años de actividad."
+    keywords_proveedor: [abogados, letrado, procurador, arquitecto, ingeniero, asesor, consultor,
+                          gestor, auditor, perito, veterinario, psicólogo, fisioterapeuta,
+                          traductor, intérprete, diseñador, programador, informático, fotógrafo]
+    keywords_lineas: [honorarios, minuta, servicios profesionales, consultoría, asesoramiento,
+                      dirección técnica, peritaje, informe técnico, proyecto]
+    base_legal: "Art.90 LIVA, Art.101.5 LIRPF"
+    notas: "La factura del autónomo debe indicar el % de retención. Sin indicación → aplicar 15% por defecto."
+
+  servicios_asesoria_gestoria:
+    descripcion: "Gestoría, asesoría fiscal/contable, auditoría"
+    subcuenta: "6230000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: 15
+    irpf_condicion: "tipo_persona == fisica"
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [gestoría, asesoría fiscal, asesoría contable, auditor, auditoria,
+                          despacho profesional, gabinete fiscal]
+    keywords_lineas: [cuota mensual gestoría, servicios contables, asesoramiento fiscal,
+                      presentación impuestos, declaración, modelo 303, modelo 100, auditoría]
+    base_legal: "Art.90 LIVA, Art.101.5 LIRPF"
+    notas: "Si la gestoría es sociedad → sin retención IRPF. Si es autónomo → 15%."
+
+  servicios_notaria:
+    descripcion: "Servicios notariales: escrituras, protocolos, copias"
+    subcuenta: "6230000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: 15
+    irpf_condicion: "tipo_persona == fisica"
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [notaría, notario, notarial]
+    keywords_lineas: [escritura, protocolo notarial, aranceles notariales, copia notarial, poder]
+    base_legal: "Art.90 LIVA, Art.101.5 LIRPF"
+    notas: "Los honorarios del notario llevan IVA. Los aranceles registrales son exentos."
+
+  servicios_registro:
+    descripcion: "Gastos de registro: Registro Mercantil, Registro de la Propiedad"
+    subcuenta: "6230000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [registro mercantil, registro de la propiedad, registrador]
+    keywords_lineas: [inscripción registral, arancel registral, depósito de cuentas, asiento]
+    base_legal: "Art.20 LIVA"
+    notas: "Los aranceles del registro están exentos de IVA."
+
+  servicios_informatica_empresa:
+    descripcion: "Servicios informáticos de empresas: desarrollo software, hosting, SaaS"
+    subcuenta: "6220000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [informática, software, sistemas, it services, tecnología, digital,
+                          cloud, hosting, web, apps, desarrollo, microsoft, google workspace,
+                          amazon aws, oracle, salesforce, hubspot, dropbox, adobe creative]
+    keywords_lineas: [licencia, subscripción, mantenimiento, soporte técnico, desarrollo,
+                      programación, hosting, dominio, cloud, servidor, saas, mrr, arr]
+    base_legal: "Art.90 LIVA"
+    notas: "SaaS extranjeros (Google, Microsoft, AWS): si tienen establecimiento permanente en España → IVA21. Si son servicios intracomunitarios o extracomunitarios → ISP o sin IVA."
+
+  servicios_limpieza:
+    descripcion: "Servicios de limpieza, seguridad, vigilancia, jardinería, mantenimiento"
+    subcuenta: "6220000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [limpieza, mantenimiento, seguridad, vigilancia, jardinería, conserjería,
+                          fumigación, desinfección, gestión edificio]
+    keywords_lineas: [servicio de limpieza, limpieza mensual, vigilancia, jardinería,
+                      mantenimiento edificio, fumigación, desratización]
+    base_legal: "Art.90 LIVA"
+    notas: "Si la empresa de limpieza factura a un particular (no empresa) → IVA10. Para empresas → IVA21."
+
+  servicios_publicidad:
+    descripcion: "Publicidad, marketing y comunicación"
+    subcuenta: "6270000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [agencia publicidad, marketing, diseño gráfico, branding, community manager,
+                          seo, sem, redes sociales, prensa, radio, televisión, vallas, imprenta,
+                          fotografía, vídeo producción]
+    keywords_lineas: [campaña, anuncio, publicidad, marketing, diseño, branding, fotografía,
+                      vídeo, contenidos, google ads, facebook ads, instagram, linkedin, banner,
+                      impresión, díptico, folleto]
+    base_legal: "Art.90 LIVA"
+    notas: "Google Ads, Meta Ads: si se facturan desde Irlanda (IE) o Países Bajos (NL) → intracomunitario → sin IVA + ISP."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 5: TRANSPORTE (624)
+  # ═══════════════════════════════════════════════════════
+
+  transporte_mercancias:
+    descripcion: "Transporte y mensajería de mercancías, paquetería"
+    subcuenta: "6240000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [seur, mrw, ups, fedex, dhl, nacex, gls, tnt, envialia, zeleris,
+                          ontime, tipsa, integra2, logística, transporte, mensajería, paquetería,
+                          transportista, agencia de transporte]
+    keywords_lineas: [envío, portes, flete, transporte, mensajería, paquete, expedición,
+                      entrega, recogida, albarán transporte]
+    base_legal: "Art.90 LIVA"
+    notas: "Correos S.A. (servicio postal universal) está EXENTO art.20. Empresas privadas (SEUR, DHL...) IVA21."
+
+  correos_exento:
+    descripcion: "Servicio postal universal (Correos S.A.)"
+    subcuenta: "6240000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [correos, correos express, servicio postal universal]
+    keywords_lineas: [sello, carta certificada, telegrama, giro postal, apartado de correos]
+    base_legal: "Art.20.Uno.1 LIVA"
+    notas: "Solo el servicio postal universal está exento. Correos Express (empresa privada) → IVA21."
+
+  transporte_viajeros:
+    descripcion: "Transporte de viajeros: tren, avión, autobús, taxi, barco"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [renfe, iberia, vueling, ryanair, easyjet, air europa, binter,
+                          alsa, avanza, taxi, cabify, uber, blablacar, balearia, trasmediterranea,
+                          metro, tmb, emt, avlo, ouigo]
+    keywords_lineas: [billete, trayecto, asiento, vuelo, viaje, pasaje, reserva, destino,
+                      asiento, billete ida, billete vuelta]
+    base_legal: "Art.91.Uno.2.k LIVA"
+    notas: "IVA10 para transporte de viajeros y sus equipajes."
+
+  peajes_autopista:
+    descripcion: "Peajes de autopista y vías de peaje"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: null
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: [tipo_vehiculo]
+    subcategoria_por_respuesta:
+      turismo:
+        iva_deducible_pct: 50
+        operaciones_extra: [iva_turismo_50]
+      comercial:
+        iva_deducible_pct: 100
+    keywords_proveedor: [abertis, autopista, peaje, via-t, telepeaje, aucalsa, audasa,
+                          ap-7, a-6, iberpistas, tpf peajes, aseta]
+    keywords_lineas: [peaje, toll, pasada, vía autopista, telepeaje, ap-]
+    base_legal: "Art.95.Tres.2 LIVA"
+    notas: "Mismo criterio de deductibilidad que combustible: turismo 50%, comercial 100%."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 6: SEGUROS (625)
+  # ═══════════════════════════════════════════════════════
+
+  seguros:
+    descripcion: "Seguros: multirriesgo, vehículo, vida, responsabilidad civil, afianzamiento..."
+    subcuenta: "6250000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [mapfre, axa, allianz, zurich, generali, mutua madrileña, sanitas,
+                          adeslas, aseguradora, mutualidad, mútua, caser, catalana occidente,
+                          helvetia, hiscox, ergo, reale, pelayo, aig, liberty seguros,
+                          segurcaixa, bnp paribas cardif, zurich vida, linea directa]
+    keywords_lineas: [prima, seguro, cobertura, póliza, siniestro, franquicia, asistencia en viaje,
+                      recibo seguro, renovación póliza, seguro de accidentes]
+    base_legal: "Art.20.Uno.16 LIVA"
+    notas: "Los seguros están EXENTOS de IVA. No hay cuenta 472. La prima es el gasto bruto. No aplica criterio turismo/comercial para el seguro (sí para reparaciones y combustible)."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 7: SERVICIOS BANCARIOS (626)
+  # ═══════════════════════════════════════════════════════
+
+  comisiones_bancarias:
+    descripcion: "Comisiones bancarias y gastos de cuenta: mantenimiento, transferencias, tarjetas"
+    subcuenta: "6260000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [banco santander, bbva, caixabank, sabadell, bankinter, ibercaja, cajamar,
+                          unicaja, kutxabank, openbank, ing, revolut business, wise business,
+                          stripe, paypal, bizum empresas, redsys, squareup, sumup]
+    keywords_lineas: [comisión, mantenimiento cuenta, tarifa, transferencia, orden de pago,
+                      cuota tarjeta, cargo, servicio bancario, comisión gestión, comisión custodia]
+    base_legal: "Art.20.Uno.18 LIVA"
+    notas: "Servicios financieros EXENTOS art.20. Stripe/PayPal: verificar si facturan con IVA (si tienen establecimiento en España → IVA21, si facturan desde Irlanda → intracomunitario sin IVA)."
+
+  intereses_prestamos:
+    descripcion: "Intereses de préstamos, créditos y descubiertos"
+    subcuenta: "6620000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: []
+    keywords_lineas: [intereses, cuota préstamo, tae, amortización principal, capital pendiente,
+                      intereses descubierto, diferencial euribor, comisión apertura]
+    base_legal: "Art.20.Uno.18 LIVA"
+    notas: "Los intereses financieros están exentos de IVA. La cuota de un préstamo = intereses (exento) + devolución capital (no es gasto)."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 8: REPARACIONES Y MANTENIMIENTO (622)
+  # ═══════════════════════════════════════════════════════
+
+  reparacion_vehiculos:
+    descripcion: "Reparación y mantenimiento de vehículos: taller, ITV, neumáticos..."
+    subcuenta: "6220000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: null
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: [tipo_vehiculo]
+    subcategoria_por_respuesta:
+      turismo:
+        iva_deducible_pct: 50
+        operaciones_extra: [iva_turismo_50]
+      comercial:
+        iva_deducible_pct: 100
+    keywords_proveedor: [taller, mecánico, carrocería, neumáticos, michelin, continental,
+                          bridgestone, goodyear, pirelli, vulcanizado, itv, autoservicio,
+                          concesionario, reparación vehículos, óptica vehículos]
+    keywords_lineas: [reparación vehículo, cambio aceite, neumáticos, frenos, revisión,
+                      itv, mantenimiento vehículo, cambio filtro, diagnóstico, sustitución pieza]
+    base_legal: "Art.95.Tres.2 LIVA"
+    notas: "Mismo criterio que combustible: turismo 50%, comercial 100%."
+
+  reparacion_inmuebles:
+    descripcion: "Reparación y mantenimiento de local, oficina, instalaciones"
+    subcuenta: "6220000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [construcción, reformas, albañilería, electricista, fontanero, pintura,
+                          carpintería, cerrajero, cristalero, instalador, climatización, hvac]
+    keywords_lineas: [obra, reforma, reparación, instalación, pintura, fontanería,
+                      electricidad, carpintería, cristal, suelo, tejado, cubierta]
+    base_legal: "Art.90 LIVA"
+    notas: "¡OJO! Obras de rehabilitación de inmuebles → posible Inversión del Sujeto Pasivo (ISP) art.84 LIVA. Verificar si supera umbrales de rehabilitación."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 9: HOSTELERÍA Y RESTAURACIÓN
+  # ═══════════════════════════════════════════════════════
+
+  hosteleria_restauracion:
+    descripcion: "Restaurantes, bares, hoteles, caterings (reuniones empresa, viajes negocios)"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [restaurante, bar, cafetería, hotel, hostal, catering, comedor, taberna,
+                          chiringuito, terraza, mesón, venta, parador, meliá, nh hoteles,
+                          room mate, ibis, accor, hilton, marriott]
+    keywords_lineas: [menú, cubierto, almuerzo, cena, desayuno, comida, bebida, servicio mesa,
+                      cóctel, aperitivo, habitación hotel, noche, check-in, room service]
+    base_legal: "Art.91.Uno.2.i LIVA"
+    notas: "IVA10 en hostelería. El gasto es deducible si tiene correlación con la actividad (reuniones, viajes). Art.96.1.5 LIVA: atenciones a clientes — deducible dentro del 1% de la cifra de negocios en IS."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 10: MATERIAL, EQUIPOS Y BIENES DE INVERSIÓN
+  # ═══════════════════════════════════════════════════════
+
+  material_oficina:
+    descripcion: "Material de oficina, papelería, consumibles: papel, tóner, bolígrafos..."
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [staples, office depot, papelería, officemáx, carrefour office,
+                          el corte inglés papelería, amazon business, fnac, pccomponentes,
+                          office 2000, abacus]
+    keywords_lineas: [papel, folios, tóner, cartuchos, bolígrafos, archivadores, material oficina,
+                      sello, sobres, grapadora, etiquetas, clips]
+    base_legal: "Art.90 LIVA"
+    notas: "Gasto corriente del ejercicio. Si un bien supera 300€ y duración > 1 año → bien de inversión."
+
+  equipos_informaticos:
+    descripcion: "Equipos informáticos: ordenadores, impresoras, tablets, servidores"
+    subcuenta: "2170000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [apple, dell, hp, lenovo, samsung, fnac, pccomponentes, mediamarkt,
+                          carrefour tech, worten, amazon computers, microsoft surface]
+    keywords_lineas: [ordenador, portátil, tablet, impresora, monitor, teclado, ratón, smartphone,
+                      servidor, disco duro, router, switch de red, ups corriente]
+    base_legal: "Art.90 LIVA, Art.108 LIVA (bienes de inversión)"
+    notas: "Si importe > 300€ y duración útil > 1 año → bien de inversión, subcuenta 217 Equipos para procesos información. Amortización 25% anual (4 años tabla AEAT)."
+
+  maquinaria_equipos:
+    descripcion: "Maquinaria, equipos industriales, instalaciones, herramientas > 300€"
+    subcuenta: "2130000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    flag_bien_inversion: true
+    umbral_bien_inversion: 300
+    keywords_lineas: [maquinaria, equipo industrial, instalación, planta, motor, compresor,
+                      frigorífico industrial, cámara frigorífica, horno industrial,
+                      lavaplatos industrial, cortadora, envasadora]
+    base_legal: "Art.90 LIVA, Art.108 LIVA"
+    notas: "Bien de inversión. Si base imponible > 3.005,06€ → posible prorrata especial IVA art.108. Amortización según tabla AEAT (8-12% general maquinaria, 10 años)."
+
+  mobiliario:
+    descripcion: "Mobiliario de oficina o local: mesas, sillas, estanterías, mostradores"
+    subcuenta: "2160000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_lineas: [mesa, silla, estantería, armario, mostrador, mueble, vitrina, expositor,
+                      sofá oficina, sillón, mesa reuniones]
+    base_legal: "Art.90 LIVA"
+    notas: "Bien amortizable. Coeficiente lineal máximo 10% (10 años tabla AEAT)."
+
+  vehiculo_empresa:
+    descripcion: "Compra de vehículo de empresa"
+    subcuenta: "2240000000"
+    iva_codimpuesto: IVA21
+    iva_tasa: 21
+    iva_deducible_pct: null
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: [tipo_vehiculo]
+    subcategoria_por_respuesta:
+      turismo:
+        iva_deducible_pct: 50
+        notas: "Vehículo turismo: 50% IVA deducible en la compra. Art.95.Tres.2 LIVA."
+      comercial:
+        iva_deducible_pct: 100
+        notas: "Vehículo comercial: 100% IVA deducible (camión, furgoneta, tractora...)."
+    keywords_lineas: [vehículo, automóvil, turismo, furgoneta, camión, motocicleta,
+                      matrícula, bastidor, concesionario, compra vehículo]
+    base_legal: "Art.95.Tres.2 LIVA, Art.108 LIVA"
+    notas: "Bien de inversión. Amortización según tabla AEAT. IVA deducible 50% si turismo, 100% si comercial."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 11: TRIBUTOS Y TASAS (631)
+  # ═══════════════════════════════════════════════════════
+
+  tributos_tasas:
+    descripcion: "Impuestos municipales, tasas, arbitrios, licencias administrativas"
+    subcuenta: "6310000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [ayuntamiento, diputación, junta, generalitat, administración, hacienda,
+                          tráfico, catastro, agencia tributaria, aeat, ministerio]
+    keywords_lineas: [ibi, iae, ivtm, tasa, licencia apertura, licencia actividad, canon,
+                      impuesto municipal, tasa basuras, tasa agua, tasa residuos, recibo, recaudación]
+    base_legal: "N/A — no hay IVA en tributos públicos"
+    notas: "Los tributos y tasas públicas no llevan IVA. Son gasto directamente contabilizable en 631."
+
+  sanciones_multas:
+    descripcion: "Multas, sanciones y recargos de organismos públicos"
+    subcuenta: "6790000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_lineas: [multa, sanción, recargo, penalización, infracción, denuncia]
+    base_legal: "N/A"
+    notas: "Las multas y sanciones NO son gasto fiscalmente deducible en IS (art.15.c LIS). Sí se contabilizan pero no deducen en base imponible del IS."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 12: GASTOS DE PERSONAL (640, 642)
+  # ═══════════════════════════════════════════════════════
+
+  nominas:
+    descripcion: "Nóminas y retribuciones a empleados"
+    subcuenta: "6400000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_lineas: [salario, nómina, sueldo, retribución bruta, irpf laboral, ss empresa,
+                      paga extraordinaria, complemento, plus, horas extra]
+    base_legal: "N/A — relación laboral, no sujeto a IVA"
+    notas: "Las nóminas no tienen IVA. Tipo doc: NOM. Las retenciones IRPF laborales se contabilizan en 4751."
+    tipo_doc_asociado: "NOM"
+
+  seguridad_social:
+    descripcion: "Cuotas de Seguridad Social (autónomo o empresa, cuota empresarial)"
+    subcuenta: "6420000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [seguridad social, tesorería general, tgss, inss, mutua colaboradora,
+                          fremap, asepeyo, mutua universal]
+    keywords_lineas: [cuota autónomo, cuota empresarial, contingencias comunes, desempleo,
+                      fogasa, formación profesional, mutua, cuota ss]
+    base_legal: "N/A"
+    notas: "No hay IVA en las cuotas de SS. Tipo doc: RLC o IMP."
+    tipo_doc_asociado: "RLC"
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 13: HOSTELERÍA — PELUQUERÍA Y BIENESTAR (IVA10)
+  # ═══════════════════════════════════════════════════════
+
+  peluqueria_estetica:
+    descripcion: "Peluquería, barbería, centros de belleza, masajes"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA10
+    iva_tasa: 10
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [peluquería, barbería, estética, salón de belleza, spa, masaje,
+                          fisioterapia no sanitaria, depilación]
+    keywords_lineas: [corte, peluquería, depilación, manicura, pedicura, masaje, tratamiento estético]
+    base_legal: "Art.91.Uno.2.j LIVA"
+    notas: "IVA reducido 10% para peluquería e higiene personal."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 14: SANIDAD Y EDUCACIÓN (EXENTOS)
+  # ═══════════════════════════════════════════════════════
+
+  servicios_sanitarios:
+    descripcion: "Médicos, dentistas (tratamientos curativos), análisis clínicos, hospitales"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [clínica, hospital, médico, dentista, odontólogo, fisioterapeuta,
+                          laboratorio análisis, farmacia, óptica, psicólogo, nutricionista]
+    keywords_lineas: [consulta médica, análisis, diagnóstico, tratamiento, intervención,
+                      fisioterapia, consulta dental]
+    base_legal: "Art.20.Uno.2-4 LIVA"
+    notas: "Servicios sanitarios exentos art.20. OJO: prótesis dentales y gafas → IVA10."
+
+  servicios_educacion:
+    descripcion: "Formación, cursos, academia, enseñanza reglada"
+    subcuenta: "6290000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 0
+    exento_art20: true
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    keywords_proveedor: [academia, escuela, universidad, instituto, colegio, centro formación,
+                          formación profesional, cursos, udemy, coursera, linkedinlearning]
+    keywords_lineas: [curso, formación, matrícula, colegiatura, taller, seminario, conferencia,
+                      inscripción formativa]
+    base_legal: "Art.20.Uno.9-10 LIVA"
+    notas: "Enseñanza reglada y formación reconocida: exenta. Formación no reglada y consultoría formativa → IVA21. Verificar si el proveedor es entidad reconocida."
+
+  # ═══════════════════════════════════════════════════════
+  # GRUPO 15: OPERACIONES ESPECIALES
+  # ═══════════════════════════════════════════════════════
+
+  intracomunitario:
+    descripcion: "Adquisición intracomunitaria de bienes/servicios (proveedor UE sin ESP)"
+    subcuenta: null
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: [crear_partidas_477_472]
+    preguntas: []
+    keywords_proveedor: []
+    keywords_lineas: []
+    condicion_activacion: "pais_ue == true AND pais != ESP"
+    base_legal: "Art.13-18 LIVA, Art.84.Uno.2 LIVA"
+    notas: "Autoliquidación: el receptor español autorrepercute IVA al tipo español. DEBE 472 / HABER 477 por el mismo importe. Si prorrata 100%, efecto neto cero. El proveedor emite sin IVA."
+
+  extracomunitario:
+    descripcion: "Compra a proveedor fuera de la UE (importación)"
+    subcuenta: null
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: []
+    preguntas: []
+    condicion_activacion: "pais_ue == false AND pais != ESP"
+    base_legal: "Art.17-18 LIVA"
+    notas: "El IVA se liquida en aduana española al DUA. Los gastos de agente aduanero/suplidos van a 4709."
+
+  suplidos_aduaneros:
+    descripcion: "Suplidos y gastos portuarios/aduaneros facturados por agente transitario"
+    subcuenta: "4709000000"
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: [reclasificar_600_a_4709]
+    preguntas: []
+    condicion_activacion: "keywords_lineas MATCH patrones_suplidos"
+    base_legal: "Art.78 LIVA (suplidos)"
+    notas: "Gastos en nombre del cliente: arancel, DUA, tasa portuaria, certificados. Reclasificar de 600 → 4709. Ver reglas/patrones_suplidos.yaml para lista completa de keywords."
+
+  inversion_sujeto_pasivo:
+    descripcion: "Inversión del Sujeto Pasivo — el receptor autoliquida el IVA (obras construcción, rehabilitación)"
+    subcuenta: null
+    iva_codimpuesto: IVA0
+    iva_tasa: 0
+    iva_deducible_pct: 100
+    exento_art20: false
+    irpf_pct: null
+    operaciones_extra: [crear_partidas_477_472_isp]
+    preguntas: []
+    condicion_activacion: "categoria IN [construccion_rehabilitacion]"
+    base_legal: "Art.84.Uno.2.f LIVA"
+    notas: "El proveedor factura SIN IVA con nota 'Inversión del sujeto pasivo'. El receptor (nosotros) autoliquidamos IVA. Aplica principalmente en obras de construcción/rehabilitación inmuebles."

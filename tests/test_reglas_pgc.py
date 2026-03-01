@@ -17,10 +17,11 @@ def test_cif_espanol_general():
     assert 21 in info["iva_factura_validos"]
 
 
-def test_cif_portugues_extracom():
+def test_cif_portugues_intracom():
+    # Portugal es miembro UE → intracomunitario (corregido en c85dcf7)
     info = detectar_regimen_por_cif("PT123456789")
     assert info["pais"] == "PRT"
-    assert info["regimen"] == "extracomunitario"
+    assert info["regimen"] == "intracomunitario"
     assert info["iva_factura_validos"] == [0]
 
 
