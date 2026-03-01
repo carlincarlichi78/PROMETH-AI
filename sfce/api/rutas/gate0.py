@@ -64,7 +64,7 @@ async def ingestar_documento(
             if emisor_cif:
                 try:
                     from sfce.core.supplier_rules import buscar_regla_aplicable, aplicar_regla
-                    regla = buscar_regla_aplicable(empresa_id, emisor_cif, sesion)
+                    regla = buscar_regla_aplicable(sesion=sesion, emisor_cif=emisor_cif, empresa_id=empresa_id)
                     if regla and regla.auto_aplicable:
                         aplicar_regla(regla, campos_prefill)
                         supplier_rule_aplicada = True
