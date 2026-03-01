@@ -722,6 +722,10 @@ class ColaProcesamiento(Base):
     decision = Column(String(30), nullable=True)
     hints_json = Column(Text, default="{}")
     sha256 = Column(String(64), nullable=True, index=True)
+    datos_ocr_json = Column(Text, nullable=True)          # JSON datos extraídos por OCR
+    coherencia_score = Column(Float, nullable=True)        # Score coherencia fiscal [0-100]
+    worker_inicio = Column(DateTime, nullable=True)        # Timestamp inicio procesamiento (para recovery)
+    reintentos = Column(Integer, default=0)                # Contador de reintentos por recovery
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
