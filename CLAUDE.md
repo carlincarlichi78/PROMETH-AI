@@ -190,8 +190,12 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
   - `prometh-desktop/` — fork CertiGestor: cliente HMAC, config IPC, pantalla Configuracion.tsx
 - **Nuevas rutas API**: `/api/colas/revision`, `/api/colas/{id}/aprobar|rechazar|escalar`, `/api/gate0/ingestar-zip`
 - **Migración ejecutada**: 008_supplier_rules.py en sfce.db
-- **Pendiente C1-C4**: worker OCR Gate 0, recovery bloqueados, coherencia_fiscal.py, migrar aprendizaje.yaml → supplier_rules
-- **Siguiente**: I1-I6 issues-patch, o Libro de Instrucciones (`docs/plans/2026-03-01-libro-instrucciones-plan.md`)
+- **C1-C4 DISEÑO + PLAN LISTOS (01/03/2026)**:
+  - Design doc: `docs/plans/2026-03-01-c1-c4-pipeline-completion-design.md`
+  - Plan implementación: `docs/plans/2026-03-01-c1-c4-pipeline-completion-plan.md` (8 tasks, ~35 tests)
+  - **Para ejecutar**: nueva sesión → leer CLAUDE.md + plan → invocar `superpowers:executing-plans`
+  - Orden tasks: T1 coherencia_fiscal → T2 gate0 5 factores → T3 ocr_gpt → T4 worker → T5 lifespan → T6 recovery → T7 migración YAML → T8 verificación
+- **Siguiente alternativa**: I1-I6 issues-patch, o Libro de Instrucciones (`docs/plans/2026-03-01-libro-instrucciones-plan.md`)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
