@@ -20,6 +20,12 @@ import {
 
 const QUERY_KEY = ['admin', 'gestorias'] as const
 
+const TIER_COLOR: Record<string, string> = {
+  basico:  'text-slate-600 border-slate-300',
+  pro:     'text-blue-600 border-blue-300',
+  premium: 'text-amber-600 border-amber-300',
+}
+
 function FormularioGestoria({ onExito }: { onExito: () => void }) {
   const qc = useQueryClient()
   const [form, setForm] = useState<CrearGestoriaDto>({
@@ -182,7 +188,15 @@ export default function GestoriasPage() {
                       <Building2 className="h-4 w-4 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-sm truncate">{g.nombre}</CardTitle>
+                      <div className="flex items-center gap-1.5">
+                        <CardTitle className="text-sm truncate">{g.nombre}</CardTitle>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] uppercase flex-shrink-0 ${TIER_COLOR[g.plan_tier ?? 'basico'] ?? TIER_COLOR.basico}`}
+                        >
+                          {g.plan_tier ?? 'basico'}
+                        </Badge>
+                      </div>
                       <CardDescription className="text-xs">{g.cif}</CardDescription>
                     </div>
                   </div>

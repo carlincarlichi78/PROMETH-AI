@@ -11,6 +11,8 @@ export interface Gestoria {
   plan_asesores: number
   plan_clientes_tramo: string
   fecha_alta: string | null
+  plan_tier?: 'basico' | 'pro' | 'premium'
+  limite_empresas?: number | null
 }
 
 export interface CrearGestoriaDto {
