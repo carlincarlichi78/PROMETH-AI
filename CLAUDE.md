@@ -179,21 +179,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, noche)
+## Estado actual (01/03/2026, sesión 2)
 
 **Rama activa**: `main`
 **Tests**: 2095 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
 ## MCF — Motor de Clasificación Fiscal (COMPLETADO, en main)
 
-- `reglas/categorias_gasto.yaml` — 30 categorías fiscales (LIVA+LIRPF 2025)
+- `reglas/categorias_gasto.yaml` — **50 categorías** fiscales (LIVA+LIRPF 2025), cobertura multisectorial: hostelería, construcción, alimentación, bebidas, limpieza, packaging, representación, alquiler maquinaria
 - `sfce/core/clasificador_fiscal.py` — ClasificadorFiscal + wizard + a_entrada_config
 - `sfce/core/informe_cuarentena.py` — informe estructurado BD+carpeta con sugerencias MCF
 - Handler `iva_turismo_50` en `correction.py` — Art.95.Tres.2 LIVA split 50/50
 - Wizard MCF en `intake._descubrimiento_interactivo` — reemplaza 8 inputs manuales
-- 70 tests nuevos: `test_clasificador_fiscal.py` (53) + `test_informe_cuarentena.py` (17)
+- 70 tests: `test_clasificador_fiscal.py` (53) + `test_informe_cuarentena.py` (17)
 
-## Pendiente (baja prioridad)
-- Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
-- Tests E2E dashboard (Playwright)
-- Backend: endpoint `/api/notificaciones/suscribir` para push real
+## Pendiente (próxima sesión — elegir)
+1. **Motor de Escenarios de Campo** — probar el MCF contra datos reales de Pastorino/chiringuito (`scripts/motor_campo.py --modo rapido`)
+2. **Página cuarentena en dashboard** — UI para revisar items + resolver desde el dashboard
+3. **Integrar MCF en pipeline completo** — que el informe cuarentena se genere automáticamente al final de cada pipeline
+4. **Migración SQLite→PostgreSQL** (`scripts/migrar_sqlite_a_postgres.py`)
+5. **Tests E2E dashboard** (Playwright)
