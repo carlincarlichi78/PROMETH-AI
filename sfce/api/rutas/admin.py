@@ -26,6 +26,11 @@ class InvitarUsuarioRequest(BaseModel):
     rol: str  # "asesor" | "admin_gestoria"
 
 
+class CrearClienteDirectoRequest(BaseModel):
+    email: EmailStr
+    nombre: str
+
+
 @router.post("/gestorias", status_code=201)
 def crear_gestoria(
     datos: CrearGestoriaRequest,
@@ -150,6 +155,64 @@ def invitar_usuario(
             "nombre": usuario.nombre,
             "rol": usuario.rol,
             "gestoria_id": gestoria_id,
+            "invitacion_token": token,
+            "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
+            "expira": expira.isoformat(),
+        }
+
+
+@router.post("/clientes-directos", status_code=201)
+def crear_cliente_directo(
+    datos: CrearClienteDirectoRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Crea un cliente directo sin gestoría. Solo superadmin."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+
+    token = secrets.token_urlsafe(32)
+    expira = datetime.utcnow() + timedelta(days=7)
+
+    with sesion_factory() as sesion:
+        existente = sesion.query(Usuario).filter(Usuario.email == datos.email).first()
+        if existente:
+            raise HTTPException(status_code=409, detail="Email ya registrado")
+
+        cliente = Usuario(
+            email=datos.email,
+            nombre=datos.nombre,
+            rol="cliente",
+            gestoria_id=None,
+            hash_password=hashear_password("PENDIENTE"),
+            invitacion_token=token,
+            invitacion_expira=expira,
+            forzar_cambio_password=True,
+            totp_habilitado=False,
+            activo=True,
+            empresas_asignadas=[],
+        )
+        sesion.add(cliente)
+        sesion.commit()
+        sesion.refresh(cliente)
+
+        try:
+            from sfce.core.email_service import obtener_servicio_email
+            obtener_servicio_email().enviar_invitacion(
+                destinatario=datos.email,
+                nombre=datos.nombre,
+                url_invitacion=f"/auth/aceptar-invitacion?token={token}",
+            )
+        except Exception:
+            pass
+
+        return {
+            "id": cliente.id,
+            "email": cliente.email,
+            "nombre": cliente.nombre,
+            "rol": cliente.rol,
+            "gestoria_id": None,
             "invitacion_token": token,
             "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
             "expira": expira.isoformat(),
