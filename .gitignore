@@ -69,3 +69,6 @@ tmpclaude-*
 # Motor de testeo
 data/
 /tmp/sfce_*.json
+
+# Git worktrees
+.worktrees/
