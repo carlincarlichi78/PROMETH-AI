@@ -361,3 +361,13 @@ header[class*="border-b"] {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
+
+/* Empresa avatar — colores por índice (sin inline styles) */
+.empresa-avatar-1 { background-color: #d97706; }
+.empresa-avatar-2 { background-color: #059669; }
+.empresa-avatar-3 { background-color: #7c3aed; }
+.empresa-avatar-4 { background-color: #dc2626; }
+.empresa-avatar-5 { background-color: #0891b2; }
+.empresa-avatar-6 { background-color: #be185d; }
+.empresa-avatar-7 { background-color: #047857; }
+.empresa-avatar-8 { background-color: #b45309; }

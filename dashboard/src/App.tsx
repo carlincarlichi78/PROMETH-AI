@@ -62,6 +62,9 @@ const ColaRevision = lazy(() => import('@/features/colas/cola-revision-page'))
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
 
+// --- Configuración global ---
+const ConfiguracionPage = lazy(() => import('@/features/configuracion/configuracion-page').then(m => ({ default: m.ConfiguracionPage })))
+
 // --- Correo ---
 const CorreoPage = lazy(() => import('@/features/correo/index'))
 
@@ -164,6 +167,10 @@ export function App() {
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
           <Route path="/salud/:id" element={<SesionDetallePage />} />
+
+          {/* Configuración global */}
+          <Route path="/configuracion" element={<ConfiguracionPage />} />
+          <Route path="/configuracion/:seccion" element={<ConfiguracionPage />} />
 
           {/* Portal Cliente */}
           <Route path="/empresa/:id/portal" element={<Portal />} />
