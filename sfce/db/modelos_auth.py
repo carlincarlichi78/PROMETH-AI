@@ -53,6 +53,11 @@ class Usuario(Base):
     totp_secret = Column(String(64), nullable=True)
     totp_habilitado = Column(Boolean, nullable=False, default=False)
 
+    # Campos de invitación (onboarding)
+    invitacion_token = Column(String(128), nullable=True, unique=True, index=True)
+    invitacion_expira = Column(DateTime, nullable=True)
+    forzar_cambio_password = Column(Boolean, default=False, nullable=False)
+
     gestoria = relationship("Gestoria", back_populates="usuarios")
 
 
