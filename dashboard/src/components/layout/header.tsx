@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { Search, Moon, Sun, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -14,10 +15,24 @@ import { useAuth } from '@/context/AuthContext'
 import { useUIStore } from '@/stores/ui-store'
 import { Breadcrumbs } from './breadcrumbs'
 import { NotificacionesPanel } from '@/features/notificaciones'
+import { OmniSearch } from '@/features/omnisearch/omnisearch'
 
 export function Header() {
   const { usuario, logout } = useAuth()
   const { tema, setTema, toggleCopilot } = useUIStore()
+  const [omniAbierto, setOmniAbierto] = React.useState(false)
+
+  // Keyboard shortcut global ⌘K / Ctrl+K
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setOmniAbierto(true)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   const iniciales =
     usuario?.nombre
@@ -38,18 +53,23 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-1">
-        {/* Busqueda global — placeholder visual */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden md:flex gap-2 text-muted-foreground h-8 px-3"
+        {/* OmniSearch — ⌘K */}
+        <button
+          type="button"
+          onClick={() => setOmniAbierto(true)}
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg
+                     bg-[var(--surface-1)] border border-border/50 text-muted-foreground
+                     hover:bg-[var(--surface-2)] hover:text-foreground transition-all duration-150
+                     text-[13px] min-w-[180px]"
         >
           <Search className="h-3.5 w-3.5" />
-          <span className="text-xs">Buscar...</span>
-          <kbd className="ml-1 rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
-            Ctrl+K
+          <span className="flex-1 text-left">Buscar...</span>
+          <kbd className="text-[11px] bg-[var(--surface-2)] px-1.5 py-0.5 rounded border border-border/50">
+            ⌘K
           </kbd>
-        </Button>
+        </button>
+
+        <OmniSearch abierto={omniAbierto} onCerrar={() => setOmniAbierto(false)} />
 
         {/* Notificaciones */}
         <NotificacionesPanel />
