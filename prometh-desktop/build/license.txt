@@ -1,0 +1,33 @@
+CONTRATO DE LICENCIA DE USUARIO FINAL (EULA)
+CertiGestor Desktop
+
+Copyright (c) 2024-2026 CertiGestor. Todos los derechos reservados.
+
+Al instalar o utilizar este software, usted acepta los siguientes terminos:
+
+1. LICENCIA
+   Se le concede una licencia no exclusiva e intransferible para usar CertiGestor
+   Desktop en un unico equipo, vinculada a su cuenta de CertiGestor activa.
+
+2. RESTRICCIONES
+   No podra: (a) descompilar, desensamblar o aplicar ingenieria inversa al software;
+   (b) redistribuir, sublicenciar o transferir el software a terceros;
+   (c) usar el software para fines ilegales.
+
+3. PROPIEDAD INTELECTUAL
+   El software y toda la documentacion asociada son propiedad de CertiGestor.
+
+4. PRIVACIDAD
+   El software recopila datos anonimizados de uso (version, plataforma, eventos
+   genericos) para mejorar el producto. No se recopilan datos personales identificables.
+   Puede desactivar la telemetria en Configuracion.
+
+5. LIMITACION DE RESPONSABILIDAD
+   El software se proporciona "tal cual", sin garantias de ningun tipo.
+   CertiGestor no sera responsable de danos derivados del uso del software.
+
+6. TERMINACION
+   Esta licencia se termina automaticamente si incumple cualquier termino.
+
+7. LEGISLACION APLICABLE
+   Este contrato se rige por la legislacion espanola.
