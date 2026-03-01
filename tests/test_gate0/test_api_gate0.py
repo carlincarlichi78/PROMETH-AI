@@ -184,3 +184,16 @@ def test_sin_emisor_cif_no_aplica_regla(app_con_supplier_rule, pdf_valido_tmp):
     assert resp.status_code == 202
     data = resp.json()
     assert data["supplier_rule_aplicada"] is False
+
+
+def test_endpoint_worker_estado(client_gestor):
+    """GET /api/gate0/worker/estado retorna estructura correcta."""
+    client, headers = client_gestor
+    resp = client.get("/api/gate0/worker/estado", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "activo" in data
+    assert "pendientes" in data
+    assert "procesados_hoy" in data
+    # En tests el worker no está activo (no hay lifespan real)
+    assert data["activo"] is False

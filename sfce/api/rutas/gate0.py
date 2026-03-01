@@ -1,5 +1,6 @@
 """Endpoint unificado de ingesta — Gate 0."""
 import logging
+from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -146,4 +147,39 @@ async def ingestar_zip(
         "encolados": resultado.encolados,
         "rechazados": resultado.rechazados,
         "errores": resultado.errores[:10],
+    }
+
+
+@router.get("/worker/estado")
+async def estado_worker(
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _usuario=Depends(obtener_usuario_actual),
+):
+    """Estado del worker OCR en background."""
+    from sfce.db.modelos import ColaProcesamiento
+    from sqlalchemy.orm import Session
+
+    task = getattr(request.app.state, "worker_ocr_task", None)
+    activo = task is not None and not task.done()
+
+    with sesion_factory() as sesion:
+        pendientes = (
+            sesion.query(ColaProcesamiento)
+            .filter(ColaProcesamiento.estado == "PENDIENTE")
+            .count()
+        )
+        procesados_hoy = (
+            sesion.query(ColaProcesamiento)
+            .filter(
+                ColaProcesamiento.estado == "PROCESADO",
+                ColaProcesamiento.updated_at >= date.today(),
+            )
+            .count()
+        )
+
+    return {
+        "activo": activo,
+        "pendientes": pendientes,
+        "procesados_hoy": procesados_hoy,
     }
