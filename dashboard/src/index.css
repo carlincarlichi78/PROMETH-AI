@@ -388,3 +388,18 @@ header[class*="border-b"] {
 .page-enter {
   animation: page-enter 150ms ease-out both;
 }
+
+/* Dark Intelligence — Advisor Premium */
+.advisor-dark {
+  --adv-bg: #0a0e1a;
+  --adv-surface: #111827;
+  --adv-surface-2: #1f2937;
+  --adv-border: #374151;
+  --adv-text: #f9fafb;
+  --adv-text-muted: #9ca3af;
+  --adv-accent: #f59e0b;
+  --adv-verde: #10b981;
+  --adv-rojo: #ef4444;
+  --adv-azul: #3b82f6;
+  --adv-font-data: 'JetBrains Mono', 'Fira Code', monospace;
+}
