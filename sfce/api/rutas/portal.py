@@ -193,6 +193,13 @@ async def subir_documento(
     usuario=Depends(obtener_usuario_actual),
 ):
     """Sube un documento desde la app movil (camara o galeria)."""
+    from sfce.core.tiers import tiene_feature_empresario
+    if not tiene_feature_empresario(usuario, "subir_docs"):
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "plan_insuficiente", "feature": "subir_docs", "requiere": "pro"},
+        )
+
     import hashlib
     from sfce.db.modelos import Documento
 

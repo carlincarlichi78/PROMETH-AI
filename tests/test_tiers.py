@@ -191,3 +191,72 @@ def test_me_incluye_plan_tier(client_tiers):
     r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 200
     assert "plan_tier" in r.json()
+
+
+# ──────────────────────────────────────────────────────────────────
+# Task 4: tests guard tier en subir_docs
+# ──────────────────────────────────────────────────────────────────
+import io
+
+
+def _seed_cliente(sesion_factory, plan_tier="basico"):
+    """Crea cliente con el tier indicado y empresa asignada."""
+    from sfce.db.modelos import Empresa
+    with sesion_factory() as s:
+        empresa = Empresa(
+            cif=f"B{plan_tier[:3].upper()}1234",
+            nombre="Empresa Tier Test",
+            forma_juridica="sl",
+            territorio="peninsula",
+            regimen_iva="general",
+        )
+        s.add(empresa)
+        s.flush()
+        cliente = Usuario(
+            email=f"cliente_{plan_tier}@test.com",
+            nombre="Cliente",
+            hash_password=hashear_password("cliente"),
+            rol="cliente",
+            activo=True,
+            empresas_asignadas=[empresa.id],
+            plan_tier=plan_tier,
+        )
+        s.add(cliente)
+        s.commit()
+        s.refresh(empresa)
+        return empresa.id
+
+
+def test_basico_no_puede_subir_documento(sf_tiers):
+    _seed_admin(sf_tiers)
+    empresa_id = _seed_cliente(sf_tiers, "basico")
+    app = crear_app(sesion_factory=sf_tiers)
+    client = TestClient(app)
+    tok = client.post("/api/auth/login", json={
+        "email": "cliente_basico@test.com", "password": "cliente"
+    }).json()["access_token"]
+
+    r = client.post(
+        f"/api/portal/{empresa_id}/documentos/subir",
+        files={"archivo": ("f.pdf", io.BytesIO(b"%PDF"), "application/pdf")},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 403
+    assert r.json()["detail"]["error"] == "plan_insuficiente"
+
+
+def test_pro_puede_subir_documento(sf_tiers):
+    _seed_admin(sf_tiers)
+    empresa_id = _seed_cliente(sf_tiers, "pro")
+    app = crear_app(sesion_factory=sf_tiers)
+    client = TestClient(app)
+    tok = client.post("/api/auth/login", json={
+        "email": "cliente_pro@test.com", "password": "cliente"
+    }).json()["access_token"]
+
+    r = client.post(
+        f"/api/portal/{empresa_id}/documentos/subir",
+        files={"archivo": ("f.pdf", io.BytesIO(b"%PDF"), "application/pdf")},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 201
