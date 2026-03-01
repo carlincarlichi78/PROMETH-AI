@@ -113,12 +113,20 @@ async def lifespan(app: FastAPI):
     )
     app.state.worker_ocr_task = worker_task
 
+    # Iniciar worker pipeline en background
+    from sfce.core.worker_pipeline import loop_worker_pipeline
+    pipeline_task = asyncio.create_task(loop_worker_pipeline(sesion_factory))
+    app.state.worker_pipeline_task = pipeline_task
+
     yield
 
-    # Apagar worker limpiamente
+    # Apagar workers limpiamente
     worker_task.cancel()
+    pipeline_task.cancel()
     with suppress(asyncio.CancelledError):
         await worker_task
+    with suppress(asyncio.CancelledError):
+        await pipeline_task
     engine.dispose()
 
 
