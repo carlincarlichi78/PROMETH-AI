@@ -32,6 +32,7 @@ import {
   Receipt,
   Activity,
   Archive,
+  HeartPulse,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -223,7 +224,16 @@ export function AppSidebar() {
       ]
     : []
 
-  const todosLosGrupos = [...gruposGenerales, ...gruposEmpresa]
+  const gruposSistema: GrupoMenu[] = [
+    {
+      label: 'Sistema',
+      items: [
+        { titulo: 'Salud del Sistema', ruta: '/salud', icono: HeartPulse },
+      ],
+    },
+  ]
+
+  const todosLosGrupos = [...gruposGenerales, ...gruposEmpresa, ...gruposSistema]
 
   return (
     <Sidebar collapsible="icon">
