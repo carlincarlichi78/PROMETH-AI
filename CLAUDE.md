@@ -208,10 +208,22 @@ Nuevas rutas frontend: `/admin/gestorias`, `/mi-gestoria`, `/portal` (índice mu
 Nuevos componentes backend: `auth_rutas` (aceptar-invitación), `email_service`, `ocr_036`, `ocr_escritura`, `fs_setup`, `migracion_historica`
 Flujos: invitación token 7 días → aceptar → JWT; clientes directos (gestoria_id=NULL); invitar cliente final al portal
 
-## Pendiente (próxima sesión — elegir)
-1. **Motor de Escenarios de Campo** — probar el MCF contra datos reales de Pastorino/chiringuito (`scripts/motor_campo.py --modo rapido`)
-2. **Página cuarentena en dashboard** — UI para revisar items + resolver desde el dashboard
-3. **Integrar MCF en pipeline completo** — que el informe cuarentena se genere automáticamente al final de cada pipeline
-4. **Nivel 2 completo end-to-end** — wizard empresa usando OCR 036/037 + fs_setup + migracion_historica encadenados
+## Próxima sesión — PRIORIDAD: Test Nivel 0 end-to-end
+
+**Contexto**: Las 4 levels del tablero están implementadas pero NO probadas en real.
+**Regla del tablero**: no avanzar de nivel sin que el anterior funcione end-to-end.
+
+**Nivel 0 a probar** (superadmin operativo):
+1. Superadmin crea gestoría desde `/admin/gestorias` en el dashboard
+2. Superadmin invita a admin de gestoría (token generado, email enviado o visible en respuesta)
+3. Admin gestoría acepta invitación (`POST /api/auth/aceptar-invitacion?token=xxx`)
+4. Admin gestoría entra al dashboard → ve `/mi-gestoria`
+
+Usar `superpowers:webapp-testing` (Playwright) para el flujo completo. Corregir lo que falle → verificar → solo entonces pasar a Nivel 1.
+
+## Pendiente (baja prioridad)
+- Motor de Escenarios de Campo (`scripts/motor_campo.py --modo rapido`)
+- Página cuarentena en dashboard
+- Integrar MCF en pipeline completo
 4. **Migración SQLite→PostgreSQL** (`scripts/migrar_sqlite_a_postgres.py`)
 5. **Tests E2E dashboard** (Playwright)
