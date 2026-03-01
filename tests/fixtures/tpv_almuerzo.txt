@@ -1,0 +1,25 @@
+CIERRE DE CAJA - ALMUERZO
+Fecha: 03/06/2026
+Hora apertura: 13:00  Hora cierre: 16:30
+
+RESUMEN DE VENTAS
+Total covers: 62
+Total facturado: 1.840,00 EUR
+
+DESGLOSE POR FAMILIA
+Cocina/Comida: 1.120,00 EUR
+Bebidas: 580,00 EUR
+Postres: 140,00 EUR
+
+ARTICULOS MAS VENDIDOS
+Paella valenciana x18 - 14,50 EUR - Total: 261,00 EUR
+Dorada a la sal x12 - 22,00 EUR - Total: 264,00 EUR
+Cerveza x45 - 2,80 EUR - Total: 126,00 EUR
+Vino Rioja Copa x28 - 4,50 EUR - Total: 126,00 EUR
+Postre casero x22 - 5,00 EUR - Total: 110,00 EUR
+
+METODOS DE PAGO
+Tarjeta: 1.540,00 EUR
+Efectivo: 300,00 EUR
+
+Mesas ocupadas: 14 de 20
