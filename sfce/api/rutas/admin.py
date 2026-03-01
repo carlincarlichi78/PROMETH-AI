@@ -87,6 +87,8 @@ def listar_gestorias(
                 "cif": g.cif,
                 "email_contacto": g.email_contacto,
                 "activa": g.activa,
+                "plan_asesores": g.plan_asesores,
+                "plan_clientes_tramo": g.plan_clientes_tramo,
             }
             for g in sesion.query(Gestoria).all()
         ]
