@@ -456,3 +456,39 @@ def invitar_cliente_a_empresa(
             "invitacion_token": token,
             "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
         }
+
+
+class InvitarOnboardingRequest(BaseModel):
+    email_empresario: str
+
+
+@router.post("/{empresa_id}/invitar-onboarding")
+def invitar_empresario_onboarding(
+    empresa_id: int,
+    datos: InvitarOnboardingRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Marca empresa como pendiente_cliente y envía invitación al empresario."""
+    from fastapi import HTTPException
+    _ROLES_GESTOR = {"superadmin", "admin_gestoria", "gestor", "asesor", "asesor_independiente"}
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = sesion.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        empresa.estado_onboarding = "pendiente_cliente"
+        sesion.commit()
+
+        try:
+            from sfce.core.email_service import enviar_invitacion_onboarding
+            enviar_invitacion_onboarding(datos.email_empresario, empresa.nombre)
+        except Exception:
+            pass  # Email es best-effort
+
+        return {"estado": empresa.estado_onboarding, "empresa_id": empresa_id}

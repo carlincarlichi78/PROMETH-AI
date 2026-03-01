@@ -81,3 +81,20 @@ def obtener_servicio_email() -> EmailService:
     if _servicio_global is None:
         _servicio_global = EmailService()
     return _servicio_global
+
+
+def enviar_invitacion_onboarding(email: str, nombre_empresa: str) -> None:
+    """Envia email al empresario para que complete el onboarding."""
+    asunto = f"Completa el alta de {nombre_empresa} en SFCE"
+    cuerpo = (
+        f"Tu gestoria ha iniciado el alta de {nombre_empresa} en SFCE.\n"
+        f"Accede a https://app.sfce.local/portal para completar tus datos.\n"
+    )
+    try:
+        obtener_servicio_email().enviar_invitacion(
+            destinatario=email,
+            nombre=nombre_empresa,
+            url_invitacion="https://app.sfce.local/portal",
+        )
+    except Exception:
+        pass  # Email es best-effort
