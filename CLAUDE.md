@@ -99,11 +99,11 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 | Componente | Ubicacion | Descripcion |
 |------------|-----------|-------------|
-| Pipeline v1 | `scripts/phases/`, `scripts/core/` | 7 fases, quality gates, 18/18 tasks |
-| Motor Autoevaluacion v2 | `scripts/core/ocr_*.py`, `reglas/*.yaml` | 6 capas, triple OCR, 21 tests |
-| Intake Multi-Tipo | `scripts/phases/intake.py` | FC/FV/NC/NOM/SUM/BAN/RLC/IMP, 67 tests |
-| Motor Aprendizaje | `scripts/core/aprendizaje.py` | 6 estrategias, auto-update YAML, 21 tests |
-| OCR por Tiers | `scripts/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
+| Pipeline v1 | `sfce/phases/`, `sfce/core/` | 7 fases, quality gates, 18/18 tasks (unificado 01/03) |
+| Motor Autoevaluacion v2 | `sfce/core/ocr_*.py`, `reglas/*.yaml` | 6 capas, triple OCR, 21 tests |
+| Intake Multi-Tipo | `sfce/phases/intake.py` | FC/FV/NC/NOM/SUM/BAN/RLC/IMP, 67 tests |
+| Motor Aprendizaje | `sfce/core/aprendizaje.py` | 6 estrategias, auto-update YAML, 21 tests |
+| OCR por Tiers | `sfce/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
 | SFCE v2 (5 fases) | `sfce/` | Normativa, perfil fiscal, clasificador, BD, API, dashboard. 954 tests |
 | Modelos Fiscales | `sfce/modelos_fiscales/` | 28 modelos, MotorBOE, GeneradorPDF, API+dashboard. 544 tests |
 | Directorio Empresas | `sfce/db/modelos.py`, `sfce/api/rutas/directorio.py` | CIF unico global, verificacion AEAT/VIES. 65 tests |
@@ -111,7 +111,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`
-**Tests totales**: 1563 PASS (+9 bancario)
+**Tests totales**: 1793 PASS
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -181,7 +181,31 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Tests**: 1660 passed, 0 failed. Rama: `feat/frontend-pwa`, 7 commits multi-tenant.
 - **Pendiente**: añadir `sfce.db`, `tmp/`, `.coverage` a `.gitignore` (se colaron en commit).
 
-### 2. **PENDIENTE (baja prioridad)**
+### 1d. **Auditoria + Refactor Arquitectura COMPLETADO — commit: 94448e1**
+- **Auditoria 93 hallazgos**: 4 agentes paralelos cubrieron api/, core/db/phases/, dashboard/src/, scripts/
+- **8 bugs criticos corregidos** (session 01/03/2026):
+  - `portal.py`: `Asiento.codejercicio`→`.ejercicio`, `p.codsubcuenta`→`.subcuenta`, `d.tipo`→`.tipo_doc`
+  - `sfce/core/backend.py`, `exportador.py`, `importador.py`: cross-import `scripts.core.logger` → `sfce.core.logger`
+  - `sfce/phases/correction.py:548`: token hardcodeado → `obtener_token()` + `API_BASE`
+  - `sfce/api/websocket.py`: except silencioso → logger.warning
+- **Unificacion arquitectura** (2001 lineas eliminadas, 40 archivos):
+  - 11 archivos duplicados `scripts/core/` eliminados → todo en `sfce/core/`
+  - `scripts/core/config.py` y `asientos_directos.py` conservados (divergencia funcional real)
+  - `scripts/pipeline.py` migrado a `sfce/phases/` (unico pipeline activo)
+  - Feature "FV sin CIF buscar por nombre" portada a `sfce/core/config.py` + `sfce/phases/`
+  - Tests actualizados: `sfce.core.*` en lugar de `scripts.core.*`
+- **scripts/phases/** sigue existiendo como codigo muerto (puede borrarse en proxima sesion)
+
+### 2. **Bugs auditoria PENDIENTES (alta prioridad)**
+- `sfce/api/rutas/modelos.py:70` — endpoint `/calcular` sin verificacion multi-tenant (cualquier usuario puede calcular cualquier empresa)
+- `sfce/api/rutas/rgpd.py:136` — descarga RGPD sin verificar que empresa pertenece al usuario
+- `sfce/api/rutas/economico.py:196` — usa `request.app.state.sesion_factory` ignorando DI inyectada
+- `sfce/api/rutas/documentos.py:99` — falta `verificar_acceso_empresa()` en `obtener_documento()`
+- Frontend: dos clientes API (`src/api/client.ts` sin usar vs `src/lib/api-client.ts` activo) — limpiar el muerto
+- Frontend: `Sidebar.tsx` y `Layout.tsx` huerfanos en `src/components/` (sustituidos por AppShell)
+
+### 3. **PENDIENTE (baja prioridad)**
+- Borrar `scripts/phases/` (codigo muerto post-unificacion)
 - Limpiar `.gitignore`: excluir `sfce.db`, `tmp/`, `.coverage`, `*.tmp.*`
 - Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts

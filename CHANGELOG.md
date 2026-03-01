@@ -1,5 +1,38 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 — Sesion: Auditoria profunda + unificacion arquitectura scripts/sfce
+
+**Objetivo**: Auditoria general del proyecto + correccion de bugs criticos + eliminacion de duplicidades arquitectonicas.
+
+**Auditoria (4 agentes paralelos)**:
+- 93 hallazgos totales: 14 criticos, 29 altos, 30 medios, 20 bajos
+- Dominios: `sfce/api/` (28), `sfce/core/db/phases/` (18), `dashboard/src/` (20), `scripts/ vs sfce/` (27)
+
+**Bugs criticos corregidos**:
+- `sfce/api/rutas/portal.py`: AttributeError en produccion — `Asiento.codejercicio`→`.ejercicio`, `Partida.codsubcuenta`→`.subcuenta`, `Documento.tipo`→`.tipo_doc`
+- `sfce/core/backend.py`, `exportador.py`, `importador.py`: cross-imports circulares `scripts.core.logger` → `sfce.core.logger`
+- `sfce/phases/correction.py:548`: token FacturaScripts hardcodeado (credencial expuesta en codigo) → `obtener_token()` + `API_BASE`
+- `sfce/api/websocket.py`: `except Exception: pass` silencioso → logging correcto
+
+**Refactor arquitectura (commit 94448e1)**:
+- 11 archivos duplicados eliminados de `scripts/core/`: logger, fs_api, errors, aritmetica, confidence, aprendizaje, prompts, reglas_pgc, ocr_mistral, ocr_gemini, historico
+- `scripts/core/config.py` y `asientos_directos.py` conservados (divergencia funcional real; sus imports internos corregidos a `sfce.core.*`)
+- `scripts/pipeline.py` migrado de `scripts/phases/` → `sfce/phases/` (pipeline unificado)
+- Feature "FV sin CIF buscar por nombre" (RD 1619/2012) portada de `scripts/` a `sfce/`:
+  - `sfce/core/config.py`: nuevos metodos `buscar_cliente_por_nombre()` + `buscar_cliente_fallback_sin_cif()`
+  - `sfce/phases/intake.py`: fallback por nombre cuando CIF no encontrado en FV
+  - `sfce/phases/pre_validation.py`: validacion FV con fallback completo
+- Tests redirigidos: 12 archivos de test actualizados (`scripts.core.*` → `sfce.core.*`, `scripts.phases.*` → `sfce.phases.*`)
+- Resultado final: **1793 tests PASS, 0 failed** (vs 1793 pre-refactor: sin regresiones)
+- Estadisticas commit: 40 archivos, 2001 lineas eliminadas, 97 insertadas
+
+**Pendiente para proxima sesion**:
+- Bugs auditoria alta prioridad: `modelos.py:70` (multi-tenant), `rgpd.py:136` (acceso empresa), `economico.py:196` (DI sesion), `documentos.py:99` (verificar_acceso_empresa)
+- Borrar `scripts/phases/` (codigo muerto post-unificacion)
+- Limpiar `.gitignore`: `sfce.db`, `tmp/`, `.coverage`
+
+---
+
 ## 2026-02-28 — Sesion: Fix arranque dashboard + bugs contabilidad
 
 **Objetivo**: Arrancar el dashboard local y corregir errores en módulo de contabilidad.
