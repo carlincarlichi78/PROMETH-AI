@@ -134,6 +134,16 @@ def invitar_usuario(
         sesion.commit()
         sesion.refresh(usuario)
 
+        try:
+            from sfce.core.email_service import obtener_servicio_email
+            obtener_servicio_email().enviar_invitacion(
+                destinatario=datos.email,
+                nombre=datos.nombre,
+                url_invitacion=f"/auth/aceptar-invitacion?token={token}",
+            )
+        except Exception:
+            pass  # el token se devuelve en el response igualmente
+
         return {
             "id": usuario.id,
             "email": usuario.email,
