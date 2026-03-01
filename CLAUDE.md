@@ -110,8 +110,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dual Backend | `sfce/core/backend.py` | FS+BD local, sync automatico asientos |
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`
-**Tests totales**: 1793 PASS
+| Gate 0 | `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py` | Trust levels + preflight SHA256 + scoring + decisión automática |
+| Onboarding | `sfce/api/rutas/admin.py`, `sfce/api/rutas/empresas.py`, `sfce/db/migraciones/006_onboarding.py` | Alta gestorías + invitación asesores + wizard 5 pasos |
+| Certificados AAPP | `sfce/core/certificados_aapp.py` | Modelos + servicio portado de CertiGestor |
+| Webhook CertiGestor | `sfce/api/rutas/certigestor.py` | Notificaciones AAPP con auth HMAC-SHA256 |
+| iCal Export | `sfce/core/exportar_ical.py` | Deadlines fiscales → .ics |
+| config_desde_bd | `sfce/core/config_desde_bd.py` | Bridge BD → pipeline sin cambiar pipeline |
+
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`
+**Tests totales**: 1865 PASS (Fases 0-3 PROMETH-AI completadas 01/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -137,19 +144,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROMETH-AI — Web + SSL + Hero COMPLETADOS (01/03/2026)**
-- **Web multi-página**: `spice-landing/` convertida a PROMETH-AI. 7 rutas. Deploy en `/opt/apps/spice-landing/`.
-- **SSL ACTIVO**: cert Let's Encrypt emitido vía certbot host (no docker). Expira 2026-05-30. HTTPS 200 + www→apex 301.
-- **Nginx HTTPS**: `/opt/infra/nginx/conf.d/prometh-ai.conf` con HTTP/2, HSTS, caché assets. `root /opt/apps/spice-landing`.
-- **Hero rediseñado**: 4 orbes glassmorphism (ámbar/violeta/naranja/cyan), shimmer border cónico rotatorio, grid de puntos, panel backdrop-blur. Rama: `feat/prometh-ai-fases-0-3` commit `188fcfc`. Desplegado al servidor.
-- **Planes backend — LEER EN ORDEN**:
-  1. `docs/plans/2026-03-01-prometh-ai-issues-patch.md` ← **LEER PRIMERO** (7 issues + 10 mejoras)
-  2. `docs/plans/2026-03-01-prometh-ai-fases-0-3.md` (21 tasks: seguridad P0, onboarding, correo, Gate 0)
-  3. `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop)
-
-#### Integraciones planificadas en los planes:
-- **CAP-Web** (`C:/Users/carli/PROYECTOS/CAP-WEB/`) — módulo correo. Ver Tasks 7-8 fases-4-6 y Task 12 fases-0-3.
-- **CertiGestor** (`C:/Users/carli/PROYECTOS/proyecto findiur/`) — Task 13 (módulo nativo), Task 14 (webhook HMAC), Fase 11 (Desktop).
+### 0. **PROMETH-AI — Fases 0-3 COMPLETADAS (01/03/2026)**
+- **Web + SSL**: `spice-landing/` → PROMETH-AI. HTTPS activo. Hero redesignado.
+- **Fases 0-3 ejecutadas**: 21 tasks, 1865 tests passing, build OK.
+- **Nuevas rutas API**: `/api/gate0/ingestar`, `/api/certigestor/webhook` (HMAC), `/api/admin/gestorias`, `/api/portal/{id}/calendario.ics`
+- **Dashboard**: `/onboarding/nueva-empresa` (wizard 5 pasos), `/empresa/:id/correo`
+- **Módulos nuevos**: gate0, certificados_aapp, certigestor webhook, exportar_ical, config_desde_bd, admin gestorias
+- **SIGUIENTE**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop) + I1-I6 post Gate 0
+- **Pendiente C1-C4**: worker OCR Gate 0, recovery bloqueados, coherencia_fiscal.py, migrar aprendizaje.yaml → supplier_rules
+- **Integraciones**: CAP-Web (módulo correo Tasks 7-8), CertiGestor (`C:/Users/carli/PROYECTOS/proyecto findiur/`, Task webhook ya hecho, Fase 11 Desktop pendiente)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
