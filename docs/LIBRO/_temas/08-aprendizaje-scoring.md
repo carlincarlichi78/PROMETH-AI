@@ -2,7 +2,7 @@
 
 > **Estado:** COMPLETADO
 > **Actualizado:** 2026-03-01
-> **Fuentes:** `sfce/core/aprendizaje.py`, `sfce/core/confidence.py`, `sfce/core/verificacion_fiscal.py`
+> **Fuentes:** `sfce/core/aprendizaje.py`, `sfce/core/confidence.py`, `sfce/core/verificacion_fiscal.py`, `sfce/core/supplier_rules.py`, `scripts/migrar_aprendizaje_yaml_a_supplier_rules.py`
 
 ---
 
@@ -313,6 +313,193 @@ Verifica números VAT de la Unión Europea contra la API REST de VIES.
 ```
 
 **Uso típico en el pipeline:** un proveedor intracomunitario sin CIF español activa la verificación VIES para confirmar que el VAT es válido antes de crear el asiento de autorepercusión (IVA 472/477).
+
+---
+
+---
+
+## Parte D: Supplier Rules BD
+
+A medida que el sistema acumula patrones en `aprendizaje.yaml`, surge la necesidad de persistir reglas de proveedores con mayor granularidad y persistencia estructurada. Las **Supplier Rules** son la evolución natural: en lugar de patrones regex genéricos, almacenan configuración contable específica por proveedor en la BD (SQLite o PostgreSQL).
+
+Archivos involucrados:
+- `sfce/core/supplier_rules.py` — motor de consulta y actualización
+- `sfce/db/modelos.py` — modelo `SupplierRule` (tabla `supplier_rules`)
+
+---
+
+### Jerarquía de 3 niveles
+
+La función `buscar_regla_aplicable(sesion, emisor_cif, emisor_nombre, empresa_id)` busca en orden de mayor a menor especificidad. En cuanto encuentra una regla, la devuelve sin seguir buscando:
+
+| Nivel | empresa_id | emisor_cif | emisor_nombre_patron | Cuándo aplica |
+|-------|-----------|-----------|---------------------|---------------|
+| 1 — Específica | `N` (id empresa) | CIF concreto | — | Este proveedor, esta empresa |
+| 2 — Global CIF | `None` | CIF concreto | — | Este proveedor, cualquier empresa |
+| 3 — Global nombre | `None` | `None` | patrón texto | Fallback por substring en nombre |
+
+El nivel 3 itera todas las reglas globales sin CIF y compara `regla.emisor_nombre_patron.upper() in emisor_nombre.upper()`. La primera coincidencia gana (ordenadas por `tasa_acierto` desc).
+
+**Constantes de auto-aplicación:**
+- `_UMBRAL_TASA = 0.90` — tasa mínima de acierto para aplicar automáticamente
+- `_MINIMO_MUESTRAS = 3` — mínimo de aplicaciones antes de activar `auto_aplicable`
+
+---
+
+### Campos que almacena una `SupplierRule`
+
+Una regla puede prerellenar cualquier combinación de estos campos para el documento entrante:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `subcuenta_gasto` | str | Subcuenta contable destino (ej: `6230000000`) |
+| `codimpuesto` | str | Código de impuesto FS (ej: `IVA21`, `IVA0`) |
+| `regimen` | str | Régimen fiscal (ej: `intracomunitario`, `general`) |
+| `tipo_doc_sugerido` | str | Tipo de documento sugerido (FC, FV, etc.) |
+| `tasa_acierto` | float | Ratio confirmaciones/aplicaciones (0.0–1.0) |
+| `auto_aplicable` | bool | True cuando tasa ≥ 0.90 y aplicaciones ≥ 3 |
+| `aplicaciones` | int | Veces que la regla se aplicó |
+| `confirmaciones` | int | Veces que el gestor la confirmó como correcta |
+
+La función `aplicar_regla(regla, campos)` rellena el dict `campos` con los valores no nulos de la regla, sin sobreescribir si el campo ya existe.
+
+---
+
+### Actualización por feedback humano
+
+Cuando el gestor corrige un campo en el dashboard, `upsert_regla_desde_correccion()` crea o actualiza la regla de nivel 1 (empresa específica):
+
+```python
+# registration.py / dashboard callback
+regla = upsert_regla_desde_correccion(
+    empresa_id=empresa_id,
+    emisor_cif="B12345678",
+    campos_corregidos={"subcuenta_gasto": "6230000000", "codimpuesto": "IVA21"},
+    sesion=sesion,
+)
+# → crea SupplierRule nivel 1 si no existe
+# → actualiza aplicaciones + confirmaciones
+# → recalcula tasa_acierto y auto_aplicable
+```
+
+`registrar_confirmacion(regla, correcto, sesion)` incrementa `aplicaciones` y, si `correcto=True`, también `confirmaciones`. Tras cada confirmación se recalcula `auto_aplicable` con `recalcular_auto_aplicable()`.
+
+---
+
+### Tests (`sfce/core/supplier_rules.py`)
+
+5 tests en `tests/test_supplier_rules.py`:
+
+| Test | Qué verifica |
+|------|-------------|
+| `test_buscar_regla_nivel1_tiene_prioridad` | Nivel 1 (empresa+CIF) se devuelve antes que nivel 2 |
+| `test_buscar_regla_nivel2_global_cif` | Sin regla empresa, devuelve la global por CIF |
+| `test_buscar_regla_nivel3_nombre_patron` | Sin CIF, coincide por substring en nombre |
+| `test_registrar_confirmacion_actualiza_tasa` | Tras 3 confirmaciones de 3 aplicaciones, `auto_aplicable=True` |
+| `test_upsert_crea_y_actualiza` | Crear regla desde cero y actualizar campos en segunda llamada |
+
+---
+
+## Parte E: Migración YAML→BD
+
+El script `scripts/migrar_aprendizaje_yaml_a_supplier_rules.py` convierte los patrones `evol_001..005` de `reglas/aprendizaje.yaml` en registros `SupplierRule` de nivel `global_nombre` en la BD.
+
+Los patrones `base_001..007` son estrategias genéricas de resolución de errores y **no se migran**: pertenecen exclusivamente al motor de aprendizaje `Resolutor`.
+
+---
+
+### Mapeo evol → SupplierRule
+
+| Patrón YAML | emisor_nombre_patron | Campos extra | Qué representaba |
+|-------------|---------------------|--------------|-----------------|
+| `evol_001` | `intracomunitario` | `codimpuesto=IVA0`, `regimen=intracomunitario` | Facturas UE con IVA 0 + autorepercusión |
+| `evol_002` | `iva_incluido_lineas` | — | Líneas donde precio ya incluye IVA |
+| `evol_003` | `cif_vacio_buscar_nombre` | — | CIF vacío, buscar proveedor por nombre |
+| `evol_004` | `precio_unitario_cero` | — | `precio_unitario=0`, derivar de `base_imponible` |
+| `evol_005` | `subcuenta_generica_6000` | `subcuenta_gasto=6000000000` | Subcuenta genérica → reclasificar a 600x correcta |
+
+Todos se crean con `empresa_id=None` y `emisor_cif=None` (nivel 3 global por nombre).
+
+---
+
+### Ejecución
+
+```bash
+# Ver qué haría (sin modificar BD)
+python scripts/migrar_aprendizaje_yaml_a_supplier_rules.py --dry-run
+
+# Ejecutar migración real
+python scripts/migrar_aprendizaje_yaml_a_supplier_rules.py
+```
+
+El script es **idempotente**: antes de insertar cada regla, verifica si ya existe en BD por `(empresa_id=None, emisor_cif=None, emisor_nombre_patron)`. Si existe, la omite con `[OMITIDO]`. Se puede ejecutar múltiples veces sin duplicar registros.
+
+Salida típica:
+
+```
+Patrones evol_* encontrados: 5
+  [INSERTAR] evol_001 -> patron='intracomunitario', nivel=global_nombre
+  [INSERTAR] evol_002 -> patron='iva_incluido_lineas', nivel=global_nombre
+  [INSERTAR] evol_003 -> patron='cif_vacio_buscar_nombre', nivel=global_nombre
+  [INSERTAR] evol_004 -> patron='precio_unitario_cero', nivel=global_nombre
+  [INSERTAR] evol_005 -> patron='subcuenta_generica_6000', nivel=global_nombre
+
+Resumen: 5 insertadas, 0 omitidas
+```
+
+---
+
+### Tests (`scripts/migrar_aprendizaje_yaml_a_supplier_rules.py`)
+
+4 tests en `tests/test_migrar_supplier_rules.py`:
+
+| Test | Qué verifica |
+|------|-------------|
+| `test_mapear_evol_001_campos_correctos` | evol_001 produce `codimpuesto=IVA0` y `regimen=intracomunitario` |
+| `test_mapear_patron_no_migrable_retorna_none` | Un id desconocido devuelve `None` |
+| `test_migrar_idempotente` | Segunda ejecución no duplica registros (cuenta sigue en 5) |
+| `test_dry_run_no_modifica_bd` | Con `--dry-run`, la BD no recibe ningún INSERT |
+
+---
+
+## Parte F: Convivencia aprendizaje.yaml y Supplier Rules BD
+
+Los dos sistemas son complementarios y conviven sin reemplazarse:
+
+```
+Documento entrante
+        │
+        ▼
+┌─────────────────────────────┐
+│  buscar_regla_aplicable()   │  ← Supplier Rules BD
+│  Nivel 1: CIF + empresa     │     sfce/core/supplier_rules.py
+│  Nivel 2: CIF global        │
+│  Nivel 3: nombre patrón     │
+└─────────────┬───────────────┘
+              │ ¿encontró regla?
+              │
+    ┌─────────┴──────────┐
+    │ SÍ                 │ NO
+    ▼                    ▼
+aplicar_regla()    BaseConocimiento
+(pre-fill campos)  .buscar_solucion()   ← aprendizaje.yaml
+                        │
+                        │ (si tampoco hay patrón)
+                        ▼
+                   Resolutor
+                   6 estrategias genéricas
+```
+
+**Responsabilidades de cada sistema:**
+
+| Sistema | Qué almacena | Cuándo se usa | Cuándo crece |
+|---------|-------------|--------------|-------------|
+| Supplier Rules BD | Configuración contable por proveedor (subcuenta, IVA, régimen) | Pre-fill automático al clasificar un documento nuevo | Cuando el gestor corrige un campo en el dashboard |
+| aprendizaje.yaml | Estrategias para resolver errores de registro (entidad no encontrada, campo null, divisa errónea) | Cuando el registro en FacturaScripts falla con un error | Cuando el Resolutor resuelve un error nuevo con `aprender_nuevo()` |
+
+**Regla práctica:** Supplier Rules evitan errores previsibles (saber de antemano que proveedor X usa IVA0). El `Resolutor` con `aprendizaje.yaml` maneja errores imprevistos que ocurren durante el registro.
+
+Los patrones `evol_001..005` del YAML representaron la fase de transición: fueron la primera observación de comportamientos por proveedor. La migración los convierte en `SupplierRule global_nombre` para que el motor BD los gestione con mayor precisión.
 
 ---
 

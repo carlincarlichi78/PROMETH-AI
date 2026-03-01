@@ -1,193 +1,126 @@
 # Roadmap y Estado del Sistema
 
-> **Estado:** COMPLETADO
+> **Estado:** EN PRODUCCION — SFCE completado, tablero operativo
 > **Actualizado:** 2026-03-01
-> **Fuentes principales:** `CLAUDE.md` seccion "Proximos pasos", `git log --oneline -20`, `docs/plans/`
+> **Tests totales:** 2133 PASS
+> **Branch activa:** main
+> **Tags:** `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
 ---
 
-## Estado del sistema a 2026-03-01
-
-### Metricas del nucleo SFCE
+## Metricas actuales
 
 | Metrica | Valor |
 |---------|-------|
-| Tests passing | ~1.793 |
-| Tablas en BD | ~39 tablas |
-| Endpoints API documentados | 66+ rutas activas |
-| Modulos del dashboard | 21 modulos |
+| Tests passing | 2133 |
+| Endpoints API activos | 75+ rutas |
+| Modulos del dashboard | 15 modulos |
 | Modelos fiscales implementados | 28 modelos |
 | Familias de documentos (generador) | 43 familias |
 | Documentos sinteticos generables | 2.343 docs |
 | Clientes reales activos | 5 clientes |
 | Plugins FacturaScripts activos | 4 (303, 111, 347, 130) |
 
-### Commits recientes (git log --oneline -20)
+---
 
-```
-8379c00 docs: libro 16-calendario-fiscal
-31745e1 docs: libro 15-modelos-fiscales
-ab9ec5b docs: libro 14-copiloto-ia
-a939415 docs: plan implementacion motor de escenarios de campo SFCE
-507d071 docs: libro 17-base-de-datos
-fe42e91 feat: Home Centro de Operaciones — BarraEstadoGlobal + EmpresaCard
-b9eece7 docs: libro 11-api-endpoints
-9871240 docs: libro 13-dashboard-modulos
-f02a587 docs: libro 12-websockets
-3b13fe9 docs: libro 10-cuarentena
-7af3199 docs: libro 09-motor-testeo
-5ba12cb docs: libro 07-sistema-reglas-yaml
-fbd3bda feat: OmniSearch Command Palette — busqueda global
-7280b75 docs: libro 08-aprendizaje-scoring
-7c3a0f2 docs: libro 06-motor-reglas
-d557a52 docs: libro 05-ocr-ia-tiers
-5bd326a docs: CLAUDE.md — Fases 4-6 Tasks 7-12 completados, 1934 tests
-3b43fd3 docs: fix header 04-gate0-cola
-bad73ed feat: electron-builder config Win/Mac/Linux
-95f416d docs: libro 03-pipeline-fases
-```
+## Completado (en main, 01/03/2026)
+
+### Nucleo SFCE
+
+| Componente | Tests | Detalle |
+|------------|-------|---------|
+| Pipeline v1 | — | 7 fases, 18/18 tasks, quality gates |
+| SFCE v2 | 954 | 5 fases, normativa, perfil fiscal, clasificador, BD, API |
+| Motor Autoevaluacion v2 | 21 | 6 capas, triple OCR consenso |
+| Intake Multi-Tipo | 67 | FC/FV/NC/NOM/SUM/BAN/RLC/IMP |
+| Motor Aprendizaje | 21 | 6 estrategias, auto-update YAML |
+| OCR por Tiers | — | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
+| Modelos Fiscales | 544 | 28 modelos, MotorBOE, GeneradorPDF, API+dashboard |
+| Directorio Empresas | 65 | CIF unico global, verificacion AEAT/VIES |
+| Dual Backend | — | FS+BD local, sync automatico asientos post-correcciones |
+| MCF Motor Clasificacion Fiscal | 70 | 50 categorias, base legal LIVA+LIRPF 2025 |
+| Gate 0 | — | Trust levels, preflight SHA256, scoring 5 factores, decision automatica |
+| Supplier Rules BD | 5 | Jerarquia 3 niveles (CIF+empresa > CIF global > nombre patron) |
+| Worker OCR + Recovery | 13 | Daemon async Tiers 0/1/2, recovery >1h, coherencia fiscal |
+| Cache OCR | — | SHA256 invalidacion, `.ocr.json` junto a PDF |
+| Coherencia Fiscal | 13 | Validador post-OCR, bloqueos duros + alertas |
+
+### Plataforma SaaS
+
+| Componente | Tests | Detalle |
+|------------|-------|---------|
+| Seguridad SaaS | — | JWT RS256, rate limiting VentanaFija, lockout, 2FA TOTP, RGPD |
+| Multi-tenant | — | Gestorias, usuarios, invitaciones, roles, audit log |
+| Tablero Usuarios | 2133 total | 4 niveles: superadmin → gestoria → gestor → cliente. 12 tasks |
+| Email Service | — | SMTP basico, envio invitaciones automatico |
+| OCR 036/037 | — | Parser Modelo 036/037: NIF, domicilio, regimen IVA, epigrafes |
+| OCR Escrituras | — | Parser escrituras constitucion: CIF, capital, administradores |
+| FS Setup Auto | — | Crea empresa + ejercicio + importa PGC automaticamente |
+| Migracion Historica | — | Parsea libros IVA CSV, extrae proveedores habituales |
+| iCal Export | — | Deadlines fiscales → .ics |
+| Webhook CertiGestor | — | Notificaciones AAPP con auth HMAC-SHA256 |
+| Certificados AAPP | — | Modelos + servicio portado de CertiGestor |
+
+### Dashboard Frontend
+
+| Componente | Detalle |
+|------------|---------|
+| Rediseno Total | React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand |
+| Build | 4.65s, 109 entries precacheadas, PWA con vite-plugin-pwa |
+| Modulos | 15 modulos, feature-based, lazy loading, path alias `@/` |
+| Tema | Paleta ambar OKLCh, dark mode, glassmorphism |
+| OmniSearch | Command Palette (cmdk), busqueda global |
+| Keyboard shortcuts | G+C/F/D/E/R/H, page transitions |
+| Configuracion | 18 secciones |
+| Endpoints home | `GET /api/empresas/estadisticas-globales`, `GET /api/empresas/{id}/resumen` (datos reales BD) |
+
+### Infraestructura
+
+| Componente | Detalle |
+|------------|---------|
+| PostgreSQL 16 | Docker `/opt/apps/sfce/`, puerto `127.0.0.1:5433`, BD `sfce_prod` |
+| Backups totales | `backup_total.sh` cron 02:00 diario — 6 PG + 2 MariaDB + configs + SSL + Vaultwarden → Hetzner Helsinki. Retencion 7d/4w/12m |
+| Firewall | ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior |
+| Seguridad nginx | `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts |
+| Uptime Kuma | Docker `127.0.0.1:3001`, acceso via SSH tunnel |
 
 ---
 
-## Pendientes por prioridad
+## Proxima sesion — PRIORIDAD: Test Nivel 0 end-to-end
 
-### P0 — Bloqueante (hacer ahora)
+**Contexto**: Las 4 levels del tablero estan implementadas pero NO probadas en real.
+**Regla del tablero**: no avanzar de nivel sin que el anterior funcione end-to-end.
 
-#### PROMETH-AI Issues Patch
-**Plan**: `docs/plans/2026-03-01-prometh-ai-issues-patch.md`
+**Nivel 0 a probar** con Playwright (`superpowers:webapp-testing`):
 
-7 issues criticos pendientes en la web PROMETH-AI. Detalles en el plan. Hasta resolver estos issues la landing no es apta para produccion.
+1. Superadmin crea gestoria desde `/admin/gestorias` en el dashboard
+2. Superadmin invita a admin de gestoria (token generado, email enviado o visible en respuesta)
+3. Admin gestoria acepta invitacion (`POST /api/auth/aceptar-invitacion?token=xxx`)
+4. Admin gestoria entra al dashboard y ve `/mi-gestoria`
 
----
-
-### P1 — Proximo sprint
-
-#### PROMETH-AI Fases 0-3
-**Plan**: `docs/plans/2026-03-01-prometh-ai-fases-0-3.md`
-
-21 tasks distribuidas en:
-- Seguridad P0 (Task 1-6): headers CSP, rate limiting, sanitizacion inputs
-- Onboarding empresas (Task 7-9): formulario alta, validacion CIF AEAT, confirmacion email
-- Correo transaccional (Task 10-12): integracion CAP-Web desde `C:/Users/carli/PROYECTOS/CAP-WEB/`
-- Gate 0 extendido (Task 13): webhook CertiGestor, HMAC, notificaciones AAPP
-
-#### Tests E2E dashboard (Playwright)
-**Estado**: 0 tests E2E escritos actualmente.
-
-El dashboard tiene 21 modulos funcionales pero ninguno tiene cobertura E2E. Los flujos criticos que necesitan tests:
-- Login → seleccion empresa → pipeline
-- Subida extracto bancario → conciliacion
-- Generacion modelo fiscal → descarga PDF
-- Portal cliente → descarga RGPD
+Corregir lo que falle → verificar → solo entonces pasar a Nivel 1.
 
 ---
 
-### P2 — Medio plazo
+## Pendiente (baja prioridad)
 
-#### PROMETH-AI Fases 4-6 + Fase 11 Desktop
-**Plan**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md`
-
-12 tasks:
-- Fase 4: Panel de gestion (empresas onboarding, documentos, estado pipeline)
-- Fase 5: Facturacion y suscripciones (Stripe, planes, trial 30 dias)
-- Fase 6: Analytics y reporting (metricas de uso, alertas fiscales)
-- Fase 11 Desktop: integracion CertiGestor desde `C:/Users/carli/PROYECTOS/proyecto findiur/` — Electron + modulo nativo, autoarranque, bandeja sistema
-
-#### Migracion SQLite → PostgreSQL en produccion
-**Script**: `scripts/migrar_sqlite_a_postgres.py` (existe, no ejecutado)
-
-El servidor ya tiene PostgreSQL 16 en Docker (`127.0.0.1:5433`, BD `sfce_prod`). La migracion es necesaria para:
-- Soporte de concurrencia con multiples usuarios simultaneos
-- Rendimiento en consultas sobre tablas grandes (asientos, partidas)
-- Transacciones robustas para operaciones criticas
-
-#### VAPID Push Notifications
-**Estado**: Frontend implementado (suscripcion Web Push con VAPID). Falta el backend.
-
-Tareas:
-1. Generar par de claves VAPID y agregar `VITE_VAPID_PUBLIC_KEY` al `.env`
-2. Implementar endpoint `POST /api/notificaciones/suscribir` en FastAPI
-3. Implementar `POST /api/notificaciones/enviar` (disparado por eventos del pipeline)
-
-#### Merge feat/frontend-pwa a main (PR pendiente)
-La rama `feat/frontend-pwa` contiene el trabajo de PWA, seguridad, portal cliente y notificaciones. Hay un PR pendiente de merge.
+| Item | Descripcion |
+|------|-------------|
+| Tests E2E dashboard | Playwright para flujos criticos: login, pipeline, conciliacion, modelo fiscal, portal cliente |
+| Migracion SQLite → PostgreSQL | `scripts/migrar_sqlite_a_postgres.py` — servidor ya tiene PG16, script existe pero no ejecutado |
+| VAPID Push Notifications | Activar `VITE_VAPID_PUBLIC_KEY` + endpoint `POST /api/notificaciones/suscribir` |
+| `fiscal.proximo_modelo` | En resumen empresa — requiere ServicioFiscal integrado |
+| Motor de Escenarios de Campo | `scripts/motor_campo.py --modo rapido` — testeo parametrico masivo sin coste API |
+| Pagina cuarentena en dashboard | Visualizar documentos en cuarentena, sugerencias MCF |
+| Integrar MCF en pipeline completo | ClasificadorFiscal activo en flujo principal (actualmente standalone) |
 
 ---
 
-### P3 — Largo plazo
+## Deuda tecnica
 
-#### Dashboard Rewrite — Plataforma de Inteligencia Contable
-**Design doc**: `docs/plans/2026-03-01-dashboard-redesign-total-design.md`
-**Plan implementacion**: `docs/plans/2026-03-01-dashboard-redesign-total-implementation.md`
-
-Objetivo: transformar el dashboard de herramienta funcional a plataforma premium.
-
-Alcance:
-- 38 paginas rediseñadas con zero empty states
-- Home Centro de Operaciones: portfolio de clientes con HealthRing, sparklines, KPIs en tiempo real
-- OmniSearch real (Command Palette) con busqueda global
-- Paleta amber unificada (eliminar colores aleatorios de charts)
-- Copiloto IA integrado (sugerencias proactivas, anomalias, alertas fiscales)
-- Dark mode completo (bugs actuales: fondo blanco en cards, charts desconectados de paleta)
-
-#### Motor de Escenarios de Campo
-**Design doc**: `docs/plans/2026-03-01-motor-campo-design.md`
-**Plan**: `docs/plans/2026-03-01-motor-campo-plan.md`
-
-Motor autonomo que testea todos los procesos SFCE con miles de variaciones parametricas. Sin coste de APIs IA (bypass OCR mediante inyeccion JSON directa). Empresa id=3 como sandbox. Detecta errores, intenta fix automatico, registra bugs en SQLite `motor_campo.db`.
-
----
-
-## Deuda tecnica activa
-
-| Item | Impacto | Accion requerida |
-|------|---------|-----------------|
-| `sfce.db` no en `.gitignore` | Bajo — BD de desarrollo se colo en commits | Agregar a `.gitignore` |
-| `tmp/` no en `.gitignore` | Bajo — archivos temporales del pipeline | Agregar a `.gitignore` |
-| `.coverage` no en `.gitignore` | Bajo — artefacto de pytest-cov | Agregar a `.gitignore` |
-| 0 tests E2E dashboard (Playwright) | Alto — flujos criticos sin cobertura automatizada | Sprint P1 |
-| `migrar_sqlite_a_postgres.py` no ejecutado | Medio — produccion sigue en SQLite | Sprint P2 |
-| VAPID endpoint backend faltante | Medio — notificaciones push no funcionan en produccion | Sprint P2 |
-
----
-
-## Dependencias entre tareas
-
-```mermaid
-flowchart TD
-    P0[P0: PROMETH-AI Issues Patch] --> P1A[P1: PROMETH-AI Fases 0-3]
-    P1A --> P2A[P2: PROMETH-AI Fases 4-6]
-    P2A --> P3A[P3: Fase 11 Desktop — CertiGestor Electron]
-
-    P1B[P1: Tests E2E Playwright] --> P2B[P2: Dashboard Rewrite]
-    P2B --> P3B[P3: Copiloto IA en Dashboard]
-
-    P2C[P2: Migracion SQLite → PostgreSQL] --> P3B
-    P2C --> P2D[P2: VAPID Push Backend]
-
-    P2D --> P1B
-```
-
-### Dependencias criticas
-
-| Tarea | Bloquea a |
-|-------|-----------|
-| PROMETH-AI Issues Patch (P0) | Todas las fases PROMETH-AI siguientes |
-| Migracion SQLite → PostgreSQL | Dashboard Rewrite en produccion, Copiloto IA |
-| Tests E2E Playwright (P1) | Dashboard Rewrite validable en CI |
-| VAPID endpoint backend | Notificaciones push en portal cliente |
-
-### Sin dependencias (pueden arrancar en paralelo)
-
-- Tests E2E Playwright — independiente de PROMETH-AI
-- Gitignore cleanup (`sfce.db`, `tmp/`, `.coverage`) — tarea trivial, independiente de todo
-- VAPID endpoint backend — independiente de PROMETH-AI
-
----
-
-## Proximos pasos inmediatos recomendados
-
-1. **Ahora mismo**: `git rm --cached sfce.db tmp/ .coverage` + commit para limpiar `.gitignore`
-2. **Esta semana**: PROMETH-AI Issues Patch (desbloquea el resto de la landing)
-3. **Proximo sprint**: Tests E2E Playwright para los 3 flujos criticos del dashboard
-4. **Mes siguiente**: Migracion SQLite → PostgreSQL (prerrequisito para escalar a mas clientes)
+| Item | Impacto | Accion |
+|------|---------|--------|
+| 0 tests E2E dashboard | Alto — flujos criticos sin cobertura automatizada | Sprint siguiente |
+| `migrar_sqlite_a_postgres.py` no ejecutado | Medio — produccion sigue en SQLite single-user | P2 |
+| VAPID endpoint backend faltante | Medio — push notifications no funcionan | P2 |
+| `fiscal.proximo_modelo` = null | Bajo — dashboard home muestra null en campo fiscal | P2 |

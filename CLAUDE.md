@@ -9,6 +9,8 @@
 
 **Regla:** si necesito contexto sobre cualquier parte del sistema, leer el archivo del libro correspondiente en lugar de explorar el código desde cero. Ahorra tokens y tiempo.
 
+**OBLIGACIÓN en cierre de sesión:** al cerrar sesión, actualizar los archivos del libro (`docs/LIBRO/_temas/`) que correspondan a los cambios realizados durante la sesión. El libro debe reflejar el estado real del código con el mismo nivel de detalle con que fue elaborado: tablas, campos YAML, endpoints, esquemas BD, flujos, comandos.
+
 | Necesito saber sobre... | Leer primero |
 |-------------------------|--------------|
 | Infraestructura / Docker / Backups | `01-infraestructura.md`, `26-infra-docker-backups.md` |

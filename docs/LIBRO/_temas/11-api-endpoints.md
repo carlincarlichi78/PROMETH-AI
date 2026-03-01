@@ -28,12 +28,12 @@ curl -X POST http://localhost:8000/api/auth/login \
 
 Respuesta normal (sin 2FA):
 ```json
-{"access_token": "eyJ...", "token_type": "bearer"}
+{"access_token": "eyJ...", "token_type": "bearer", "usuario": {"id": 1, "email": "...", "nombre": "...", "rol": "..."}}
 ```
 
 Respuesta con 2FA activo (HTTP 202):
 ```json
-{"temp_token": "eyJ...", "requiere_2fa": true}
+{"pending_2fa": true, "temp_token": "eyJ...", "detail": "Se requiere código TOTP."}
 ```
 
 Usar el `temp_token` en `/api/auth/2fa/confirm` con el codigo TOTP del autenticador.
@@ -46,19 +46,83 @@ Usar el `temp_token` en `/api/auth/2fa/confirm` con el codigo TOTP del autentica
 
 ---
 
+## Tablero de Usuarios — Jerarquia de Roles
+
+El SFCE implementa 4 niveles de acceso. Cada nivel tiene endpoints exclusivos.
+
+```
+superadmin
+  └── gestoría (admin_gestoria)
+        ├── asesor / asesor_independiente
+        └── cliente (portal simplificado)
+```
+
+| Rol | Descripcion | Endpoints exclusivos |
+|-----|-------------|----------------------|
+| `superadmin` | Administrador global del sistema | `POST /api/admin/gestorias`, `PATCH /api/admin/gestorias/{id}` |
+| `admin_gestoria` | Admin de una gestoría concreta | `GET/PUT /api/admin/gestorias/{id}`, invitar asesores y clientes |
+| `asesor` / `asesor_independiente` | Gestor de empresas asignadas | Acceso a empresas de su cartera |
+| `cliente` | Cliente final | `GET /api/portal/mis-empresas`, resumen simplificado |
+
+El JWT incluye `gestoria_id` y `rol`. Los endpoints verifican automaticamente que la empresa pertenece a la gestoria del usuario (403 si no).
+
+**Flujo de invitacion:**
+1. Superadmin/admin_gestoria llama a `POST /api/admin/gestorias/{id}/invitar` o `POST /api/empresas/{id}/invitar-cliente`
+2. Se genera un token de 7 dias y se envia por email (o se devuelve en el response)
+3. El invitado llama a `POST /api/auth/aceptar-invitacion` con `{token, password}` → recibe JWT definitivo
+
+---
+
 ## Autenticacion — `/api/auth`
 
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
 | POST | `/api/auth/login` | No | Login. Body: `{email, password}`. Devuelve JWT o 202+temp_token si 2FA activo |
 | GET | `/api/auth/me` | Si | Perfil del usuario autenticado |
-| POST | `/api/auth/usuarios` | Si | Crear usuario |
-| GET | `/api/auth/usuarios` | Si | Listar usuarios |
-| POST | `/api/auth/2fa/setup` | Si | Iniciar configuracion 2FA TOTP. Devuelve QR code |
-| POST | `/api/auth/2fa/verify` | Si | Verificar codigo TOTP durante setup |
-| POST | `/api/auth/2fa/confirm` | No* | Confirmar login con 2FA. Body: `{temp_token, codigo}` |
+| POST | `/api/auth/usuarios` | Si (admin) | Crear usuario directamente. Body: `{email, nombre, password, rol, empresas_ids}` |
+| GET | `/api/auth/usuarios` | Si (admin) | Listar todos los usuarios |
+| POST | `/api/auth/aceptar-invitacion` | No | Canjear token de invitacion. Body: `{token, password}`. Devuelve JWT definitivo |
+| POST | `/api/auth/2fa/setup` | Si | Iniciar configuracion 2FA TOTP. Devuelve `{secret, qr_uri, qr_base64}` |
+| POST | `/api/auth/2fa/verify` | Si | Verificar codigo TOTP durante setup y activar 2FA |
+| POST | `/api/auth/2fa/confirm` | No* | Confirmar login con 2FA. Body: `{temp_token, codigo}`. Devuelve JWT definitivo |
 
 > *`/2fa/confirm` no requiere JWT pero si el temp_token de 5 min devuelto por el login.
+
+**Codigos especiales del endpoint de login:**
+- `200` — login exitoso, devuelve `access_token`
+- `202` — credenciales OK pero 2FA activo, devuelve `temp_token` (5 min)
+- `401` — credenciales invalidas
+- `423` — cuenta bloqueada (header `Retry-After` con segundos restantes)
+
+**Campos del JWT:** `sub` (email), `rol`, `gestoria_id`, exp.
+
+---
+
+## Administracion — `/api/admin`
+
+Solo accesible para roles `superadmin` y `admin_gestoria` (este ultimo solo sobre su propia gestoria).
+
+### Gestion de Gestorias (solo superadmin)
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| POST | `/api/admin/gestorias` | superadmin | Crear gestoria. Body: `{nombre, email_contacto, cif, plan_asesores, plan_clientes_tramo}`. Devuelve 201 |
+| GET | `/api/admin/gestorias` | superadmin | Listar todas las gestorias |
+| GET | `/api/admin/gestorias/{gestoria_id}` | superadmin | Detalle de una gestoria. Incluye `fecha_alta` |
+| PATCH | `/api/admin/gestorias/{gestoria_id}` | superadmin | Actualizar nombre, estado activa o plan_asesores |
+
+### Gestion de Usuarios por Gestoria
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/admin/gestorias/{gestoria_id}/usuarios` | superadmin o admin_gestoria propio | Listar usuarios de una gestoria |
+| POST | `/api/admin/gestorias/{gestoria_id}/invitar` | superadmin o admin_gestoria propio | Invitar usuario (asesor o admin_gestoria). Body: `{email, nombre, rol}`. Genera token 7 dias, envia email. Devuelve `{invitacion_token, invitacion_url, expira}` |
+
+### Clientes Directos (sin gestoria)
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| POST | `/api/admin/clientes-directos` | superadmin | Crear cliente sin gestoria asociada (gestoria_id=NULL). Body: `{email, nombre}`. Devuelve token de invitacion |
 
 ---
 
@@ -66,14 +130,57 @@ Usar el `temp_token` en `/api/auth/2fa/confirm` con el codigo TOTP del autentica
 
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
-| GET | `/api/empresas` | Si | Listar empresas de la gestoria autenticada |
-| POST | `/api/empresas` | Si | Crear empresa |
+| GET | `/api/empresas` | Si | Listar empresas activas de la gestoria del usuario autenticado |
+| POST | `/api/empresas` | Si | Crear empresa. Body: `{cif, nombre, forma_juridica, territorio, regimen_iva, idempresa_fs, codejercicio_fs}` |
+| GET | `/api/empresas/estadisticas-globales` | Si | KPIs agregados de toda la cartera: total_clientes, docs_pendientes_total, alertas_urgentes, volumen_gestionado (ingresos YTD). Filtra por gestoria del usuario autenticado |
 | GET | `/api/empresas/{empresa_id}` | Si | Detalle de empresa |
-| PATCH | `/api/empresas/{empresa_id}/perfil` | Si | Actualizar perfil fiscal de empresa |
-| POST | `/api/empresas/{empresa_id}/proveedores-habituales` | Si | Anadir proveedor habitual |
-| POST | `/api/empresas/{empresa_id}/fuentes` | Si | Anadir fuente de documentos |
-| GET | `/api/empresas/{empresa_id}/proveedores` | Si | Listar proveedores/clientes de empresa |
+| PATCH | `/api/empresas/{empresa_id}/perfil` | Si | Actualizar perfil de negocio (wizard paso 2). Body: `{descripcion, actividades, importador, exportador, ...}` |
+| POST | `/api/empresas/{empresa_id}/proveedores-habituales` | Si | Anadir proveedor/cliente habitual (wizard paso 3) |
+| POST | `/api/empresas/{empresa_id}/fuentes` | Si | Anadir fuente IMAP (wizard paso 5). Body: `{tipo, nombre, servidor, puerto, usuario, password}` |
+| GET | `/api/empresas/{empresa_id}/proveedores` | Si | Listar proveedores y clientes de empresa |
 | GET | `/api/empresas/{empresa_id}/trabajadores` | Si | Listar trabajadores (RRHH) |
+| GET | `/api/empresas/{empresa_id}/resumen` | Si | Resumen operativo: bandeja (pendientes/errores/cuarentena), fiscal (proximo_modelo), contabilidad (asientos descuadrados), facturacion (ventas_ytd), ventas_6m (array 6 ultimos meses) |
+| POST | `/api/empresas/{empresa_id}/invitar-cliente` | Si (asesor+) | Invitar cliente final al portal de esta empresa. Body: `{email, nombre}`. Si el email ya existe, solo anade la empresa a sus empresas_asignadas |
+
+**Nota sobre `/estadisticas-globales`:** debe declararse ANTES de `/{empresa_id}` en el router para evitar que FastAPI lo interprete como un ID. El orden en el codigo es el correcto.
+
+**Respuesta de `/resumen`:**
+```json
+{
+  "empresa_id": 1,
+  "bandeja": {"pendientes": 3, "errores_ocr": 0, "cuarentena": 1, "ultimo_procesado": "2025-12-20"},
+  "fiscal": {"proximo_modelo": null, "dias_restantes": null, "fecha_limite": null, "importe_estimado": null},
+  "contabilidad": {"errores_asientos": 0, "ultimo_asiento": "2025-12-31"},
+  "facturacion": {"ventas_ytd": 145000.0, "facturas_vencidas": 0, "pendientes_cobro": 0},
+  "scoring": null,
+  "alertas_ia": [],
+  "ventas_6m": [12000.0, 18000.0, 21000.0, 14000.0, 19000.0, 22000.0]
+}
+```
+
+---
+
+## Portal Cliente — `/api/portal`
+
+Vista para el cliente final. Accede solo a empresas en su `empresas_asignadas`.
+Los roles superadmin/admin_gestoria/asesor ven todas sus empresas via este mismo endpoint.
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus empresas_asignadas. Asesores/admin: todas las de su gestoria. Superadmin: todas. El frontend redirige automaticamente si solo hay 1 empresa |
+| GET | `/api/portal/{empresa_id}/resumen` | Si | Resumen simplificado para el cliente: resultado_acumulado, facturas_pendientes_cobro, importe_pendiente_cobro, facturas_pendientes_pago, importe_pendiente_pago |
+| GET | `/api/portal/{empresa_id}/documentos` | Si | Ultimos 50 documentos disponibles para descarga por el cliente |
+| GET | `/api/portal/{empresa_id}/calendario.ics` | Si | Calendario fiscal en formato iCal (archivo .ics con deadlines del ejercicio) |
+
+**Respuesta de `/mis-empresas`:**
+```json
+{
+  "empresas": [
+    {"id": 1, "nombre": "Empresa S.L.", "ejercicio": "2025"},
+    {"id": 2, "nombre": "Otra S.L.", "ejercicio": "2025"}
+  ]
+}
+```
 
 ---
 
@@ -83,13 +190,13 @@ Directorio global CIF unico compartido entre todas las empresas/gestorias.
 
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
-| GET | `/api/directorio/` | Si | Listar entidades (paginado) |
-| GET | `/api/directorio/buscar` | Si | Buscar por CIF, nombre o alias. Params: `q`, `limit`, `offset` |
-| POST | `/api/directorio/` | Si | Crear entidad en directorio global |
+| GET | `/api/directorio/` | Si | Listar entidades. Param opcional: `pais` (ISO alpha-3) |
+| GET | `/api/directorio/buscar` | Si | Busqueda paginada. Params: `q` (libre), `cif` (exacto), `nombre` (exacto), `limit` (max 200), `offset`. Sin `q`: devuelve objeto `{entidades, total}`. Con `cif`/`nombre`: devuelve entidad directamente |
+| POST | `/api/directorio/` | Si | Crear entidad en directorio global. 409 si CIF ya existe |
 | GET | `/api/directorio/{entidad_id}` | Si | Detalle de entidad |
-| PUT | `/api/directorio/{entidad_id}` | Si | Actualizar entidad |
-| GET | `/api/directorio/{entidad_id}/overlays` | Si | Overlays de empresa sobre entidad global |
-| POST | `/api/directorio/{entidad_id}/verificar` | Si | Verificar CIF contra AEAT/VIES |
+| PUT | `/api/directorio/{entidad_id}` | Si | Actualizar entidad completa |
+| GET | `/api/directorio/{entidad_id}/overlays` | Si | Overlays de empresa sobre entidad global (instancias ProveedorCliente que referencian esta entidad) |
+| POST | `/api/directorio/{entidad_id}/verificar` | Si | Verificar CIF contra AEAT (CIF espanol) o VIES (VAT europeo). Actualiza `validado_aeat`, `validado_vies`, `datos_enriquecidos` |
 
 ---
 
@@ -246,30 +353,6 @@ Gestion de cuentas IMAP para ingesta automatica de facturas por email.
 
 ---
 
-## Administracion — `/api/admin`
-
-Solo accesible para roles `superadmin` y `admin_gestoria`.
-
-| Metodo | Ruta | Auth | Descripcion |
-|--------|------|------|-------------|
-| POST | `/api/admin/gestorias` | Si | Crear gestoria |
-| GET | `/api/admin/gestorias` | Si | Listar gestorias |
-| POST | `/api/admin/gestorias/{gestoria_id}/invitar` | Si | Invitar usuario a gestoria |
-
----
-
-## Portal Cliente — `/api/portal`
-
-Vista reducida para el cliente final (sin acceso a configuracion interna).
-
-| Metodo | Ruta | Auth | Descripcion |
-|--------|------|------|-------------|
-| GET | `/api/portal/{empresa_id}/resumen` | Si | KPIs y resumen fiscal para el cliente |
-| GET | `/api/portal/{empresa_id}/documentos` | Si | Documentos disponibles para descarga por el cliente |
-| GET | `/api/portal/{empresa_id}/calendario.ics` | No | Calendario fiscal en formato iCal (deadlines) |
-
----
-
 ## RGPD — sin prefijo de grupo
 
 | Metodo | Ruta | Auth | Descripcion |
@@ -353,6 +436,54 @@ El parametro `ejercicio` es el ano en formato string (ej: `"2025"`). En empresas
 
 ## Ejemplos de uso habituales
 
+### Flujo completo de invitacion
+
+```bash
+# 1. Superadmin crea gestoria
+curl -X POST http://localhost:8000/api/admin/gestorias \
+  -H "Authorization: Bearer <token-superadmin>" \
+  -H "Content-Type: application/json" \
+  -d '{"nombre": "Gestoria Lopez", "email_contacto": "info@lopez.com", "cif": "B12345678"}'
+
+# 2. Invitar admin de gestoria
+curl -X POST http://localhost:8000/api/admin/gestorias/1/invitar \
+  -H "Authorization: Bearer <token-superadmin>" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@lopez.com", "nombre": "Pedro Lopez", "rol": "admin_gestoria"}'
+# Respuesta incluye invitacion_token
+
+# 3. Admin acepta invitacion
+curl -X POST http://localhost:8000/api/auth/aceptar-invitacion \
+  -H "Content-Type: application/json" \
+  -d '{"token": "<invitacion_token>", "password": "MiPassword123!"}'
+# Respuesta: {access_token, token_type}
+```
+
+### Invitar cliente al portal
+
+```bash
+curl -X POST http://localhost:8000/api/empresas/1/invitar-cliente \
+  -H "Authorization: Bearer <token-asesor>" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "cliente@empresa.com", "nombre": "Juan Garcia"}'
+# Si el email ya existe, solo anade empresa_id a sus empresas_asignadas
+```
+
+### Estadisticas globales del gestor
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8000/api/empresas/estadisticas-globales
+# Respuesta: {total_clientes, docs_pendientes_total, alertas_urgentes, volumen_gestionado}
+```
+
+### Listar empresas del portal (cliente)
+
+```bash
+curl -H "Authorization: Bearer <token-cliente>" \
+  http://localhost:8000/api/portal/mis-empresas
+```
+
 ### Listar empresas de la gestoria
 
 ```bash
@@ -408,8 +539,10 @@ curl -H "Authorization: Bearer <token>" \
 | Codigo | Significado | Cuando ocurre |
 |--------|-------------|---------------|
 | 401 | No autenticado | Token ausente, expirado o malformado |
-| 403 | Sin permiso | Empresa pertenece a otra gestoria |
-| 404 | No encontrado | Empresa, documento, asiento o entidad no existe |
+| 403 | Sin permiso | Empresa pertenece a otra gestoria, o rol insuficiente |
+| 404 | No encontrado | Empresa, documento, asiento, entidad o token de invitacion no existe |
+| 409 | Conflicto | Email ya registrado, CIF duplicado en directorio |
+| 410 | Expirado | Token de invitacion caducado (7 dias) |
 | 422 | Validacion | Body malformado, campos faltantes o tipos incorrectos |
 | 423 | Cuenta bloqueada | 5 o mas intentos de login fallidos (bloqueo 30 min) |
 | 429 | Rate limit | Demasiadas peticiones. Login: 5/min. Endpoints autenticados: 100/min |
@@ -421,8 +554,10 @@ curl -H "Authorization: Bearer <token>" \
 
 | Dominio | Prefijo | Endpoints |
 |---------|---------|-----------|
-| Autenticacion | `/api/auth` | 7 |
-| Empresas | `/api/empresas` | 8 |
+| Autenticacion | `/api/auth` | 8 |
+| Administracion (gestorias) | `/api/admin` | 7 |
+| Empresas | `/api/empresas` | 11 |
+| Portal Cliente | `/api/portal` | 4 |
 | Directorio | `/api/directorio` | 7 |
 | Documentos | `/api/documentos` | 4 |
 | Contabilidad | `/api/contabilidad` | 15 |
@@ -435,10 +570,8 @@ curl -H "Authorization: Bearer <token>" \
 | Correo | `/api/correo` | 9 |
 | CertiGestor | `/api/certigestor` | 1 |
 | Informes | `/api/informes` | 4 |
-| Admin | `/api/admin` | 3 |
-| Portal | `/api/portal` | 3 |
 | RGPD | (mixto) | 2 |
 | Configuracion | `/api/config` | 7 |
 | Salud | `/api/salud` | 4 |
 | WebSocket | `/api/ws` | 2 |
-| **Total** | | **106** |
+| **Total** | | **125** |

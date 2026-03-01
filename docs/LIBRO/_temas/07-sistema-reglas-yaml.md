@@ -1,8 +1,8 @@
 # 07 — Sistema de Reglas YAML
 
 > **Estado:** ✅ COMPLETADO
-> **Actualizado:** 2026-03-01
-> **Fuentes:** `reglas/*.yaml`, `sfce/reglas/`
+> **Actualizado:** 2026-03-01 (inventario expandido: categorias_gasto, coherencia_fiscal, tipos_retencion, normativa/2025)
+> **Fuentes:** `reglas/*.yaml`, `sfce/reglas/`, `sfce/normativa/`
 
 ---
 
@@ -16,17 +16,24 @@ El sistema SFCE usa archivos YAML para separar las reglas contables y fiscales d
 
 ### Directorio `reglas/` (nivel raíz — activos en producción)
 
-| Archivo | Propósito | Quién lo lee | Se auto-modifica |
-|---------|-----------|--------------|-----------------|
-| `aprendizaje.yaml` | Patrones de error → estrategia de resolución | `sfce/core/aprendizaje.py` (`BaseConocimiento`) | **Sí** — en runtime |
-| `coherencia_fiscal.yaml` | Prefijos CIF → país → régimen → IVA esperado + errores conocidos FS | `sfce/phases/pre_validation.py`, `sfce/core/correction.py` | No |
-| `errores_conocidos.yaml` | Catálogo de bugs de FacturaScripts con detección y corrección automática | `sfce/core/correction.py` | No |
-| `patrones_suplidos.yaml` | Detección de suplidos aduaneros en líneas de factura | `sfce/core/correction.py` | No |
-| `subcuentas_pgc.yaml` | Rangos de grupos del PGC con lado contable y tipo | `sfce/core/asientos_directos.py` | No |
-| `subcuentas_tipos.yaml` | Plantillas de asientos por tipo de documento (nómina, RLC, BAN...) | `sfce/core/asientos_directos.py` | No |
-| `tipos_entidad.yaml` | Tipos de entidad jurídica con obligaciones fiscales y contables | `sfce/core/config.py` | No |
-| `tipos_retencion.yaml` | Porcentajes IRPF e IVA legales vigentes (2025) | `sfce/phases/registration.py` | No |
-| `validaciones.yaml` | Reglas de validación pre-FS y post-asiento | `sfce/phases/pre_validation.py` | No |
+| Archivo | Líneas | Entradas | Propósito | Quién lo lee | Auto-modifica |
+|---------|--------|----------|-----------|--------------|---------------|
+| `aprendizaje.yaml` | 538 | 49 patrones | Memoria persistente del motor de resolución de errores: regex → estrategia | `sfce/core/aprendizaje.py` (`BaseConocimiento`) | **Sí** — en runtime |
+| `categorias_gasto.yaml` | 1022 | 50 categorías | MCF: keywords + subcuenta PGC + IVA + IRPF + base legal por categoría de gasto | `sfce/core/clasificador_fiscal.py` (`ClasificadorFiscal`) | No |
+| `coherencia_fiscal.yaml` | 252 | 39 prefijos CIF | Prefijos CIF → país → régimen → IVA esperado. Valida coherencia post-OCR (bloqueos duros + alertas) | `sfce/core/coherencia_fiscal.py`, `sfce/phases/pre_validation.py` | No |
+| `errores_conocidos.yaml` | 94 | 7 errores | Catálogo de bugs FS con detección automática y corrección vía PUT API | `sfce/core/correction.py` | No |
+| `patrones_suplidos.yaml` | 80 | 19 patrones | Detecta suplidos aduaneros en líneas de factura → IVA0 + reclasifica a 4709 | `sfce/core/correction.py` | No |
+| `subcuentas_pgc.yaml` | 109 | 26 grupos | Rangos de grupos del PGC con lado contable (debe/haber/ambos) y tipo semántico | `sfce/core/asientos_directos.py` | No |
+| `subcuentas_tipos.yaml` | — | — | Plantillas de asientos por tipo de documento (nómina, RLC, BAN...) | `sfce/core/asientos_directos.py` | No |
+| `tipos_entidad.yaml` | 174 | 9 tipos | Obligaciones fiscales y contables por forma jurídica (autónomo, SL, SA...) | `sfce/core/config.py` | No |
+| `tipos_retencion.yaml` | 36 | 7 tipos IRPF | Porcentajes IRPF válidos e IVA codimpuesto de FacturaScripts (lista blanca) | `sfce/phases/registration.py` | No |
+| `validaciones.yaml` | 88 | 5 pre-FS | Reglas de validación pre-FS y post-asiento con severidad y auto_fix | `sfce/phases/pre_validation.py`, `sfce/core/correction.py` | No |
+
+### Directorio `sfce/normativa/` (tablas fiscales oficiales)
+
+| Archivo | Líneas | Propósito | Quién lo lee | Auto-modifica |
+|---------|--------|-----------|--------------|---------------|
+| `2025.yaml` | 284 | Tablas fiscales multi-territorio 2025: IVA, IS, IRPF, retenciones para Península, Canarias, Ceuta/Melilla y las cuatro haciendas forales | `sfce/normativa/vigente.py`, Motor de Reglas | No |
 
 ### Directorio `sfce/reglas/` (organizados por submódulo)
 
@@ -414,19 +421,135 @@ seguros:
 
 ---
 
+## Sección: `categorias_gasto.yaml` (Motor de Clasificación Fiscal)
+
+### Propósito
+
+50 categorías fiscales para el Motor de Clasificación Fiscal (MCF), cubriendo hostelería, construcción, alimentación, bebidas, limpieza, packaging, representación, alquiler de maquinaria y gasto genérico. Para cada categoría define el tratamiento fiscal completo según LIVA 37/1992, LIRPF 35/2006 y LIS 27/2014.
+
+### Campos de cada categoría
+
+```yaml
+version: "2025-01"
+
+categorias:
+  compras_alimentacion_general:
+    descripcion: "Alimentos en general: frutas, verduras, carne, pescado..."
+    subcuenta: "6000000000"          # Subcuenta PGC 10 dígitos
+    iva_codimpuesto: IVA10           # IVA0 | IVA4 | IVA5 | IVA10 | IVA21
+    iva_tasa: 10                     # Porcentaje numérico
+    iva_deducible_pct: 100           # 0 | 50 | 100
+    exento_art20: false              # true si exento sin derecho a deducción
+    irpf_pct: null                   # null o % retención
+    irpf_condicion: null             # condición que activa IRPF (null = siempre)
+    operaciones_extra: []            # operaciones adicionales en correction.py
+    preguntas: []                    # campos que el wizard MCF debe preguntar
+    subcategoria_por_respuesta: {}   # tratamiento alternativo según respuesta
+    keywords_proveedor: [...]        # palabras en nombre del proveedor
+    keywords_lineas: [...]           # palabras en líneas de factura
+    base_legal: "Art.91 LIVA"
+    notas: "Aclaraciones para el operador"
+```
+
+**Cómo se usa:** `ClasificadorFiscal.clasificar()` en `sfce/core/clasificador_fiscal.py` carga este archivo y busca la categoría cuyas `keywords_proveedor` o `keywords_lineas` coincidan con los datos del OCR. Si hay múltiples candidatos, aplica scoring por número de keywords coincidentes. Si el resultado requiere información del operador, el wizard MCF hace las `preguntas` definidas en la categoría.
+
+**Casos especiales:**
+- `iva_deducible_pct: 50` — hostelería con Art.95.Tres.2 LIVA (handler `iva_turismo_50` en `correction.py`)
+- `operaciones_extra: [autorepercusion_477]` — facturas intracomunitarias
+- `exento_art20: true` — servicios financieros, seguros, educación
+
+---
+
+## Sección: `coherencia_fiscal.yaml` (Validación post-OCR)
+
+### Propósito
+
+Dos responsabilidades en el mismo archivo:
+
+1. **Tabla de prefijos CIF** (39 entradas): mapea el prefijo o par de letras iniciales del NIF/CIF al país, régimen fiscal y tipos de IVA esperados. Permite al motor validar coherencia antes de enviar a FacturaScripts.
+
+2. **Bloqueos duros vs alertas**: define qué inconsistencias son errores que detienen el pipeline y cuáles son solo advertencias que puntúan negativo en el score de confianza.
+
+### Estructura
+
+```yaml
+prefijos_cif:
+  # Multi-caracter ANTES que un solo caracter (evita que "PT" matchee como "P")
+  - prefijos: ["PT"]
+    pais: PRT
+    regimen: intracomunitario
+    iva_factura: [0]
+    nota: "Portugal — intracomunitario (miembro UE)"
+
+  - prefijos: ["A", "B", "C", "D", "E", "F", "G", "H", "J", "N", "P", "Q", "R", "S", "U", "V", "W"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "CIF español (letra + 7dig + control)"
+```
+
+**Quién lo consume:** `sfce/core/coherencia_fiscal.py` (`CoherenciaFiscal`) en la fase post-OCR. Lanza bloqueos duros (score=0, documento a cuarentena) o alertas (-score parcial). `sfce/phases/pre_validation.py` usa los prefijos para el CHECK F1.
+
+---
+
+## Sección: `sfce/normativa/2025.yaml` (Tablas fiscales oficiales)
+
+### Propósito
+
+Fuente única de verdad para todos los tipos impositivos vigentes en España para el ejercicio 2025, desglosados por territorio. Evita que los porcentajes fiscales estén hardcodeados en el código Python.
+
+### Territorios cubiertos (9 secciones top-level)
+
+- `peninsula` — territorio común (IVA, IS, IRPF, retenciones)
+- `canarias` — IGIC (tipos 0%, 3%, 7%, 9.5%, 15%, 20%), AIEM
+- `ceuta_melilla` — IPSI
+- `pais_vasco_alava`, `pais_vasco_vizcaya`, `pais_vasco_gipuzkoa`, `navarra` — haciendas forales con tipos propios
+
+### Estructura (extracto Península)
+
+```yaml
+peninsula:
+  iva:
+    general: 21
+    reducido: 10
+    superreducido: 4
+    recargo_equivalencia:
+      general: 5.2
+      reducido: 1.4
+      superreducido: 0.5
+  impuesto_sociedades:
+    general: 25
+    pymes: 23
+    nuevas_empresas: 15
+  irpf:
+    retencion_profesional: 15
+    retencion_profesional_nuevo: 7
+    pago_fraccionado_130: 20
+    tablas_retencion:
+      - base_hasta: 12450
+        tipo: 19
+```
+
+**Quién lo consume:** `sfce/normativa/vigente.py` expone helpers `tipo_iva(territorio, tipo)`, `tipo_is(territorio, forma_juridica)` y `tabla_irpf(territorio)`. El Motor de Reglas lo usa para validar tipos en facturas según el territorio del cliente.
+
+---
+
 ## Cómo añadir una nueva regla (paso a paso)
 
 ### 1. Identificar el YAML correcto
 
 | Tipo de regla | YAML a editar |
 |---------------|---------------|
+| Nueva categoría de gasto (MCF) | `reglas/categorias_gasto.yaml` |
 | Nuevo tipo de suplido aduanero | `reglas/patrones_suplidos.yaml` |
-| Nuevo bug de FacturaScripts | `reglas/coherencia_fiscal.yaml` (sección `errores`) |
+| Nueva regla de coherencia fiscal / prefijo CIF | `reglas/coherencia_fiscal.yaml` |
+| Nuevo bug de FacturaScripts | `reglas/errores_conocidos.yaml` |
 | Nueva subcuenta o grupo PGC | `reglas/subcuentas_pgc.yaml` |
 | Nueva palabra clave OCR → subcuenta | `sfce/reglas/pgc/palabras_clave_subcuentas.yaml` |
 | Nuevo % de retención IRPF | `reglas/tipos_retencion.yaml` |
 | Nueva validación pre-FS | `reglas/validaciones.yaml` |
 | Nuevo tipo de entidad jurídica | `reglas/tipos_entidad.yaml` |
+| Actualizar tipos impositivos anuales | `sfce/normativa/2025.yaml` (o crear `2026.yaml`) |
 
 ### 2. Editar el YAML
 

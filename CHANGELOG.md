@@ -495,3 +495,27 @@
 - Nominas: OCR extrae importes ya calculados, no recalculamos SS/IRPF. Normativa sirve para validar coherencia
 
 **Proxima sesion**: implementar Fase A (Tasks 1-10)
+
+## Sesión 2026-03-01 (sesión 4) — Actualización Libro de Instrucciones
+
+### Objetivo
+Puesta al día del Libro de Instrucciones (`docs/LIBRO/_temas/`) tras innumerables mejoras acumuladas desde su creación. 12 archivos actualizados en paralelo con agentes.
+
+### Archivos del libro actualizados
+| Archivo | Cambios principales |
+|---|---|
+| `06-motor-reglas.md` | MCF completo (50 categorías, campos YAML, base legal LIVA/LIRPF/LIS), normativa multi-territorio (península, Canarias IGIC, Navarra, País Vasco, Ceuta) |
+| `22-seguridad.md` | Rate limiting VentanaFijaLimiter, account lockout, 2FA TOTP flow, RGPD nonces, migraciones 001+003 |
+| `11-api-endpoints.md` | 125 endpoints documentados (antes 106), tablero usuarios, portal multi-empresa, estadísticas globales |
+| `17-base-de-datos.md` | 39 tablas, multi-tenant completo, migraciones 001-006, nombres reales SQLAlchemy |
+| `13-dashboard-modulos.md` | Rediseño total, stack real con versiones, 25 módulos, tema OKLCh, keyboard shortcuts, PWA |
+| `05-ocr-ia-tiers.md` | Worker OCR async, recovery bloqueados, OCR 036/037, OCR escrituras, caché SHA256 |
+| `04-gate0-cola.md` | Scoring 5 factores con pesos reales, bloqueo duro coherencia, campos cola nuevos |
+| `02-sfce-arquitectura.md` | 12 componentes nuevos en diagrama, jerarquía usuarios, MCF, normativa |
+| `23-clientes.md` | Flujos invitación token, 4 roles, portal multi-empresa, idempresa=6 |
+| `28-roadmap.md` | Estado limpio y real, sin contenido obsoleto de proyectos anteriores |
+| `08-aprendizaje-scoring.md` | Supplier Rules BD, migración YAML→BD, convivencia entre sistemas |
+| `07-sistema-reglas-yaml.md` | Inventario con líneas/entradas reales, normativa/2025.yaml, detalle MCF |
+
+### Nueva obligación añadida a CLAUDE.md
+Actualizar el libro en cada cierre de sesión, con el mismo nivel de detalle con que fue elaborado.

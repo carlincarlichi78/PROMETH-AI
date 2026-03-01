@@ -2,7 +2,7 @@
 
 > **Estado:** COMPLETADO
 > **Actualizado:** 2026-03-01
-> **Fuentes:** `sfce/phases/intake.py`, `sfce/phases/ocr_consensus.py`, `sfce/core/cache_ocr.py`
+> **Fuentes:** `sfce/phases/intake.py`, `sfce/phases/ocr_consensus.py`, `sfce/core/cache_ocr.py`, `sfce/core/worker_ocr_gate0.py`, `sfce/core/recovery_bloqueados.py`, `sfce/core/ocr_036.py`, `sfce/core/ocr_escritura.py`
 
 ---
 
@@ -255,3 +255,259 @@ flowchart TD
     T1Disc2 --> Save
     Save --> Datos
 ```
+
+---
+
+## Worker OCR Gate 0 (`sfce/core/worker_ocr_gate0.py`)
+
+Daemon async que procesa la cola `ColaProcesamiento` en background. Se integra en el lifespan de FastAPI.
+
+### Responsabilidades por ciclo
+
+1. Obtiene hasta `_LIMITE_POR_CICLO = 10` documentos en estado `PENDIENTE`.
+2. Por cada documento: ejecuta OCR en cascada (Tier 0 → 1 → 2), verifica coherencia fiscal, calcula score Gate 0 con 5 factores y decide destino.
+3. Cada `_CICLOS_RECOVERY = 10` ciclos (aproximadamente cada 5 minutos con `intervalo=30s`) ejecuta recovery de documentos bloqueados.
+
+### Flujo de un documento
+
+```
+ColaProcesamiento (PENDIENTE)
+  → marcar PROCESANDO + registrar worker_inicio
+  → _ejecutar_ocr_tiers(): Tier 0 Mistral → Tier 1 GPT → Tier 2 Gemini
+  → verificar_coherencia_fiscal(datos_ocr)
+  → calcular_score(confianza_ocr, trust_level, coherencia)
+  → decidir_destino(score, trust, coherencia)
+  → _finalizar_doc(): estado=PROCESADO, decision, score_final, coherencia_score, datos_ocr_json
+```
+
+Si se produce una excepcion en cualquier paso, el documento se resetea a `PENDIENTE` para retry automatico.
+
+### Decisiones posibles
+
+| Decision | Descripcion |
+|----------|-------------|
+| `AUTO_PUBLICADO` | Score alto, trust alta, coherencia OK |
+| `COLA_REVISION` | Score medio o coherencia con alertas |
+| `COLA_ADMIN` | Requiere supervision manual |
+| `CUARENTENA` | OCR fallo totalmente o score muy bajo |
+
+### Confianza OCR inferida
+
+Si el motor OCR no devuelve `_confianza` ni `confianza_ocr`, la funcion `_confianza_desde_ocr()` la infiere contando cuantos campos clave estan presentes (`emisor_cif`, `total`, `base_imponible`, `fecha_factura`): `presentes / 4`.
+
+### Arranque
+
+```python
+# En lifespan de FastAPI
+asyncio.create_task(loop_worker_ocr(sesion_factory, intervalo=30))
+```
+
+El worker se detiene limpiamente al recibir `CancelledError` (shutdown de FastAPI).
+
+**Tests:** 7 (`tests/test_worker_ocr_gate0.py`)
+
+---
+
+## Recovery de bloqueados (`sfce/core/recovery_bloqueados.py`)
+
+Modulo independiente invocado periodicamente por el Worker OCR Gate 0.
+
+### Problema que resuelve
+
+Si el worker crashea o es interrumpido mientras un documento esta en estado `PROCESANDO`, ese documento queda bloqueado indefinidamente (nadie lo pone de vuelta a `PENDIENTE`). Sin recovery, esos documentos nunca se procesan.
+
+### Algoritmo
+
+```
+Buscar en ColaProcesamiento:
+  estado == "PROCESANDO"
+  AND worker_inicio < (ahora - 1 hora)
+
+Para cada doc bloqueado:
+  SI reintentos >= MAX_REINTENTOS (3):
+    → estado = "PROCESADO", decision = "CUARENTENA"  (definitivo)
+  SINO:
+    → estado = "PENDIENTE", worker_inicio = None, reintentos += 1
+```
+
+### Constantes
+
+| Constante | Valor | Descripcion |
+|-----------|-------|-------------|
+| `TIMEOUT_PROCESANDO` | 1 hora | Tiempo en PROCESANDO antes de considerar bloqueado |
+| `MAX_REINTENTOS` | 3 | Intentos maximos antes de CUARENTENA definitiva |
+
+### Resultado devuelto
+
+```python
+{
+    "bloqueados": 2,   # total detectados
+    "resetados": 1,    # enviados de vuelta a PENDIENTE
+    "cuarentena": 1    # enviados a CUARENTENA definitiva
+}
+```
+
+### Invocacion desde el worker
+
+```python
+# En loop_worker_ocr(), cada _CICLOS_RECOVERY ciclos:
+with sesion_factory() as sesion:
+    resultado = recovery_documentos_bloqueados(sesion)
+if resultado.get("resetados", 0) > 0:
+    logger.info(f"Recovery: {resultado}")
+```
+
+**Tests:** 6 (`tests/test_recovery_bloqueados.py`)
+
+---
+
+## OCR Especializado — Formularios fiscales
+
+Parsers de texto plano para documentos estructurados que no son facturas. Reciben texto ya extraido (por pdfplumber u otro motor) y aplican expresiones regulares para campos conocidos.
+
+### Parser Modelo 036/037 (`sfce/core/ocr_036.py`)
+
+Extrae datos de alta censal de la AEAT (formularios 036 y 037).
+
+**Dataclass de resultado:**
+
+```python
+@dataclass
+class DatosAlta036:
+    nif: str = ""                    # NIF persona fisica o CIF sociedad
+    nombre: str = ""                 # Apellidos + nombre o razon social
+    domicilio_fiscal: str = ""       # Domicilio fiscal completo
+    fecha_inicio_actividad: str = "" # Formato dd/mm/aaaa
+    regimen_iva: str = ""            # "general", "simplificado", etc. (lowercase)
+    epigrafe_iae: str = ""           # Codigo numerico epigrafe IAE
+    es_sociedad: bool = False        # True si NIF empieza por letra (CIF)
+    tipo_cliente: str = ""           # "autonomo" | "sociedad" | "desconocido"
+    raw_text: str = ""               # Texto original para debug
+```
+
+**Logica de deteccion autonomo/sociedad:**
+
+- Busca primero patron CIF sociedad (`[A-Z][0-9]{8}`). Si encuentra → `es_sociedad=True`, `tipo_cliente="sociedad"`.
+- Si no, busca NIF persona fisica (`[0-9]{8}[A-Z]`). Si encuentra → `tipo_cliente="autonomo"`.
+- Si ninguno → `tipo_cliente="desconocido"`.
+
+**Campos extraidos por regex:**
+
+| Campo | Patron buscado en texto |
+|-------|-------------------------|
+| `nombre` | `Apellidos y nombre`, `Razon social`, `Nombre` |
+| `domicilio_fiscal` | `Domicilio fiscal`, `Domicilio social` |
+| `fecha_inicio_actividad` | `Fecha inicio actividad` + formato `dd/mm/aaaa` |
+| `regimen_iva` | `Regimen del IVA`, `Regimen IVA` |
+| `epigrafe_iae` | `Epigrafe IAE`, `IAE` + digitos |
+
+**Uso:**
+
+```python
+from sfce.core.ocr_036 import parsear_modelo_036
+
+texto = extraer_texto_pdf("alta_censal.pdf")   # pdfplumber u otro motor
+datos = parsear_modelo_036(texto)
+print(datos.nif, datos.tipo_cliente, datos.regimen_iva)
+```
+
+### Parser escrituras de constitucion (`sfce/core/ocr_escritura.py`)
+
+Extrae datos de escrituras notariales de constitucion de sociedades.
+
+**Dataclass de resultado:**
+
+```python
+@dataclass
+class DatosEscritura:
+    cif: str = ""                    # CIF de la sociedad (formato [A-Z][0-9]{8})
+    denominacion: str = ""           # Denominacion social completa
+    capital_social: str = ""         # Capital social en texto (con unidad)
+    objeto_social: str = ""          # Objeto social
+    administradores: List[str] = []  # Lista de nombres de administradores
+    domicilio_social: str = ""       # Domicilio social completo
+    raw_text: str = ""               # Texto original para debug
+```
+
+**Logica de extraccion de CIF:**
+
+1. Busca primero con prefijo explicito: `C.I.F.`, `NIF/CIF`, `NIF` seguido de `[A-Z][0-9]{8}`.
+2. Si no encuentra con prefijo, busca CIF bare (`[A-Z][0-9]{8}`) en cualquier lugar del texto.
+
+**Campos extraidos por regex:**
+
+| Campo | Patron buscado en texto |
+|-------|-------------------------|
+| `denominacion` | `DENOMINACION SOCIAL`, `RAZON SOCIAL`, `Denominacion` |
+| `capital_social` | `CAPITAL SOCIAL` |
+| `objeto_social` | `OBJETO SOCIAL` |
+| `domicilio_social` | `DOMICILIO SOCIAL` |
+| `administradores` | `ADMINISTRADOR...: <nombre>, DNI` (captura todos con `finditer`) |
+
+**Uso:**
+
+```python
+from sfce.core.ocr_escritura import parsear_escritura
+
+texto = extraer_texto_pdf("escritura_constitucion.pdf")
+datos = parsear_escritura(texto)
+print(datos.cif, datos.denominacion, datos.administradores)
+```
+
+---
+
+## Cache OCR — Referencia detallada (`sfce/core/cache_ocr.py`)
+
+La seccion anterior del diagrama describe el flujo a alto nivel. Esta seccion documenta las funciones y casos de uso operativos.
+
+### API publica
+
+| Funcion | Signatura | Descripcion |
+|---------|-----------|-------------|
+| `obtener_cache_ocr` | `(ruta_pdf: str) -> dict \| None` | Devuelve datos OCR cacheados si validos, `None` si miss o invalido |
+| `guardar_cache_ocr` | `(ruta_pdf: str, datos_ocr: dict) -> str` | Guarda `.ocr.json` junto al PDF, retorna ruta del JSON |
+| `invalidar_cache_ocr` | `(ruta_pdf: str) -> bool` | Elimina `.ocr.json`. `True` si existia, `False` si no |
+| `estadisticas_cache` | `(ruta_directorio: str) -> dict` | Audita directorio: total, hits, misses, invalidos, ratio_hits |
+| `calcular_hash_archivo` | `(ruta_pdf: str) -> str` | SHA256 en hex (64 chars). Lee en bloques de 4 MB |
+
+### Estructura del archivo `.ocr.json`
+
+```json
+{
+  "hash_sha256": "a3f9c2...",
+  "timestamp": "2026-03-01T14:32:00",
+  "motor_ocr": "mistral",
+  "tier_ocr": 0,
+  "datos": {
+    "emisor_cif": "B12345678",
+    "total": 1210.50,
+    "...": "..."
+  }
+}
+```
+
+### Casos de invalidacion automatica
+
+El cache se ignora automaticamente (sin necesidad de borrar el archivo) si:
+
+- El PDF ha cambiado desde que se genero el cache (hash SHA256 difiere).
+- El `.ocr.json` esta corrupto o es JSON invalido.
+- El `.ocr.json` no contiene el campo `hash_sha256`.
+- El PDF ya no existe en disco al intentar recalcular el hash.
+
+Para invalidacion manual (tras correccion de datos OCR):
+
+```python
+from sfce.core.cache_ocr import invalidar_cache_ocr
+invalidar_cache_ocr("inbox/factura-2025-001.pdf")
+```
+
+### Estadisticas de un directorio
+
+```python
+from sfce.core.cache_ocr import estadisticas_cache
+stats = estadisticas_cache("clientes/chiringuito-sol-arena/inbox/2025/")
+# {"total_pdfs": 45, "hits": 38, "misses": 5, "invalidos": 2, "ratio_hits": 0.844}
+```
+
+Util para auditar el estado del cache antes de re-ejecutar el pipeline sobre un lote grande.

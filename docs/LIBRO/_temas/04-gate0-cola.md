@@ -1,7 +1,7 @@
 # 04 — Gate 0: Preflight, Cola y Scoring
 
 > **Estado:** ✅ COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-02
 > **Fuentes:** `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py`, `sfce/db/modelos.py`
 
 ---
@@ -93,28 +93,35 @@ Los duplicados detectados por SHA256 devuelven HTTP 409 (sin lanzar la excepció
 
 ## 3. Scoring y decisión automática
 
-Tras el preflight, el sistema calcula un score 0-100 que combina cuatro factores ponderados.
+Tras el preflight, el sistema calcula un score 0-100 que combina **cinco factores** ponderados.
+El 5o factor (coherencia fiscal) se añadio para integrar la validacion post-OCR directamente
+en la decision de admision.
 
 ### Función `calcular_score()`
 
 ```python
 def calcular_score(
-    confianza_ocr: float,        # 0.0 – 1.0, confianza reportada por el motor OCR
+    confianza_ocr: float,              # 0.0 – 1.0, confianza reportada por el motor OCR
     trust_level: TrustLevel,
-    supplier_rule_aplicada: bool, # True si existe una SupplierRule auto_aplicable para el CIF
-    checks_pasados: int,          # checks de pre-validación que pasaron
+    supplier_rule_aplicada: bool,      # True si existe SupplierRule auto_aplicable para el CIF
+    checks_pasados: int,               # checks de pre-validación que pasaron
     checks_totales: int,
+    coherencia: Optional[ResultadoCoherencia] = None,  # resultado del validador fiscal post-OCR
 ) -> float
 ```
 
-**Pesos de cada factor:**
+**Pesos de los 5 factores:**
 
-| Factor                   | Peso  | Contribución máxima       |
-|--------------------------|-------|---------------------------|
-| Confianza OCR            | 0.50  | `confianza_ocr * 100 * 0.50` |
-| Bonus trust level        | —     | 0 / 5 / 15 / 25 puntos    |
-| Bonus supplier rule      | —     | 15 puntos si aplicada     |
-| Ratio checks pre-validación | 0.10 | `(checks_pasados/checks_totales) * 100 * 0.10` |
+| Factor                      | Constante        | Peso  | Contribución máxima                                   |
+|-----------------------------|------------------|-------|-------------------------------------------------------|
+| Confianza OCR               | `_PESO_OCR`      | 0.45  | `confianza_ocr * 100 * 0.45`                         |
+| Bonus trust level           | `_PESO_TRUST`    | 0.25  | 0 / 5 / 15 / 25 puntos (fijo según TrustLevel)       |
+| Bonus supplier rule         | `_PESO_SUPPLIER` | 0.15  | 15 puntos si `supplier_rule_aplicada=True`, 0 si no  |
+| Coherencia fiscal (5º)      | `_PESO_COHERENCIA` | 0.10 | `coherencia.score * 0.10` (0 si no hay coherencia)  |
+| Ratio checks pre-validación | `_PESO_CHECKS`   | 0.05  | `(checks_pasados/checks_totales) * 100 * 0.05`       |
+
+> Los pesos OCR y Checks fueron reducidos (0.50→0.45 y 0.10→0.05) al incorporar el 5o factor
+> para que la suma total siga siendo 100.
 
 **Bonus por trust level:**
 
@@ -128,17 +135,29 @@ def calcular_score(
 El resultado se redondea a 2 decimales y se limita a 100.0.
 
 > Nota: En la ingesta inicial (Gate 0 HTTP), el OCR todavía no se ha ejecutado, por lo que
-> `confianza_ocr=0.0` y se usa un score conservador. El score definitivo se recalcula
-> dentro del pipeline tras la fase de OCR.
+> `confianza_ocr=0.0` y `coherencia=None`, usando un score conservador. El score definitivo
+> se recalcula dentro del pipeline tras la fase de OCR y validacion de coherencia.
 
-### Función `decidir_destino(score, trust)` — umbrales exactos
+### Función `decidir_destino(score, trust, coherencia)` — umbrales exactos
 
 ```python
-def decidir_destino(score: float, trust: TrustLevel) -> Decision
+def decidir_destino(
+    score: float,
+    trust: TrustLevel,
+    coherencia: Optional[ResultadoCoherencia] = None,
+) -> Decision
 ```
+
+**Bloqueo duro por coherencia fiscal:**
+
+Si `coherencia` tiene `errores_graves=True`, la decision es **CUARENTENA inmediata**,
+independientemente del score y del trust level. Este bloqueo se evalua antes que los umbrales.
+
+**Umbrales de score (aplicados solo si no hay bloqueo duro):**
 
 | Condición                                         | Decisión          |
 |---------------------------------------------------|-------------------|
+| `coherencia.errores_graves == True`               | CUARENTENA        |
 | score >= 95 **y** trust in (MAXIMA, ALTA)         | AUTO_PUBLICADO    |
 | score >= 85 **y** trust == ALTA                   | AUTO_PUBLICADO    |
 | score >= 70                                       | COLA_REVISION     |
@@ -163,39 +182,47 @@ Registra cada documento que pasa por Gate 0, con su estado, score y decisión.
 
 ```sql
 CREATE TABLE cola_procesamiento (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    empresa_id      INTEGER NOT NULL,
-    documento_id    INTEGER,            -- NULL hasta que el pipeline registra el doc
-    nombre_archivo  VARCHAR(500) NOT NULL,
-    ruta_archivo    VARCHAR(1000) NOT NULL,
-    estado          VARCHAR(20) DEFAULT 'PENDIENTE',
-    trust_level     VARCHAR(20) DEFAULT 'BAJA',
-    score_final     FLOAT,
-    decision        VARCHAR(30),
-    hints_json      TEXT DEFAULT '{}',
-    sha256          VARCHAR(64),
-    created_at      DATETIME,
-    updated_at      DATETIME
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id        INTEGER NOT NULL,
+    documento_id      INTEGER,            -- NULL hasta que el pipeline registra el doc
+    nombre_archivo    VARCHAR(500) NOT NULL,
+    ruta_archivo      VARCHAR(1000) NOT NULL,
+    estado            VARCHAR(20) DEFAULT 'PENDIENTE',
+    trust_level       VARCHAR(20) DEFAULT 'BAJA',
+    score_final       FLOAT,
+    decision          VARCHAR(30),
+    hints_json        TEXT DEFAULT '{}',
+    sha256            VARCHAR(64),
+    datos_ocr_json    TEXT,               -- JSON con datos extraídos por OCR (nullable)
+    coherencia_score  FLOAT,             -- Score coherencia fiscal 0-100 (nullable)
+    worker_inicio     DATETIME,          -- Timestamp inicio procesamiento (para recovery)
+    reintentos        INTEGER DEFAULT 0, -- Contador de reintentos por recovery
+    created_at        DATETIME,
+    updated_at        DATETIME
 );
 ```
 
 ### Descripción de campos
 
-| Campo           | Tipo         | Descripción                                                                 |
-|-----------------|--------------|-----------------------------------------------------------------------------|
-| `id`            | Integer PK   | Identificador único del item en cola                                        |
-| `empresa_id`    | Integer      | Empresa a la que pertenece el documento (no nullable, indexado)             |
-| `documento_id`  | Integer      | FK al documento creado en BD tras completar el pipeline (nullable al inicio)|
-| `nombre_archivo`| String(500)  | Nombre sanitizado del archivo                                               |
-| `ruta_archivo`  | String(1000) | Ruta absoluta en disco del archivo almacenado                               |
-| `estado`        | String(20)   | Estado actual: `PENDIENTE`, `PROCESANDO`, `COMPLETADO`, `ERROR`             |
-| `trust_level`   | String(20)   | Nivel de confianza asignado en Gate 0 (valor del enum `TrustLevel`)         |
-| `score_final`   | Float        | Score 0-100 calculado por `calcular_score()`                                |
-| `decision`      | String(30)   | Decisión de routing (valor del enum `Decision`)                             |
-| `hints_json`    | Text         | JSON con campos pre-rellenados por SupplierRule (`tipo_doc`, `subcuenta_gasto`, etc.) |
-| `sha256`        | String(64)   | Hash SHA256 del contenido binario; usado para deduplicación (indexado)      |
-| `created_at`    | DateTime     | Timestamp de inserción (UTC)                                                |
-| `updated_at`    | DateTime     | Timestamp de última modificación (auto-update en cada PUT)                  |
+| Campo             | Tipo         | Descripción                                                                                 |
+|-------------------|--------------|---------------------------------------------------------------------------------------------|
+| `id`              | Integer PK   | Identificador único del item en cola                                                        |
+| `empresa_id`      | Integer      | Empresa a la que pertenece el documento (no nullable, indexado)                             |
+| `documento_id`    | Integer      | FK al documento creado en BD tras completar el pipeline (nullable al inicio)                |
+| `nombre_archivo`  | String(500)  | Nombre sanitizado del archivo                                                               |
+| `ruta_archivo`    | String(1000) | Ruta absoluta en disco del archivo almacenado                                               |
+| `estado`          | String(20)   | Estado actual: `PENDIENTE`, `PROCESANDO`, `COMPLETADO`, `ERROR`                             |
+| `trust_level`     | String(20)   | Nivel de confianza asignado en Gate 0 (valor del enum `TrustLevel`)                         |
+| `score_final`     | Float        | Score 0-100 calculado por `calcular_score()`                                                |
+| `decision`        | String(30)   | Decisión de routing (valor del enum `Decision`)                                             |
+| `hints_json`      | Text         | JSON con campos pre-rellenados por SupplierRule (`tipo_doc`, `subcuenta_gasto`, etc.)       |
+| `sha256`          | String(64)   | Hash SHA256 del contenido binario; usado para deduplicación (indexado)                      |
+| `datos_ocr_json`  | Text         | JSON con los datos extraídos por OCR tras procesamiento. Nullable hasta que el worker actua.|
+| `coherencia_score`| Float        | Score de coherencia fiscal (0-100) calculado por `CoherenciaFiscal` post-OCR. Nullable.    |
+| `worker_inicio`   | DateTime     | Timestamp de cuando el worker inició el procesamiento. Usado por `RecoveryBloqueados` para detectar docs atascados en `PROCESANDO` >1h. |
+| `reintentos`      | Integer      | Contador de reintentos ejecutados por `RecoveryBloqueados`. Al llegar a `MAX_REINTENTOS` el doc pasa a CUARENTENA. |
+| `created_at`      | DateTime     | Timestamp de inserción (UTC)                                                                |
+| `updated_at`      | DateTime     | Timestamp de última modificación (auto-update en cada cambio)                              |
 
 Los estados posibles para `estado`:
 
@@ -350,6 +377,7 @@ Punto de entrada unificado. Requiere autenticación.
 
 Ingesta masiva. Recibe un ZIP, extrae todos los PDFs internos y los encola individualmente.
 Trust level asignado: ALTA (upload manual por gestor).
+Limite de tamano del ZIP: **500 MB**.
 
 **Respuesta** (HTTP 202):
 
@@ -360,6 +388,33 @@ Trust level asignado: ALTA (upload manual por gestor).
   "errores": ["factura_corrupta.pdf: PDF inválido"]
 }
 ```
+
+**Codigos de error adicionales para ZIP:**
+
+| Codigo | Causa                          |
+|--------|--------------------------------|
+| 413    | ZIP > 500 MB                   |
+
+### `GET /api/gate0/worker/estado`
+
+Consulta el estado del worker OCR que procesa la cola en background.
+Requiere autenticacion.
+
+**Respuesta** (HTTP 200):
+
+```json
+{
+  "activo": true,
+  "pendientes": 3,
+  "procesados_hoy": 17
+}
+```
+
+| Campo            | Tipo    | Descripcion                                                              |
+|------------------|---------|--------------------------------------------------------------------------|
+| `activo`         | bool    | `true` si la task asyncio del worker esta viva y no ha terminado         |
+| `pendientes`     | int     | Items en cola con `estado = "PENDIENTE"` en este momento                 |
+| `procesados_hoy` | int     | Items con `estado = "PROCESADO"` y `updated_at >= hoy`                   |
 
 ### Gestión de la cola (endpoints estándar BD)
 
@@ -439,13 +494,16 @@ flowchart TD
 
 ## Resumen de constantes
 
-| Constante        | Valor        | Ubicación          |
-|------------------|--------------|--------------------|
-| `MAX_BYTES`      | 25 MB        | `sfce/core/gate0.py` |
-| `_PESO_OCR`      | 0.50         | `sfce/core/gate0.py` |
-| `_PESO_TRUST`    | 0.25         | `sfce/core/gate0.py` |
-| `_PESO_SUPPLIER` | 0.15         | `sfce/core/gate0.py` |
-| `_PESO_CHECKS`   | 0.10         | `sfce/core/gate0.py` |
+| Constante            | Valor        | Ubicación              |
+|----------------------|--------------|------------------------|
+| `MAX_BYTES`          | 25 MB        | `sfce/core/gate0.py`   |
+| `MAX_ZIP`            | 500 MB       | `sfce/api/rutas/gate0.py` |
+| `_PESO_OCR`          | 0.45         | `sfce/core/gate0.py`   |
+| `_PESO_TRUST`        | 0.25         | `sfce/core/gate0.py`   |
+| `_PESO_SUPPLIER`     | 0.15         | `sfce/core/gate0.py`   |
+| `_PESO_COHERENCIA`   | 0.10         | `sfce/core/gate0.py`   |
+| `_PESO_CHECKS`       | 0.05         | `sfce/core/gate0.py`   |
+| Bloqueo duro         | `coherencia.errores_graves` → CUARENTENA | `sfce/core/gate0.py` |
 | Umbral AUTO_PUBLICADO (MAXIMA/ALTA) | score >= 95 | `sfce/core/gate0.py` |
 | Umbral AUTO_PUBLICADO (ALTA)        | score >= 85 | `sfce/core/gate0.py` |
 | Umbral COLA_REVISION                | score >= 70 | `sfce/core/gate0.py` |

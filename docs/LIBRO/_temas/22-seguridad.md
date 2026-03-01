@@ -2,7 +2,7 @@
 
 > **Estado:** ✅ COMPLETADO
 > **Actualizado:** 2026-03-01
-> **Fuentes principales:** `sfce/api/auth.py`, `sfce/api/rate_limiter.py`, `sfce/api/rutas/rgpd.py`, `sfce/db/modelos_auth.py`, `sfce/core/cifrado.py`
+> **Fuentes principales:** `sfce/api/auth.py`, `sfce/api/rutas/auth_rutas.py`, `sfce/api/rate_limiter.py`, `sfce/api/rutas/rgpd.py`, `sfce/db/modelos_auth.py`, `sfce/core/cifrado.py`, `sfce/api/app.py`
 
 ---
 
@@ -86,26 +86,63 @@ totp_habilitado = Column(Boolean, default=False)   # si el 2FA está activo
 
 ### Flujo completo de activación
 
-1. `POST /api/auth/2fa/setup` — genera una nueva clave TOTP (`pyotp.random_base32()`), devuelve la clave y la URL para el QR
+1. `POST /api/auth/2fa/setup` — genera una nueva clave TOTP (`pyotp.random_base32()`), guarda `totp_secret` en BD, devuelve la clave base32, la URI de aprovisionamiento y el QR en base64 (PNG)
 2. Usuario escanea el QR en Google Authenticator / Authy
-3. `POST /api/auth/2fa/verify` — usuario envía el primer código TOTP para confirmar
-4. `POST /api/auth/2fa/confirm` — confirma la activación, guarda `totp_habilitado=True`
+3. `POST /api/auth/2fa/verify` — usuario envía el primer código TOTP para confirmar que el dispositivo está sincronizado. Si es correcto: `totp_habilitado = True`. Este endpoint requiere JWT normal (usuario ya autenticado).
+
+```python
+# verify_2fa — activa el 2FA
+totp = pyotp.TOTP(u.totp_secret)
+if not totp.verify(body.codigo, valid_window=1):   # valid_window=1: acepta ±30s
+    raise HTTPException(401, "Código TOTP incorrecto.")
+u.totp_habilitado = True
+```
+
+**Nota:** `/api/auth/2fa/confirm` es un endpoint diferente — se usa exclusivamente en el flujo de login cuando 2FA ya está activo (no en la activación inicial).
 
 ### Flujo de login con 2FA activo
 
 ```
 POST /api/auth/login
-  → Si totp_habilitado=False: retorna HTTP 200 + token JWT normal
-  → Si totp_habilitado=True:  retorna HTTP 202 + temp_token (TTL 5min, totp_pending=True)
+  → Verifica bloqueo (locked_until) antes de comprobar password
+  → Si password incorrecto: failed_attempts += 1, audit LOGIN_FAILED
+  → Si totp_habilitado=False: audit LOGIN ok, retorna HTTP 200 + token JWT completo
+  → Si totp_habilitado=True:  audit LOGIN ok (estado: pending_2fa), retorna:
+       HTTP 202 + {pending_2fa: true, temp_token: "...", detail: "Se requiere código TOTP."}
 
 POST /api/auth/2fa/confirm
-  → Body: {temp_token, codigo_totp}
-  → Verifica código con pyotp.TOTP(totp_secret).verify(codigo)
-  → Si válido: retorna HTTP 200 + token JWT normal
-  → Si inválido: HTTP 401
+  → Body: {temp_token, codigo}
+  → Decodifica temp_token, verifica payload.totp_pending == True
+  → Verifica código TOTP con pyotp.TOTP(totp_secret).verify(codigo, valid_window=1)
+  → Si válido: retorna HTTP 200 + token JWT completo con gestoria_id
+  → Si temp_token no tiene totp_pending: HTTP 400
+  → Si código incorrecto: HTTP 401
 ```
 
-El `temp_token` tiene `totp_pending=True` en el payload para que no pueda usarse en endpoints normales.
+El `temp_token` se genera con `expires_delta=timedelta(minutes=5)` y lleva `"totp_pending": True` en el payload. Los endpoints normales verifican que este flag no esté presente, por lo que el temp_token no puede usarse para acceder a recursos protegidos.
+
+### Invitación de usuarios (`POST /api/auth/aceptar-invitacion`)
+
+Los usuarios creados por admin de gestoría o superadmin reciben un token de invitación de 7 días. El flujo de aceptación:
+
+```
+POST /api/auth/aceptar-invitacion
+  → Body: {token, password}
+  → Busca usuario por invitacion_token (campo en tabla usuarios)
+  → Verifica invitacion_expira > now() — si ha expirado: HTTP 410 Gone
+  → Establece hash_password con la nueva contraseña
+  → Limpia invitacion_token, invitacion_expira; forzar_cambio_password = False
+  → Captura email, rol, gestoria_id ANTES del commit
+  → Retorna HTTP 200 + token JWT listo para usar
+```
+
+Campos implicados en tabla `usuarios`:
+
+```python
+invitacion_token   = Column(String(64), nullable=True)
+invitacion_expira  = Column(DateTime, nullable=True)
+forzar_cambio_password = Column(Boolean, default=False)
+```
 
 ---
 
@@ -140,6 +177,37 @@ El algoritmo de ventana fija (no deslizante) tiene O(n) en limpieza pero con ven
 | `crear_usuario_limiter` | `usuario:{email}` | 100 req | 60s |
 
 Los límites son configurables en `crear_app()` para permitir tests con valores diferentes sin modificar los límites de producción.
+
+### Inyección de dependencias (app.state)
+
+Los limitadores no se registran como dependencias globales sino como callables guardados en `app.state`. Los endpoints los leen desde allí:
+
+```python
+# En crear_app():
+login_limiter   = crear_login_limiter(limite_login)
+usuario_limiter = crear_usuario_limiter(limite_usuario)
+app.state.dep_rate_login   = crear_dependencia_login(login_limiter)
+app.state.dep_rate_usuario = crear_dependencia_usuario(usuario_limiter)
+
+# En auth_rutas.py (endpoints):
+async def _rate_limit_login(request: Request, response: Response):
+    dep = getattr(request.app.state, "dep_rate_login", None)
+    if dep:
+        await dep(request, response)
+
+@router.post("/login", dependencies=[Depends(_rate_limit_login)])
+```
+
+Este patrón permite reemplazar los limitadores en tests inyectando un `sesion_factory` diferente o simplemente no configurando el `dep_rate_login` en el estado.
+
+### Middleware de tamaño máximo
+
+`LimiteTamanioMiddleware` rechaza cualquier request con `Content-Length > 25 MB` antes de que llegue a los endpoints:
+
+```python
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
+# Retorna HTTP 413 con {"detail": "Archivo demasiado grande. Maximo 25 MB."}
+```
 
 ### Extracción de IP
 
@@ -253,7 +321,14 @@ GET /api/rgpd/descargar/{token}
 
 El nonce se marca como usado **antes** de generar el ZIP. Si la generación del ZIP fallara, el usuario tendría que solicitar un nuevo token. Esto es intencional: garantiza que el nonce de un solo uso no se puede usar por un segundo agente incluso si el primer intento falla a mitad.
 
-Los nonces se almacenan en `app.state.rgpd_nonces_usados` (set en memoria). Se inicializa en `crear_app()`.
+Los nonces se almacenan en `app.state.rgpd_nonces_usados` (set en memoria). Se inicializa en `crear_app()` con un guard `hasattr` para ser idempotente:
+
+```python
+if not hasattr(app.state, "rgpd_nonces_usados"):
+    app.state.rgpd_nonces_usados = set()
+```
+
+**Limitación conocida:** los nonces usados se pierden al reiniciar el servidor. Si el servidor se reinicia entre la emisión del token y su uso, el nonce ya no está en el set y se consideraría "no usado". Aceptable para el caso de uso actual (exportaciones puntuales por operadores).
 
 ---
 
@@ -261,10 +336,15 @@ Los nonces se almacenan en `app.state.rgpd_nonces_usados` (set en memoria). Se i
 
 ```python
 def _leer_cors_origins() -> list[str]:
-    cors_env = os.environ.get("SFCE_CORS_ORIGINS", "")
-    if not cors_env:
-        return ["http://localhost:5173", "http://localhost:3000"]
-    return [o.strip() for o in cors_env.split(",") if o.strip()]
+    env = os.environ.get("SFCE_CORS_ORIGINS", "")
+    if env:
+        return [o.strip() for o in env.split(",") if o.strip()]
+    # Defecto: solo localhost para desarrollo
+    return [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ]
 ```
 
 La variable `SFCE_CORS_ORIGINS` acepta una lista separada por comas:
@@ -273,7 +353,13 @@ La variable `SFCE_CORS_ORIGINS` acepta una lista separada por comas:
 SFCE_CORS_ORIGINS=https://app.sfce.es,https://portal.sfce.es
 ```
 
-**Nunca se configura `"*"`** como origen permitido. El default solo permite localhost (entorno de desarrollo).
+**Nunca se configura `"*"`** como origen permitido. El default (sin variable) permite tres orígenes de desarrollo:
+
+```python
+["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+```
+
+Los métodos permitidos son `GET, POST, PUT, PATCH, DELETE, OPTIONS`. Los headers permitidos son `Authorization, Content-Type, Accept`. `allow_credentials=True` para que el navegador envíe cookies/credenciales.
 
 ---
 
@@ -404,12 +490,46 @@ app = crear_app(sesion_factory=sf, limite_login=1000)
 
 ---
 
-## 12. Variables de entorno requeridas
+## 12. Historial de migraciones de seguridad
+
+| Migración | Archivo | Qué crea/modifica |
+|-----------|---------|-------------------|
+| 001 | `sfce/db/migraciones/001_seguridad_base.py` | Tabla `audit_log_seguridad` + 3 índices (timestamp, gestoria+timestamp, email+timestamp) |
+| 003 | `sfce/db/migraciones/003_account_lockout.py` | Añade a tabla `usuarios`: `failed_attempts`, `locked_until`, `totp_secret`, `totp_habilitado` |
+
+Las migraciones son **idempotentes**: comprueban columnas existentes antes de ejecutar `ALTER TABLE` (SQLite: `PRAGMA table_info`; PostgreSQL: `ADD COLUMN IF NOT EXISTS`).
+
+Ejecutar en orden antes de arrancar la app en una BD nueva:
+
+```bash
+python sfce/db/migraciones/001_seguridad_base.py
+python sfce/db/migraciones/003_account_lockout.py
+```
+
+---
+
+## 13. Variables de entorno requeridas
 
 | Variable | Descripción | Falla si ausente |
 |----------|-------------|-----------------|
 | `SFCE_JWT_SECRET` | Secreto JWT (≥32 chars) | Sí — RuntimeError en startup |
 | `SFCE_CORS_ORIGINS` | Origins CORS permitidos, separados por coma | No — default localhost |
 | `SFCE_DB_TYPE` | `sqlite` o `postgresql` | No — default sqlite |
+| `SFCE_DB_PATH` | Ruta del archivo SQLite | No — default `./sfce.db` |
+| `SFCE_DB_HOST` | Host PostgreSQL | No — default `localhost` |
+| `SFCE_DB_PORT` | Puerto PostgreSQL | No — default `5432` |
+| `SFCE_DB_USER` | Usuario PostgreSQL | Sí si `SFCE_DB_TYPE=postgresql` |
+| `SFCE_DB_PASSWORD` | Password PostgreSQL | Sí si `SFCE_DB_TYPE=postgresql` |
+| `SFCE_DB_NAME` | Nombre BD PostgreSQL | Sí si `SFCE_DB_TYPE=postgresql` |
 | `SFCE_FERNET_KEY` | Clave Fernet para cifrado de correo | No — se genera en memoria (advertencia) |
 | `CERTIGESTOR_WEBHOOK_SECRET` | Secreto HMAC para webhook CertiGestor | No — webhook siempre rechaza con error log |
+
+Generar valores para las variables de seguridad:
+
+```bash
+# SFCE_JWT_SECRET (mínimo 32 chars)
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# SFCE_FERNET_KEY
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```

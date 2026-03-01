@@ -2,7 +2,7 @@
 
 > **Estado:** COMPLETADO
 > **Actualizado:** 2026-03-01
-> **Fuentes principales:** `clientes/elena-navarro/config.yaml`, `sfce/core/config.py`, `sfce/core/config_desde_bd.py`
+> **Fuentes principales:** `clientes/elena-navarro/config.yaml`, `sfce/core/config.py`, `sfce/core/config_desde_bd.py`, `sfce/api/rutas/admin.py`, `sfce/api/rutas/portal.py`, `sfce/api/rutas/auth_rutas.py`
 
 ---
 
@@ -15,9 +15,180 @@
 | 3 | `EMPRESA PRUEBA` | EMPRESA PRUEBA S.L. | S.L. | Sandbox testing — pipeline 46/46 OK | 2025 |
 | 4 | `chiringuito-sol-arena` | CHIRINGUITO SOL Y ARENA S.L. | S.L. | Datos inyectados: 1200 FC + 596 FV + 112 asientos | C422, C423, C424, 0004 |
 | 5 | `elena-navarro` | ELENA NAVARRO PRECIADOS | Autonomo | Pipeline completado | 2025 |
+| 6 | — | GESTORIA CARLOS CANETE | S.L. | Empresa default del admin superadmin | 2025 |
 
 > Nota: el `idempresa` es el ID de empresa en FacturaScripts, no un ID interno del SFCE.
 > El `codejercicio` puede diferir del ano — empresa 4 usa "0004", no "2025".
+> La empresa 6 (GESTORIA CARLOS CANETE) es la empresa interna; no tiene slug de cliente ni config.yaml.
+
+---
+
+## Tablero de Usuarios — Jerarquia y Accesos
+
+El SFCE implementa un sistema multiusuario con 4 niveles de rol. Los archivos clave son:
+- `sfce/api/rutas/admin.py` — gestion de gestorias y usuarios (superadmin)
+- `sfce/api/rutas/auth_rutas.py` — login, aceptar invitacion
+- `sfce/api/rutas/portal.py` — portal cliente multi-empresa
+- `sfce/api/rutas/empresas.py` — invitar cliente a empresa especifica
+
+### Roles y accesos
+
+| Rol | Frontend | Puede hacer |
+|-----|----------|-------------|
+| `superadmin` | `/admin/gestorias` | Crear/gestionar gestorias, invitar `admin_gestoria`, crear clientes directos |
+| `admin_gestoria` | `/mi-gestoria` | Administrar su gestoria, invitar `asesor` y clientes de su gestoria |
+| `asesor` | Dashboard completo | Gestionar empresas asignadas de su gestoria |
+| `cliente` | `/portal` | Ver sus empresas asignadas (vista simplificada) |
+
+### Campo `gestoria_id` en `Usuario`
+
+- `admin_gestoria`, `asesor`, `cliente` de gestoria: tienen `gestoria_id` asignado
+- **Clientes directos**: `gestoria_id=NULL` — creados por superadmin, no pertenecen a ninguna gestoria
+
+---
+
+## Flujo de invitacion
+
+Los usuarios no se registran solos: el acceso se otorga siempre via token de invitacion.
+
+### 1. Generar token
+
+**Invitar a un asesor o admin_gestoria** (desde `admin.py`):
+
+```http
+POST /api/admin/gestorias/{gestoria_id}/invitar
+Authorization: Bearer <jwt_superadmin_o_admin_gestoria>
+Content-Type: application/json
+
+{
+  "email": "asesor@ejemplo.com",
+  "nombre": "Ana Perez",
+  "rol": "asesor"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 7,
+  "email": "asesor@ejemplo.com",
+  "invitacion_token": "<token_urlsafe_32bytes>",
+  "invitacion_url": "/auth/aceptar-invitacion?token=<token>",
+  "expira": "2026-03-08T12:00:00"
+}
+```
+
+**Crear cliente directo** (sin gestoria, solo superadmin):
+
+```http
+POST /api/admin/clientes-directos
+Authorization: Bearer <jwt_superadmin>
+Content-Type: application/json
+
+{ "email": "cliente@empresa.com", "nombre": "Carlos Lopez" }
+```
+
+### 2. Verificar token (lado cliente, antes de mostrar formulario)
+
+El frontend llama a `GET /api/auth/aceptar-invitacion?token=xxx` para comprobar que el token existe y no ha expirado antes de mostrar el formulario de alta.
+
+### 3. Aceptar invitacion y obtener JWT
+
+```http
+POST /api/auth/aceptar-invitacion
+Content-Type: application/json
+
+{
+  "token": "<token>",
+  "password": "NuevaPassword123!"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "access_token": "<jwt>",
+  "token_type": "bearer"
+}
+```
+
+El endpoint (`auth_rutas.py`):
+1. Busca el usuario por `invitacion_token`
+2. Verifica que `invitacion_expira > ahora`
+3. Hashea la password definitiva y la guarda
+4. Limpia `invitacion_token` y `invitacion_expira`
+5. Pone `forzar_cambio_password=False`
+6. Devuelve JWT con `sub=email`, `rol`, `gestoria_id`
+
+> El token queda inutilizado tras el canje: `invitacion_token=NULL`. No hay campo `usado` booleano; la ausencia del token es la marca de canjeado.
+
+### 4. Logica de envio de email
+
+`email_service.py` se llama en `try/except`. Si el SMTP no esta configurado, el envio falla silenciosamente y el token igualmente se devuelve en la respuesta de la API para uso manual/testing.
+
+---
+
+## Portal multi-empresa (`/portal`)
+
+El portal es la vista simplificada para usuarios con rol `cliente`.
+
+### Endpoint `GET /api/portal/mis-empresas`
+
+Devuelve las empresas segun el rol:
+
+| Rol | Que devuelve |
+|-----|--------------|
+| `superadmin` | Todas las empresas de la BD |
+| `admin_gestoria` / `asesor` | Empresas de su gestoria (filtradas por `gestoria_id`) |
+| `cliente` | Solo las empresas en su campo `empresas_asignadas` |
+
+### Logica de redireccion en el frontend
+
+```
+GET /api/portal/mis-empresas
+  → empresas.length == 0  → mensaje "sin empresas asignadas"
+  → empresas.length == 1  → redirige directamente a /portal/{id}/resumen
+  → empresas.length > 1   → muestra indice /portal/mis-empresas
+```
+
+### Endpoints del portal
+
+| Endpoint | Descripcion |
+|----------|-------------|
+| `GET /api/portal/mis-empresas` | Lista de empresas accesibles |
+| `GET /api/portal/{id}/resumen` | Resultado acumulado, facturas pendientes cobro/pago |
+| `GET /api/portal/{id}/documentos` | Ultimos 50 documentos procesados |
+| `GET /api/portal/{id}/calendario.ics` | Descarga iCal con vencimientos fiscales |
+
+---
+
+## Invitar cliente final al portal
+
+Un asesor o admin_gestoria puede invitar al propietario de una empresa para que acceda al portal con su propio usuario.
+
+```http
+POST /api/empresas/{empresa_id}/invitar-cliente
+Authorization: Bearer <jwt_asesor_o_admin_gestoria>
+Content-Type: application/json
+
+{
+  "email": "propietario@suempresa.com",
+  "nombre": "Juan Propietario"
+}
+```
+
+Comportamiento (`empresas.py`):
+1. Verifica que el solicitante tiene acceso a esa empresa
+2. Crea un `Usuario` con `rol="cliente"`, `gestoria_id` heredado del invitador, `empresas_asignadas=[empresa_id]`
+3. Genera token de invitacion (7 dias)
+4. Intenta enviar email via `email_service.py`
+5. Devuelve token en respuesta para uso manual si el email falla
+
+Diferencia con `POST /api/admin/clientes-directos`:
+- `invitar-cliente` asigna automaticamente la empresa al usuario y hereda `gestoria_id`
+- `clientes-directos` crea el cliente sin empresa asignada ni gestoria (cliente huerfano para asignar despues)
 
 ---
 

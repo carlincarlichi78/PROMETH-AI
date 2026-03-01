@@ -1,8 +1,8 @@
-# 17 — Base de Datos: Las 29 Tablas
+# 17 — Base de Datos: Las 39 Tablas
 
 > **Estado:** COMPLETADO
 > **Actualizado:** 2026-03-01
-> **Fuentes:** `sfce/db/modelos.py`, `sfce/db/modelos_auth.py`, `sfce/db/base.py`
+> **Fuentes:** `sfce/db/modelos.py`, `sfce/db/modelos_auth.py`, `sfce/db/base.py`, `sfce/db/migraciones/`
 
 ---
 
@@ -10,7 +10,9 @@
 
 | Tabla | Dominio | Descripcion | Relacionadas con |
 |-------|---------|-------------|-----------------|
-| `gestorias` | Nucleo | Tenant raiz del sistema SaaS | `empresas`, `usuarios` |
+| `gestorias` | Auth | Tenant raiz del sistema SaaS | `empresas`, `usuarios` |
+| `usuarios` | Auth | Usuario con roles, 2FA, lockout y onboarding | `gestorias` |
+| `audit_log_seguridad` | Auth | Log RGPD inmutable (accesos, exports, logins) | — |
 | `empresas` | Nucleo | Empresa o autonomo gestionado | `gestorias`, `documentos`, `asientos` |
 | `proveedores_clientes` | Nucleo | Proveedor/cliente con overlay por empresa | `empresas`, `directorio_entidades` |
 | `directorio_entidades` | Nucleo | Directorio maestro global de entidades (CIF unico) | `proveedores_clientes` |
@@ -47,9 +49,6 @@
 | `copilot_feedback` | Dashboard | Feedback sobre respuestas del copiloto | `copilot_conversaciones` |
 | `informes_programados` | Dashboard | Informes con generacion automatica | `empresas` |
 | `vistas_usuario` | Dashboard | Filtros personalizados guardados por usuario | — |
-| `gestorias` | Auth | Tenant principal (definido en modelos_auth.py) | `usuarios`, `empresas` |
-| `usuarios` | Auth | Usuario con roles, 2FA, lockout y onboarding | `gestorias` |
-| `audit_log_seguridad` | Auth | Log RGPD inmutable (accesos, exports, logins) | — |
 
 ---
 
@@ -115,31 +114,116 @@ erDiagram
 
 ## Detalle por dominio
 
-### Nucleo
+### Auth — Multi-tenant (`modelos_auth.py`)
 
 **`gestorias`** — Tenant raiz. Cada gestoria es un cliente del SaaS.
-- PK: `id`
-- Campos clave: `nombre`, `email_contacto`, `cif`, `modulos` (JSON), `plan_asesores`, `activa`, `fecha_vencimiento`
-- Nota: el plan controla cuantos asesores y cuantos clientes puede tener la gestoria.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador autoincremental |
+| `nombre` | String(200) | Nombre de la gestoria |
+| `email_contacto` | String(200) | Email de contacto |
+| `cif` | String(20) nullable | CIF de la gestoria |
+| `modulos` | JSON | Lista de modulos contratados (ej: `['contabilidad', 'asesoramiento']`) |
+| `plan_asesores` | Integer | Numero maximo de asesores permitidos (default 1) |
+| `plan_clientes_tramo` | String(10) | Tramo de clientes contratado (ej: `'1-10'`, `'11-50'`) |
+| `activa` | Boolean | Gestoria activa o suspendida |
+| `fecha_alta` | DateTime | Fecha de creacion |
+| `fecha_vencimiento` | DateTime nullable | Fecha de vencimiento del plan |
+
+**`usuarios`** — Usuario del sistema con roles, seguridad y onboarding por invitacion.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador autoincremental |
+| `email` | String(200) unique | Email del usuario (clave de login) |
+| `nombre` | String(200) | Nombre completo |
+| `hash_password` | String(200) | Contrasena hasheada (bcrypt) |
+| `rol` | String(30) | Rol del usuario (ver valores abajo) |
+| `activo` | Boolean | Cuenta activa |
+| `gestoria_id` | FK nullable | Gestoria a la que pertenece. NULL para superadmin y clientes directos |
+| `empresas_asignadas` | JSON | Lista de IDs de empresas asignadas al asesor |
+| `failed_attempts` | Integer | Contador de intentos fallidos de login (default 0) |
+| `locked_until` | DateTime nullable | Fecha hasta la que esta bloqueada la cuenta |
+| `totp_secret` | String(64) nullable | Secreto TOTP para 2FA (base32) |
+| `totp_habilitado` | Boolean | Si el 2FA esta activado para este usuario |
+| `invitacion_token` | String(128) nullable unique | Token de invitacion (valido 7 dias) |
+| `invitacion_expira` | DateTime nullable | Fecha de expiracion del token |
+| `forzar_cambio_password` | Boolean | El usuario debe cambiar la contrasena en el proximo login |
+
+Valores del campo `rol`:
+
+| Valor | Descripcion |
+|-------|-------------|
+| `superadmin` | Acceso total al sistema. Sin gestoria_id. |
+| `admin_gestoria` | Administrador de una gestoria especifica. |
+| `asesor` | Gestor de empresas dentro de una gestoria. |
+| `asesor_independiente` | Asesor sin gestoria (gestoria_id = NULL). |
+| `cliente` | Cliente final que accede al portal de su empresa. |
+| `admin`, `gestor`, `readonly` | Valores legacy mantenidos por compatibilidad. |
+
+Nota: `gestoria_id = NULL` puede significar superadmin o cliente directo (sin gestoria intermediaria). Distinguir por `rol`.
+
+**`audit_log_seguridad`** — Log RGPD inmutable. Nunca se modifica ni borra.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `timestamp` | DateTime | Momento del evento |
+| `usuario_id` | Integer nullable | ID del usuario (null si login fallido antes de resolver usuario) |
+| `email_usuario` | String(200) nullable | Email del usuario |
+| `rol` | String(30) nullable | Rol en el momento del evento |
+| `gestoria_id` | Integer nullable | Gestoria del usuario |
+| `accion` | String(30) | Accion realizada (ver valores abajo) |
+| `recurso` | String(50) | Tipo de recurso afectado |
+| `recurso_id` | String(50) nullable | ID del recurso afectado |
+| `ip_origen` | String(45) nullable | IPv4 o IPv6 del cliente |
+| `resultado` | String(10) | Resultado: `ok`, `error`, `denied` |
+| `detalles` | JSON nullable | Informacion adicional del evento |
+
+Valores del campo `accion`: `login`, `login_failed`, `logout`, `read`, `create`, `update`, `delete`, `export`, `conciliar`.
+
+Indices: `(timestamp)`, `(gestoria_id, timestamp)`, `(email_usuario, timestamp)`.
+
+Diferencia con `audit_log` (tabla contable): `audit_log` registra operaciones del pipeline (crear asiento, registrar factura). `audit_log_seguridad` registra accesos, autenticacion y exportaciones para cumplimiento RGPD.
+
+---
+
+### Nucleo
 
 **`empresas`** — La empresa o autonomo gestionado.
-- PK: `id`, FK: `gestoria_id → gestorias`
-- Campos clave: `cif` (unico), `nombre`, `forma_juridica`, `territorio`, `regimen_iva`
-- Campos FS: `idempresa_fs`, `codejercicio_fs` — referencias a FacturaScripts para dual backend
-- Nota: `config_extra` almacena el contenido del `config.yaml` del cliente como JSON.
 
-**`directorio_entidades`** — Directorio maestro global. Un CIF aparece una sola vez aqui aunque opere con varias empresas.
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador |
+| `cif` | String(20) unique | CIF/NIF de la empresa |
+| `nombre` | String(200) | Nombre fiscal |
+| `forma_juridica` | String(50) | autonomo, sl, sa, cb, sc, coop, asociacion, comunidad, fundacion, slp, slu |
+| `territorio` | String(20) | peninsula (default), canarias, ceuta, melilla |
+| `regimen_iva` | String(30) | general, simplificado, recargo_equivalencia, intracomunitario, exento |
+| `idempresa_fs` | Integer nullable | ID en FacturaScripts (solo si dual backend activo) |
+| `codejercicio_fs` | String(10) nullable | Codigo de ejercicio en FS (puede diferir del ano: "0004") |
+| `activa` | Boolean | Empresa activa |
+| `gestoria_id` | FK nullable | Gestoria propietaria (columna anadida en migracion 004) |
+| `fecha_alta` | Date | Fecha de alta |
+| `config_extra` | JSON | Contenido del `config.yaml` del cliente serializado como JSON |
+
+**`directorio_entidades`** — Directorio maestro global. Un CIF aparece una sola vez aunque opere con varias empresas.
+
 - PK: `id`, CIF unico (nullable para clientes sin CIF)
-- Campos clave: `aliases` (JSON), `validado_aeat`, `validado_vies`, `datos_enriquecidos` (JSON)
+- Campos clave: `aliases` (JSON), `validado_aeat`, `validado_vies`, `datos_enriquecidos` (JSON), `cnae`, `sector`
 - Indice: `ix_directorio_nombre` para busqueda full-text
 
 **`proveedores_clientes`** — Overlay por empresa encima del directorio. Contiene la configuracion contable especifica.
-- PK: `id`, FK: `empresa_id → empresas`, `directorio_id → directorio_entidades`
-- Campos clave: `tipo` (proveedor|cliente), `subcuenta_gasto` (6xxxxx), `subcuenta_contrapartida` (4xxxxx), `codimpuesto`, `regimen`, `retencion_pct`
+
+- PK: `id`, FK: `empresa_id -> empresas`, `directorio_id -> directorio_entidades`
+- Campos clave: `tipo` (proveedor|cliente), `subcuenta_gasto` (6xxxxx), `subcuenta_contrapartida` (4xxxxx), `codimpuesto`, `regimen`, `retencion_pct`, `recargo_equiv`, `persona_fisica`
 - Restriccion unica: `(empresa_id, cif, tipo)`
+- Indices: `ix_provcli_cif`, `ix_provcli_directorio`
 
 **`trabajadores`** — Para el modulo de nominas.
-- PK: `id`, FK: `empresa_id → empresas`
+
+- PK: `id`, FK: `empresa_id -> empresas`
 - Campos clave: `dni`, `bruto_mensual`, `pagas` (12|14), `ss_empresa_pct`, `irpf_pct`
 - Restriccion unica: `(empresa_id, dni)`
 
@@ -148,22 +232,38 @@ erDiagram
 ### Documentos
 
 **`documentos`** — Registro central de cada documento procesado por el pipeline.
-- PK: `id`, FK: `empresa_id → empresas`, `asiento_id → asientos`
-- Campos clave: `tipo_doc` (FC/FV/NC/NOM/SUM/BAN/RLC/IMP), `hash_pdf` SHA256, `datos_ocr` (JSON completo), `ocr_tier` (0/1/2), `confianza`, `estado`, `factura_id_fs`
-- Nota: `hash_pdf` es la clave de deduplicacion. Si el SHA256 ya existe, el documento se ignora.
-- Nota: `decision_log` guarda el razonamiento del MotorReglas para auditoria.
 
-**`facturas`** — Datos fiscales estructurados de una factura. Separado de `documentos` para queries fiscales limpias.
-- PK: `id`, FK: `documento_id → documentos`, `empresa_id → empresas`
-- Campos clave: `tipo` (emitida|recibida), `numero_factura`, `base_imponible`, `iva_importe`, `irpf_importe`, `total`, `divisa`, `tasa_conversion`, `idfactura_fs`
-- Nota: `idfactura_fs` enlaza con FacturaScripts para el dual backend.
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador |
+| `empresa_id` | FK | Empresa propietaria |
+| `tipo_doc` | String(10) | FC, FV, NC, NOM, SUM, BAN, RLC, IMP, ANT, REC |
+| `hash_pdf` | String(64) | SHA256 del PDF. Clave de deduplicacion. Si existe, el doc se ignora. |
+| `datos_ocr` | JSON | Resultado OCR completo (todos los campos extraidos) |
+| `ocr_tier` | Integer | Tier OCR usado: 0 (Mistral), 1 (+GPT), 2 (+Gemini) |
+| `confianza` | Integer | Score de confianza del OCR (0-100) |
+| `estado` | String(20) | pendiente, registrado, cuarentena, error |
+| `decision_log` | JSON | Razonamiento del MotorReglas para auditoria |
+| `asiento_id` | FK nullable | Asiento generado por este documento |
+| `factura_id_fs` | Integer nullable | `idfactura` en FacturaScripts (dual backend) |
+| `ejercicio` | String(4) | Ejercicio fiscal (ej: "2025") |
+
+Indices: `(empresa_id, tipo_doc)`, `(hash_pdf)`, `(estado)`.
+
+**`facturas`** — Datos fiscales estructurados. Separado de `documentos` para queries fiscales limpias.
+
+- PK: `id`, FK: `documento_id -> documentos`, `empresa_id -> empresas`
+- Campos clave: `tipo` (emitida|recibida), `numero_factura`, `base_imponible`, `iva_importe`, `irpf_importe`, `total`, `divisa`, `tasa_conversion`, `pagada`, `idfactura_fs`
+- Nota: `tipo` usa strings descriptivos `emitida`/`recibida`, NO los codigos del pipeline `FC`/`FV`. Nunca filtrar por `'FC'` en este campo.
 
 **`pagos`** — Registro de cobros/pagos de facturas.
-- PK: `id`, FK: `factura_id → facturas`
+
+- PK: `id`, FK: `factura_id -> facturas`
 - Campos clave: `fecha`, `importe`, `medio` (transferencia/tarjeta/efectivo/domiciliacion), `referencia`
 
 **`cuarentena`** — Documentos bloqueados esperando resolucion manual.
-- PK: `id`, FK: `documento_id → documentos`, `empresa_id → empresas`
+
+- PK: `id`, FK: `documento_id -> documentos`, `empresa_id -> empresas`
 - Campos clave: `tipo_pregunta` (subcuenta/iva/entidad/duplicado/importe/otro), `pregunta`, `opciones` (JSON), `respuesta`, `resuelta`
 - Indice: `ix_cuarentena_resuelta` para filtrado rapido de pendientes.
 
@@ -172,51 +272,76 @@ erDiagram
 ### Contabilidad
 
 **`asientos`** — Libro diario local. Cada asiento puede venir de un documento o crearse directamente.
-- PK: `id`, FK: `empresa_id → empresas`
-- Campos clave: `numero`, `fecha`, `concepto`, `idasiento_fs`, `ejercicio`, `origen` (pipeline/manual/cierre/amortizacion), `sincronizado_fs`
-- Nota: `idasiento_fs` es el ID en FacturaScripts. Solo existe si el dual backend esta activo.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador |
+| `empresa_id` | FK | Empresa propietaria (campo `empresa_id`, NO `idempresa`) |
+| `numero` | Integer | Numero secuencial dentro del ejercicio |
+| `fecha` | **Date** | Fecha del asiento (tipo `Date`, NO `DateTime`) |
+| `concepto` | String(500) | Descripcion del asiento |
+| `idasiento_fs` | Integer nullable | ID en FacturaScripts |
+| `ejercicio` | String(4) | Ejercicio fiscal (ej: "2025") |
+| `origen` | String(30) | pipeline, manual, cierre, amortizacion, regularizacion |
+| `sincronizado_fs` | Boolean | Si el asiento esta sincronizado con FacturaScripts |
+
+Indice: `(empresa_id, fecha)`.
 
 **`partidas`** — Lineas de asiento (doble partida).
-- PK: `id`, FK: `asiento_id → asientos`
-- Campos clave: `subcuenta` (10 digitos PGC), `debe`, `haber`, `concepto`, `codimpuesto`, `idpartida_fs`
-- Indice: `ix_partida_subcuenta` para saldos por cuenta.
 
-**`audit_log`** — Log de operaciones del pipeline. Distinto de `audit_log_seguridad` (RGPD).
-- PK: `id`, FK: `empresa_id → empresas`
-- Campos clave: `accion`, `entidad_tipo`, `entidad_id`, `datos_antes` (JSON), `datos_despues` (JSON), `usuario`, `timestamp`
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Identificador |
+| `asiento_id` | FK | Asiento al que pertenece |
+| `subcuenta` | String(10) | Subcuenta PGC 10 digitos (campo `subcuenta`, NO `codsubcuenta`) |
+| `debe` | Numeric(12,2) | Importe al debe |
+| `haber` | Numeric(12,2) | Importe al haber |
+| `concepto` | String(500) | Descripcion de la partida |
+| `codimpuesto` | String(10) nullable | Codigo impuesto (IVA21, IVA10, IVA0, etc.) |
+| `idpartida_fs` | Integer nullable | ID en FacturaScripts |
+
+Indice: `ix_partida_subcuenta` para calculo de saldos por cuenta.
+
+**`audit_log`** — Log de operaciones del pipeline (NO es el log RGPD).
+
+- PK: `id`, FK: `empresa_id -> empresas`
+- Campos: `accion`, `entidad_tipo`, `entidad_id`, `datos_antes` (JSON), `datos_despues` (JSON), `usuario`, `timestamp`, `detalle`
+- Tabla en BD: `"audit_log"` (plural de la tabla real, diferente de `audit_log_seguridad`)
 
 **`aprendizaje_log`** — Patrones aprendidos. Complementa el archivo `reglas/aprendizaje.yaml`.
-- PK: `id`, FK: `empresa_id → empresas`
+
+- PK: `id`, FK: `empresa_id -> empresas`
 - Campos clave: `patron_tipo` (cif_subcuenta/nombre_subcuenta/correccion_campo), `clave`, `valor`, `confianza`, `usos`
 
 ---
 
 ### Bancario
 
-**`cuentas_bancarias`** — Una cuenta bancaria por IBAN.
-- PK: `id`, FK: `empresa_id → empresas`
-- Campos clave: `banco_codigo` (ej: "2100" = CaixaBank), `iban`, `alias`, `email_c43` (para recepcion automatica futura)
+**`cuentas_bancarias`** — Una cuenta bancaria por IBAN. Columnas `empresa_id` y `gestoria_id` (sin FK constraint en gestoria_id para no acoplar BDs).
+
+- Campos clave: `banco_codigo` (ej: "2100" = CaixaBank), `iban`, `alias`, `email_c43`
 - Restriccion unica: `(empresa_id, iban)`
 
 **`movimientos_bancarios`** — Cada linea del extracto bancario importado.
-- PK: `id`, FK: `empresa_id → empresas`, `cuenta_id → cuentas_bancarias`, `asiento_id → asientos`
-- Campos clave: `fecha`, `fecha_valor`, `importe`, `signo` (D cargo / H abono), `concepto_comun` (codigo AEB), `concepto_propio`, `estado_conciliacion` (pendiente/conciliado/revision/manual)
-- Deduplicacion: `hash_unico` SHA256 de (iban + fecha + importe + referencia + num_orden)
+
+- PK: `id`, FK: `empresa_id -> empresas`, `cuenta_id -> cuentas_bancarias`, `asiento_id -> asientos`
+- Campos clave: `fecha`, `fecha_valor`, `importe`, `importe_eur`, `signo` (D cargo / H abono), `concepto_comun` (codigo AEB), `concepto_propio`, `tipo_clasificado` (TPV|PROVEEDOR|NOMINA|IMPUESTO|COMISION|OTRO), `estado_conciliacion` (pendiente/conciliado/revision/manual)
+- Deduplicacion: `hash_unico` SHA256 de (iban + fecha + importe + referencia + num_orden). Unico global.
 
 **`archivos_ingestados`** — Registro de archivos C43/XLS ya procesados para garantizar idempotencia.
-- PK: `id`
-- Campos clave: `hash_archivo` (unico), `fuente` (email|manual), `tipo` (c43|ticket_z|factura), `movimientos_totales`, `movimientos_nuevos`, `movimientos_duplicados`
+
+- Campos clave: `hash_archivo` (unico), `fuente` (email|manual), `tipo` (c43|ticket_z|factura), `empresa_id`, `gestoria_id`, `movimientos_totales`, `movimientos_nuevos`, `movimientos_duplicados`
 
 ---
 
 ### Activos
 
 **`activos_fijos`** — Inmovilizado material e intangible.
-- PK: `id`, FK: `empresa_id → empresas`
+
 - Campos clave: `tipo_bien`, `subcuenta_activo` (21x), `subcuenta_amortizacion` (281x), `valor_adquisicion`, `valor_residual`, `pct_amortizacion`, `amortizacion_acumulada`
 
 **`operaciones_periodicas`** — Tareas automaticas programadas (amortizacion, provision pagas, regularizacion IVA).
-- PK: `id`, FK: `empresa_id → empresas`
+
 - Campos clave: `tipo`, `periodicidad` (mensual/trimestral/anual), `dia_ejecucion`, `ultimo_ejecutado`, `parametros` (JSON), `activa`
 
 ---
@@ -224,14 +349,15 @@ erDiagram
 ### Fiscal
 
 **`modelos_fiscales_generados`** — Registro de cada modelo AEAT generado.
-- PK: `id`, FK: `empresa_id → empresas`
-- Campos clave: `modelo` (303/111/390/etc.), `ejercicio`, `periodo`, `casillas_json`, `ruta_boe`, `ruta_pdf`, `estado` (generado|presentado), `fecha_presentacion`
+
+- Campos clave: `modelo` (303/111/390/etc.), `ejercicio`, `periodo`, `casillas_json`, `ruta_boe`, `ruta_pdf`, `estado` (generado|presentado), `fecha_presentacion`, `valido`, `notas`
 
 **`presupuestos`** — Presupuesto anual por subcuenta con desglose mensual.
-- PK: `id`, FK: `empresa_id → empresas`
+
 - Campos clave: `ejercicio`, `subcuenta`, `importe_mensual` (JSON: `{"01": 1000, ...}`), `importe_total`
 
 **`centros_coste`** y **`asignaciones_coste`** — Analitica de costes.
+
 - `centros_coste`: `tipo` (departamento|proyecto|sucursal|obra)
 - `asignaciones_coste`: FK a `centros_coste` y `partidas`, campo `porcentaje` para reparto proporcional
 
@@ -240,19 +366,25 @@ erDiagram
 ### Correo
 
 **`cuentas_correo`** — Conexion IMAP o Microsoft Graph por empresa.
-- Campos clave: `protocolo` (imap|graph), `servidor`, `ssl`, `contrasena_enc`, `oauth_token_enc`, `ultimo_uid`, `polling_intervalo_segundos`
+
+- Campos clave: `protocolo` (imap|graph), `servidor`, `ssl`, `contrasena_enc`, `oauth_token_enc`, `oauth_refresh_enc`, `ultimo_uid`, `polling_intervalo_segundos`
 
 **`emails_procesados`** — Cada email recibido con su estado de clasificacion.
-- Estados: PENDIENTE | CLASIFICADO | CUARENTENA | PROCESADO | ERROR | IGNORADO
+
+- Estados: `PENDIENTE` | `CLASIFICADO` | `CUARENTENA` | `PROCESADO` | `ERROR` | `IGNORADO`
 - Campos clave: `uid_servidor`, `message_id`, `nivel_clasificacion` (REGLA|IA|MANUAL), `empresa_destino_id`, `confianza_ia`
+- Restriccion unica: `(cuenta_id, uid_servidor)`
 
 **`adjuntos_email`** — PDF o imagen adjunta a un email. Se envia al pipeline OCR.
-- Campos clave: `nombre_original`, `ruta_archivo`, `documento_id` (FK logica al pipeline), estado (PENDIENTE|OCR_OK|OCR_ERROR|DUPLICADO)
+
+- Campos clave: `nombre_original`, `ruta_archivo`, `documento_id` (FK logica al pipeline), `estado` (PENDIENTE|OCR_OK|OCR_ERROR|DUPLICADO)
 
 **`enlaces_email`** — URL extraida del HTML del email (ej: enlace descarga factura banco).
+
 - Campos clave: `url`, `dominio`, `patron_detectado` (AEAT|BANCO|SUMINISTRO|CLOUD|OTRO), `estado` (PENDIENTE|DESCARGANDO|DESCARGADO|ERROR|IGNORADO)
 
 **`reglas_clasificacion_correo`** — Reglas tipo, condicion, accion para clasificar emails entrantes.
+
 - `tipo`: REMITENTE_EXACTO | DOMINIO | ASUNTO_CONTIENE | COMPOSITE
 - `accion`: CLASIFICAR | IGNORAR | APROBAR_MANUAL
 - `origen`: MANUAL | APRENDIZAJE (las del motor se auto-crean)
@@ -262,67 +394,102 @@ erDiagram
 ### AAPP
 
 **`certificados_aap`** — Metadatos del certificado digital (sin el P12 en BD).
+
 - Campos clave: `cif`, `tipo` (representante|firma|sello), `organismo` (AEAT|SEDE|SEGURIDAD_SOCIAL), `caducidad`, `alertado_30d`, `alertado_7d`
 
 **`notificaciones_aap`** — Notificaciones y requerimientos de administraciones publicas.
+
 - Campos clave: `organismo`, `tipo` (requerimiento|notificacion|sancion|embargo), `fecha_limite`, `leida`, `origen` (certigestor|manual|webhook)
 
 ---
 
-### Gate 0 (nuevas)
+### Gate 0
 
 Ver detalle de la cola en `04-gate0-cola.md`. Esta seccion documenta las tres tablas del modulo.
 
 **`cola_procesamiento`** — Cada documento que entra por el endpoint `/api/gate0/ingestar`.
-- PK: `id`, campo `empresa_id` (sin FK constraint para agilidad)
-- Campos clave: `estado` (PENDIENTE/SCORING/APROBADO/RECHAZADO/ERROR), `trust_level` (BAJA/MEDIA/ALTA/CRITICA), `score_final`, `decision`, `hints_json`, `sha256`
-- El `sha256` permite deduplicacion pre-OCR sin leer el documento.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | Integer | Sin FK constraint para agilidad |
+| `estado` | String(20) | PENDIENTE / SCORING / APROBADO / RECHAZADO / ERROR |
+| `trust_level` | String(20) | BAJA / MEDIA / ALTA / CRITICA |
+| `score_final` | Float nullable | Score calculado por el motor |
+| `decision` | String(30) nullable | Decision tomada |
+| `sha256` | String(64) nullable | Hash del documento para deduplicacion pre-OCR |
+| `datos_ocr_json` | Text nullable | JSON con datos extraidos por OCR |
+| `coherencia_score` | Float nullable | Score coherencia fiscal [0-100] |
+| `worker_inicio` | DateTime nullable | Inicio del procesamiento (para recovery de bloqueados) |
+| `reintentos` | Integer | Contador de reintentos por recovery (default 0) |
 
 **`documento_tracking`** — Audit trail de cada cambio de estado de un documento.
+
 - PK: `id`, campo `documento_id` (FK logica)
 - Campos clave: `estado`, `timestamp`, `actor` (sistema|usuario|ia), `detalle_json`
 - Permite reconstruir el ciclo de vida completo de cualquier documento.
 
 **`supplier_rules`** — Reglas aprendidas por proveedor para pre-rellenar Gate 0 automaticamente.
-- PK: `id`
-- Campos clave: `emisor_cif`, `emisor_nombre_patron`, `tipo_doc_sugerido`, `subcuenta_gasto`, `codimpuesto`, `regimen`
-- Metricas: `aplicaciones`, `confirmaciones`, `tasa_acierto` — determinan si `auto_aplicable = True`
-- `nivel`: empresa (especifico) o global (cross-empresa)
-- Nota: tabla creada en `modelos.py`, migrada via `008_supplier_rules.py`. Pendiente verificar si la migracion fue ejecutada en produccion.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | Integer nullable | NULL = regla global cross-empresa |
+| `emisor_cif` | String(20) nullable | CIF del emisor |
+| `emisor_nombre_patron` | String(200) nullable | Patron de nombre para match |
+| `tipo_doc_sugerido` | String(10) nullable | Tipo de documento sugerido |
+| `subcuenta_gasto` | String(20) nullable | Subcuenta de gasto sugerida |
+| `codimpuesto` | String(10) nullable | Impuesto sugerido |
+| `regimen` | String(30) nullable | Regimen IVA sugerido |
+| `aplicaciones` | Integer | Veces que se aplico la regla |
+| `confirmaciones` | Integer | Veces que el usuario confirmo la sugerencia |
+| `tasa_acierto` | Float | `confirmaciones / aplicaciones` |
+| `auto_aplicable` | Boolean | Si la tasa es suficiente para aplicar sin confirmacion |
+| `nivel` | String(20) | `empresa` (especifico) o `global` (cross-empresa) |
+
+Jerarquia de aplicacion: CIF+empresa > CIF global > nombre patron.
 
 ---
 
-### Auth (`modelos_auth.py`)
+### Dashboard
 
-**`gestorias`** — Raiz del modelo multi-tenant.
-- PK: `id`
-- Campos clave: `nombre`, `email_contacto`, `modulos` (JSON lista de modulos contratados), `plan_asesores`, `plan_clientes_tramo`, `fecha_vencimiento`
-
-**`usuarios`** — Usuario del sistema.
-- PK: `id`, FK: `gestoria_id → gestorias`
-- Campos clave: `email` (unico), `hash_password`, `rol` (superadmin|admin_gestoria|asesor|asesor_independiente|cliente), `empresas_asignadas` (JSON)
-- Seguridad: `failed_attempts`, `locked_until` (lockout), `totp_secret`, `totp_habilitado` (2FA)
-- Onboarding: `invitacion_token`, `invitacion_expira`, `forzar_cambio_password`
-
-**`audit_log_seguridad`** — Log RGPD inmutable. Nunca se modifica ni borra.
-- Campos clave: `accion` (login|login_failed|logout|read|create|update|delete|export), `recurso`, `ip_origen`, `resultado` (ok|error|denied), `gestoria_id`
-- Distinto de `audit_log` (operaciones del pipeline): este es el log de seguridad para RGPD.
+- **`scoring_historial`**: historial de puntuaciones de clientes/proveedores. Campos: `entidad_tipo`, `entidad_id`, `puntuacion` (0-100), `factores` (JSON).
+- **`copilot_conversaciones`**: conversaciones IA por empresa y usuario. Campo `mensajes` es JSON con array de `{rol, contenido, timestamp}`.
+- **`copilot_feedback`**: feedback sobre respuestas del copiloto. `valoracion`: 1 (dislike) | 5 (like).
+- **`informes_programados`**: informes automaticos. `plantilla`: mensual|trimestral|anual|adhoc. `secciones` es JSON.
+- **`vistas_usuario`**: filtros guardados por usuario por pagina. `filtros` y `columnas` son JSON.
 
 ---
 
 ## Migraciones
 
-| # | Archivo | Que hace | Estado |
-|---|---------|---------|--------|
-| 001 | `001_seguridad_base.py` | Tablas `usuarios`, `gestorias`, `audit_log_seguridad`. JWT y auth basica | Ejecutada |
-| 002 | `002_multi_tenant.py` | Columna `gestoria_id` en `usuarios`. Modelo multi-tenant inicial | Ejecutada |
-| 003 | `003_account_lockout.py` | Columnas `failed_attempts`, `locked_until`, `totp_secret`, `totp_habilitado` en `usuarios` | Ejecutada |
-| 004 | `migracion_004.py` | Columna `gestoria_id` en `empresas`. Multi-tenant completo con aislamiento por empresa | Ejecutada |
-| 005 | `migracion_005.py` | 5 tablas modulo correo: `cuentas_correo`, `emails_procesados`, `adjuntos_email`, `enlaces_email`, `reglas_clasificacion_correo` | Ejecutada |
-| 007 | `007_gate0.py` | Tablas Gate 0: `cola_procesamiento`, `documento_tracking` | Ejecutada |
-| 008 | `008_supplier_rules.py` | Tabla `supplier_rules` para reglas aprendidas por proveedor | Verificar en prod |
+| # | Archivo | Que anade | Estado |
+|---|---------|-----------|--------|
+| 001 | `001_seguridad_base.py` | Tabla `audit_log_seguridad` con indices por timestamp, gestoria y usuario. Punto de entrada de seguridad RGPD. | Ejecutada |
+| 002 | `002_multi_tenant.py` | Tabla `gestorias`. Columnas `gestoria_id` y `empresas_asignadas` en `usuarios`. Tabla `cuentas_bancarias`. Extension de `movimientos_bancarios` (hash_unico, signo, estado_conciliacion, etc.). Tabla `archivos_ingestados`. | Ejecutada |
+| 003 | `003_account_lockout.py` | Columnas `failed_attempts`, `locked_until`, `totp_secret`, `totp_habilitado` en `usuarios`. Soporta SQLite y PostgreSQL. | Ejecutada |
+| 004 | `migracion_004.py` | Columna `gestoria_id` en `empresas`. Completa el aislamiento multi-tenant a nivel de empresa. | Ejecutada |
+| 005 | `migracion_005.py` | 5 tablas del modulo correo: `cuentas_correo`, `emails_procesados`, `adjuntos_email`, `enlaces_email`, `reglas_clasificacion_correo`. Con CHECK constraints y indices. | Ejecutada |
+| 006 | — | No existe. Los numeros saltan de 005 a 007 intencionalmente. | — |
+| 007 | `007_gate0.py` | Tablas `cola_procesamiento` y `documento_tracking`. Indices por estado y sha256. | Ejecutada |
+| 008 | `008_supplier_rules.py` | Tabla `supplier_rules`. Indices por `(empresa_id, emisor_cif)` y `auto_aplicable`. | Ejecutada |
 
-Nota: no existe migracion 006. Los numeros saltan de 005 a 007 intencionalmente.
+Ejecucion de migraciones:
+
+```bash
+# Asegurarse de que SFCE_DB_PATH apunta a la BD correcta
+export SFCE_DB_PATH=./sfce.db
+
+python sfce/db/migraciones/001_seguridad_base.py
+python sfce/db/migraciones/002_multi_tenant.py
+python sfce/db/migraciones/003_account_lockout.py
+python sfce/db/migraciones/migracion_004.py
+python sfce/db/migraciones/migracion_005.py
+python sfce/db/migraciones/007_gate0.py
+python sfce/db/migraciones/008_supplier_rules.py
+```
+
+Todas las migraciones son idempotentes (usan `CREATE TABLE IF NOT EXISTS` y comprueban columnas existentes antes de `ALTER TABLE`).
 
 ---
 
@@ -336,6 +503,7 @@ La variable de entorno `SFCE_DB_TYPE` controla el motor activo:
 | `postgresql` | Produccion | DSN en `.env`, puerto **5433** (no el estandar 5432) |
 
 El DSN de produccion sigue el formato:
+
 ```
 postgresql://sfce_user:[pass]@127.0.0.1:5433/sfce_prod
 ```
@@ -344,7 +512,7 @@ La contrasena completa esta en `/opt/apps/sfce/.env` en el servidor (65.108.60.6
 
 ### `crear_motor()` en `sfce/db/base.py`
 
-Lee la configuracion y construye el engine SQLAlchemy:
+Lee la configuracion via `_leer_config_bd()` y construye el engine SQLAlchemy:
 
 - **SQLite**: habilita `WAL journal_mode`, `busy_timeout=5000ms` y `foreign_keys=ON` via pragma
 - **PostgreSQL**: pool de 10 conexiones con 20 overflow maximo
@@ -384,7 +552,8 @@ engine = create_engine(
 
 # INCORRECTO — usar crear_motor() con in-memory
 engine = crear_motor({"ruta_bd": ":memory:"})
-# crear_motor() no usa StaticPool → las tablas no se comparten entre conexiones
+# crear_motor() no usa StaticPool -> las tablas no se comparten entre conexiones
+# Tests fallaran con "no such table" en la segunda conexion
 ```
 
 ### Capturar atributos antes del commit (DetachedInstanceError)
@@ -400,6 +569,17 @@ session.commit()
 session.commit()
 return {"id": usuario.id}  # DetachedInstanceError en SQLAlchemy 2.x
 ```
+
+### Nombres reales de tablas y campos (errores frecuentes)
+
+| Lo que parece | Lo que es realmente | Donde aplica |
+|---------------|---------------------|-------------|
+| `"asiento"` (singular) | `"asientos"` (plural) | Nombre de tabla en SQL raw |
+| `idempresa` | `empresa_id` | Campo FK en `Asiento`, `Partida`, `Documento` |
+| `codsubcuenta` | `subcuenta` | Campo en `Partida` |
+| `DateTime` para fecha | `Date` | `Asiento.fecha` es tipo `Date`, no `DateTime` |
+| `idasiento` | `asiento_id` | FK en `Partida` |
+| `tipo` (FC/FV) | `tipo` (emitida/recibida) | Campo `Factura.tipo` usa strings descriptivos |
 
 ### ORM sobre SQL raw
 
