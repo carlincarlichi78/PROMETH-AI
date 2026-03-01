@@ -32,4 +32,18 @@ export const advisorApi = {
 
   portfolio: (): Promise<{ empresas: EmpresaPortfolio[] }> =>
     apiFetch('/api/empresas?resumen=true'),
+
+  sectorBrain: (
+    empresaId: number,
+    kpi = 'ticket_medio',
+  ): Promise<{
+    disponible: boolean
+    cnae?: string
+    kpi?: string
+    percentiles_sector?: { p25: number; p50: number; p75: number; n_empresas: number }
+    valor_empresa?: number
+    posicion?: { percentil: number; etiqueta: string; color: string }
+    razon?: string
+  }> =>
+    apiFetch(`${BASE}/${empresaId}/sector-brain?kpi=${kpi}`),
 }

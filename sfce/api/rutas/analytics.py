@@ -2,7 +2,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -259,4 +259,46 @@ def compras_proveedores(
             "empresa_id": empresa_id,
             "desde": desde.isoformat(),
             "proveedores": proveedores,
+        }
+
+
+@router.get("/{empresa_id}/sector-brain")
+def sector_brain(
+    empresa_id: int,
+    kpi: str = "ticket_medio",
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Benchmarks anónimos del sector para comparar la empresa con sus pares.
+
+    Solo disponible cuando hay 5+ empresas activas con el mismo CNAE.
+    Los datos son agregados y anónimos — nunca se exponen valores individuales.
+    """
+    from sfce.analytics.benchmark_engine import calcular_percentiles_sector, posicion_en_sector
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
+        empresa = sesion.get(Empresa, empresa_id)
+        if not empresa or not empresa.cnae:
+            raise HTTPException(status_code=404, detail="Empresa sin CNAE configurado")
+
+        percentiles = calcular_percentiles_sector(sesion, empresa.cnae, kpi)
+        if not percentiles:
+            return {
+                "disponible": False,
+                "razon": "Pocos datos del sector (mínimo 5 empresas)",
+            }
+
+        engine = SectorEngine()
+        engine.cargar(empresa.cnae)
+        kpi_empresa = engine.calcular_kpi(kpi, {})
+
+        return {
+            "disponible": True,
+            "cnae": empresa.cnae,
+            "kpi": kpi,
+            "percentiles_sector": percentiles,
+            "valor_empresa": kpi_empresa.valor if kpi_empresa else None,
+            "posicion": posicion_en_sector(
+                kpi_empresa.valor if kpi_empresa else 0, percentiles
+            ) if kpi_empresa else None,
         }

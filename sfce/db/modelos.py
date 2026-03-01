@@ -52,6 +52,7 @@ class Empresa(Base):
     slug = Column(String(50), unique=True, nullable=True)  # identificador URL-friendly
     idempresa_fs = Column(Integer)  # ID en FacturaScripts (nullable si solo BD local)
     codejercicio_fs = Column(String(10))
+    cnae = Column(String(4), nullable=True)  # Código CNAE del sector principal
     activa = Column(Boolean, default=True)
     gestoria_id = Column(Integer, ForeignKey("gestorias.id"), nullable=True)
     fecha_alta = Column(Date, nullable=False, default=date.today)
