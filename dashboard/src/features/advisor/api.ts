@@ -61,5 +61,5 @@ export const advisorApi = {
         acciones: string[]
         borrador_mensaje: string | null
       }>
-    }>('/analytics/autopilot/briefing'),
+    }>(`${BASE}/autopilot/briefing`),
 }
