@@ -70,6 +70,7 @@ def _seed(sesion_factory):
             rol="superadmin",
             activo=True,
             empresas_asignadas=[],
+            plan_tier="pro",
         )
         s.add(admin)
         empresa = Empresa(
