@@ -96,6 +96,7 @@ Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 | `scripts/limpiar_empresa_fs.py` | Limpia empresa FS. `--empresa N --dry-run` |
 | `scripts/migrar_fs_a_bd.py` | One-time: FS API → SQLite |
 | `scripts/migrar_config_a_directorio.py` | Config.yaml → BD directorio |
+| `scripts/motor_campo.py` | **Motor de Escenarios de Campo**. `--modo rapido/completo/continuo`, `--escenario X`, `--grupo X`, `--pausa N` |
 
 Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py --cliente elena-navarro --ejercicio 2025 --inbox inbox_muestra --no-interactivo`
 
