@@ -124,14 +124,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 5 commits.
-- `.claude/launch.json` configurado con env vars inline (SFCE_JWT_SECRET, etc.) — `preview_start` funciona directamente
+- **Estado actual**: **Claude Spectacular Theme APLICADO** (01/03/2026) — main, 2 commits de tema.
+- `.claude/launch.json` configurado con env vars inline — `preview_start` funciona directamente
 - `iniciar_dashboard.bat` en raíz para arranque manual alternativo
-- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify**
+- **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify** + **Inter**
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
 - **Backend extendido**: 66+ rutas, 25 tablas BD.
-- **Mergeado a main**: PR #3 cerrado (28/02/2026). Main = estado actual.
-- **Bug corregido**: `contabilidad.py` — `int(codejercicio)` con "C422" y `func.case()` SQLAlchemy 2.x
+- **Tema Claude**: paleta ámbar OKLCh, dark mode por defecto, glassmorphism, glow effects. Tokens en `src/index.css`.
+- **Login redeseñado**: fondo oscuro cálido + glow ámbar + card glassmorphism + gradient text
 - **Pendiente**: tests E2E dashboard (Playwright), activar VITE_VAPID_PUBLIC_KEY + endpoint `/api/notificaciones/suscribir`
 
 ## SPICE Landing Page
