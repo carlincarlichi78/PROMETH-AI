@@ -65,7 +65,29 @@ export default function AceptarInvitacionPage() {
       const datos = await respuesta.json()
       await loginConToken(datos.access_token)
       const rol = _rolDesdeToken(datos.access_token)
-      navigate(rol === 'cliente' ? '/portal' : '/', { replace: true })
+      if (rol === 'cliente') {
+        // Verificar si la empresa asignada necesita onboarding
+        try {
+          const miResp = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${datos.access_token}` },
+          })
+          const miDatos = await miResp.json()
+          const empresaId = miDatos.empresas_asignadas?.[0]
+          if (empresaId) {
+            const onbResp = await fetch(`/api/onboarding/cliente/${empresaId}`, {
+              headers: { Authorization: `Bearer ${datos.access_token}` },
+            })
+            const onb = await onbResp.json()
+            if (onb.estado === 'pendiente_cliente') {
+              navigate(`/onboarding/cliente/${empresaId}`, { replace: true })
+              return
+            }
+          }
+        } catch { /* ignorar, navegar a portal normal */ }
+        navigate('/portal', { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
