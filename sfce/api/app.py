@@ -1,7 +1,8 @@
 """SFCE API — Aplicacion FastAPI principal."""
 
+import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -104,7 +105,20 @@ async def lifespan(app: FastAPI):
     app.state.sesion_factory = sesion_factory
     app.state.repo = Repositorio(sesion_factory)
     crear_admin_por_defecto(sesion_factory)
+
+    # Iniciar worker OCR en background
+    from sfce.core.worker_ocr_gate0 import loop_worker_ocr
+    worker_task = asyncio.create_task(
+        loop_worker_ocr(sesion_factory=sesion_factory)
+    )
+    app.state.worker_ocr_task = worker_task
+
     yield
+
+    # Apagar worker limpiamente
+    worker_task.cancel()
+    with suppress(asyncio.CancelledError):
+        await worker_task
     engine.dispose()
 
 

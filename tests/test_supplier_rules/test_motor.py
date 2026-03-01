@@ -80,7 +80,7 @@ def test_aplicar_regla_no_sobreescribe_campos_vacios():
 
 
 def test_confirmacion_actualiza_tasa(sesion_con_regla):
-    regla = buscar_regla_aplicable(1, "A00000001", sesion_con_regla)
+    regla = buscar_regla_aplicable(sesion=sesion_con_regla, emisor_cif="A00000001", empresa_id=1)
     aplicaciones_previas = regla.aplicaciones
     confirmaciones_previas = regla.confirmaciones
     registrar_confirmacion(regla, correcto=True, sesion=sesion_con_regla)
@@ -89,7 +89,7 @@ def test_confirmacion_actualiza_tasa(sesion_con_regla):
 
 
 def test_confirmacion_incorrecta_no_sube_confirmaciones(sesion_con_regla):
-    regla = buscar_regla_aplicable(1, "A00000001", sesion_con_regla)
+    regla = buscar_regla_aplicable(sesion=sesion_con_regla, emisor_cif="A00000001", empresa_id=1)
     confirmaciones_previas = regla.confirmaciones
     registrar_confirmacion(regla, correcto=False, sesion=sesion_con_regla)
     assert regla.confirmaciones == confirmaciones_previas
@@ -147,3 +147,101 @@ def test_upsert_actualiza_regla_existente():
         regla = upsert_regla_desde_correccion(1, "A00000002", {"subcuenta_gasto": "6280000000"}, s)
         assert regla.subcuenta_gasto == "6280000000"
         assert regla.aplicaciones == 2
+
+
+# ---------------------------------------------------------------------------
+# Tests jerarquía 3 niveles (nueva funcionalidad C4)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def sesion_jerarquia():
+    """Sesión con 3 reglas: específica, global CIF y global por nombre."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    with Session(engine) as s:
+        # Nivel 1: empresa=1, cif=B11111111 (más específico)
+        s.add(SupplierRule(
+            empresa_id=1, emisor_cif="B11111111",
+            subcuenta_gasto="6280000000", codimpuesto="IVA21", nivel="empresa",
+        ))
+        # Nivel 2: global CIF (empresa_id=None, cif=B22222222)
+        s.add(SupplierRule(
+            empresa_id=None, emisor_cif="B22222222",
+            subcuenta_gasto="6200000000", codimpuesto="IVA0", nivel="global_cif",
+        ))
+        # Nivel 3: global por nombre (empresa_id=None, cif=None, patron nombre)
+        s.add(SupplierRule(
+            empresa_id=None, emisor_cif=None,
+            emisor_nombre_patron="Telefonica",
+            subcuenta_gasto="6280000000", codimpuesto="IVA21", nivel="global_nombre",
+        ))
+        s.commit()
+    return Session(engine)
+
+
+def test_jerarquia_especifica_por_cif_empresa(sesion_jerarquia):
+    """Nivel 1: regla específica (CIF + empresa) se encuentra."""
+    regla = buscar_regla_aplicable(
+        sesion=sesion_jerarquia,
+        emisor_cif="B11111111",
+        empresa_id=1,
+    )
+    assert regla is not None
+    assert regla.nivel == "empresa"
+
+
+def test_jerarquia_global_por_cif(sesion_jerarquia):
+    """Nivel 2: regla global por CIF (sin empresa) se encuentra desde cualquier empresa."""
+    regla = buscar_regla_aplicable(
+        sesion=sesion_jerarquia,
+        emisor_cif="B22222222",
+        empresa_id=99,  # empresa diferente
+    )
+    assert regla is not None
+    assert regla.nivel == "global_cif"
+
+
+def test_jerarquia_global_por_nombre(sesion_jerarquia):
+    """Nivel 3: regla global por patrón nombre (sin CIF conocido)."""
+    regla = buscar_regla_aplicable(
+        sesion=sesion_jerarquia,
+        emisor_cif="",
+        emisor_nombre="Telefonica Moviles SA",
+        empresa_id=1,
+    )
+    assert regla is not None
+    assert regla.nivel == "global_nombre"
+
+
+def test_jerarquia_especifica_prevalece_sobre_global(sesion_jerarquia):
+    """Nivel 1 tiene prioridad sobre nivel 2 para el mismo CIF."""
+    with Session(sesion_jerarquia.get_bind()) as s:
+        # Añadir regla global para B11111111 también
+        s.add(SupplierRule(
+            empresa_id=None, emisor_cif="B11111111",
+            subcuenta_gasto="9999999999", nivel="global_cif",
+        ))
+        s.commit()
+
+    regla = buscar_regla_aplicable(
+        sesion=sesion_jerarquia,
+        emisor_cif="B11111111",
+        empresa_id=1,
+    )
+    # Debe devolver la empresa-específica, no la global
+    assert regla.nivel == "empresa"
+
+
+def test_sin_regla_retorna_none(sesion_jerarquia):
+    """CIF desconocido y nombre sin patrón → None."""
+    regla = buscar_regla_aplicable(
+        sesion=sesion_jerarquia,
+        emisor_cif="XCIFDESCONOCIDO",
+        emisor_nombre="Empresa Rara SL",
+        empresa_id=1,
+    )
+    assert regla is None
