@@ -172,6 +172,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.salud import router as salud_router
     from sfce.api.rutas.admin import router as admin_router
     from sfce.api.rutas.certigestor import router as certigestor_router
+    from sfce.api.rutas.gate0 import router as gate0_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -192,6 +193,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(salud_router)
     app.include_router(admin_router)
     app.include_router(certigestor_router)
+    app.include_router(gate0_router)
 
     # Nonces RGPD usados (token de un solo uso)
     if not hasattr(app.state, "rgpd_nonces_usados"):
