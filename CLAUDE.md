@@ -221,9 +221,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - ✅ `scripts/phases/` — borrado (codigo muerto post-unificacion)
 - ✅ Frontend: `src/api/client.ts`, `Sidebar.tsx`, `Layout.tsx` — borrados. Build OK.
 
+### 2. **Dashboard Rediseño Total — DISEÑO APROBADO, IMPLEMENTACIÓN PENDIENTE**
+- **Design doc**: `docs/plans/2026-03-01-dashboard-redesign-total-design.md`
+- **Plan implementación**: `docs/plans/2026-03-01-dashboard-redesign-total-implementation.md`
+- **Para continuar**: nueva sesión → leer CLAUDE.md + `git log -5` → invocar `superpowers:executing-plans`
+- **Orden de fases**: F0 (design system + fix bugs) → F1 (sidebar) → F2 (omnisearch) → F3 (home) → F5 (fix páginas) → F7 (config) → F8 (polish)
+- **Bugs críticos a corregir en F0**: cards `bg-white` en dark mode (KPIs/Tesorería/Scoring/Pipeline), charts con colores random
+
 ### 3. **PENDIENTE (baja prioridad)**
 - Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
-- Merge a main (PR pendiente)
 - Backend: endpoint `/api/notificaciones/suscribir` para push real

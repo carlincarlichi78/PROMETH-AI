@@ -1,5 +1,25 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 (tarde) — Dashboard Rediseño Total: Diseño y Planificación
+
+**Objetivo**: Analizar el dashboard actual, diseñar el rediseño total y planificar la implementación en 8 fases.
+
+**Actividad**:
+- Análisis visual completo con Playwright (22 screenshots de todas las páginas)
+- Bugs críticos detectados: cards fondo BLANCO en dark mode (KPIs/Tesorería/Scoring/Pipeline), charts con colores random, Libro Diario microscópico
+- Diseño completo aprobado: design system con tokens semánticos, sidebar colapsable con empresa pill, OmniSearch ⌘K, Home como Centro de Operaciones con tarjetas enriquecidas, página /configuracion con 18 secciones
+- Enfoque C aprobado: reescritura total con design system primero
+
+**Archivos creados**:
+- `docs/plans/2026-03-01-dashboard-redesign-total-design.md`
+- `docs/plans/2026-03-01-dashboard-redesign-total-implementation.md`
+
+**Commits**: `ab57077`, `9a16e28`
+
+**SIGUIENTE**: Nueva sesión → `superpowers:executing-plans` con plan de implementación, empezar por F0
+
+---
+
 ## 2026-03-01 — Sesion: Planes PROMETH-AI revisados + integraciones CAP-Web/CertiGestor/Desktop
 
 **Objetivo**: Revisar y pulir planes de implementación PROMETH-AI con integraciones reales.
