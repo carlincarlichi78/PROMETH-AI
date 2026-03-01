@@ -107,6 +107,61 @@ def cmd_init_sesion(db_path: Path) -> int:
     return sesion_id
 
 
+def cmd_registrar_resultados(db_path: Path, sesion_id: int, reporte_json: Path) -> None:
+    """Carga resultados de pytest JSON en SQLite y actualiza la sesión."""
+    datos = json.loads(reporte_json.read_text())
+    summary = datos.get("summary", {})
+    duracion = datos.get("duration", 0.0)
+
+    conn = _conectar(db_path)
+
+    conn.execute(
+        """UPDATE sesiones SET tests_total=?, tests_pass=?, tests_fail=?, duracion_seg=?
+           WHERE id=?""",
+        (
+            summary.get("total", 0),
+            summary.get("passed", 0),
+            summary.get("failed", 0),
+            duracion,
+            sesion_id,
+        ),
+    )
+
+    fallos_previos = {
+        r["test_id"]
+        for r in conn.execute(
+            """SELECT DISTINCT test_id FROM resultados_test
+               WHERE estado='failed' AND sesion_id < ?""",
+            (sesion_id,),
+        ).fetchall()
+    }
+
+    for test in datos.get("tests", []):
+        node_id = test["nodeid"]
+        modulo = node_id.split("::")[0].replace("/", ".").replace(".py", "")
+        estado = test["outcome"]
+        error_msg = None
+        if estado == "failed":
+            call = test.get("call", {})
+            error_msg = call.get("longrepr", "")
+        es_regresion = 1 if (estado == "failed" and node_id in fallos_previos) else 0
+
+        conn.execute(
+            """INSERT INTO resultados_test
+               (sesion_id, test_id, nombre, modulo, estado, error_msg,
+                duracion_ms, es_regresion)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                sesion_id, node_id, node_id, modulo, estado, error_msg,
+                test.get("duration", 0.0) * 1000,
+                es_regresion,
+            ),
+        )
+
+    conn.commit()
+    conn.close()
+
+
 def main():
     argv = sys.argv[1:]
 
@@ -117,6 +172,12 @@ def main():
     if "--init-sesion" in argv:
         sesion_id = cmd_init_sesion(db_path)
         print(sesion_id)
+        return
+
+    if "--registrar-resultados" in argv:
+        sesion_id = int(_get_arg(argv, "--sesion-id"))
+        reporte_json = Path(_get_arg(argv, "--reporte-json"))
+        cmd_registrar_resultados(db_path, sesion_id, reporte_json)
         return
 
     print("Uso: motor_testeo.py [--db PATH] --init-sesion")
