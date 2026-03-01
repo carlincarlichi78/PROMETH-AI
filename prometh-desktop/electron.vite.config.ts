@@ -37,8 +37,7 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, '../web/src'),
-        '@certigestor/shared': resolve(__dirname, '../../packages/shared/src'),
+        '@': resolve(__dirname, 'src'),
       },
     },
     plugins: [react()],
