@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, hashear_password
 from sfce.db.modelos_auth import Gestoria, Usuario
+from sfce.db.modelos import Empresa, ConfigProcesamientoEmpresa
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -373,4 +374,87 @@ def crear_cliente_directo(
             "invitacion_token": token,
             "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
             "expira": expira.isoformat(),
+        }
+
+
+# ── Config procesamiento por empresa ──────────────────────────────────────────
+
+@router.get("/empresas/{empresa_id}/config-procesamiento")
+def get_config_procesamiento(
+    empresa_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    if usuario.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        cfg = s.query(ConfigProcesamientoEmpresa).filter_by(empresa_id=empresa_id).first()
+        if not cfg:
+            return {
+                "empresa_id": empresa_id,
+                "modo": "revision",
+                "schedule_minutos": None,
+                "ocr_previo": True,
+                "notif_calidad_cliente": True,
+                "notif_contable_gestor": True,
+                "ultimo_pipeline": None,
+            }
+        return {
+            "empresa_id": cfg.empresa_id,
+            "modo": cfg.modo,
+            "schedule_minutos": cfg.schedule_minutos,
+            "ocr_previo": cfg.ocr_previo,
+            "notif_calidad_cliente": cfg.notif_calidad_cliente,
+            "notif_contable_gestor": cfg.notif_contable_gestor,
+            "ultimo_pipeline": cfg.ultimo_pipeline.isoformat() if cfg.ultimo_pipeline else None,
+        }
+
+
+@router.put("/empresas/{empresa_id}/config-procesamiento")
+def put_config_procesamiento(
+    empresa_id: int,
+    request: Request,
+    body: dict,
+    usuario=Depends(obtener_usuario_actual),
+):
+    if usuario.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
+    modo = body.get("modo", "revision")
+    if modo not in ("auto", "revision"):
+        raise HTTPException(status_code=422, detail="modo debe ser 'auto' o 'revision'")
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        cfg = s.query(ConfigProcesamientoEmpresa).filter_by(empresa_id=empresa_id).first()
+        if not cfg:
+            cfg = ConfigProcesamientoEmpresa(empresa_id=empresa_id)
+            s.add(cfg)
+
+        cfg.modo = modo
+        if "schedule_minutos" in body:
+            cfg.schedule_minutos = body["schedule_minutos"]
+        if "ocr_previo" in body:
+            cfg.ocr_previo = bool(body["ocr_previo"])
+        if "notif_calidad_cliente" in body:
+            cfg.notif_calidad_cliente = bool(body["notif_calidad_cliente"])
+        if "notif_contable_gestor" in body:
+            cfg.notif_contable_gestor = bool(body["notif_contable_gestor"])
+
+        s.commit()
+        return {
+            "empresa_id": cfg.empresa_id,
+            "modo": cfg.modo,
+            "schedule_minutos": cfg.schedule_minutos,
+            "ocr_previo": cfg.ocr_previo,
+            "notif_calidad_cliente": cfg.notif_calidad_cliente,
+            "notif_contable_gestor": cfg.notif_contable_gestor,
         }
