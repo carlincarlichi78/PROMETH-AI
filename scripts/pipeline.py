@@ -222,6 +222,59 @@ def parsear_argumentos() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _sincronizar_cuarentena_bd(sesion_factory, empresa_bd_id, ruta_cuarentena, resultado_intake, logger):
+    """Post-intake: marca en BD los docs en cuarentena y genera notificaciones automáticas."""
+    if not ruta_cuarentena.exists():
+        return
+    try:
+        from sfce.core.notificaciones import evaluar_motivo_auto
+        from sfce.db.modelos import Documento
+
+        archivos_cuarentena = {p.name for p in ruta_cuarentena.glob("*") if p.is_file()}
+        if not archivos_cuarentena:
+            return
+
+        # Extraer avisos de cuarentena del resultado de intake
+        avisos_cuarentena = {}
+        for aviso in resultado_intake.avisos:
+            msg = aviso.get("mensaje", "")
+            datos = aviso.get("datos", {})
+            archivo = datos.get("archivo", "")
+            if archivo:
+                avisos_cuarentena[archivo] = msg
+
+        with sesion_factory() as sesion:
+            docs_pendientes = (
+                sesion.query(Documento)
+                .filter(
+                    Documento.empresa_id == empresa_bd_id,
+                    Documento.estado == "pendiente",
+                )
+                .all()
+            )
+            notificados = 0
+            for doc in docs_pendientes:
+                nombre = Path(doc.ruta_pdf).name if doc.ruta_pdf else ""
+                if nombre in archivos_cuarentena:
+                    motivo = avisos_cuarentena.get(nombre, "Documento en cuarentena")
+                    doc.estado = "cuarentena"
+                    doc.motivo_cuarentena = motivo
+                    se_notifico = evaluar_motivo_auto(
+                        sesion=sesion,
+                        empresa_id=empresa_bd_id,
+                        motivo_cuarentena=motivo,
+                        nombre_archivo=nombre,
+                        documento_id=doc.id,
+                    )
+                    if se_notifico:
+                        notificados += 1
+            sesion.commit()
+            if notificados:
+                logger.info(f"  Notificaciones auto generadas: {notificados}")
+    except Exception as exc:
+        logger.warning(f"  No se pudo sincronizar cuarentena con BD: {exc}")
+
+
 def main():
     args = parsear_argumentos()
 
@@ -440,6 +493,15 @@ def main():
             logger.info(f"  Correcciones auto-aplicadas: {len(resultado.correcciones)}")
         if resultado.avisos:
             logger.info(f"  Avisos: {len(resultado.avisos)}")
+
+        # Post-intake: sincronizar cuarentena con BD y generar notificaciones auto
+        if nombre == "intake" and sesion_factory and empresa_bd_id:
+            _sincronizar_cuarentena_bd(
+                sesion_factory, empresa_bd_id,
+                ruta_cliente / "cuarentena",
+                resultado,
+                logger,
+            )
 
     # Calcular score global
     confianza = _calcular_confianza_global(estado)

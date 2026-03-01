@@ -1,10 +1,11 @@
-"""Sistema de notificaciones SFCE — Task 43.
-
-Canales disponibles: log (siempre activo), email (smtplib), websocket (GestorWebSocket).
-Uso rapido: `notificar(TipoNotificacion.CUARENTENA, empresa_id=1, nombre="doc.pdf")`
+# sfce/core/notificaciones.py
 """
-from __future__ import annotations
+Sistema de notificaciones SFCE.
 
+Dos modos de uso:
+  1. En memoria (GestorNotificaciones) — canales configurables (log, email, websocket)
+  2. En BD (crear_notificacion_bd / evaluar_motivo_auto) — persistencia para la app movil
+"""
 import asyncio
 import logging
 import smtplib
@@ -13,22 +14,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from enum import Enum
-from typing import Callable
+from typing import Any, Callable, Optional
 
-from sfce.core.logger import crear_logger
-
-# ---------------------------------------------------------------------------
-# Logger interno del modulo
-# ---------------------------------------------------------------------------
-_logger = crear_logger("notificaciones")
+_logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
 # TipoNotificacion
 # ---------------------------------------------------------------------------
-class TipoNotificacion(str, Enum):
-    """Tipos de notificacion soportados por el sistema SFCE."""
 
+class TipoNotificacion(Enum):
     DOCUMENTO_ILEGIBLE = "documento_ilegible"
     PROVEEDOR_NUEVO = "proveedor_nuevo"
     TRABAJADOR_NUEVO = "trabajador_nuevo"
@@ -39,305 +34,298 @@ class TipoNotificacion(str, Enum):
 
 
 # ---------------------------------------------------------------------------
-# Plantillas de titulo y mensaje
+# Plantillas
 # ---------------------------------------------------------------------------
-PLANTILLAS: dict[TipoNotificacion, dict[str, str]] = {
+
+PLANTILLAS: dict = {
     TipoNotificacion.DOCUMENTO_ILEGIBLE: {
-        "titulo": "Documento ilegible: {nombre}",
-        "mensaje": "El archivo {nombre} no pudo ser procesado. Motivo: {motivo}",
+        "titulo": "No se ha podido leer '{nombre}'",
+        "mensaje": "El archivo '{nombre}' no es legible. Motivo: {motivo}. Por favor, vuelve a subirlo.",
     },
     TipoNotificacion.PROVEEDOR_NUEVO: {
-        "titulo": "Nuevo proveedor detectado: {nombre}",
-        "mensaje": "Se ha detectado un proveedor nuevo: {nombre} (CIF: {cif}). Revisar y confirmar.",
+        "titulo": "Proveedor nuevo detectado: {nombre}",
+        "mensaje": "Se ha detectado un proveedor nuevo: {nombre} ({cif}). Revisa los datos.",
     },
     TipoNotificacion.TRABAJADOR_NUEVO: {
-        "titulo": "Nuevo trabajador detectado: {nombre}",
-        "mensaje": "Nomina de trabajador no registrado: {nombre} (NIF: {nif}). Dar de alta antes de procesar.",
+        "titulo": "Nuevo trabajador: {nombre}",
+        "mensaje": "Se ha dado de alta al trabajador {nombre} ({nif}). Verifica los datos en RRHH.",
     },
     TipoNotificacion.PLAZO_FISCAL: {
-        "titulo": "Plazo fiscal proximo: modelo {modelo}",
-        "mensaje": "El modelo {modelo} vence el {fecha}. Verificar que la contabilidad esta cerrada.",
+        "titulo": "Plazo fiscal modelo {modelo} — {fecha}",
+        "mensaje": "El modelo {modelo} vence el {fecha}. Asegurate de tener los documentos preparados.",
     },
     TipoNotificacion.FACTURA_RECURRENTE_FALTANTE: {
         "titulo": "Factura recurrente faltante: {nombre}",
-        "mensaje": "No se ha recibido la factura periodica de {nombre} para el periodo {periodo}.",
+        "mensaje": "No se ha recibido la factura habitual de {nombre} para el periodo {periodo}.",
     },
     TipoNotificacion.ERROR_REGISTRO: {
-        "titulo": "Error al registrar: {nombre}",
-        "mensaje": "No se pudo registrar el documento {nombre} en FacturaScripts. Revisar en cuarentena.",
+        "titulo": "Error al registrar '{nombre}'",
+        "mensaje": "No se ha podido registrar el documento '{nombre}'. Revisa la cola de errores.",
     },
     TipoNotificacion.CUARENTENA: {
-        "titulo": "Documento en cuarentena: {nombre}",
-        "mensaje": "El documento {nombre} ha sido enviado a cuarentena y requiere revision manual.",
+        "titulo": "Documento en cuarentena: '{nombre}'",
+        "mensaje": "El documento '{nombre}' ha ido a cuarentena y requiere revision manual.",
     },
 }
 
 
 # ---------------------------------------------------------------------------
-# Dataclass Notificacion
+# Notificacion (dataclass)
 # ---------------------------------------------------------------------------
-def _timestamp_ahora() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _nuevo_id() -> str:
-    return str(uuid.uuid4())
-
 
 @dataclass
 class Notificacion:
-    """Representa una notificacion del sistema SFCE."""
-
     tipo: TipoNotificacion
     titulo: str
     mensaje: str
-    empresa_id: int | None = None
-    datos_extra: dict = field(default_factory=dict)
-    timestamp: str = field(default_factory=_timestamp_ahora)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
     leida: bool = False
-    id: str = field(default_factory=_nuevo_id)
+    empresa_id: Optional[int] = None
+    datos_extra: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
-# Factory function
+# crear_notificacion (en memoria)
 # ---------------------------------------------------------------------------
+
 def crear_notificacion(
     tipo: TipoNotificacion,
     titulo: str,
     mensaje: str,
-    empresa_id: int | None = None,
-    **datos_extra,
+    empresa_id: Optional[int] = None,
+    **kwargs,
 ) -> Notificacion:
-    """Crea una Notificacion con id y timestamp automaticos."""
+    """Crea una Notificacion en memoria (no persiste en BD)."""
     return Notificacion(
         tipo=tipo,
         titulo=titulo,
         mensaje=mensaje,
         empresa_id=empresa_id,
-        datos_extra=datos_extra,
+        datos_extra=kwargs,
     )
 
 
 # ---------------------------------------------------------------------------
-# Canales predefinidos
+# Canales
 # ---------------------------------------------------------------------------
 
-def canal_log(notificacion: Notificacion) -> bool:
-    """Canal log: escribe la notificacion al logger sfce.notificaciones.
-
-    Siempre activo. Retorna True si tuvo exito, False si el logger fallo.
-    """
+def canal_log(notif: Notificacion) -> bool:
     try:
-        nivel = logging.WARNING if notificacion.tipo in (
-            TipoNotificacion.ERROR_REGISTRO,
-            TipoNotificacion.DOCUMENTO_ILEGIBLE,
-        ) else logging.INFO
+        nivel = (
+            logging.WARNING
+            if notif.tipo in (TipoNotificacion.CUARENTENA, TipoNotificacion.ERROR_REGISTRO)
+            else logging.INFO
+        )
         _logger.log(
             nivel,
-            "[%s] %s — %s (empresa=%s)",
-            notificacion.tipo.value,
-            notificacion.titulo,
-            notificacion.mensaje,
-            notificacion.empresa_id,
+            "[Notificacion] %s | %s | empresa=%s",
+            notif.tipo.value,
+            notif.titulo,
+            notif.empresa_id,
         )
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception:
         return False
 
 
-def canal_email(notificacion: Notificacion, config_smtp: dict) -> bool:
-    """Canal email: envia la notificacion via smtplib.
-
-    config_smtp debe contener: servidor, puerto, usuario, contrasena, destinatario.
-    Retorna True si el email fue enviado, False en caso de error.
-    """
+def canal_email(notif: Notificacion, config: dict) -> bool:
     try:
-        asunto = f"[SFCE] {notificacion.titulo}"
-        cuerpo = (
-            f"Tipo: {notificacion.tipo.value}\n"
-            f"Empresa: {notificacion.empresa_id}\n"
-            f"Fecha: {notificacion.timestamp}\n\n"
-            f"{notificacion.mensaje}"
-        )
-        msg = MIMEText(cuerpo, "plain", "utf-8")
-        msg["Subject"] = asunto
-        msg["From"] = config_smtp["usuario"]
-        msg["To"] = config_smtp["destinatario"]
-
-        with smtplib.SMTP(config_smtp["servidor"], config_smtp["puerto"]) as servidor:
-            servidor.starttls()
-            servidor.login(config_smtp["usuario"], config_smtp["contrasena"])
-            servidor.sendmail(
-                config_smtp["usuario"],
-                config_smtp["destinatario"],
-                msg.as_string(),
-            )
+        msg = MIMEText(notif.mensaje, "plain", "utf-8")
+        msg["Subject"] = notif.titulo
+        msg["From"] = config["usuario"]
+        msg["To"] = config["destinatario"]
+        with smtplib.SMTP(config["servidor"], config["puerto"]) as smtp:
+            smtp.starttls()
+            smtp.login(config["usuario"], config["contrasena"])
+            smtp.sendmail(config["usuario"], config["destinatario"], msg.as_string())
         return True
-    except Exception as exc:  # noqa: BLE001
-        _logger.error("Error enviando email de notificacion: %s", exc)
+    except Exception:
         return False
 
 
 def _obtener_gestor_ws():
-    """Import lazy de gestor_ws para evitar imports circulares."""
-    from sfce.api.websocket import gestor_ws  # noqa: PLC0415
-    return gestor_ws
+    from sfce.api import websocket_manager  # importacion diferida
+    return websocket_manager.gestor
 
 
-def canal_websocket(notificacion: Notificacion) -> bool:
-    """Canal websocket: emite evento 'notificacion' al canal de la empresa.
-
-    Requiere que empresa_id este definido. Usa import lazy de gestor_ws.
-    Retorna True si se emitio con exito, False en caso de error.
-    """
-    if notificacion.empresa_id is None:
+def canal_websocket(notif: Notificacion) -> bool:
+    if notif.empresa_id is None:
         return False
-
     try:
-        gestor_ws = _obtener_gestor_ws()
-
-        # Serializar datos de la notificacion
-        datos = {
-            "id": notificacion.id,
-            "tipo": notificacion.tipo.value,
-            "titulo": notificacion.titulo,
-            "mensaje": notificacion.mensaje,
-            "empresa_id": notificacion.empresa_id,
-            "timestamp": notificacion.timestamp,
-            "datos_extra": notificacion.datos_extra,
-        }
-
-        coro = gestor_ws.emitir_a_empresa(notificacion.empresa_id, "notificacion", datos)
-
-        # Ejecutar coroutine: detectar si hay un loop activo
-        try:
-            loop = asyncio.get_running_loop()
-            # En contexto async (FastAPI): programar como tarea
+        ws = _obtener_gestor_ws()
+        coro = ws.emitir_a_empresa(
+            notif.empresa_id,
+            "notificacion",
+            {
+                "id": notif.id,
+                "tipo": notif.tipo.value,
+                "titulo": notif.titulo,
+                "mensaje": notif.mensaje,
+                "timestamp": notif.timestamp,
+            },
+        )
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
             loop.create_task(coro)
-        except RuntimeError:
-            # Sin loop activo: ejecutar sincrono
-            asyncio.run(coro)
-
+        else:
+            loop.run_until_complete(coro)
         return True
-    except Exception as exc:  # noqa: BLE001
-        _logger.error("Error enviando notificacion por WebSocket: %s", exc)
+    except Exception:
         return False
 
 
 # ---------------------------------------------------------------------------
 # GestorNotificaciones
 # ---------------------------------------------------------------------------
+
 class GestorNotificaciones:
-    """Almacena notificaciones y las despacha a los canales registrados."""
+    def __init__(self):
+        self._historial: list = []
+        self._canales: list = []
 
-    def __init__(self) -> None:
-        self._almacen: list[Notificacion] = []
-        self._canales: list[Callable[[Notificacion], bool]] = []
-
-    def agregar_canal(self, canal: Callable[[Notificacion], bool]) -> None:
-        """Registra un canal de entrega (funcion que recibe Notificacion y retorna bool)."""
+    def agregar_canal(self, canal: Callable) -> None:
         self._canales.append(canal)
 
-    def enviar(self, notificacion: Notificacion) -> dict:
-        """Almacena la notificacion y la despacha a todos los canales.
-
-        Retorna {"enviada": bool, "canales_ok": int, "canales_error": int}.
-        """
-        self._almacen.append(notificacion)
-
-        canales_ok = 0
-        canales_error = 0
-
+    def enviar(self, notif: Notificacion) -> dict:
+        self._historial.append(notif)
+        ok = 0
+        err = 0
         for canal in self._canales:
             try:
-                exito = canal(notificacion)
-                if exito:
-                    canales_ok += 1
+                resultado = canal(notif)
+                if resultado:
+                    ok += 1
                 else:
-                    canales_error += 1
-            except Exception as exc:  # noqa: BLE001
-                _logger.error("Error en canal de notificacion: %s", exc)
-                canales_error += 1
+                    err += 1
+            except Exception:
+                err += 1
+        return {"enviada": True, "canales_ok": ok, "canales_error": err}
 
-        return {
-            "enviada": True,
-            "canales_ok": canales_ok,
-            "canales_error": canales_error,
-        }
+    def marcar_leida(self, notif_id: str) -> bool:
+        for n in self._historial:
+            if n.id == notif_id:
+                n.leida = True
+                return True
+        return False
 
-    def obtener_pendientes(
-        self, empresa_id: int | None = None
-    ) -> list[Notificacion]:
-        """Devuelve notificaciones no leidas, opcionalmente filtradas por empresa."""
-        resultado = [n for n in self._almacen if not n.leida]
+    def obtener_pendientes(self, empresa_id: Optional[int] = None) -> list:
+        resultado = [n for n in self._historial if not n.leida]
         if empresa_id is not None:
             resultado = [n for n in resultado if n.empresa_id == empresa_id]
         return resultado
 
-    def marcar_leida(self, id_notificacion: str) -> bool:
-        """Marca una notificacion como leida por su id. Retorna True si la encontro."""
-        for notificacion in self._almacen:
-            if notificacion.id == id_notificacion:
-                notificacion.leida = True
-                return True
-        return False
-
-    def historial(
-        self, empresa_id: int | None = None, limite: int = 50
-    ) -> list[Notificacion]:
-        """Devuelve el historial completo (leidas y no leidas), opcionalmente filtrado.
-
-        Devuelve las ultimas `limite` notificaciones (las mas recientes).
-        """
-        resultado = list(self._almacen)
+    def historial(self, empresa_id: Optional[int] = None, limite: Optional[int] = None) -> list:
+        resultado = list(self._historial)
         if empresa_id is not None:
             resultado = [n for n in resultado if n.empresa_id == empresa_id]
-        # Devolver las ultimas N
-        return resultado[-limite:] if len(resultado) > limite else resultado
+        if limite is not None:
+            resultado = resultado[-limite:]
+        return resultado
 
 
-# ---------------------------------------------------------------------------
-# Shortcut global: notificar
-# ---------------------------------------------------------------------------
-def notificar(
-    tipo: TipoNotificacion,
-    empresa_id: int | None = None,
-    **kwargs,
-) -> Notificacion:
-    """Crea y envia una notificacion usando las plantillas predefinidas.
+# Instancia global
+gestor_notificaciones = GestorNotificaciones()
+gestor_notificaciones.agregar_canal(canal_log)
 
-    Args:
-        tipo: tipo de notificacion
-        empresa_id: id de empresa (opcional)
-        **kwargs: placeholders para los templates (nombre, cif, fecha, etc.)
 
-    Returns:
-        Notificacion creada y enviada al gestor global.
-    """
+def notificar(tipo: TipoNotificacion, empresa_id: Optional[int] = None, **kwargs) -> Notificacion:
+    """Shortcut: crea notificacion con plantilla y la envia al gestor global."""
     plantilla = PLANTILLAS[tipo]
-
     try:
         titulo = plantilla["titulo"].format(**kwargs)
     except KeyError:
         titulo = plantilla["titulo"]
-
     try:
         mensaje = plantilla["mensaje"].format(**kwargs)
     except KeyError:
         mensaje = plantilla["mensaje"]
+    notif = crear_notificacion(tipo, titulo, mensaje, empresa_id=empresa_id, **kwargs)
+    gestor_notificaciones.enviar(notif)
+    return notif
 
-    notificacion = crear_notificacion(
-        tipo=tipo,
-        titulo=titulo,
-        mensaje=mensaje,
+
+# ---------------------------------------------------------------------------
+# BD — persistencia para la app movil
+# ---------------------------------------------------------------------------
+
+MOTIVOS_AUTO_NOTIFICAR: dict = {
+    "duplicado": {
+        "titulo": "Documento duplicado",
+        "descripcion": "El archivo '{archivo}' ya fue procesado anteriormente. No es necesario volver a enviarlo.",
+        "tipo": "duplicado",
+    },
+    "sin datos extraibles": {
+        "titulo": "Documento ilegible",
+        "descripcion": "No hemos podido leer el archivo '{archivo}'. Comprueba que no esta en blanco y vuelve a subirlo.",
+        "tipo": "doc_ilegible",
+    },
+    "ilegible": {
+        "titulo": "Documento ilegible",
+        "descripcion": "No hemos podido leer '{archivo}'. Asegurate de que la imagen o PDF es legible.",
+        "tipo": "doc_ilegible",
+    },
+    "foto borrosa": {
+        "titulo": "Imagen con poca calidad",
+        "descripcion": "La foto '{archivo}' no tiene suficiente calidad. Haz una foto con mejor iluminacion.",
+        "tipo": "doc_ilegible",
+    },
+}
+
+
+def crear_notificacion_bd(
+    sesion,
+    empresa_id: int,
+    titulo: str,
+    descripcion: str = "",
+    tipo: str = "aviso_gestor",
+    origen: str = "manual",
+    documento_id: Optional[int] = None,
+):
+    """Crea y persiste una notificacion en BD para el empresario."""
+    from datetime import datetime as _dt
+    from sfce.db.modelos import NotificacionUsuario
+
+    notif = NotificacionUsuario(
         empresa_id=empresa_id,
-        **kwargs,
+        documento_id=documento_id,
+        titulo=titulo,
+        descripcion=descripcion,
+        tipo=tipo,
+        origen=origen,
+        leida=False,
+        fecha_creacion=_dt.utcnow(),
     )
-    gestor_notificaciones.enviar(notificacion)
-    return notificacion
+    sesion.add(notif)
+    sesion.flush()
+    _logger.info(
+        "Notificacion BD empresa=%s tipo=%s origen=%s: %s",
+        empresa_id, tipo, origen, titulo,
+    )
+    return notif
 
 
-# ---------------------------------------------------------------------------
-# Instancia global (singleton)
-# ---------------------------------------------------------------------------
-gestor_notificaciones = GestorNotificaciones()
+def evaluar_motivo_auto(
+    sesion,
+    empresa_id: int,
+    motivo_cuarentena: str,
+    nombre_archivo: str,
+    documento_id: Optional[int] = None,
+) -> bool:
+    """Si el motivo coincide con MOTIVOS_AUTO_NOTIFICAR, crea notificacion en BD."""
+    motivo_lower = motivo_cuarentena.lower()
+    for patron, cfg in MOTIVOS_AUTO_NOTIFICAR.items():
+        if patron in motivo_lower:
+            crear_notificacion_bd(
+                sesion=sesion,
+                empresa_id=empresa_id,
+                titulo=cfg["titulo"],
+                descripcion=cfg["descripcion"].format(archivo=nombre_archivo),
+                tipo=cfg["tipo"],
+                origen="pipeline",
+                documento_id=documento_id,
+            )
+            return True
+    return False

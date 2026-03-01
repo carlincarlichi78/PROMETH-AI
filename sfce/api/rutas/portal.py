@@ -269,8 +269,8 @@ def notificaciones_portal(
     request: Request,
     usuario=Depends(obtener_usuario_actual),
 ):
-    """Alertas fiscales y documentos pendientes para el empresario."""
-    from sfce.db.modelos import Documento
+    """Alertas fiscales, documentos pendientes y notificaciones del gestor."""
+    from sfce.db.modelos import Documento, NotificacionUsuario
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
@@ -283,28 +283,79 @@ def notificaciones_portal(
         # Onboarding pendiente
         if empresa.estado_onboarding == "pendiente_cliente":
             notificaciones.append({
+                "id": None,
                 "tipo": "onboarding",
                 "prioridad": "alta",
                 "titulo": "Completa tu alta",
                 "descripcion": "Tu gestoria necesita que completes tus datos.",
+                "leida": False,
+                "fecha": None,
             })
 
-        # Documentos en espera (max 5)
-        docs_pendientes = (
-            sesion.query(Documento)
-            .filter_by(empresa_id=empresa_id, estado="pendiente")
-            .limit(5)
+        # Notificaciones del gestor / pipeline (no leidas primero)
+        notifs_bd = (
+            sesion.query(NotificacionUsuario)
+            .filter_by(empresa_id=empresa_id)
+            .order_by(NotificacionUsuario.leida, NotificacionUsuario.fecha_creacion.desc())
+            .limit(20)
             .all()
         )
-        if docs_pendientes:
+        for n in notifs_bd:
+            prioridad = "alta" if n.tipo in ("error_doc", "doc_ilegible", "duplicado") else "media"
             notificaciones.append({
-                "tipo": "documentos",
-                "prioridad": "media",
-                "titulo": f"{len(docs_pendientes)} documentos pendientes",
-                "descripcion": "Tu gestoria esta procesando documentos recientes.",
+                "id": n.id,
+                "tipo": n.tipo,
+                "origen": n.origen,
+                "prioridad": prioridad,
+                "titulo": n.titulo,
+                "descripcion": n.descripcion or "",
+                "leida": n.leida,
+                "fecha": n.fecha_creacion.isoformat() if n.fecha_creacion else None,
             })
 
-        return {"notificaciones": notificaciones}
+        # Documentos en espera (solo si no hay notificaciones de BD)
+        if not notifs_bd:
+            docs_pendientes = (
+                sesion.query(Documento)
+                .filter_by(empresa_id=empresa_id, estado="pendiente")
+                .limit(5)
+                .all()
+            )
+            if docs_pendientes:
+                notificaciones.append({
+                    "id": None,
+                    "tipo": "documentos",
+                    "prioridad": "media",
+                    "titulo": f"{len(docs_pendientes)} documentos pendientes",
+                    "descripcion": "Tu gestoria esta procesando documentos recientes.",
+                    "leida": False,
+                    "fecha": None,
+                })
+
+        no_leidas = sum(1 for n in notificaciones if not n.get("leida"))
+        return {"notificaciones": notificaciones, "no_leidas": no_leidas}
+
+
+@router.post("/{empresa_id}/notificaciones/{notif_id}/leer")
+def marcar_notificacion_leida(
+    empresa_id: int,
+    notif_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Marca una notificación como leída."""
+    from datetime import datetime
+    from sfce.db.modelos import NotificacionUsuario
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        notif = sesion.get(NotificacionUsuario, notif_id)
+        if not notif or notif.empresa_id != empresa_id:
+            raise HTTPException(status_code=404, detail="Notificacion no encontrada")
+        notif.leida = True
+        notif.fecha_lectura = datetime.utcnow()
+        sesion.commit()
+        return {"ok": True}
 
 
 @router.get("/{empresa_id}/proveedores-frecuentes")

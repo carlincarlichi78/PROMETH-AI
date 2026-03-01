@@ -764,6 +764,28 @@ class DocumentoTracking(Base):
     detalle_json = Column(Text, default="{}")
 
 
+class NotificacionUsuario(Base):
+    """Notificaciones para empresarios: errores doc, avisos gestor, info pipeline."""
+    __tablename__ = "notificaciones_usuario"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False, index=True)
+    documento_id = Column(Integer, ForeignKey("documentos.id"), nullable=True)
+    titulo = Column(String(200), nullable=False)
+    descripcion = Column(Text, nullable=True)
+    # tipo: error_doc | aviso_gestor | info | duplicado | doc_ilegible
+    tipo = Column(String(30), nullable=False, default="aviso_gestor")
+    # origen: manual (gestor) | pipeline (automático)
+    origen = Column(String(20), nullable=False, default="manual")
+    leida = Column(Boolean, nullable=False, default=False)
+    fecha_creacion = Column(DateTime, nullable=False, default=datetime.utcnow)
+    fecha_lectura = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("ix_notif_empresa_leida", "empresa_id", "leida"),
+    )
+
+
 class SupplierRule(Base):
     """Reglas aprendidas por proveedor para pre-rellenar campos en Gate 0."""
     __tablename__ = "supplier_rules"

@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ShieldAlert, CheckCircle2, Clock } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { ShieldAlert, CheckCircle2, Clock, Bell } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { queryKeys } from '@/lib/query-keys'
 import { KPICard } from '@/components/charts/kpi-card'
@@ -10,9 +10,74 @@ import { PageHeader } from '@/components/page-header'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import type { Cuarentena } from '@/types'
 
-const COLUMNAS: ColumnaTabla<Cuarentena>[] = [
+function NotificarDialog({
+  empresaId,
+  item,
+  onClose,
+}: {
+  empresaId: number
+  item: Cuarentena
+  onClose: () => void
+}) {
+  const [titulo, setTitulo] = useState('Documento requiere tu atención')
+  const [descripcion, setDescripcion] = useState(
+    item.pregunta.length > 0
+      ? `El documento (ID ${item.documento_id}) tiene una incidencia: ${item.pregunta}`
+      : `El documento (ID ${item.documento_id}) no ha podido procesarse. Por favor, vuelve a subirlo.`
+  )
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () =>
+      api.post(`/api/gestor/empresas/${empresaId}/notificar-cliente`, {
+        titulo,
+        descripcion,
+        tipo: 'aviso_gestor',
+        documento_id: item.documento_id,
+      }),
+    onSuccess: onClose,
+  })
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Notificar al cliente</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1">
+            <Label>Título</Label>
+            <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Mensaje</Label>
+            <Textarea
+              rows={4}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => mutate()} disabled={isPending || !titulo.trim()}>
+            {isPending ? 'Enviando…' : 'Enviar notificación'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const COLUMNAS_BASE: ColumnaTabla<Cuarentena>[] = [
   {
     key: 'documento_id',
     header: 'Doc. ID',
@@ -62,6 +127,7 @@ const COLUMNAS: ColumnaTabla<Cuarentena>[] = [
 export default function CuarentenaPage() {
   const { id } = useParams<{ id: string }>()
   const empresaId = Number(id)
+  const [notificarItem, setNotificarItem] = useState<Cuarentena | null>(null)
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: queryKeys.documentos.cuarentena(empresaId),
@@ -71,6 +137,26 @@ export default function CuarentenaPage() {
 
   const resueltas = useMemo(() => items.filter((c) => c.resuelta), [items])
   const pendientes = useMemo(() => items.filter((c) => !c.resuelta), [items])
+
+  const COLUMNAS: ColumnaTabla<Cuarentena>[] = [
+    ...COLUMNAS_BASE,
+    {
+      key: 'documento_id' as keyof Cuarentena,
+      header: 'Acción',
+      render: (c) =>
+        !c.resuelta ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1 text-amber-600 border-amber-400 hover:bg-amber-50"
+            onClick={() => setNotificarItem(c)}
+          >
+            <Bell className="h-3 w-3" />
+            Notificar
+          </Button>
+        ) : null,
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -127,6 +213,14 @@ export default function CuarentenaPage() {
             c.pregunta.toLowerCase().includes(t.toLowerCase())
           }
           vacio="No hay documentos en cuarentena"
+        />
+      )}
+
+      {notificarItem && (
+        <NotificarDialog
+          empresaId={empresaId}
+          item={notificarItem}
+          onClose={() => setNotificarItem(null)}
         />
       )}
     </div>

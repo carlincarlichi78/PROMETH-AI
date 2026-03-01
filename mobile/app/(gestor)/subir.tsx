@@ -9,7 +9,8 @@ import { router } from 'expo-router'
 import { apiFetch, apiUpload } from '@/hooks/useApi'
 import { ProveedorSelector } from '@/components/upload/ProveedorSelector'
 import { Camera, FileText, CheckCircle, Building2, ChevronRight, ArrowLeft, ExternalLink } from 'lucide-react-native'
-import { Image, Linking } from 'react-native'
+import { Image } from 'react-native'
+import * as Sharing from 'expo-sharing'
 
 const TIPOS_DOC = [
   { id: 'Factura',  icono: '🧾', desc: 'Factura de proveedor' },
@@ -209,7 +210,7 @@ export default function SubirGestor() {
                 <Text style={s.previewNombre}>{archivo.name}</Text>
               </View>
             ) : archivo ? (
-              <TouchableOpacity style={s.previewArchivo} onPress={() => Linking.openURL(archivo.uri)} activeOpacity={0.7}>
+              <TouchableOpacity style={s.previewArchivo} onPress={async () => { if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(archivo.uri) }} activeOpacity={0.7}>
                 <View style={s.previewArchivoIcono}>
                   <FileText size={28} color={archivo.mimeType.includes('pdf') ? '#ef4444' : archivo.mimeType.includes('sheet') || archivo.mimeType.includes('excel') || archivo.mimeType.includes('csv') ? '#10b981' : '#94a3b8'} />
                 </View>

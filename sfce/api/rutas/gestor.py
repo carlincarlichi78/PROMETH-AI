@@ -1,5 +1,5 @@
 """Endpoints para la vista ligera del gestor en la app movil."""
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
@@ -81,3 +81,41 @@ def alertas_gestor(
             })
 
         return {"alertas": alertas}
+
+
+@router.post("/empresas/{empresa_id}/notificar-cliente")
+def notificar_cliente(
+    empresa_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+    titulo: str = Body(...),
+    descripcion: str = Body(""),
+    tipo: str = Body("aviso_gestor"),
+    documento_id: int = Body(None),
+):
+    """
+    El gestor crea una notificacion manual para el cliente de una empresa.
+    Aparecera en el tab Notificaciones de la app del empresario.
+    """
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403, detail="Solo gestores")
+
+    from sfce.core.notificaciones import crear_notificacion_bd as crear_notificacion
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = sesion.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        notif = crear_notificacion(
+            sesion=sesion,
+            empresa_id=empresa_id,
+            titulo=titulo,
+            descripcion=descripcion,
+            tipo=tipo,
+            origen="manual",
+            documento_id=documento_id,
+        )
+        sesion.commit()
+        return {"id": notif.id, "ok": True}
