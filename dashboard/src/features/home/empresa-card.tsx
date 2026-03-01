@@ -251,25 +251,6 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
         </div>
       )}
 
-      {/* Quick actions */}
-      <div className="border-t border-border/30 grid grid-cols-3 divide-x divide-border/30 mt-auto">
-        {[
-          { label: 'Bandeja', ruta: 'inbox' },
-          { label: 'PyG', ruta: 'pyg' },
-          { label: 'Fiscal', ruta: 'calendario-fiscal' },
-        ].map(({ label, ruta }) => (
-          <button
-            type="button"
-            key={ruta}
-            className="py-2 text-[11px] font-medium text-muted-foreground
-                       hover:text-foreground hover:bg-[var(--surface-2)]
-                       transition-colors text-center"
-            onClick={() => ir(`/empresa/${empresa.id}/${ruta}`)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

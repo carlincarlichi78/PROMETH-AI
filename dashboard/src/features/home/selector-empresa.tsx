@@ -32,7 +32,7 @@ function BarraEstadoGlobal() {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-border/50 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
       {[
         { label: 'Clientes activos', valor: stats.total_clientes.toString(), icono: '🏢' },
         { label: 'Docs pendientes', valor: stats.docs_pendientes_total.toLocaleString('es'), icono: '📥' },
@@ -40,7 +40,8 @@ function BarraEstadoGlobal() {
           label: 'Alertas urgentes',
           valor: stats.alertas_urgentes.toString(),
           icono: '⚠️',
-          clase: stats.alertas_urgentes > 0 ? 'text-[var(--state-danger)]' : '',
+          clase: stats.alertas_urgentes > 0 ? 'text-[var(--state-danger)]' : 'text-[var(--state-success)]',
+          acento: stats.alertas_urgentes > 0 ? 'border-l-[var(--state-danger)]' : 'border-l-[var(--state-success)]',
         },
         {
           label: stats.proximo_deadline
@@ -53,13 +54,17 @@ function BarraEstadoGlobal() {
           label: 'Volumen gestionado',
           valor: `${(stats.volumen_gestionado / 1_000_000).toFixed(1)}M€`,
           icono: '💰',
+          clase: 'text-[var(--primary)]',
         },
       ].map((stat) => (
-        <div key={stat.label} className="bg-[var(--surface-1)] px-4 py-3 flex flex-col justify-between">
-          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+        <div key={stat.label}
+          className={`bg-[var(--surface-1)] border border-border/50 rounded-xl px-5 py-4 flex flex-col justify-between
+                      border-l-2 ${stat.acento ?? 'border-l-[var(--primary)]/40'}`}
+        >
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
             {stat.icono} {stat.label}
           </span>
-          <span className={`text-[18px] font-bold tabular-nums ${stat.clase ?? ''}`}>
+          <span className={`text-[22px] font-bold tabular-nums leading-none ${stat.clase ?? ''}`}>
             {stat.valor}
           </span>
         </div>
