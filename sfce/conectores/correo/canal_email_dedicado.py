@@ -63,7 +63,8 @@ def resolver_empresa_por_slug(slug: str, sesion: Session) -> Optional[int]:
 
     empresas = sesion.execute(select(Empresa)).scalars().all()
     for emp in empresas:
-        config = json.loads(emp.config_extra or "{}")
+        raw = emp.config_extra or {}
+        config = raw if isinstance(raw, dict) else json.loads(raw)
         if config.get("slug") == slug:
             return emp.id
         # Fallback: slug derivado del nombre (solo alfanumérico, máx 20 chars)
