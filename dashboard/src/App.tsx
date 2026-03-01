@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AdvisorGate } from './features/advisor/advisor-gate'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // --- Auth ---
@@ -73,6 +74,13 @@ const CorreoPage = lazy(() => import('@/features/correo/index'))
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 const WizardOnboardingClienteWrapper = lazy(() => import('@/features/onboarding/WizardOnboardingCliente').then((m) => ({ default: m.WizardOnboardingClienteWrapper })))
+
+// --- Advisor ---
+const CommandCenter = lazy(() => import('./features/advisor/command-center-page'))
+const Restaurant360 = lazy(() => import('./features/advisor/restaurant-360-page'))
+const ProductIntelligence = lazy(() => import('./features/advisor/product-intelligence-page'))
+const SalaEstrategia = lazy(() => import('./features/advisor/sala-estrategia-page'))
+const AutopilotPage = lazy(() => import('./features/advisor/autopilot-page'))
 
 // --- Admin ---
 const GestoriasPage = lazy(() => import('@/features/admin/gestorias-page'))
@@ -170,6 +178,13 @@ export function App() {
           <Route path="/empresa/:id/comparativa" element={<Comparativa />} />
           <Route path="/empresa/:id/scoring" element={<Scoring />} />
           <Route path="/empresa/:id/informes" element={<Informes />} />
+
+          {/* Advisor */}
+          <Route path="/advisor" element={<AdvisorGate><CommandCenter /></AdvisorGate>} />
+          <Route path="/empresa/:id/advisor" element={<AdvisorGate><Restaurant360 /></AdvisorGate>} />
+          <Route path="/empresa/:id/advisor/productos" element={<AdvisorGate><ProductIntelligence /></AdvisorGate>} />
+          <Route path="/empresa/:id/advisor/estrategia" element={<AdvisorGate><SalaEstrategia /></AdvisorGate>} />
+          <Route path="/advisor/autopilot" element={<AdvisorGate><AutopilotPage /></AdvisorGate>} />
 
           {/* Admin */}
           <Route path="/admin/gestorias" element={<GestoriasPage />} />

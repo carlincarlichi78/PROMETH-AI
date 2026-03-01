@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useEmpresaStore } from '@/stores/empresa-store'
 import { useAuth } from '@/context/AuthContext'
+import { useTiene } from '@/hooks/useTiene'
 import { cn } from '@/lib/utils'
 
 interface ItemMenu { titulo: string; ruta: string; icono: React.ElementType }
@@ -26,6 +27,7 @@ export function AppSidebar() {
   const { usuario, logout } = useAuth()
   const empresaActiva = useEmpresaStore((s) => s.empresaActiva)
   const eId = empresaActiva?.id
+  const tieneAdvisor = useTiene('advisor_premium')
 
   // Estado de grupos colapsados — persistido en localStorage
   const [gruposAbiertos, setGruposAbiertos] = React.useState<Record<string, boolean>>(() => {
@@ -253,6 +255,39 @@ export function AppSidebar() {
             </SidebarGroup>
           )
         })}
+
+        {/* Advisor — solo tier premium */}
+        {tieneAdvisor && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+              ⚡ Advisor
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === '/advisor'}
+                    onClick={() => navigate('/advisor')}
+                    tooltip="Command Center"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Command Center</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === '/advisor/autopilot'}
+                    onClick={() => navigate('/advisor/autopilot')}
+                    tooltip="Autopilot"
+                  >
+                    <Target className="h-4 w-4" />
+                    <span>Autopilot</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Admin — solo superadmin */}
         {usuario?.rol === 'admin' && (
