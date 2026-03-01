@@ -59,6 +59,9 @@ const Informes = lazy(() => import('@/features/economico/informes-page'))
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
 
+// --- Correo ---
+const CorreoPage = lazy(() => import('@/features/correo/index'))
+
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 
@@ -150,6 +153,9 @@ export function App() {
 
           {/* Onboarding */}
           <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />
+
+          {/* Correo */}
+          <Route path="/empresa/:id/correo" element={<CorreoPage />} />
 
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
