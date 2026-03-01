@@ -12,6 +12,8 @@ import imaplib
 from email.header import decode_header as _decode_header
 from typing import Any
 
+from sfce.core.seguridad_archivos import sanitizar_nombre_archivo
+
 
 class _ImaplibAdapter:
     """Adaptador fino sobre imaplib.IMAP4 con la misma interfaz que los mocks."""
@@ -140,7 +142,7 @@ class ImapServicio:
                 if payload:
                     cuerpo_html = payload.decode("utf-8", errors="replace")
             elif "attachment" in cd or parte.get_filename():
-                nombre = self._decodificar_header(parte.get_filename() or "adjunto")
+                nombre = sanitizar_nombre_archivo(self._decodificar_header(parte.get_filename() or ""))
                 datos = parte.get_payload(decode=True)
                 if datos:
                     adjuntos.append({"nombre": nombre, "datos_bytes": datos, "mime_type": ct})
