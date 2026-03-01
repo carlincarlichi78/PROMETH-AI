@@ -1,5 +1,20 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 (noche 2) — MCF Motor Clasificación Fiscal — Completado y mergeado a main
+
+**Objetivo**: completar las tareas pendientes de la rama `feat/motor-clasificacion-fiscal`.
+
+**Completado**:
+- **53 tests ClasificadorFiscal** (`tests/test_clasificador_fiscal.py`): 9 bloques — detección país/régimen, 12 categorías de gasto, suplidos aduaneros, wizard tipo_vehiculo, wizard inicio_actividad, wizard pct_afectacion, divisa extranjera, confianza/trazabilidad, a_entrada_config
+- **Handler `iva_turismo_50`** en `correction.py`: Art.95.Tres.2 LIVA — detecta partida 472, genera corrección split 50% deducible + 50% gasto 6280, con guard anti-duplicados. También añade `regla_especial_iva_turismo_50` a `_aplicar_correccion`
+- **Wizard MCF** en `intake._descubrimiento_interactivo`: reemplaza 8 preguntas manuales por clasificación automática MCF. Muestra resumen (categoría, IVA, IRPF, confianza, razonamiento), luego solo pregunta lo ambiguo (0-3 preguntas según categoría). Usa `a_entrada_config` para construir la entrada
+- **`sfce/core/informe_cuarentena.py`**: informe estructurado de cuarentena combinando tabla BD + PDFs en carpeta. Enriquece items tipo "entidad" con sugerencias MCF. Genera JSON en `auditoria/` + texto legible para terminal. 17 tests en `test_informe_cuarentena.py`
+- **Fix coherencia_fiscal.yaml**: Portugal corregido a `intracomunitario` (era extracomunitario incorrectamente). Fix test `test_reglas_pgc.py::test_cif_portugues` para reflejar corrección
+
+**Tests**: 2095 PASS (70 nuevos). Merge a main. Commit: `812bda2`
+
+---
+
 ## 2026-03-01 (noche) — Dashboard Rediseño Total: Implementación COMPLETADA
 
 **Objetivo**: Ejecutar el plan de implementación del dashboard redesign (FASES 5, 7, 8 pendientes).

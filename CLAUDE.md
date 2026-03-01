@@ -179,29 +179,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026)
+## Estado actual (01/03/2026, noche)
 
-**Rama activa**: `feat/motor-clasificacion-fiscal` (worktree en `.worktrees/mcf/`)
-**Main**: 2025 tests PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Rama activa**: `main`
+**Tests**: 2095 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
-## MCF — Motor de Clasificación Fiscal (en progreso)
+## MCF — Motor de Clasificación Fiscal (COMPLETADO, en main)
 
-**Objetivo**: auto-deducir tratamiento fiscal de proveedores desde CIF+OCR. Solo pregunta lo genuinamente ambiguo (tipo de vehículo, inicio actividad autónomo).
-
-**Completado en esta rama**:
-- `reglas/categorias_gasto.yaml` — 30 categorías fiscales completas (LIVA+LIRPF 2025)
-- `sfce/core/clasificador_fiscal.py` — ClasificadorFiscal + ClasificacionFiscal
-- Fix bug: Portugal era `extracomunitario` → corregido a `intracomunitario` en `coherencia_fiscal.yaml`
-- Fix bug: retención administradores 24% → 19% en `tipos_retencion.yaml`
-
-**Pendiente** (próxima sesión, plan en `C:\Users\carli\.claude\plans\fizzy-nibbling-firefly.md`):
-1. `tests/test_clasificador_fiscal.py` — ~35 tests (T6 del plan)
-2. Handler `iva_turismo_50` en `sfce/phases/correction.py` (T3)
-3. Reemplazar `_descubrimiento_interactivo()` en `sfce/phases/intake.py` con wizard MCF (T4)
-4. Informe cuarentena estructurado `informe_cuarentena.json` en intake.py (T5)
-5. Merge a main + tests regresión completos
-
-**Para retomar**: `git worktree list` y `cd .worktrees/mcf` o trabajar desde la rama directamente.
+- `reglas/categorias_gasto.yaml` — 30 categorías fiscales (LIVA+LIRPF 2025)
+- `sfce/core/clasificador_fiscal.py` — ClasificadorFiscal + wizard + a_entrada_config
+- `sfce/core/informe_cuarentena.py` — informe estructurado BD+carpeta con sugerencias MCF
+- Handler `iva_turismo_50` en `correction.py` — Art.95.Tres.2 LIVA split 50/50
+- Wizard MCF en `intake._descubrimiento_interactivo` — reemplaza 8 inputs manuales
+- 70 tests nuevos: `test_clasificador_fiscal.py` (53) + `test_informe_cuarentena.py` (17)
 
 ## Pendiente (baja prioridad)
 - Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
