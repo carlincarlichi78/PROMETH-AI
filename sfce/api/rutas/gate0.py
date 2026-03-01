@@ -116,3 +116,34 @@ async def ingestar_documento(
         tmp_ruta.unlink(missing_ok=True)
         logger.error("Error en Gate 0: %s", exc)
         raise HTTPException(status_code=500, detail="Error interno en Gate 0")
+
+
+@router.post("/ingestar-zip", status_code=202)
+async def ingestar_zip(
+    archivo: UploadFile = File(...),
+    empresa_id: int = Form(...),
+    sesion_factory=Depends(get_sesion_factory),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Ingesta masiva: ZIP con múltiples facturas PDF.
+
+    Extrae todos los PDFs del ZIP, valida cada uno y los encola en Gate 0
+    con trust_level ALTA (upload manual por gestor).
+    """
+    from sfce.core.procesador_zip import extraer_pdfs_zip
+    from sqlalchemy.orm import Session
+
+    MAX_ZIP = 500 * 1024 * 1024
+    contenido = await archivo.read()
+    if len(contenido) > MAX_ZIP:
+        raise HTTPException(status_code=413, detail="ZIP demasiado grande (máx 500 MB)")
+
+    dir_destino = DIRECTORIO_DOCS / str(empresa_id) / "inbox"
+    with Session(sesion_factory()) as sesion:
+        resultado = extraer_pdfs_zip(contenido, empresa_id, dir_destino, sesion)
+
+    return {
+        "encolados": resultado.encolados,
+        "rechazados": resultado.rechazados,
+        "errores": resultado.errores[:10],
+    }
