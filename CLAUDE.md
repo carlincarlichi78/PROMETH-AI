@@ -1,5 +1,33 @@
 # Proyecto CONTABILIDAD - CLAUDE.md
 
+## Libro de Instrucciones (LEER PRIMERO)
+
+**Antes de explorar código, leer el tema relevante del libro:**
+
+- `docs/LIBRO/LIBRO-PERSONAL.md` — índice completo con comandos rápidos y variables de entorno
+- `docs/LIBRO/_temas/` — 28 archivos técnicos por dominio (pipeline, BD, API, seguridad, FS, etc.)
+
+**Regla:** si necesito contexto sobre cualquier parte del sistema, leer el archivo del libro correspondiente en lugar de explorar el código desde cero. Ahorra tokens y tiempo.
+
+| Necesito saber sobre... | Leer primero |
+|-------------------------|--------------|
+| Infraestructura / Docker / Backups | `01-infraestructura.md`, `26-infra-docker-backups.md` |
+| Arquitectura general | `02-sfce-arquitectura.md` |
+| Pipeline y fases | `03-pipeline-fases.md` |
+| Gate 0 / cola | `04-gate0-cola.md` |
+| OCR y tiers | `05-ocr-ia-tiers.md` |
+| Motor de reglas / YAMLs | `06-motor-reglas.md`, `07-sistema-reglas-yaml.md` |
+| Base de datos (39 tablas) | `17-base-de-datos.md` |
+| API endpoints (106) | `11-api-endpoints.md` |
+| Seguridad / JWT / 2FA | `22-seguridad.md` |
+| FacturaScripts lecciones | `24-facturascripts.md` |
+| Clientes y config.yaml | `23-clientes.md` |
+| Modelos fiscales | `15-modelos-fiscales.md` |
+| Bancario / conciliación | `19-bancario.md` |
+| Correo / IMAP | `20-correo.md` |
+
+---
+
 ## Que es esto
 Servicio de contabilidad y gestoria que ofrezco a mis clientes usando FacturaScripts.
 Claude me asiste controlando FacturaScripts via navegador para registrar facturas, generar modelos fiscales, etc.
