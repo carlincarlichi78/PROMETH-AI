@@ -11,6 +11,7 @@ from sfce.db.modelos import (
 )
 from sfce.conectores.correo.clasificacion.servicio_clasificacion import clasificar_email
 from sfce.conectores.correo.extractor_enlaces import extraer_enlaces
+from sfce.conectores.correo.parser_hints import extraer_hints_asunto
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +56,16 @@ class IngestaCorreo:
                 if ya_existe:
                     continue
 
+                hints = extraer_hints_asunto(email_data.get("asunto", ""))
                 clasificacion = clasificar_email(
                     remitente=email_data["remitente"],
                     asunto=email_data["asunto"],
                     cuerpo_texto=email_data.get("cuerpo_texto", ""),
                     reglas=reglas,
                 )
+                # Tipo de documento sugerido por hints tiene precedencia sobre clasificación IA
+                if hints.tipo_doc and clasificacion.get("tipo_doc") is None:
+                    clasificacion["tipo_doc"] = hints.tipo_doc
                 estado_inicial = _ESTADO_POR_ACCION.get(
                     clasificacion["accion"], "PENDIENTE"
                 )
