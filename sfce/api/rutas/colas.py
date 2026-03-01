@@ -164,6 +164,40 @@ def escalar_item(
         return _serializar_item(item)
 
 
+@router.get("/documentos/{documento_id}/tracking")
+def tracking_documento(
+    documento_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Historial de estados de un documento. Visible en portal y por gestor."""
+    obtener_usuario_actual(request)  # verifica auth
+    with sesion_factory() as sesion:
+        # Verificar que el documento existe
+        item = sesion.get(ColaProcesamiento, documento_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+        estados = sesion.execute(
+            select(DocumentoTracking)
+            .where(DocumentoTracking.documento_id == documento_id)
+            .order_by(DocumentoTracking.timestamp)
+        ).scalars().all()
+
+        return {
+            "documento_id": documento_id,
+            "nombre_archivo": item.nombre_archivo,
+            "estados": [
+                {
+                    "estado": e.estado,
+                    "timestamp": str(e.timestamp),
+                    "actor": e.actor,
+                }
+                for e in estados
+            ],
+        }
+
+
 def _serializar_item(item: ColaProcesamiento) -> dict:
     return {
         "id": item.id,
