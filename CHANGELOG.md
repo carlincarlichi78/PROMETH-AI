@@ -1,5 +1,29 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 (sesión 3) — Tablero de Usuarios SFCE — 12 tasks implementados
+
+**Objetivo**: Diseñar e implementar el sistema completo de jerarquía de usuarios en 4 niveles (tablero de juego).
+
+**Diseño**: Design doc `docs/plans/2026-03-01-tablero-usuarios-design.md` — 4 niveles:
+- Nivel 0: Super-admin operativo (todo el poder)
+- Nivel 1: La gestoría puede jugar (invitación, panel propio)
+- Nivel 2: Alta de cliente con historia (OCR 036 + escrituras + FS setup + migración histórica)
+- Nivel 3: Cliente en su portal (portal multi-empresa, invitación cliente)
+
+**Backend nuevos**: `email_service.py`, `ocr_036.py`, `ocr_escritura.py`, `fs_setup.py`, `migracion_historica.py`, `sfce/api/rutas/migracion.py`
+
+**Backend modificados**: `auth_rutas.py` (aceptar-invitacion), `admin.py` (clientes directos, panel gestorías completo), `portal.py` (mis-empresas), `empresas.py` (invitar-cliente)
+
+**Frontend nuevos**: `features/admin/api.ts`, `gestorias-page.tsx`, `features/mi-gestoria/api.ts`, `mi-gestoria-page.tsx`, `features/portal/mis-empresas-page.tsx`, `features/empresa/invitar-cliente-dialog.tsx`
+
+**Frontend modificados**: `App.tsx` (rutas /admin/gestorias, /mi-gestoria, /portal), `app-sidebar.tsx` (links por rol), `types/index.ts` (admin_gestoria, gestoria_id)
+
+**Tests nuevos**: test_auth (4), test_admin (11), test_email_service (2), test_ocr_036 (6), test_ocr_escritura (5), test_fs_setup (3), test_migracion_historica (5), test_portal_mis_empresas (2) = 38 tests nuevos
+
+**Tests totales**: 2133 PASS | **Build**: 4.53s, 113 entries
+
+---
+
 ## 2026-03-01 (noche 2) — MCF Motor Clasificación Fiscal — Completado y mergeado a main
 
 **Objetivo**: completar las tareas pendientes de la rama `feat/motor-clasificacion-fiscal`.

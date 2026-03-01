@@ -152,8 +152,15 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Supplier Rules BD | `sfce/core/supplier_rules.py` | Jerarquía 3 niveles: CIF+empresa > CIF global > nombre patron. 5 tests |
 | Migración YAML->BD | `scripts/migrar_aprendizaje_yaml_a_supplier_rules.py` | evol_001..005 → SupplierRule global_nombre. Idempotente. 4 tests |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`
-**Tests totales**: 2025 PASS (C1-C4 completados 01/03/2026, tag `c1-c4-pipeline-completion`)
+| Tablero Usuarios | `sfce/api/rutas/auth_rutas.py`, `sfce/api/rutas/admin.py`, `sfce/api/rutas/portal.py`, `sfce/api/rutas/empresas.py` | 4 niveles: superadmin → gestoría → gestor → cliente. Invitación por token, clientes directos, panel gestoría, portal multi-empresa |
+| OCR 036/037 | `sfce/core/ocr_036.py` | Parser Modelo 036/037: NIF, nombre, domicilio, régimen IVA, epígrafe IAE, fecha alta |
+| OCR Escrituras | `sfce/core/ocr_escritura.py` | Parser escrituras constitución: CIF, denominación, capital, administradores |
+| FS Setup Auto | `sfce/core/fs_setup.py` | Crea empresa + ejercicio + importa PGC en FS automáticamente |
+| Migración Histórica | `sfce/core/migracion_historica.py`, `sfce/api/rutas/migracion.py` | Parsea libros IVA CSV → extrae proveedores habituales |
+| Email Service | `sfce/core/email_service.py` | SMTP básico: envía invitaciones automáticamente desde admin.py |
+
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`
+**Tests totales**: 2133 PASS (tablero-usuarios 12 tasks completados 01/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -163,8 +170,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - `.claude/launch.json` configurado con env vars inline — `preview_start` funciona directamente
 - `iniciar_dashboard.bat` en raíz para arranque manual alternativo
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify** + **Inter**
-- **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
-- **Backend extendido**: 66+ rutas, 25 tablas BD.
+- **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 15 modulos
+- **Backend extendido**: 75+ rutas, 25 tablas BD.
 - **Tema Claude**: paleta ámbar OKLCh, dark mode, glassmorphism. Tokens en `src/index.css`. CHART_COLORS en `chart-wrapper.tsx`.
 - **Completado**: OmniSearch (cmdk), Home centro ops, AppSidebar rediseñado, KPICard/EmptyState/PageTitle, page transitions, keyboard shortcuts (G+C/F/D/E/R/H), Configuración 18 secciones.
 - **Home Panel Principal**: sidebar cambiada a dark slate/navy (oklch 245°), KPI strip con tarjetas individuales y borde acento, quick-actions redundantes eliminadas de EmpresaCard.
@@ -179,10 +186,10 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 2)
+## Estado actual (01/03/2026, sesión 3)
 
 **Rama activa**: `main`
-**Tests**: 2095 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Tests**: 2133 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
 ## MCF — Motor de Clasificación Fiscal (COMPLETADO, en main)
 
@@ -193,9 +200,18 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - Wizard MCF en `intake._descubrimiento_interactivo` — reemplaza 8 inputs manuales
 - 70 tests: `test_clasificador_fiscal.py` (53) + `test_informe_cuarentena.py` (17)
 
+## Tablero Usuarios SFCE — COMPLETADO (sesión 3, 01/03/2026)
+
+**12 tasks implementados**. Jerarquía completa: superadmin → gestoría → gestor → cliente.
+
+Nuevas rutas frontend: `/admin/gestorias`, `/mi-gestoria`, `/portal` (índice multi-empresa)
+Nuevos componentes backend: `auth_rutas` (aceptar-invitación), `email_service`, `ocr_036`, `ocr_escritura`, `fs_setup`, `migracion_historica`
+Flujos: invitación token 7 días → aceptar → JWT; clientes directos (gestoria_id=NULL); invitar cliente final al portal
+
 ## Pendiente (próxima sesión — elegir)
 1. **Motor de Escenarios de Campo** — probar el MCF contra datos reales de Pastorino/chiringuito (`scripts/motor_campo.py --modo rapido`)
 2. **Página cuarentena en dashboard** — UI para revisar items + resolver desde el dashboard
 3. **Integrar MCF en pipeline completo** — que el informe cuarentena se genere automáticamente al final de cada pipeline
+4. **Nivel 2 completo end-to-end** — wizard empresa usando OCR 036/037 + fs_setup + migracion_historica encadenados
 4. **Migración SQLite→PostgreSQL** (`scripts/migrar_sqlite_a_postgres.py`)
 5. **Tests E2E dashboard** (Playwright)
