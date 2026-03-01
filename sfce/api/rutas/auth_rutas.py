@@ -254,8 +254,8 @@ class AceptarInvitacionRequest(BaseModel):
     password: str
 
 
-@router.post("/aceptar-invitacion")
-def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request):
+@router.post("/aceptar-invitacion", dependencies=[Depends(_rate_limit_login)])
+def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request, response: Response):
     """Canjea un token de invitacion, establece la password definitiva y devuelve JWT."""
     sf = request.app.state.sesion_factory
 

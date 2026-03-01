@@ -25,7 +25,12 @@ export default function LoginPage() {
     setEnviando(true)
     try {
       await login(email, password)
-      navigate(from, { replace: true })
+      // Clientes solo acceden al portal, no al dashboard de contabilidad
+      const token = sessionStorage.getItem('sfce_token') ?? ''
+      let rol = ''
+      try { rol = JSON.parse(atob(token.split('.')[1]!))?.rol ?? '' } catch { /* */ }
+      const destino = rol === 'cliente' ? '/portal' : from
+      navigate(destino, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error de autenticacion')
     } finally {
