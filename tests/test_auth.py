@@ -3,6 +3,7 @@
 Cubre: login, /me, CRUD usuarios, roles, token expirado.
 """
 
+import os
 import time
 
 import pytest
@@ -23,6 +24,9 @@ from sfce.api.auth import (
     decodificar_token,
     crear_admin_por_defecto,
 )
+
+# Garantizar SFCE_JWT_SECRET para toda la suite de autenticacion
+os.environ.setdefault("SFCE_JWT_SECRET", "test-secret-de-pruebas-con-al-menos-32-caracteres-ok")
 
 
 # --- Fixtures ---
