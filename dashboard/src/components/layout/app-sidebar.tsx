@@ -272,6 +272,26 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {/* Mi Gestoria — solo admin_gestoria */}
+        {usuario?.rol === 'admin_gestoria' && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === '/mi-gestoria'}
+                    onClick={() => navigate('/mi-gestoria')}
+                    tooltip="Mi equipo"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Mi equipo</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Sistema — siempre visible */}
         <SidebarGroup>
           <SidebarGroupContent>

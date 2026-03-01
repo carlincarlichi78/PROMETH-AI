@@ -3,7 +3,8 @@ export interface Usuario {
   id: number
   email: string
   nombre: string
-  rol: 'admin' | 'gestor' | 'cliente'
+  rol: 'admin' | 'gestor' | 'cliente' | 'admin_gestoria'
+  gestoria_id?: number | null
 }
 
 /** Empresa/cliente contable (coincide con EmpresaOut del backend) */

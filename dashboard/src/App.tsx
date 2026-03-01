@@ -74,6 +74,9 @@ const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').t
 // --- Admin ---
 const GestoriasPage = lazy(() => import('@/features/admin/gestorias-page'))
 
+// --- Mi Gestoria ---
+const MiGestoriaPage = lazy(() => import('@/features/mi-gestoria/mi-gestoria-page'))
+
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
 const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
@@ -163,6 +166,9 @@ export function App() {
 
           {/* Admin */}
           <Route path="/admin/gestorias" element={<GestoriasPage />} />
+
+          {/* Mi Gestoria */}
+          <Route path="/mi-gestoria" element={<MiGestoriaPage />} />
 
           {/* Onboarding */}
           <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />
