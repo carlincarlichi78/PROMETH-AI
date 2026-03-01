@@ -161,8 +161,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Migración Histórica | `sfce/core/migracion_historica.py`, `sfce/api/rutas/migracion.py` | Parsea libros IVA CSV → extrae proveedores habituales |
 | Email Service | `sfce/core/email_service.py` | SMTP básico: envía invitaciones automáticamente desde admin.py |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`
-**Tests totales**: 2133 PASS (tablero-usuarios 12 tasks completados 01/03/2026)
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`
+**Tests totales**: 2147 PASS (app móvil 9 tasks completados 01/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -188,10 +188,38 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 4+5)
+## Estado actual (01/03/2026, sesión 7 — app móvil)
 
 **Rama activa**: `main`
-**Tests**: 2133 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Tests**: 2147 PASS (2 nuevos: test_proveedores_frecuentes). Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+
+### App Móvil COMPLETADA (01/03/2026, sesión 7)
+- `mobile/` — monorepo Expo SDK 54 + Expo Router v3 + NativeWind v4
+- **Stack**: Zustand v5, TanStack Query v5, expo-secure-store, expo-camera, expo-image-picker
+- `mobile/app/(auth)/login.tsx` — login email+password, redirect por rol
+- `mobile/app/(empresario)/` — Home KPIs, subir (4 pasos), notificaciones, perfil
+- `mobile/app/(gestor)/` — lista empresas, subir (5 pasos + picker empresa), alertas
+- `mobile/app/onboarding/[id].tsx` — wizard 3 pasos completa estado `pendiente_cliente`
+- `mobile/store/auth.ts` — Zustand + SecureStore JWT
+- `mobile/hooks/useApi.ts` — fetch wrapper JWT + 401 handler
+- `mobile/hooks/useTiene.ts` — feature flags por tier (espejo de tiers.py)
+- `mobile/components/upload/ProveedorSelector.tsx` — selector con historial + añadir nuevo
+- `sfce/api/rutas/portal.py` — `GET /{id}/proveedores-frecuentes` (2 tests PASS)
+- **Arrancar app**: `cd mobile && EXPO_PUBLIC_API_URL=http://localhost:8000 npx expo start --web`
+- **Nota SDK**: se generó SDK 54 (ultima versión) en lugar de 52 — sin diferencias funcionales
+
+### Sistema Tiers COMPLETADO (01/03/2026)
+- `sfce/db/migraciones/010_plan_tiers.py` — migración 010 ejecutada en BD real
+- `sfce/db/modelos_auth.py` — `plan_tier` + `limite_empresas` en Gestoria; `plan_tier` en Usuario
+- `sfce/core/tiers.py` — helper Tier(IntEnum) + FEATURES_EMPRESARIO + verificar_limite_empresas
+- `sfce/api/rutas/admin.py` — PUT /api/admin/gestorias/{id}/plan + usuarios/{id}/plan + plan_tier en listado
+- `sfce/api/rutas/auth_rutas.py` — /me incluye plan_tier
+- `sfce/api/rutas/portal.py` — guard tier en subir_docs (403 si tier < pro)
+- `dashboard/src/hooks/useTiene.ts` — hook React para feature flags por tier
+- `dashboard/src/components/ui/tier-gate.tsx` — componente overlay con candado
+- `dashboard/src/types/index.ts` — plan_tier en tipo Usuario
+- `dashboard/src/features/admin/api.ts` — plan_tier en tipo Gestoria
+- `dashboard/src/features/admin/gestorias-page.tsx` — badge color por tier en cada card
 
 ## MCF — Motor de Clasificación Fiscal (COMPLETADO, en main)
 
