@@ -1,5 +1,41 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 — Sesion: Brainstorming plan completo PROMETH-AI
+
+**Objetivo**: Revisar design doc Ingesta 360, mapear estado real del proyecto, disenar onboarding + importacion historica.
+
+**Realizado**:
+- Verificado estado real del plan 28/02: Tasks 1-8 completadas, Tasks 9-14 pendientes (CLAUDE.md estaba desactualizado)
+- Decisiones confirmadas: incluir Task 9 + CertiGestor + onboarding + importacion historica
+- Mapeados 4 flujos de onboarding: gestoria, gestor/asesor, asesor independiente, empresa/cliente
+- Identificado gap critico: pipeline lee config.yaml pero SaaS necesita leer de BD → solucion hibrida generar_config_desde_bd()
+- Disenada importacion historica en 5 sub-fases (ZIP/perfil auto → Excel/CSV → AEAT → contabilidad → software contable)
+- Plan completo: 14 fases (0-13), desde seguridad P0 hasta WhatsApp
+- Guardado en `docs/plans/2026-03-01-brainstorming-prometh-ai-completo.md`
+
+**Proxima sesion**: writing-plans sobre Fases 0-6 (primer plan), luego Fases 7-11 (segundo plan)
+
+---
+
+## 2026-03-01 — Sesion: Rebrand PROMETH-AI + configuracion email
+
+**Objetivo**: Rebrand de SPICE a PROMETH-AI, compra dominio, configuracion email profesional.
+
+**Realizado**:
+- Confirmados 2 planes pendientes de implementar: Ingesta 360 Fases 4-10 + Dashboard Rewrite
+- Rebrand decidido: SPICE → PROMETH-AI
+- Dominio `prometh-ai.es` comprado en DonDominio (expira 2028)
+- Email forwarding configurado con ImprovMX (free plan, sin SMS):
+  - Catch-all `*@prometh-ai.es → carlincarlichi@gmail.com`
+  - MX1: mx1.improvmx.com (prio 10), MX2: mx2.improvmx.com (prio 20)
+  - SPF TXT: `v=spf1 include:spf.dondominio.com include:spf.improvmx.com ~all`
+- Decision: NO segundo VPS — PROMETH-AI corre en servidor existente 65.108.60.69
+- ACCESOS.md actualizado: secciones 23 (ImprovMX) y 24 (dominio)
+
+**Zoho Mail descartado**: verificacion SMS bloqueada (+34 627333631 no recibe SMS en datacenter EU).
+
+---
+
 ## 2026-03-01 — Sesion: Brainstorming SPICE Ingesta 360
 
 **Objetivo**: Disenar el sistema de ingesta automatizada 360 grados de SPICE.

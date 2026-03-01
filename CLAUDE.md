@@ -137,16 +137,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **SPICE Ingesta 360 — Design doc aprobado 01/03/2026**
-- **Design doc**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
-- **Vision**: docs entran por cualquier canal → SPICE automatiza 360 → asiento en FS sin intervencion humana
-- **FS es obligatorio** — SPICE automatiza, FS registra. FS siempre gana.
-- **10 fases de ejecucion** (Fase 0: seguridad P0, Fases 1-3: plan 28/02, Fases 4-10: diseno nuevo)
-- **Componentes nuevos**: Gate 0 (preflight), scoring + decision automatica, colas revision por nivel, enriquecimiento (hints), supplier rules en BD, tracking docs, email dedicado catch-all, upload masivo ZIP
-- **Infraestructura**: segundo VPS Hetzner para SPICE (~15-28 EUR/mes), FS se mantiene en servidor actual
-- **Sin sobredimensionar**: PostgreSQL para colas (no Redis), disco local (no S3), IMAP polling (no Postfix)
-- **Prerequisito**: plan `2026-02-28-plataforma-unificada-integracion.md` (14 tasks, se ejecuta como Fases 1-3)
-- **Siguiente paso**: sesion nueva → writing-plans para plan de implementacion detallado de Fases 4-10
+### 0. **PROMETH-AI — Brainstorming completo (01/03/2026)**
+- **Brainstorming**: `docs/plans/2026-03-01-brainstorming-prometh-ai-completo.md` — 14 fases, onboarding, importacion historica
+- **Design doc Ingesta 360**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
+- **Rebrand**: SPICE → PROMETH-AI. Dominio `prometh-ai.es`, email `*@prometh-ai.es → Gmail` (ImprovMX)
+- **Plan 28/02 estado real**: Tasks 1-8 COMPLETADAS, Tasks 9-14 pendientes
+- **14 fases**: Fase 0 (seguridad P0) → Fase 1 (onboarding) → Fases 2-6 (correo+gate0+scoring+colas+canales) → Fases 7-11 (importacion historica 5 sub-fases) → Fase 12 (servidor) → Fase 13 (WhatsApp)
+- **Gap critico resuelto**: config.yaml vs BD → hibrido con `generar_config_desde_bd()`
+- **Siguiente paso**: sesion nueva → `writing-plans` Fases 0-6 (primer plan), luego Fases 7-11 (segundo plan)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
