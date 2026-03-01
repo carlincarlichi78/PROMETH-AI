@@ -3,16 +3,47 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import CuarentenaOut, DocumentoOut, ResolverCuarentenaIn
+from sfce.core.validador_pdf import ErrorValidacionPDF, validar_pdf
 from sfce.db.modelos import Cuarentena, Documento, Empresa
 
 router = APIRouter(prefix="/api/documentos", tags=["documentos"])
+
+
+@router.post("/subir")
+async def subir_documento_sin_empresa(
+    archivo: UploadFile = File(...),
+):
+    """Recibe un documento (PDF) — ruta sin empresa_id para compatibilidad."""
+    contenido = await archivo.read()
+    if archivo.filename and archivo.filename.lower().endswith(".pdf"):
+        try:
+            validar_pdf(contenido, archivo.filename)
+        except ErrorValidacionPDF as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    return {"nombre": archivo.filename, "status": "recibido"}
+
+
+@router.post("/subir/{empresa_id}")
+async def subir_documento(
+    empresa_id: int,
+    archivo: UploadFile = File(...),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Recibe un documento (PDF) para una empresa."""
+    contenido = await archivo.read()
+    if archivo.filename and archivo.filename.lower().endswith(".pdf"):
+        try:
+            validar_pdf(contenido, archivo.filename)
+        except ErrorValidacionPDF as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    return {"nombre": archivo.filename, "empresa_id": empresa_id, "status": "recibido"}
 
 
 @router.get("/{empresa_id}", response_model=list[DocumentoOut])
