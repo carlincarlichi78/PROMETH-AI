@@ -114,6 +114,7 @@ function MatrizBCG({ empresaId }: { empresaId: number }) {
   const productos = deriveProductos(data)
   const maxQty = Math.max(...productos.map(p => p.qty), 1)
   const maxPvp = Math.max(...productos.map(p => p.pvp), 1)
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || !productos.length) return
