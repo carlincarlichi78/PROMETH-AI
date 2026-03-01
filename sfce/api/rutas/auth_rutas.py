@@ -187,6 +187,18 @@ async def login(body: LoginRequest, request: Request, response: Response):
     }
 
 
+@router.post("/refresh")
+def refresh_token(request: Request):
+    """Renueva el JWT. Util para clientes moviles con tokens de corta vida."""
+    usuario = obtener_usuario_actual(request)
+    nuevo_token = crear_token({
+        "sub": usuario.email,
+        "rol": usuario.rol,
+        "gestoria_id": getattr(usuario, "gestoria_id", None),
+    })
+    return {"access_token": nuevo_token, "token_type": "bearer"}
+
+
 @router.get("/me", dependencies=[Depends(_rate_limit_usuario)])
 def me(request: Request):
     """Devuelve info del usuario autenticado."""

@@ -495,3 +495,18 @@ class TestAceptarInvitacion:
             "password": "OtraClave456!",
         })
         assert resp.status_code == 404
+
+
+class TestRefreshToken:
+    def test_refresh_token(self, client, admin_token):
+        """El token se renueva con el token actual."""
+        r = client.post("/api/auth/refresh", headers={"Authorization": f"Bearer {admin_token}"})
+        assert r.status_code == 200
+        data = r.json()
+        assert "access_token" in data
+        assert data["access_token"] != admin_token  # nuevo token
+
+    def test_refresh_sin_token_401(self, client):
+        """Sin token devuelve 401."""
+        r = client.post("/api/auth/refresh")
+        assert r.status_code == 401

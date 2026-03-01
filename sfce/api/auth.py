@@ -66,12 +66,15 @@ def crear_token(data: dict, expires_delta: timedelta | None = None) -> str:
 
     data debe incluir al menos 'sub' (email del usuario).
     """
+    import time as _time
     payload = data.copy()
+    ahora = datetime.now(timezone.utc)
     if expires_delta:
-        expiracion = datetime.now(timezone.utc) + expires_delta
+        expiracion = ahora + expires_delta
     else:
-        expiracion = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRATION_MINUTOS)
+        expiracion = ahora + timedelta(minutes=JWT_EXPIRATION_MINUTOS)
     payload["exp"] = expiracion
+    payload["iat"] = _time.time()  # microsegundos → tokens siempre distintos
     return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGORITHM)
 
 
