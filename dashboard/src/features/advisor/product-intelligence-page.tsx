@@ -114,9 +114,6 @@ function MatrizBCG({ empresaId }: { empresaId: number }) {
   const productos = deriveProductos(data)
   const maxQty = Math.max(...productos.map(p => p.qty), 1)
   const maxPvp = Math.max(...productos.map(p => p.pvp), 1)
-  const medioQty = maxQty / 2
-  const medioPvp = maxPvp / 2
-
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || !productos.length) return
@@ -125,8 +122,10 @@ function MatrizBCG({ empresaId }: { empresaId: number }) {
 
     const W = canvas.offsetWidth || 500
     const H = canvas.offsetHeight || 360
-    canvas.width = W
-    canvas.height = H
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = W * dpr
+    canvas.height = H * dpr
+    ctx.scale(dpr, dpr)
 
     const padL = 56, padR = 16, padT = 40, padB = 36
     const plotW = W - padL - padR
@@ -208,7 +207,7 @@ function MatrizBCG({ empresaId }: { empresaId: number }) {
       const offsetX = x + maxW > W ? -r - 3 : r + 3
       ctx.fillText(label, x + offsetX, y - 2)
     })
-  }, [productos, maxQty, maxPvp, medioPvp, medioQty])
+  }, [productos, maxQty, maxPvp])
 
   if (isLoading) return <ZonaSkeleton label="Matriz BCG" />
 
@@ -272,10 +271,9 @@ function FoodCostEvolucion({ empresaId }: { empresaId: number }) {
     queryFn: () => advisorApi.comprasProveedores(empresaId, 6),
   })
 
-  // El endpoint devuelve proveedores con meses, no agregados. Usamos demo siempre
-  // que no haya datos suficientes para calcular el % real.
+  // TODO: reemplazar con datos reales cuando el endpoint devuelva food_cost_pct mensual
+  const chartData = FOOD_COST_DEMO
   const tieneDatos = (data?.proveedores?.length ?? 0) > 0
-  const chartData = tieneDatos ? FOOD_COST_DEMO : FOOD_COST_DEMO
 
   if (isLoading) return <ZonaSkeleton label="Food Cost" />
 
@@ -313,6 +311,53 @@ function FoodCostEvolucion({ empresaId }: { empresaId: number }) {
 
 // ─── COMPONENTE 3: HistorialCompras ──────────────────────────────────────────
 
+interface MiniSparklineProps {
+  valores: number[]
+  tendencia: 'up' | 'down' | 'flat'
+}
+
+function MiniSparkline({ valores, tendencia }: MiniSparklineProps) {
+  if (valores.length < 2) return null
+  const W = 60
+  const H = 20
+  const min = Math.min(...valores)
+  const max = Math.max(...valores)
+  const rango = max - min || 1
+  const paso = W / (valores.length - 1)
+
+  const puntos = valores.map((v, i) => {
+    const x = i * paso
+    const y = H - ((v - min) / rango) * (H - 2) - 1
+    return `${x},${y}`
+  }).join(' ')
+
+  const color = tendencia === 'up'
+    ? 'var(--adv-verde)'
+    : tendencia === 'down'
+    ? 'var(--adv-rojo)'
+    : 'var(--adv-text-muted)'
+
+  return (
+    <svg width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
+      <polyline
+        points={puntos}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function sparklineDesdeMeses(meses: Record<string, number>, pct: number): MiniSparklineProps {
+  const claves = Object.keys(meses).sort()
+  const valores = claves.length >= 2 ? claves.map(k => meses[k] ?? 0) : []
+  const tendencia: 'up' | 'down' | 'flat' = pct > 2 ? 'up' : pct < -2 ? 'down' : 'flat'
+  return { valores, tendencia }
+}
+
 function indicadorMoM(pct: number): React.ReactNode {
   const alerta = Math.abs(pct) > 15
   if (pct > 2) return (
@@ -337,11 +382,11 @@ function indicadorMoM(pct: number): React.ReactNode {
 }
 
 const COMPRAS_DEMO: CompraProveedor[] = [
-  { nombre: 'Makro', familia: 'Alimentación', meses: {}, total: 8400, variacion_mom_pct: 3.2 },
-  { nombre: 'Pescaderías del Sur', familia: 'Pescados', meses: {}, total: 3200, variacion_mom_pct: 18.5 },
-  { nombre: 'Carnicería Hermanos López', familia: 'Carnes', meses: {}, total: 2800, variacion_mom_pct: -4.1 },
-  { nombre: 'Distribuidora Frutas Pérez', familia: 'Frutas y Verduras', meses: {}, total: 1600, variacion_mom_pct: 0.8 },
-  { nombre: 'Bebidas García S.L.', familia: 'Bebidas', meses: {}, total: 2100, variacion_mom_pct: -16.2 },
+  { nombre: 'Makro', familia: 'Alimentación', meses: { '2024-10': 1280, '2024-11': 1350, '2024-12': 1400, '2025-01': 1420, '2025-02': 1490, '2025-03': 1460 }, total: 8400, variacion_mom_pct: 3.2 },
+  { nombre: 'Pescaderías del Sur', familia: 'Pescados', meses: { '2024-10': 420, '2024-11': 440, '2024-12': 390, '2025-01': 500, '2025-02': 580, '2025-03': 870 }, total: 3200, variacion_mom_pct: 18.5 },
+  { nombre: 'Carnicería Hermanos López', familia: 'Carnes', meses: { '2024-10': 520, '2024-11': 490, '2024-12': 470, '2025-01': 460, '2025-02': 430, '2025-03': 430 }, total: 2800, variacion_mom_pct: -4.1 },
+  { nombre: 'Distribuidora Frutas Pérez', familia: 'Frutas y Verduras', meses: { '2024-10': 260, '2024-11': 270, '2024-12': 265, '2025-01': 268, '2025-02': 270, '2025-03': 267 }, total: 1600, variacion_mom_pct: 0.8 },
+  { nombre: 'Bebidas García S.L.', familia: 'Bebidas', meses: { '2024-10': 480, '2024-11': 460, '2024-12': 390, '2025-01': 340, '2025-02': 280, '2025-03': 150 }, total: 2100, variacion_mom_pct: -16.2 },
 ]
 
 function HistorialCompras({ empresaId }: { empresaId: number }) {
@@ -366,7 +411,7 @@ function HistorialCompras({ empresaId }: { empresaId: number }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--adv-border)' }}>
-              {['Proveedor', 'Familia', 'Total 6M', 'MoM'].map(h => (
+              {['Proveedor', 'Familia', 'Total 6M', 'Tendencia', 'MoM'].map(h => (
                 <th key={h} style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--adv-text-muted)', fontWeight: 500 }}>
                   {h}
                 </th>
@@ -374,21 +419,30 @@ function HistorialCompras({ empresaId }: { empresaId: number }) {
             </tr>
           </thead>
           <tbody>
-            {proveedores.map((p, i) => (
-              <tr key={p.nombre} style={{
-                borderBottom: '1px solid var(--adv-border)',
-                background: i % 2 === 0 ? 'transparent' : 'rgba(31,41,55,0.3)',
-              }}>
-                <td style={{ padding: '8px 8px', color: 'var(--adv-text)', fontWeight: 500 }}>{p.nombre}</td>
-                <td style={{ padding: '8px 8px', color: 'var(--adv-text-muted)' }}>{p.familia}</td>
-                <td style={{ padding: '8px 8px', fontFamily: 'var(--adv-font-data)', color: 'var(--adv-text)' }}>
-                  {fmtEur(p.total)}
-                </td>
-                <td style={{ padding: '8px 8px' }}>
-                  {indicadorMoM(p.variacion_mom_pct)}
-                </td>
-              </tr>
-            ))}
+            {proveedores.map((p, i) => {
+              const sp = sparklineDesdeMeses(p.meses, p.variacion_mom_pct)
+              return (
+                <tr key={p.nombre} style={{
+                  borderBottom: '1px solid var(--adv-border)',
+                  background: i % 2 === 0 ? 'transparent' : 'rgba(31,41,55,0.3)',
+                }}>
+                  <td style={{ padding: '8px 8px', color: 'var(--adv-text)', fontWeight: 500 }}>{p.nombre}</td>
+                  <td style={{ padding: '8px 8px', color: 'var(--adv-text-muted)' }}>{p.familia}</td>
+                  <td style={{ padding: '8px 8px', fontFamily: 'var(--adv-font-data)', color: 'var(--adv-text)' }}>
+                    {fmtEur(p.total)}
+                  </td>
+                  <td style={{ padding: '8px 8px' }}>
+                    {sp.valores.length >= 2
+                      ? <MiniSparkline valores={sp.valores} tendencia={sp.tendencia} />
+                      : <span style={{ color: 'var(--adv-text-muted)', fontSize: 10 }}>—</span>
+                    }
+                  </td>
+                  <td style={{ padding: '8px 8px' }}>
+                    {indicadorMoM(p.variacion_mom_pct)}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
