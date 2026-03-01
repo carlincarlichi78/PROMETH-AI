@@ -1,5 +1,5 @@
 """Motor de KPIs sectoriales — carga YAMLs por CNAE y calcula métricas."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 import yaml
@@ -76,16 +76,26 @@ class SectorEngine:
             if (r := self.calcular_kpi(kpi_id, datos)) is not None
         }
 
+    _VALOR_POR_ALERTA: dict = {
+        "food_cost_spike": "food_cost_pct",
+        "revpash_bajo": "revpash",
+        "proveedor_escalada": "variacion_mom_proveedor_max",
+        "sin_datos_tpv": "dias_sin_tpv",
+    }
+
     def evaluar_alertas(self, empresa_id: int, metricas: dict) -> list[AlertaGenerada]:
         """Evalúa las condiciones de alerta del sector. Retorna lista de alertas activas."""
         activas = []
         for alerta in self.alertas:
             if self._condicion_activa(alerta, metricas):
+                clave_valor = self._VALOR_POR_ALERTA.get(alerta["id"])
+                valor_actual = metricas.get(clave_valor) if clave_valor else None
                 activas.append(AlertaGenerada(
                     empresa_id=empresa_id,
                     alerta_id=alerta["id"],
                     severidad=alerta["severidad"],
-                    mensaje=self._formatear_mensaje(alerta["mensaje"], metricas),
+                    mensaje=self._formatear_mensaje(alerta["mensaje"], metricas, valor_actual=valor_actual or 0),
+                    valor_actual=valor_actual,
                 ))
         return activas
 
@@ -163,10 +173,10 @@ class SectorEngine:
             return metricas.get("dias_sin_tpv", 0) >= 3
         return False
 
-    def _formatear_mensaje(self, plantilla: str, metricas: dict) -> str:
+    def _formatear_mensaje(self, plantilla: str, metricas: dict, valor_actual: float = 0) -> str:
         try:
             return plantilla.format(
-                valor=metricas.get("food_cost_pct", metricas.get("revpash", 0)),
+                valor=valor_actual,
                 benchmark=metricas.get("_benchmark", 0),
                 tendencia=metricas.get("tendencia_7d_food_cost", 0),
                 proveedor=metricas.get("proveedor_nombre", "desconocido"),
