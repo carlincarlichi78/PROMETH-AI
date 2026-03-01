@@ -94,7 +94,14 @@ def _validar_entidad_existe(doc: dict, tipo_doc: str,
         cif = (datos.get("receptor_cif") or "").upper()
         entidad = config.buscar_cliente_por_cif(cif) if cif else None
         if not entidad:
-            return f"Cliente CIF '{cif}' no encontrado en config.yaml"
+            nombre = datos.get("receptor_nombre", "")
+            entidad = config.buscar_cliente_por_nombre(nombre) if nombre else None
+        if not entidad:
+            # Verificar si hay fallback CLIENTES VARIOS (RD 1619/2012)
+            fallback = config.buscar_cliente_fallback_sin_cif()
+            if fallback:
+                return None  # No bloquear: se usara fallback en registration
+            return f"Cliente CIF '{cif}' / nombre '{datos.get('receptor_nombre', '')}' no encontrado en config.yaml"
 
     return None
 

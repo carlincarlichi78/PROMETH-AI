@@ -554,7 +554,7 @@ def _aplicar_correccion(correccion: dict, backend=None) -> bool:
             if backend:
                 backend.crear_partida(nueva_partida)
             else:
-                from scripts.core.fs_api import api_post as _api_post
+                from sfce.core.fs_api import api_post as _api_post
                 _api_post("partidas", nueva_partida)
             return True
 

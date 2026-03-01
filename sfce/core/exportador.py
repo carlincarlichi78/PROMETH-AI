@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("exportador")
 

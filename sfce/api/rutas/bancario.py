@@ -84,7 +84,7 @@ def crear_cuenta(
             raise HTTPException(409, "Ya existe una cuenta con este IBAN para esta empresa")
         cuenta = CuentaBancaria(
             empresa_id=empresa_id,
-            gestoria_id=usuario.gestoria_id or 0,
+            gestoria_id=usuario.gestoria_id or 0,  # 0 = superadmin sin gestoría asignada
             banco_codigo=datos.banco_codigo,
             banco_nombre=datos.banco_nombre,
             iban=iban_limpio,

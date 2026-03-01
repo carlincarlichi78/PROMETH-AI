@@ -544,8 +544,9 @@ def _aplicar_correccion(correccion: dict) -> bool:
 
             # 2. Crear partida nueva en 4709 (IVA extranjero)
             import requests
-            url = "https://contabilidad.lemonfresh-tuc.com/api/3/partidas"
-            headers = {"Token": "iOXmrA1Bbn8RDWXLv91L"}
+            from ..core.fs_api import API_BASE, obtener_token
+            url = f"{API_BASE}/partidas"
+            headers = {"Token": obtener_token()}
             nueva_partida = {
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": datos["subcuenta_destino"],

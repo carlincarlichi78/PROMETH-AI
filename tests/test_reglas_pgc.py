@@ -1,6 +1,6 @@
 """Tests para reglas PGC."""
 import pytest
-from scripts.core.reglas_pgc import (
+from sfce.core.reglas_pgc import (
     detectar_regimen_por_cif,
     validar_coherencia_cif_iva,
     validar_subcuenta_lado,

@@ -35,13 +35,13 @@ def resumen_portal(
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         ).scalars().all())
 
         ingresos = sum(float(p.haber or 0) - float(p.debe or 0)
-                      for p in partidas if (p.codsubcuenta or "").startswith("7"))
+                      for p in partidas if (p.subcuenta or "").startswith("7"))
         gastos = sum(float(p.debe or 0) - float(p.haber or 0)
-                     for p in partidas if (p.codsubcuenta or "").startswith("6"))
+                     for p in partidas if (p.subcuenta or "").startswith("6"))
         resultado = ingresos - gastos
 
         # Facturas pendientes
@@ -97,7 +97,7 @@ def documentos_portal(
                 {
                     "id": d.id,
                     "nombre": d.nombre_archivo,
-                    "tipo": d.tipo,
+                    "tipo": d.tipo_doc,
                     "estado": d.estado,
                     "fecha": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
                 }

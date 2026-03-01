@@ -15,7 +15,7 @@ RAIZ = Path(__file__).resolve().parents[4]
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("pdf_renderer")
 

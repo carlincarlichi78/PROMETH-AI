@@ -20,7 +20,7 @@ _RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _RAIZ not in sys.path:
     sys.path.insert(0, _RAIZ)
 
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("generar_periodicas")
 

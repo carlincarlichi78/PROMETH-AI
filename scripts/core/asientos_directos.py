@@ -8,8 +8,8 @@ from typing import Any
 
 import yaml
 
-from .fs_api import api_post
-from .logger import crear_logger
+from sfce.core.fs_api import api_post
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("asientos_directos")
 

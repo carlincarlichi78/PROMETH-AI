@@ -18,7 +18,7 @@ RAIZ = Path(__file__).parent.parent
 
 sys.path.insert(0, str(RAIZ))
 
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("onboarding")
 

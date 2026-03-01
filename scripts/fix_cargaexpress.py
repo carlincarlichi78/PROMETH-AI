@@ -15,7 +15,7 @@ Correccion por asiento:
 import sys
 sys.path.insert(0, "C:/Users/carli/PROYECTOS/CONTABILIDAD")
 
-from scripts.core.fs_api import api_get, api_put, api_post
+from sfce.core.fs_api import api_get, api_put, api_post
 
 ID_EMPRESA = 3
 

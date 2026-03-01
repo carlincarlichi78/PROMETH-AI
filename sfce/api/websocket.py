@@ -2,10 +2,13 @@
 
 import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import WebSocket
+
+logger = logging.getLogger("sfce.websocket")
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +78,8 @@ class GestorWebSocket:
         for ws in conexiones:
             try:
                 await ws.send_json(mensaje)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Error enviando WS a {canal}: {e}")
                 desconectados.append(ws)
 
         # Limpiar desconectados

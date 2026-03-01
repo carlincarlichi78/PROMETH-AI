@@ -131,6 +131,30 @@ class ConfigCliente:
                 return {**datos, "_nombre_corto": nombre}
         return None
 
+    def buscar_cliente_por_nombre(self, nombre: str) -> Optional[dict]:
+        """Busca cliente por nombre o aliases (case-insensitive, coincidencia parcial)."""
+        nombre_upper = nombre.upper()
+        for clave, datos in self.clientes.items():
+            if clave.upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            if datos.get("nombre_fs", "").upper() == nombre_upper:
+                return {**datos, "_nombre_corto": clave}
+            for alias in datos.get("aliases", []):
+                if alias.upper() in nombre_upper or nombre_upper in alias.upper():
+                    return {**datos, "_nombre_corto": clave}
+        return None
+
+    def buscar_cliente_fallback_sin_cif(self) -> Optional[dict]:
+        """Devuelve el cliente marcado como fallback_sin_cif (ej: CLIENTES VARIOS).
+
+        Se usa cuando una FV no tiene receptor CIF identificable.
+        Criterio RD 1619/2012: facturas simplificadas sin NIF receptor.
+        """
+        for clave, datos in self.clientes.items():
+            if datos.get("fallback_sin_cif"):
+                return {**datos, "_nombre_corto": clave}
+        return None
+
     def es_intracomunitario(self, nombre_prov: str) -> bool:
         """Verifica si proveedor es intracomunitario."""
         for clave, datos in self.proveedores.items():
