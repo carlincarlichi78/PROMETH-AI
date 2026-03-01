@@ -9,6 +9,12 @@ const FEATURES_EMPRESARIO: Record<string, string> = {
   app_movil:   'pro',
   firmar:      'premium',
   chat_gestor: 'premium',
+  advisor_premium:          'premium',
+  advisor_sector_brain:     'premium',
+  advisor_temporal_machine: 'premium',
+  advisor_autopilot:        'premium',
+  advisor_simulador:        'premium',
+  advisor_informes:         'pro',
 }
 
 export function useTiene(feature: string): boolean {
