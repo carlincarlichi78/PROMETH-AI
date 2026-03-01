@@ -45,7 +45,7 @@ export function KPICard({
 
   if (cargando) {
     return (
-      <Card className={cn('', className)}>
+      <Card className={cn('border-l-2 border-l-primary/30', className)}>
         <CardHeader className="pb-2">
           <Skeleton className="h-4 w-24" />
         </CardHeader>
@@ -57,13 +57,13 @@ export function KPICard({
   }
 
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('border-l-2 border-l-primary/60 hover:border-l-primary transition-all duration-200', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{titulo}</CardTitle>
-        {Icono && <Icono className="h-4 w-4 text-muted-foreground" />}
+        {Icono && <Icono className="h-4 w-4 text-primary/70" />}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{valor}</div>
+        <div className="text-2xl font-semibold tracking-tight">{valor}</div>
         {(variacion != null || descripcion) && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             {variacion != null && (

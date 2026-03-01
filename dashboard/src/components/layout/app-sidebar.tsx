@@ -239,11 +239,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm flex-shrink-0">
+          <div className="logo-amber flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm flex-shrink-0 text-[oklch(0.13_0.015_50)]">
             S
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden">
-            <span className="text-sm font-semibold truncate">SFCE</span>
+            <span className="text-sm font-semibold truncate text-gradient">SFCE</span>
             <span className="text-[10px] text-muted-foreground truncate">
               Sistema Fiscal Contable
             </span>
