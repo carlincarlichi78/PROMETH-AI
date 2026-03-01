@@ -14,33 +14,64 @@ _MINIMO_MUESTRAS = 3
 
 
 def buscar_regla_aplicable(
-    empresa_id: int,
-    emisor_cif: str,
     sesion: Session,
+    emisor_cif: str,
     emisor_nombre: str = "",
+    empresa_id: Optional[int] = None,
 ) -> Optional[SupplierRule]:
-    """Busca la regla más específica aplicable.
+    """Busca la regla más específica aplicable en jerarquía de 3 niveles.
 
-    Jerarquía: empresa > global.
-    Prioriza por empresa específica y luego por tasa_acierto.
+    Jerarquía:
+      1. Específica: CIF + empresa  (más precisa)
+      2. Global CIF: empresa_id=None + CIF conocido  (cross-empresa)
+      3. Global nombre: empresa_id=None + CIF=None + patrón nombre  (fallback)
+
+    Args:
+        sesion: Sesión SQLAlchemy.
+        emisor_cif: CIF del emisor (puede ser vacío para nivel 3).
+        emisor_nombre: Nombre del emisor para fallback por patrón.
+        empresa_id: ID de empresa (opcional, None para búsqueda global).
     """
-    stmt = (
-        select(SupplierRule)
-        .where(
-            or_(
-                SupplierRule.empresa_id == empresa_id,
+    # Nivel 1 + 2: búsqueda por CIF (empresa específica primero, global segundo)
+    if emisor_cif:
+        stmt = (
+            select(SupplierRule)
+            .where(
+                or_(
+                    SupplierRule.empresa_id == empresa_id,
+                    SupplierRule.empresa_id.is_(None),
+                ),
+                SupplierRule.emisor_cif == emisor_cif,
+            )
+            .order_by(
+                # Más específico primero: empresa > global
+                SupplierRule.empresa_id.desc().nulls_last(),
+                SupplierRule.tasa_acierto.desc(),
+            )
+            .limit(1)
+        )
+        resultado = sesion.execute(stmt).scalar_one_or_none()
+        if resultado:
+            return resultado
+
+    # Nivel 3: búsqueda por patrón nombre (solo reglas globales sin CIF)
+    if emisor_nombre:
+        nombre_upper = emisor_nombre.upper()
+        candidatas = sesion.execute(
+            select(SupplierRule)
+            .where(
                 SupplierRule.empresa_id.is_(None),
-            ),
-            SupplierRule.emisor_cif == emisor_cif,
-        )
-        .order_by(
-            # Más específico primero: empresa > global
-            SupplierRule.empresa_id.desc().nulls_last(),
-            SupplierRule.tasa_acierto.desc(),
-        )
-        .limit(1)
-    )
-    return sesion.execute(stmt).scalar_one_or_none()
+                SupplierRule.emisor_cif.is_(None),
+                SupplierRule.emisor_nombre_patron.is_not(None),
+            )
+            .order_by(SupplierRule.tasa_acierto.desc())
+        ).scalars().all()
+
+        for regla in candidatas:
+            if regla.emisor_nombre_patron and regla.emisor_nombre_patron.upper() in nombre_upper:
+                return regla
+
+    return None
 
 
 def aplicar_regla(regla: SupplierRule, campos: dict) -> None:
