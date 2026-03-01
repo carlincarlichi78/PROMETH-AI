@@ -30,12 +30,24 @@
   --input:                oklch(0.88 0.015 70);
   --ring:                 oklch(0.65 0.13 45);
 
-  /* Gráficos — paleta tierra */
-  --chart-1: oklch(0.72 0.15 50);
-  --chart-2: oklch(0.60 0.12 170);
-  --chart-3: oklch(0.55 0.16 30);
-  --chart-4: oklch(0.68 0.10 270);
-  --chart-5: oklch(0.62 0.12 120);
+  /* Gráficos — paleta cohesiva ámbar (light) */
+  --chart-1: oklch(0.65 0.14 50);
+  --chart-2: oklch(0.55 0.12 50);
+  --chart-3: oklch(0.52 0.17 162);
+  --chart-4: oklch(0.55 0.20 15);
+  --chart-5: oklch(0.45 0.02 50);
+
+  /* Superficie — jerarquía de profundidad (light) */
+  --surface-0: oklch(0.97 0.01 75);
+  --surface-1: oklch(0.94 0.01 75);
+  --surface-2: oklch(0.91 0.01 75);
+  --surface-3: oklch(0.88 0.01 75);
+
+  /* Estados semánticos (light) */
+  --state-success: oklch(0.52 0.17 162);
+  --state-warning: oklch(0.55 0.14 50);
+  --state-danger:  oklch(0.55 0.20 15);
+  --state-info:    oklch(0.52 0.12 220);
 
   /* Sidebar — oscura también en light mode (signature Claude) */
   --sidebar:                    oklch(0.16 0.015 50);
@@ -69,12 +81,24 @@
   --input:                oklch(0.25 0.01 50);
   --ring:                 oklch(0.75 0.14 50);
 
-  /* Gráficos — más luminosos en dark */
-  --chart-1: oklch(0.75 0.15 50);
-  --chart-2: oklch(0.65 0.12 170);
-  --chart-3: oklch(0.62 0.16 30);
-  --chart-4: oklch(0.72 0.10 270);
-  --chart-5: oklch(0.67 0.12 120);
+  /* Gráficos — paleta cohesiva ámbar */
+  --chart-1: oklch(0.75 0.14 50);
+  --chart-2: oklch(0.65 0.12 50);
+  --chart-3: oklch(0.72 0.17 162);
+  --chart-4: oklch(0.70 0.20 15);
+  --chart-5: oklch(0.50 0.02 50);
+
+  /* Superficie — jerarquía de profundidad */
+  --surface-0: oklch(0.13 0.015 50);
+  --surface-1: oklch(0.16 0.015 50);
+  --surface-2: oklch(0.19 0.015 50);
+  --surface-3: oklch(0.22 0.015 50);
+
+  /* Estados semánticos */
+  --state-success: oklch(0.72 0.17 162);
+  --state-warning: oklch(0.75 0.14 50);
+  --state-danger:  oklch(0.70 0.20 15);
+  --state-info:    oklch(0.72 0.12 220);
 
   /* Sidebar — aún más oscura que el fondo */
   --sidebar:                    oklch(0.11 0.015 50);
