@@ -37,6 +37,13 @@ export const api = {
   get: <T>(ruta: string) => fetchApi<T>(ruta),
   post: <T>(ruta: string, body: unknown) =>
     fetchApi<T>(ruta, { method: 'POST', body: JSON.stringify(body) }),
+  postForm: <T>(ruta: string, formData: FormData) => {
+    // FormData no lleva Content-Type manual (el browser lo añade con boundary)
+    const token = sessionStorage.getItem(TOKEN_KEY)
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return fetchApi<T>(ruta, { method: 'POST', body: formData, headers })
+  },
   put: <T>(ruta: string, body: unknown) =>
     fetchApi<T>(ruta, { method: 'PUT', body: JSON.stringify(body) }),
   patch: <T>(ruta: string, body: unknown) =>
