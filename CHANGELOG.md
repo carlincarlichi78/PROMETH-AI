@@ -1,5 +1,54 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 — Sesion: Brainstorming SPICE Ingesta 360
+
+**Objetivo**: Disenar el sistema de ingesta automatizada 360 grados de SPICE.
+
+**Brainstorming**:
+- Mapeados 6 tipos de actores (superadmin, admin gestoria, gestor, asesor, cliente directo, empleado)
+- Escenario de referencia: 3 gestorias + 1 asesor + 5 clientes directos = 58 empresas
+- 6 canales de entrada: IMAP polling, email dedicado catch-all, portal web, ZIP masivo, CertiGestor bridge, WhatsApp
+- Sistema de trust levels: sistema > gestor > cliente
+- Scoring automatico: decide auto-publicar vs cola revision vs cuarentena
+- Colas de revision por nivel: gestor → admin gestoria → superadmin
+- Sistema de enriquecimiento (hints pre-OCR del emisor)
+- Supplier Rules en BD (evolucion de aprendizaje.yaml)
+- Tracking de documentos visible para todos los actores
+- FS obligatorio como corazon contable (SPICE automatiza, FS registra)
+
+**Decision clave**: NO sobredimensionar. PostgreSQL para colas (no Redis), disco local (no S3), IMAP (no Postfix).
+
+**Investigacion**: patrones de Dext, AutoEntry, Hubdoc, DATEV, Nanonets. Email routing por slug, supplier rules aprendidas, WhatsApp Business API.
+
+**Seguridad P0 identificados**: path traversal en nombres archivo email, IDOR email huerfano, limite uploads, validacion contenido PDF.
+
+**Design doc**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
+**Prerequisito**: plan `2026-02-28-plataforma-unificada-integracion.md` se ejecuta primero (Fases 1-3).
+
+---
+
+## 2026-03-01 — Sesion: Seguridad multi-tenant + limpieza + merge main
+
+**Objetivo**: Cerrar bugs de seguridad de auditoría y hacer merge a main.
+
+**Seguridad multi-tenant**:
+- `sfce/api/rutas/modelos.py`: añadida `verificar_acceso_empresa()` en `POST /calcular`
+- `sfce/api/rutas/economico.py`: 7 endpoints migrados de `request.app.state.sesion_factory` a DI inyectada
+- `sfce/api/rutas/rgpd.py`: revertido auth extra en descarga (token JWT de un solo uso es el mecanismo correcto)
+- `sfce/api/rutas/documentos.py`: ya tenía verificación correcta (false positive del audit)
+
+**Limpieza código muerto**:
+- `scripts/phases/` borrado completo (9 archivos, ~5000 líneas)
+- `dashboard/src/api/client.ts`, `Sidebar.tsx`, `Layout.tsx` borrados
+- `.gitignore`: añadidos `sfce.db`, `tmp/`, `.coverage`, `*.tmp.*`
+- Desrastreados archivos ignorados que se habían colado en la rama
+
+**Tests**: 1793 passed, 0 failed. Test `test_calcular_303_empresa_sin_datos` y `test_calcular_con_override` actualizados con `token_superadmin`.
+
+**Git**: merge `feat/frontend-pwa` → `main`, push a GitHub.
+
+---
+
 ## 2026-03-01 — Sesion: Auditoria profunda + unificacion arquitectura scripts/sfce
 
 **Objetivo**: Auditoria general del proyecto + correccion de bugs criticos + eliminacion de duplicidades arquitectonicas.

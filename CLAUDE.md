@@ -137,16 +137,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **Plataforma Unificada — Plan listo, PENDIENTE ejecucion**
-- **Sesion 28/02/2026**: Analisis profundo de 3 proyectos: CAP-WEB (email SaaS) + CertiGestor/findiur (certs digitales + AAPP) + SPICE
-- **Plan**: `docs/plans/2026-02-28-plataforma-unificada-integracion.md` — 14 tasks, 4 fases, TDD
-- **Fase 1** (9 tasks): Modulo correo SPICE — IMAP+Graph, clasificacion 3 niveles, extractor enlaces, renombrado post-OCR, API REST, frontend
-- **Fase 2** (3 tasks): Bridge CertiGestor — cliente HTTP, webhook receiver AAPP, scrapers→inbox SPICE
-- **Fase 3** (1 task): Portal cliente unificado SPICE+CertiGestor
-- **Fase 4** (1 task): Exportacion iCal plazos fiscales
-- **Variables .env nuevas**: `SFCE_FERNET_KEY`, `CERTIGESTOR_URL`, `CERTIGESTOR_API_KEY`, `CERTIGESTOR_WEBHOOK_SECRET`
-- **Deps nuevas**: `pip install cryptography lxml`
-- **Sinergia clave**: scrapers AAPP CertiGestor Desktop → inbox SPICE → OCR triple → asiento → modelo 303. Nadie mas tiene esto en Espana.
+### 0. **SPICE Ingesta 360 — Design doc aprobado 01/03/2026**
+- **Design doc**: `docs/plans/2026-03-01-spice-ingesta-360-design.md`
+- **Vision**: docs entran por cualquier canal → SPICE automatiza 360 → asiento en FS sin intervencion humana
+- **FS es obligatorio** — SPICE automatiza, FS registra. FS siempre gana.
+- **10 fases de ejecucion** (Fase 0: seguridad P0, Fases 1-3: plan 28/02, Fases 4-10: diseno nuevo)
+- **Componentes nuevos**: Gate 0 (preflight), scoring + decision automatica, colas revision por nivel, enriquecimiento (hints), supplier rules en BD, tracking docs, email dedicado catch-all, upload masivo ZIP
+- **Infraestructura**: segundo VPS Hetzner para SPICE (~15-28 EUR/mes), FS se mantiene en servidor actual
+- **Sin sobredimensionar**: PostgreSQL para colas (no Redis), disco local (no S3), IMAP polling (no Postfix)
+- **Prerequisito**: plan `2026-02-28-plataforma-unificada-integracion.md` (14 tasks, se ejecuta como Fases 1-3)
+- **Siguiente paso**: sesion nueva → writing-plans para plan de implementacion detallado de Fases 4-10
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
