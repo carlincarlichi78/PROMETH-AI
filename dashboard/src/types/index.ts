@@ -5,6 +5,7 @@ export interface Usuario {
   nombre: string
   rol: 'admin' | 'gestor' | 'cliente' | 'admin_gestoria'
   gestoria_id?: number | null
+  plan_tier?: 'basico' | 'pro' | 'premium'
 }
 
 /** Empresa/cliente contable (coincide con EmpresaOut del backend) */
