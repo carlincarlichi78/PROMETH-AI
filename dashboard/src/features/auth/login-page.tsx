@@ -4,7 +4,6 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function LoginPage() {
@@ -35,16 +34,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl mx-auto mb-3">
+    <div className="min-h-screen flex items-center justify-center p-4 login-bg">
+      {/* Glow ambar de fondo */}
+      <div className="login-glow" />
+
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Logo y titulo */}
+        <div className="text-center mb-8">
+          <div className="logo-amber inline-flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-2xl text-[oklch(0.13_0.015_50)] mx-auto mb-4 login-logo-glow">
             S
           </div>
-          <CardTitle className="text-2xl">SFCE</CardTitle>
-          <CardDescription>Sistema Fiscal Contable Evolutivo</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <h1 className="text-3xl font-semibold tracking-tight text-gradient">SFCE</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sistema Fiscal Contable Evolutivo</p>
+        </div>
+
+        {/* Formulario */}
+        <div className="login-card rounded-2xl p-6 space-y-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Correo electronico</Label>
@@ -56,6 +61,7 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 placeholder="usuario@ejemplo.com"
+                className="login-input"
               />
             </div>
             <div className="space-y-1.5">
@@ -68,6 +74,7 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
+                className="login-input"
               />
             </div>
             {error && (
@@ -75,12 +82,16 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full" disabled={enviando}>
+            <Button type="submit" className="w-full h-10 text-sm font-medium" disabled={enviando}>
               {enviando ? 'Iniciando sesion...' : 'Iniciar sesion'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Gestionado con seguridad · SFCE v2
+        </p>
+      </div>
     </div>
   )
 }
