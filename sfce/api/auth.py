@@ -178,8 +178,11 @@ from sfce.db.modelos import Empresa
 def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
     """Devuelve la empresa si el usuario tiene acceso, lanza 403/404 si no.
 
-    Superadmin (gestoria_id=None) tiene acceso total.
-    Resto solo a empresas de su gestoría.
+    Jerarquia de acceso:
+    - superadmin (gestoria_id=None): acceso total
+    - admin / admin_gestoria: acceso total a empresas de su gestoria
+    - asesor / asesor_independiente / cliente / readonly: solo empresas
+      en empresas_asignadas. Lista vacia = sin acceso (IDOR prevention).
     """
     empresa = sesion.get(Empresa, empresa_id)
     if not empresa:
@@ -189,8 +192,21 @@ def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
     if usuario.gestoria_id is None:
         return empresa
 
-    # Gestoría: solo sus empresas
+    # Verificar que la empresa pertenece a la gestoria del usuario
     if empresa.gestoria_id != usuario.gestoria_id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes acceso a esta empresa",
+        )
+
+    # Admin y admin_gestoria tienen acceso total a su gestoria
+    _roles_admin = {"admin", "superadmin", "admin_gestoria"}
+    if getattr(usuario, "rol", None) in _roles_admin:
+        return empresa
+
+    # Roles con acceso restringido: verificar lista de empresas asignadas
+    asignadas = getattr(usuario, "empresas_asignadas", None) or []
+    if empresa_id not in asignadas:
         raise HTTPException(
             status_code=403,
             detail="No tienes acceso a esta empresa",
