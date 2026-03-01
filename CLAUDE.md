@@ -118,7 +118,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | config_desde_bd | `sfce/core/config_desde_bd.py` | Bridge BD → pipeline sin cambiar pipeline |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`
-**Tests totales**: 1865 PASS (Fases 0-3 PROMETH-AI completadas 01/03/2026)
+**Tests totales**: 1911 PASS (Fases 0-6 Tasks 1-6 completados 01/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -144,15 +144,26 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROMETH-AI — Fases 0-3 COMPLETADAS (01/03/2026)**
-- **Web + SSL**: `spice-landing/` → PROMETH-AI. HTTPS activo. Hero redesignado.
-- **Fases 0-3 ejecutadas**: 21 tasks, 1865 tests passing, build OK.
-- **Nuevas rutas API**: `/api/gate0/ingestar`, `/api/certigestor/webhook` (HMAC), `/api/admin/gestorias`, `/api/portal/{id}/calendario.ics`
-- **Dashboard**: `/onboarding/nueva-empresa` (wizard 5 pasos), `/empresa/:id/correo`
-- **Módulos nuevos**: gate0, certificados_aapp, certigestor webhook, exportar_ical, config_desde_bd, admin gestorias
-- **SIGUIENTE**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop) + I1-I6 post Gate 0
+### 0. **PROMETH-AI — Fases 0-6 Tasks 1-6 COMPLETADOS (01/03/2026)**
+- **Fases 0-3**: 21 tasks, 1865 tests. Gate 0, onboarding, correo, certificados_aapp.
+- **Fases 4-6 Tasks 1-6 completados** (esta sesión):
+  - Task 1: `sfce/api/rutas/colas.py` — API colas revisión gestor (aprobar/rechazar/escalar)
+  - Task 2: `dashboard/src/features/colas/cola-revision-page.tsx` — UI cola con score badge
+  - Task 3: `GET /api/colas/documentos/{id}/tracking` + `TrackingDocumento.tsx` portal
+  - Task 4: `sfce/db/migraciones/008_supplier_rules.py` + ORM SupplierRule en modelos.py
+  - Task 5: `sfce/core/supplier_rules.py` — motor buscar/aplicar/confirmar/auto_aplicable
+  - Task 6: Gate 0 acepta `emisor_cif`, aplica Supplier Rule si auto_aplicable
+- **SIGUIENTE**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` Tasks 7-12 + Fase 11 Desktop
+  - Task 7: parser hints email (`[tipo:FV]` en asunto)
+  - Task 8: canal email dedicado (slug@prometh-ai.es → empresa_id)
+  - Task 9: worker catch-all polling IMAP
+  - Task 10: upload masivo ZIP (endpoint + procesador_zip.py)
+  - Task 11: UI SubirZIP drag&drop
+  - Task 12: suite completa + tag fase6-ingesta-360
+- **Nuevas rutas API**: `/api/colas/revision`, `/api/colas/{id}/aprobar|rechazar|escalar`, `/api/colas/documentos/{id}/tracking`
+- **Migración ejecutada**: 008_supplier_rules.py en sfce.db
 - **Pendiente C1-C4**: worker OCR Gate 0, recovery bloqueados, coherencia_fiscal.py, migrar aprendizaje.yaml → supplier_rules
-- **Integraciones**: CAP-Web (módulo correo Tasks 7-8), CertiGestor (`C:/Users/carli/PROYECTOS/proyecto findiur/`, Task webhook ya hecho, Fase 11 Desktop pendiente)
+- **Integraciones**: CAP-Web (módulo correo Tasks 7-8), CertiGestor (Fase 11 Desktop pendiente)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
