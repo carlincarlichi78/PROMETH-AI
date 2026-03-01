@@ -69,6 +69,24 @@ CREATE TABLE IF NOT EXISTS cobertura_modulo (
 """
 
 
+def _http_post(url: str, json: dict, headers: dict, timeout: int = 10):
+    """Wrapper HTTP para facilitar testing con monkeypatch."""
+    import json as _json
+    import urllib.request
+    data = _json.dumps(json).encode()
+    req = urllib.request.Request(
+        url, data=data,
+        headers={**headers, "Content-Type": "application/json"},
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        body = resp.read()
+        class R:
+            status_code = resp.status
+            def json(self): return _json.loads(body)
+        return R()
+
+
 def _conectar(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
@@ -268,6 +286,50 @@ def cmd_generar_reporte(db_path: Path, sesion_id: int, reportes_dir: Path) -> Pa
     return ruta
 
 
+def cmd_push_dashboard(db_path: Path, sesion_id: int, api_url: str, token: str) -> dict:
+    """Envía los resultados de la sesión a la API del dashboard SFCE."""
+    conn = _conectar(db_path)
+    sesion = conn.execute("SELECT * FROM sesiones WHERE id=?", (sesion_id,)).fetchone()
+    fallos = conn.execute(
+        "SELECT test_id, nombre, modulo, error_msg FROM resultados_test WHERE sesion_id=? AND estado='failed'",
+        (sesion_id,)
+    ).fetchall()
+    cobertura = conn.execute(
+        "SELECT modulo, pct_cobertura, lineas_cubiertas, lineas_totales FROM cobertura_modulo WHERE sesion_id=?",
+        (sesion_id,)
+    ).fetchall()
+    conn.close()
+
+    payload = {
+        "rama_git": sesion["rama_git"],
+        "commit_hash": sesion["commit_hash"],
+        "tests_total": sesion["tests_total"],
+        "tests_pass": sesion["tests_pass"],
+        "tests_fail": sesion["tests_fail"],
+        "cobertura_pct": sesion["cobertura_pct"],
+        "duracion_seg": sesion["duracion_seg"],
+        "estado": sesion["estado"],
+        "fallos": [
+            {"test_id": f["test_id"], "nombre": f["nombre"],
+             "modulo": f["modulo"], "error_msg": f["error_msg"]}
+            for f in fallos
+        ],
+        "cobertura": [
+            {"modulo": c["modulo"], "pct_cobertura": c["pct_cobertura"],
+             "lineas_cubiertas": c["lineas_cubiertas"],
+             "lineas_totales": c["lineas_totales"]}
+            for c in cobertura
+        ],
+    }
+
+    r = _http_post(
+        f"{api_url}/api/salud/sesiones",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    return r.json()
+
+
 def main():
     argv = sys.argv[1:]
 
@@ -302,6 +364,14 @@ def main():
         reportes_dir = Path(_get_arg(argv, "--reportes-dir")) if "--reportes-dir" in argv else Path("data/reportes")
         ruta = cmd_generar_reporte(db_path, sesion_id, reportes_dir)
         print(str(ruta))
+        return
+
+    if "--push-dashboard" in argv:
+        sesion_id = int(_get_arg(argv, "--sesion-id"))
+        api_url = _get_arg(argv, "--api-url") if "--api-url" in argv else "http://localhost:8000"
+        token = _get_arg(argv, "--token") if "--token" in argv else ""
+        result = cmd_push_dashboard(db_path, sesion_id, api_url, token)
+        print(result)
         return
 
     print("Uso: motor_testeo.py [--db PATH] --init-sesion")

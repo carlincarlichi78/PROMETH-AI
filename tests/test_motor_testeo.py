@@ -175,3 +175,40 @@ def test_generar_reporte_html(tmp_path):
     html = archivos[0].read_text()
     assert "Motor de Testeo SFCE" in html
     assert "tests/t.py::test_x" in html
+
+
+def test_push_dashboard_genera_payload(tmp_path, monkeypatch):
+    """cmd_push_dashboard construye el payload correcto para la API."""
+    calls = []
+
+    def mock_http_post(url, json, headers, timeout=10):
+        calls.append({"url": url, "json": json})
+        class R:
+            status_code = 201
+            def json(self): return {"id": 99}
+        return R()
+
+    import scripts.motor_testeo as mt
+    monkeypatch.setattr(mt, "_http_post", mock_http_post)
+
+    db_path = tmp_path / "test_motor.db"
+
+    # Iniciar sesión
+    sid = mt.cmd_init_sesion(db_path)
+
+    # Registrar resultados
+    import json as _json
+    reporte = {"summary": {"total": 3, "passed": 3, "failed": 0}, "duration": 1.0, "tests": []}
+    rp = tmp_path / "r.json"
+    rp.write_text(_json.dumps(reporte))
+    mt.cmd_registrar_resultados(db_path, sid, rp)
+    mt.cmd_finalizar_sesion(db_path, sid)
+
+    # Ejecutar push
+    result = mt.cmd_push_dashboard(db_path, sid, api_url="http://localhost:8000", token="test-tok")
+
+    assert len(calls) == 1
+    assert calls[0]["url"] == "http://localhost:8000/api/salud/sesiones"
+    assert calls[0]["json"]["tests_total"] == 3
+    assert calls[0]["json"]["estado"] == "completada"
+    assert result == {"id": 99}
