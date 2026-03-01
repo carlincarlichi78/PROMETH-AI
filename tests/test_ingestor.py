@@ -7,7 +7,12 @@ from sfce.analytics.ingestor import Ingestor
 
 @pytest.fixture
 def sesion():
-    engine = create_engine("sqlite:///:memory:")
+    from sqlalchemy.pool import StaticPool
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     BaseAnalitica.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     with Session() as s:

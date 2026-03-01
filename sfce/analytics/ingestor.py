@@ -21,17 +21,7 @@ class Ingestor:
         evento = self._sesion.get(EventoAnalitico, evento_id)
         if not evento or evento.procesado:
             return
-        payload = json.loads(evento.payload) if isinstance(evento.payload, str) else evento.payload
-        tipo = evento.tipo_evento
-
-        if tipo == "TPV":
-            self._procesar_tpv(evento, payload)
-        elif tipo in ("BAN", "BAN_DETALLE"):
-            self._procesar_ban(evento, payload)
-        elif tipo == "NOM":
-            self._procesar_nom(evento, payload)
-
-        evento.procesado = True
+        self._procesar_evento_obj(evento)
 
     def procesar_pendientes(self, empresa_id: Optional[int] = None) -> int:
         from sqlalchemy import select
