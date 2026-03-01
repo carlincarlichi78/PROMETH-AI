@@ -153,17 +153,17 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
   - Task 4: `sfce/db/migraciones/008_supplier_rules.py` + ORM SupplierRule en modelos.py
   - Task 5: `sfce/core/supplier_rules.py` — motor buscar/aplicar/confirmar/auto_aplicable
   - Task 6: Gate 0 acepta `emisor_cif`, aplica Supplier Rule si auto_aplicable
-- **SIGUIENTE**: `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` Tasks 7-12 + Fase 11 Desktop
-  - Task 7: parser hints email (`[tipo:FV]` en asunto)
-  - Task 8: canal email dedicado (slug@prometh-ai.es → empresa_id)
-  - Task 9: worker catch-all polling IMAP
-  - Task 10: upload masivo ZIP (endpoint + procesador_zip.py)
-  - Task 11: UI SubirZIP drag&drop
-  - Task 12: suite completa + tag fase6-ingesta-360
-- **Nuevas rutas API**: `/api/colas/revision`, `/api/colas/{id}/aprobar|rechazar|escalar`, `/api/colas/documentos/{id}/tracking`
+- **COMPLETADO Tasks 7-12 + Fase 11**: 1934 tests, tag `fase6-ingesta-360`
+  - `sfce/conectores/correo/parser_hints.py` — hints `[tipo:FV]` en asunto
+  - `sfce/conectores/correo/canal_email_dedicado.py` — slug@prometh-ai.es → empresa_id
+  - `sfce/conectores/correo/worker_catchall.py` — worker catch-all IMAP
+  - `sfce/core/procesador_zip.py` + `POST /api/gate0/ingestar-zip`
+  - `dashboard/src/features/documentos/SubirZIP.tsx` — drag&drop
+  - `prometh-desktop/` — fork CertiGestor: cliente HMAC, config IPC, pantalla Configuracion.tsx
+- **Nuevas rutas API**: `/api/colas/revision`, `/api/colas/{id}/aprobar|rechazar|escalar`, `/api/gate0/ingestar-zip`
 - **Migración ejecutada**: 008_supplier_rules.py en sfce.db
 - **Pendiente C1-C4**: worker OCR Gate 0, recovery bloqueados, coherencia_fiscal.py, migrar aprendizaje.yaml → supplier_rules
-- **Integraciones**: CAP-Web (módulo correo Tasks 7-8), CertiGestor (Fase 11 Desktop pendiente)
+- **Siguiente**: I1-I6 issues-patch, o Libro de Instrucciones (`docs/plans/2026-03-01-libro-instrucciones-plan.md`)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
