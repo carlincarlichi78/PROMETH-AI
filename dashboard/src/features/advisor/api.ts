@@ -46,4 +46,20 @@ export const advisorApi = {
     razon?: string
   }> =>
     apiFetch(`${BASE}/${empresaId}/sector-brain?kpi=${kpi}`),
+
+  autopilotBriefing: () =>
+    apiFetch<{
+      fecha: string
+      total_empresas: number
+      urgentes: number
+      items: Array<{
+        empresa_id: number
+        empresa_nombre: string
+        urgencia: 'rojo' | 'amarillo' | 'verde'
+        titulo: string
+        descripcion: string
+        acciones: string[]
+        borrador_mensaje: string | null
+      }>
+    }>('/analytics/autopilot/briefing'),
 }

@@ -309,3 +309,31 @@ def sector_brain(
             "valor_empresa": valor_empresa,
             "posicion": posicion_en_sector(valor_empresa, percentiles) if valor_empresa is not None else None,
         }
+
+
+@router.get("/autopilot/briefing")
+def obtener_briefing(
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Briefing semanal del asesor — empresas priorizadas por urgencia."""
+    from sfce.analytics.autopilot import generar_briefing
+    with sesion_factory() as sesion:
+        items = generar_briefing(sesion, _user.id)
+        return {
+            "fecha": date.today().isoformat(),
+            "total_empresas": len(items),
+            "urgentes": sum(1 for i in items if i.urgencia == "rojo"),
+            "items": [
+                {
+                    "empresa_id": i.empresa_id,
+                    "empresa_nombre": i.empresa_nombre,
+                    "urgencia": i.urgencia,
+                    "titulo": i.titulo,
+                    "descripcion": i.descripcion,
+                    "acciones": i.acciones,
+                    "borrador_mensaje": i.borrador_mensaje,
+                }
+                for i in items
+            ],
+        }
