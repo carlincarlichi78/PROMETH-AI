@@ -59,8 +59,13 @@ def posicion_en_sector(valor: float, percentiles: dict) -> dict:
     return {"percentil": 90, "etiqueta": "cuartil superior", "color": "verde"}
 
 
+def calcular_kpi_empresa(sesion: Session, empresa_id: int, kpi: str) -> float | None:
+    """Calcula un KPI concreto para una empresa (interfaz pública para el endpoint)."""
+    return _calcular_kpi_empresa(sesion, empresa_id, kpi)
+
+
 def _calcular_kpi_empresa(sesion: Session, empresa_id: int, kpi: str) -> float | None:
-    """Calcula un KPI concreto para una empresa (para comparativa sectorial)."""
+    """Implementación interna del cálculo de KPI por empresa."""
     if kpi == "ticket_medio":
         resultado = sesion.execute(
             select(func.avg(FactCaja.ticket_medio)).where(FactCaja.empresa_id == empresa_id)

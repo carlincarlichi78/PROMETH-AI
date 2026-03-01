@@ -277,7 +277,7 @@ def sector_brain(
     from sfce.analytics.benchmark_engine import (
         calcular_percentiles_sector,
         posicion_en_sector,
-        _calcular_kpi_empresa,
+        calcular_kpi_empresa,
         KPI_SOPORTADOS,
     )
     with sesion_factory() as sesion:
@@ -299,7 +299,7 @@ def sector_brain(
                 "razon": "Pocos datos del sector (mínimo 5 empresas)",
             }
 
-        valor_empresa = _calcular_kpi_empresa(sesion, empresa_id, kpi)
+        valor_empresa = calcular_kpi_empresa(sesion, empresa_id, kpi)
 
         return {
             "disponible": True,
