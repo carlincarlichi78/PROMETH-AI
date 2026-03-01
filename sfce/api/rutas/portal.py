@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.core.exportar_ical import generar_ical, DeadlineFiscal
-from sfce.db.modelos import Empresa, Factura, Asiento, Partida
+from sfce.db.modelos import Empresa, Factura, Asiento, Partida, SupplierRule
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
@@ -270,3 +270,36 @@ def notificaciones_portal(
             })
 
         return {"notificaciones": notificaciones}
+
+
+@router.get("/{empresa_id}/proveedores-frecuentes")
+def proveedores_frecuentes(
+    empresa_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista de proveedores ya usados por la empresa — para el selector en la app."""
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        reglas = (
+            sesion.execute(
+                select(SupplierRule)
+                .where(SupplierRule.empresa_id == empresa_id)
+                .where(SupplierRule.emisor_nombre_patron.is_not(None))
+                .order_by(SupplierRule.aplicaciones.desc())
+                .limit(50)
+            )
+            .scalars()
+            .all()
+        )
+        return {
+            "proveedores": [
+                {
+                    "cif": r.emisor_cif,
+                    "nombre": r.emisor_nombre_patron,
+                    "tipo_doc_sugerido": r.tipo_doc_sugerido,
+                    "aplicaciones": r.aplicaciones,
+                }
+                for r in reglas
+            ]
+        }

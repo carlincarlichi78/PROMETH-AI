@@ -180,3 +180,46 @@ def test_subir_documento_portal(client_onboarding):
     data = r.json()
     assert "id" in data
     assert data["nombre"] == "factura.pdf"
+
+
+# ── Task 1 app móvil: proveedores-frecuentes ──────────────────────────────
+
+from sfce.db.modelos import SupplierRule
+
+
+def test_proveedores_frecuentes_vacio(client_onboarding):
+    client, empresa_id = client_onboarding
+    token = _token(client)
+    r = client.get(
+        f"/api/portal/{empresa_id}/proveedores-frecuentes",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200
+    assert r.json()["proveedores"] == []
+
+
+def test_proveedores_frecuentes_devuelve_reglas(client_onboarding):
+    client, empresa_id = client_onboarding
+    token = _token(client)
+
+    sesion_factory = client.app.state.sesion_factory
+    with sesion_factory() as s:
+        rule = SupplierRule(
+            empresa_id=empresa_id,
+            emisor_cif="B12312312",
+            emisor_nombre_patron="Repsol",
+            tipo_doc_sugerido="FV",
+            aplicaciones=5,
+        )
+        s.add(rule)
+        s.commit()
+
+    r = client.get(
+        f"/api/portal/{empresa_id}/proveedores-frecuentes",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200
+    proveedores = r.json()["proveedores"]
+    assert len(proveedores) == 1
+    assert proveedores[0]["nombre"] == "Repsol"
+    assert proveedores[0]["cif"] == "B12312312"
