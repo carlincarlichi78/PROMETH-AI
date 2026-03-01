@@ -14,7 +14,7 @@ const TABS: { id: Tab; label: string; count: number }[] = [
 /** Badge con el numero de modelo */
 function BadgeModelo({ modelo }: { modelo: string }) {
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-spice-emerald/20 text-spice-emerald font-heading font-bold text-sm border border-spice-emerald/30">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-prometh-amber/20 text-prometh-amber font-heading font-bold text-sm border border-prometh-amber/30">
       {modelo}
     </span>
   )
@@ -28,7 +28,7 @@ function TablaAutomaticos({ modelos }: { modelos: ModeloFiscal[] }) {
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-spice-border text-spice-text-muted text-left">
+            <tr className="border-b border-prometh-border text-prometh-muted text-left">
               <th className="py-3 px-4 font-heading font-semibold">Modelo</th>
               <th className="py-3 px-4 font-heading font-semibold">Nombre</th>
               <th className="py-3 px-4 font-heading font-semibold">Periodicidad</th>
@@ -45,10 +45,10 @@ function TablaAutomaticos({ modelos }: { modelos: ModeloFiscal[] }) {
                 <td className="py-3 px-4">
                   <BadgeModelo modelo={m.modelo} />
                 </td>
-                <td className="py-3 px-4 text-spice-text font-body">{m.nombre}</td>
-                <td className="py-3 px-4 text-spice-text-muted font-body">{m.periodicidad}</td>
-                <td className="py-3 px-4 text-spice-text-muted font-body">{m.quien}</td>
-                <td className="py-3 px-4 text-spice-text/80 font-body">{m.descripcionCorta}</td>
+                <td className="py-3 px-4 text-prometh-text font-body">{m.nombre}</td>
+                <td className="py-3 px-4 text-prometh-muted font-body">{m.periodicidad}</td>
+                <td className="py-3 px-4 text-prometh-muted font-body">{m.quien}</td>
+                <td className="py-3 px-4 text-prometh-text/80 font-body">{m.descripcionCorta}</td>
               </tr>
             ))}
           </tbody>
@@ -61,12 +61,12 @@ function TablaAutomaticos({ modelos }: { modelos: ModeloFiscal[] }) {
           <div key={m.modelo} className="glass-card p-4">
             <div className="flex items-center gap-3 mb-2">
               <BadgeModelo modelo={m.modelo} />
-              <span className="font-heading font-semibold text-spice-text">{m.nombre}</span>
+              <span className="font-heading font-semibold text-prometh-text">{m.nombre}</span>
             </div>
-            <div className="text-xs text-spice-text-muted font-body mb-1">
+            <div className="text-xs text-prometh-muted font-body mb-1">
               {m.periodicidad} · {m.quien}
             </div>
-            <p className="text-sm text-spice-text/80 font-body">{m.descripcionCorta}</p>
+            <p className="text-sm text-prometh-text/80 font-body">{m.descripcionCorta}</p>
           </div>
         ))}
       </div>
@@ -89,22 +89,22 @@ function CardsSemi({ modelos }: { modelos: ModeloFiscal[] }) {
             <div className="flex items-center gap-3 mb-4">
               <BadgeModelo modelo={m.modelo} />
               <div>
-                <span className="font-heading font-semibold text-spice-text">{m.nombre}</span>
-                <span className="text-spice-text-muted text-sm ml-2">· {m.periodicidad} · {m.quien}</span>
+                <span className="font-heading font-semibold text-prometh-text">{m.nombre}</span>
+                <span className="text-prometh-muted text-sm ml-2">· {m.periodicidad} · {m.quien}</span>
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-spice-emerald/10 border border-spice-emerald/20">
-                <div className="text-xs text-spice-emerald font-heading font-semibold uppercase tracking-wider mb-2">
+              <div className="p-4 rounded-lg bg-prometh-amber/10 border border-prometh-amber/20">
+                <div className="text-xs text-prometh-amber font-heading font-semibold uppercase tracking-wider mb-2">
                   SPICE automatiza
                 </div>
-                <p className="text-sm text-spice-text/90 font-body">{spiceHace}</p>
+                <p className="text-sm text-prometh-text/90 font-body">{spiceHace}</p>
               </div>
-              <div className="p-4 rounded-lg bg-spice-gold/10 border border-spice-gold/20">
-                <div className="text-xs text-spice-gold font-heading font-semibold uppercase tracking-wider mb-2">
+              <div className="p-4 rounded-lg bg-prometh-amber/10 border border-prometh-amber/20">
+                <div className="text-xs text-prometh-amber font-heading font-semibold uppercase tracking-wider mb-2">
                   El gestor completa
                 </div>
-                <p className="text-sm text-spice-text/90 font-body">
+                <p className="text-sm text-prometh-text/90 font-body">
                   {gestorCompleta || 'Revision y validacion final'}
                 </p>
               </div>
@@ -119,34 +119,34 @@ function CardsSemi({ modelos }: { modelos: ModeloFiscal[] }) {
 /** Card especial para el modelo 100 (asistido) */
 function CardAsistido({ modelo }: { modelo: ModeloFiscal }) {
   return (
-    <div className="glass-card p-8 border-spice-gold/30 border-2 max-w-2xl mx-auto">
+    <div className="glass-card p-8 border-prometh-amber/30 border-2 max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <span className="inline-flex items-center px-4 py-1.5 rounded-lg bg-spice-gold/20 text-spice-gold font-heading font-bold text-lg border border-spice-gold/40">
+        <span className="inline-flex items-center px-4 py-1.5 rounded-lg bg-prometh-amber/20 text-prometh-amber font-heading font-bold text-lg border border-prometh-amber/40">
           {modelo.modelo}
         </span>
         <div>
-          <h4 className="font-heading font-bold text-spice-text text-lg">{modelo.nombre}</h4>
-          <p className="text-sm text-spice-text-muted">{modelo.periodicidad} · {modelo.quien}</p>
+          <h4 className="font-heading font-bold text-prometh-text text-lg">{modelo.nombre}</h4>
+          <p className="text-sm text-prometh-muted">{modelo.periodicidad} · {modelo.quien}</p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="p-4 rounded-lg bg-spice-emerald/10 border border-spice-emerald/20">
-          <div className="text-xs text-spice-emerald font-heading font-semibold uppercase tracking-wider mb-2">
+        <div className="p-4 rounded-lg bg-prometh-amber/10 border border-prometh-amber/20">
+          <div className="text-xs text-prometh-amber font-heading font-semibold uppercase tracking-wider mb-2">
             Lo que SPICE aporta
           </div>
-          <p className="text-sm text-spice-text/90 font-body">
+          <p className="text-sm text-prometh-text/90 font-body">
             Rendimientos de la actividad economica calculados automaticamente desde la contabilidad:
             ingresos, gastos deducibles, amortizaciones y resultado neto. Datos exportables para
             importar en Renta Web.
           </p>
         </div>
 
-        <div className="p-4 rounded-lg bg-spice-gold/10 border border-spice-gold/20">
-          <div className="text-xs text-spice-gold font-heading font-semibold uppercase tracking-wider mb-2">
+        <div className="p-4 rounded-lg bg-prometh-amber/10 border border-prometh-amber/20">
+          <div className="text-xs text-prometh-amber font-heading font-semibold uppercase tracking-wider mb-2">
             Lo que completa el gestor en Renta Web
           </div>
-          <p className="text-sm text-spice-text/90 font-body">
+          <p className="text-sm text-prometh-text/90 font-body">
             Rendimientos del trabajo, capital mobiliario e inmobiliario, ganancias patrimoniales,
             deducciones personales y familiares, situacion personal del contribuyente.
           </p>
@@ -171,10 +171,10 @@ export default function ModelosFiscales() {
         }`}
       >
         {/* Titulo */}
-        <h2 className="text-3xl md:text-4xl font-heading font-bold text-center text-spice-text mb-3">
+        <h2 className="text-3xl md:text-4xl font-heading font-bold text-center text-prometh-text mb-3">
           Modelos fiscales: 3 niveles de automatizacion
         </h2>
-        <p className="text-center text-spice-text-muted mb-10 max-w-2xl mx-auto">
+        <p className="text-center text-prometh-muted mb-10 max-w-2xl mx-auto">
           Desde la generacion completa hasta la asistencia al gestor
         </p>
 
@@ -186,8 +186,8 @@ export default function ModelosFiscales() {
               onClick={() => setTabActivo(tab.id)}
               className={`glass-card px-5 py-2.5 font-heading font-semibold text-sm cursor-pointer transition-all ${
                 tabActivo === tab.id
-                  ? 'bg-spice-emerald/20 border-spice-emerald text-spice-emerald'
-                  : 'text-spice-text-muted hover:text-spice-text hover:bg-white/[0.08]'
+                  ? 'bg-prometh-amber/20 border-prometh-amber text-prometh-amber'
+                  : 'text-prometh-muted hover:text-prometh-text hover:bg-white/[0.08]'
               }`}
             >
               {tab.label} ({tab.count})

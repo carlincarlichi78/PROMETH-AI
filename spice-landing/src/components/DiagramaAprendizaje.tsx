@@ -24,7 +24,7 @@ function Nodo({
 function FlechaAbajo() {
   return (
     <div className="flex justify-center py-1">
-      <ChevronDown className="w-5 h-5 text-spice-text-muted" />
+      <ChevronDown className="w-5 h-5 text-prometh-muted" />
     </div>
   )
 }
@@ -33,8 +33,8 @@ function FlechaAbajo() {
 function Decision({ texto }: { texto: string }) {
   return (
     <div className="flex justify-center">
-      <div className="bg-spice-gold/10 border border-spice-gold/30 rounded-lg px-4 py-2 text-center">
-        <span className="text-sm font-heading text-spice-gold">{texto}</span>
+      <div className="bg-prometh-amber/10 border border-prometh-amber/30 rounded-lg px-4 py-2 text-center">
+        <span className="text-sm font-heading text-prometh-amber">{texto}</span>
       </div>
     </div>
   )
@@ -43,9 +43,9 @@ function Decision({ texto }: { texto: string }) {
 /** Etiqueta de rama (SI / NO) */
 function Rama({ texto, color }: { texto: string; color: 'emerald' | 'red' | 'gold' }) {
   const colores = {
-    emerald: 'text-spice-emerald',
-    red: 'text-spice-red',
-    gold: 'text-spice-gold',
+    emerald: 'text-prometh-amber',
+    red: 'text-prometh-red',
+    gold: 'text-prometh-amber',
   }
   return (
     <span className={`text-xs font-heading font-bold ${colores[color]}`}>{texto}</span>
@@ -70,10 +70,10 @@ export default function DiagramaAprendizaje() {
       <div className="max-w-4xl mx-auto">
         {/* Titulo */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-heading font-bold text-spice-text mb-3">
+          <h2 className="text-3xl font-heading font-bold text-prometh-text mb-3">
             Un sistema que mejora con el uso
           </h2>
-          <p className="text-spice-text-muted text-lg">
+          <p className="text-prometh-muted text-lg">
             Con cada documento que procesa, SPICE aprende
           </p>
         </div>
@@ -86,8 +86,8 @@ export default function DiagramaAprendizaje() {
         >
           {/* Nodo inicio */}
           <Nodo
-            icono={<FileText className="w-5 h-5 text-spice-emerald shrink-0" />}
-            clase="border-spice-emerald/30"
+            icono={<FileText className="w-5 h-5 text-prometh-amber shrink-0" />}
+            clase="border-prometh-amber/30"
           >
             Llega un documento
           </Nodo>
@@ -95,7 +95,7 @@ export default function DiagramaAprendizaje() {
           <FlechaAbajo />
 
           {/* Intentar contabilizar */}
-          <Nodo clase="border-spice-border">Intentar contabilizar</Nodo>
+          <Nodo clase="border-prometh-border">Intentar contabilizar</Nodo>
 
           <FlechaAbajo />
 
@@ -106,16 +106,16 @@ export default function DiagramaAprendizaje() {
           <div className="flex gap-4 mt-2">
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="NO" color="emerald" />
-              <div className="w-full bg-spice-emerald/10 border border-spice-emerald/40 rounded-lg p-3 flex items-center gap-2 justify-center">
-                <CheckCircle className="w-4 h-4 text-spice-emerald shrink-0" />
-                <span className="text-sm text-spice-emerald font-medium">
+              <div className="w-full bg-prometh-amber/10 border border-prometh-amber/40 rounded-lg p-3 flex items-center gap-2 justify-center">
+                <CheckCircle className="w-4 h-4 text-prometh-amber shrink-0" />
+                <span className="text-sm text-prometh-amber font-medium">
                   Contabilizado correctamente
                 </span>
               </div>
             </div>
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="SI" color="gold" />
-              <ChevronDown className="w-4 h-4 text-spice-text-muted" />
+              <ChevronDown className="w-4 h-4 text-prometh-muted" />
             </div>
           </div>
 
@@ -127,21 +127,21 @@ export default function DiagramaAprendizaje() {
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="SI" color="emerald" />
               <div className="glass-card p-3 w-full text-center">
-                <span className="text-xs md:text-sm text-spice-text-muted">
+                <span className="text-xs md:text-sm text-prometh-muted">
                   Aplicar solucion que funciono antes
                 </span>
               </div>
-              <ChevronDown className="w-4 h-4 text-spice-text-muted" />
-              <div className="w-full bg-spice-emerald/10 border border-spice-emerald/40 rounded-lg p-2 flex items-center gap-2 justify-center">
-                <CheckCircle className="w-4 h-4 text-spice-emerald shrink-0" />
-                <span className="text-xs text-spice-emerald">Resuelto</span>
+              <ChevronDown className="w-4 h-4 text-prometh-muted" />
+              <div className="w-full bg-prometh-amber/10 border border-prometh-amber/40 rounded-lg p-2 flex items-center gap-2 justify-center">
+                <CheckCircle className="w-4 h-4 text-prometh-amber shrink-0" />
+                <span className="text-xs text-prometh-amber">Resuelto</span>
               </div>
             </div>
 
             {/* Rama NO: probar estrategias */}
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="NO" color="gold" />
-              <ChevronDown className="w-4 h-4 text-spice-text-muted" />
+              <ChevronDown className="w-4 h-4 text-prometh-muted" />
             </div>
           </div>
 
@@ -149,17 +149,17 @@ export default function DiagramaAprendizaje() {
           <div className="mt-2">
             <button
               onClick={() => setEstrategiaAbierta(!estrategiaAbierta)}
-              className="glass-card p-4 w-full text-left cursor-pointer hover:border-spice-emerald/30 transition-colors"
+              className="glass-card p-4 w-full text-left cursor-pointer hover:border-prometh-amber/30 transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-spice-gold shrink-0" />
+                  <Lightbulb className="w-4 h-4 text-prometh-amber shrink-0" />
                   <span className="text-sm font-heading font-medium">
                     Probar 6 estrategias de resolucion
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-spice-text-muted transition-transform duration-300 ${
+                  className={`w-4 h-4 text-prometh-muted transition-transform duration-300 ${
                     estrategiaAbierta ? 'rotate-180' : ''
                   }`}
                 />
@@ -171,8 +171,8 @@ export default function DiagramaAprendizaje() {
               >
                 <ol className="space-y-2">
                   {estrategias.map((e, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-spice-text-muted">
-                      <span className="text-spice-emerald font-heading font-bold shrink-0">
+                    <li key={i} className="flex items-start gap-2 text-sm text-prometh-muted">
+                      <span className="text-prometh-amber font-heading font-bold shrink-0">
                         {i + 1}.
                       </span>
                       {e}
@@ -192,9 +192,9 @@ export default function DiagramaAprendizaje() {
             {/* Rama SI: guardar */}
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="SI" color="emerald" />
-              <div className="w-full bg-spice-gold/10 border border-spice-gold/40 rounded-lg p-3 flex items-center gap-2 justify-center">
-                <BookMarked className="w-4 h-4 text-spice-gold shrink-0" />
-                <span className="text-xs md:text-sm text-spice-gold font-medium">
+              <div className="w-full bg-prometh-amber/10 border border-prometh-amber/40 rounded-lg p-3 flex items-center gap-2 justify-center">
+                <BookMarked className="w-4 h-4 text-prometh-amber shrink-0" />
+                <span className="text-xs md:text-sm text-prometh-amber font-medium">
                   Guardar solucion para la proxima vez
                 </span>
               </div>
@@ -203,16 +203,16 @@ export default function DiagramaAprendizaje() {
             {/* Rama NO: cuarentena */}
             <div className="flex-1 flex flex-col items-center gap-1">
               <Rama texto="NO" color="red" />
-              <div className="w-full bg-spice-red/10 border border-spice-red/40 rounded-lg p-3 flex items-center gap-2 justify-center">
-                <AlertTriangle className="w-4 h-4 text-spice-red shrink-0" />
-                <span className="text-xs md:text-sm text-spice-red font-medium">
+              <div className="w-full bg-prometh-red/10 border border-prometh-red/40 rounded-lg p-3 flex items-center gap-2 justify-center">
+                <AlertTriangle className="w-4 h-4 text-prometh-red shrink-0" />
+                <span className="text-xs md:text-sm text-prometh-red font-medium">
                   CUARENTENA: preguntar al gestor
                 </span>
               </div>
-              <ChevronDown className="w-4 h-4 text-spice-text-muted" />
-              <div className="w-full bg-spice-gold/10 border border-spice-gold/40 rounded-lg p-2 flex items-center gap-2 justify-center">
-                <BookMarked className="w-3 h-3 text-spice-gold shrink-0" />
-                <span className="text-xs text-spice-gold">
+              <ChevronDown className="w-4 h-4 text-prometh-muted" />
+              <div className="w-full bg-prometh-amber/10 border border-prometh-amber/40 rounded-lg p-2 flex items-center gap-2 justify-center">
+                <BookMarked className="w-3 h-3 text-prometh-amber shrink-0" />
+                <span className="text-xs text-prometh-amber">
                   Aplicar su decision y aprender de ella
                 </span>
               </div>
@@ -228,16 +228,16 @@ export default function DiagramaAprendizaje() {
         >
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-spice-gold mt-2 shrink-0" />
-              <p className="text-sm text-spice-text-muted">
-                <span className="text-spice-text font-medium">Lunes:</span> llega factura
+              <div className="w-2 h-2 rounded-full bg-prometh-amber mt-2 shrink-0" />
+              <p className="text-sm text-prometh-muted">
+                <span className="text-prometh-text font-medium">Lunes:</span> llega factura
                 de proveedor nuevo. SPICE no lo conoce → pregunta al gestor.
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-spice-emerald mt-2 shrink-0" />
-              <p className="text-sm text-spice-text-muted">
-                <span className="text-spice-text font-medium">Martes:</span> llega otra
+              <div className="w-2 h-2 rounded-full bg-prometh-amber mt-2 shrink-0" />
+              <p className="text-sm text-prometh-muted">
+                <span className="text-prometh-text font-medium">Martes:</span> llega otra
                 factura del mismo proveedor → SPICE ya sabe quien es.
               </p>
             </div>

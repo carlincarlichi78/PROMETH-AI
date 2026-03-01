@@ -5,10 +5,10 @@ import { useInView } from '../hooks/useInView'
 function Flecha() {
   return (
     <div className="flex justify-center">
-      <div className="border-l-2 border-spice-emerald h-8 relative">
+      <div className="border-l-2 border-prometh-amber h-8 relative">
         <ArrowDown
           size={16}
-          className="text-spice-emerald absolute -bottom-2 -left-[9px]"
+          className="text-prometh-amber absolute -bottom-2 -left-[9px]"
         />
       </div>
     </div>
@@ -19,7 +19,7 @@ function Flecha() {
 function ConectorHorizontal({ lado }: { lado: 'izquierda' | 'derecha' }) {
   return (
     <div
-      className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-8 border-t-2 border-spice-emerald ${
+      className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-8 border-t-2 border-prometh-amber ${
         lado === 'izquierda' ? 'right-full' : 'left-full'
       }`}
     />
@@ -30,10 +30,10 @@ function ConectorHorizontal({ lado }: { lado: 'izquierda' | 'derecha' }) {
 function CajaProceso({ texto, delay }: { texto: string; delay: number }) {
   return (
     <div
-      className="glass-card border-l-4 border-spice-emerald p-4 max-w-md mx-auto text-center animate-fade-in-up"
+      className="glass-card border-l-4 border-prometh-amber p-4 max-w-md mx-auto text-center animate-fade-in-up"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <p className="text-spice-text text-sm md:text-base">{texto}</p>
+      <p className="text-prometh-text text-sm md:text-base">{texto}</p>
     </div>
   )
 }
@@ -48,16 +48,16 @@ function CajaDecision({
 }) {
   return (
     <div
-      className="glass-card bg-spice-emerald/5 border-spice-emerald/40 p-4 max-w-md mx-auto text-center animate-fade-in-up"
+      className="glass-card bg-prometh-amber/5 border-prometh-amber/40 p-4 max-w-md mx-auto text-center animate-fade-in-up"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center justify-center gap-2 mb-1">
-        <HelpCircle size={18} className="text-spice-gold shrink-0" />
-        <span className="text-spice-gold font-heading font-semibold text-sm uppercase tracking-wide">
+        <HelpCircle size={18} className="text-prometh-amber shrink-0" />
+        <span className="text-prometh-amber font-heading font-semibold text-sm uppercase tracking-wide">
           Decision
         </span>
       </div>
-      <p className="text-spice-text text-sm md:text-base">{texto}</p>
+      <p className="text-prometh-text text-sm md:text-base">{texto}</p>
     </div>
   )
 }
@@ -79,12 +79,12 @@ function CajaNivel({
   delay: number
 }) {
   const estilos = {
-    emerald: 'bg-emerald-900/30 border-spice-emerald',
+    emerald: 'bg-emerald-900/30 border-prometh-amber',
     yellow: 'bg-yellow-900/30 border-yellow-500',
     orange: 'bg-orange-900/30 border-orange-500',
   }
   const textoColor = {
-    emerald: 'text-spice-emerald',
+    emerald: 'text-prometh-amber',
     yellow: 'text-yellow-400',
     orange: 'text-orange-400',
   }
@@ -100,8 +100,8 @@ function CajaNivel({
           NIVEL {nivel}
         </span>
       </div>
-      <p className="text-spice-text font-semibold text-sm md:text-base">{titulo}</p>
-      <div className="flex items-center gap-3 mt-2 text-xs text-spice-text-muted">
+      <p className="text-prometh-text font-semibold text-sm md:text-base">{titulo}</p>
+      <div className="flex items-center gap-3 mt-2 text-xs text-prometh-muted">
         <span className={`font-bold ${textoColor[color]}`}>{porcentaje}</span>
         <span>{motores}</span>
       </div>
@@ -119,8 +119,8 @@ function EtiquetaRama({
 }) {
   const cls =
     color === 'emerald'
-      ? 'bg-spice-emerald/20 text-spice-emerald'
-      : 'bg-spice-red/20 text-spice-red'
+      ? 'bg-prometh-amber/20 text-prometh-amber'
+      : 'bg-prometh-red/20 text-prometh-red'
   return (
     <span
       className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${cls}`}
@@ -139,7 +139,7 @@ export default function DiagramaOCR() {
         {/* Encabezado */}
         <div className="text-center mb-14">
           <h2
-            className={`text-3xl md:text-4xl font-heading font-bold text-spice-text mb-4 transition-all duration-700 ${
+            className={`text-3xl md:text-4xl font-heading font-bold text-prometh-text mb-4 transition-all duration-700 ${
               visible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-6'
@@ -148,7 +148,7 @@ export default function DiagramaOCR() {
             Lectura inteligente de documentos
           </h2>
           <p
-            className={`text-spice-text-muted max-w-xl mx-auto transition-all duration-700 delay-150 ${
+            className={`text-prometh-muted max-w-xl mx-auto transition-all duration-700 delay-150 ${
               visible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-6'
@@ -163,8 +163,8 @@ export default function DiagramaOCR() {
           <div className="flex flex-col items-center">
             {/* --- Nodo inicial --- */}
             <div className="glass-card p-5 flex items-center gap-3 animate-fade-in-up max-w-xs mx-auto">
-              <FileText size={28} className="text-spice-emerald shrink-0" />
-              <span className="text-spice-text font-heading font-semibold">
+              <FileText size={28} className="text-prometh-amber shrink-0" />
+              <span className="text-prometh-text font-heading font-semibold">
                 Llega un documento
               </span>
             </div>
@@ -281,7 +281,7 @@ export default function DiagramaOCR() {
 
             {/* Texto explicativo */}
             <p
-              className="mt-12 max-w-2xl mx-auto text-center text-spice-text-muted text-sm md:text-base leading-relaxed animate-fade-in-up"
+              className="mt-12 max-w-2xl mx-auto text-center text-prometh-muted text-sm md:text-base leading-relaxed animate-fade-in-up"
               style={{ animationDelay: '900ms' }}
             >
               El 70% de los documentos se leen correctamente a la primera. Solo

@@ -41,15 +41,15 @@ const pasos = [
 
 /** Color de la barra de fiabilidad segun porcentaje */
 function colorFiabilidad(porcentaje: number): string {
-  if (porcentaje >= 80) return 'bg-spice-emerald'
-  if (porcentaje >= 60) return 'bg-spice-gold'
+  if (porcentaje >= 80) return 'bg-prometh-amber'
+  if (porcentaje >= 60) return 'bg-prometh-amber'
   return 'bg-orange-500'
 }
 
 /** Texto del color de la barra */
 function colorTextoFiabilidad(porcentaje: number): string {
-  if (porcentaje >= 80) return 'text-spice-emerald'
-  if (porcentaje >= 60) return 'text-spice-gold'
+  if (porcentaje >= 80) return 'text-prometh-amber'
+  if (porcentaje >= 60) return 'text-prometh-amber'
   return 'text-orange-500'
 }
 
@@ -65,10 +65,10 @@ export default function DiagramaClasificador() {
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-spice-text mb-3">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-prometh-text mb-3">
             Como decide la subcuenta: cascada de decision
           </h2>
-          <p className="text-spice-text-muted text-lg max-w-2xl mx-auto">
+          <p className="text-prometh-muted text-lg max-w-2xl mx-auto">
             Paso a paso, como SPICE decide a que cuenta contable va cada
             documento
           </p>
@@ -84,12 +84,12 @@ export default function DiagramaClasificador() {
                 : 'opacity-0 translate-y-8'
             }`}
           >
-            <FileSearch className="w-7 h-7 text-spice-emerald flex-shrink-0" />
+            <FileSearch className="w-7 h-7 text-prometh-amber flex-shrink-0" />
             <div>
-              <p className="font-heading font-bold text-spice-text">
+              <p className="font-heading font-bold text-prometh-text">
                 Documento leido
               </p>
-              <p className="text-sm text-spice-text-muted">
+              <p className="text-sm text-prometh-muted">
                 Datos extraidos por OCR triple consenso
               </p>
             </div>
@@ -99,7 +99,7 @@ export default function DiagramaClasificador() {
           {pasos.map((paso, i) => (
             <div key={paso.numero}>
               {/* Conector vertical */}
-              <div className="ml-6 border-l-2 border-spice-emerald/40 h-8" />
+              <div className="ml-6 border-l-2 border-prometh-amber/40 h-8" />
 
               {/* Caja de pregunta */}
               <div
@@ -114,19 +114,19 @@ export default function DiagramaClasificador() {
                   {/* Contenido principal */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-spice-emerald/20 flex items-center justify-center">
-                        <span className="text-xs font-heading font-bold text-spice-emerald">
+                      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-prometh-amber/20 flex items-center justify-center">
+                        <span className="text-xs font-heading font-bold text-prometh-amber">
                           {paso.numero}
                         </span>
                       </span>
-                      <h3 className="font-heading font-semibold text-spice-text text-sm md:text-base">
+                      <h3 className="font-heading font-semibold text-prometh-text text-sm md:text-base">
                         {paso.pregunta}
                       </h3>
                     </div>
-                    <p className="text-sm text-spice-text-muted ml-9">
+                    <p className="text-sm text-prometh-muted ml-9">
                       {paso.ejemplo}
                     </p>
-                    <p className="text-xs text-spice-emerald/70 ml-9 mt-1">
+                    <p className="text-xs text-prometh-amber/70 ml-9 mt-1">
                       SI → usa esta subcuenta
                     </p>
                   </div>
@@ -149,7 +149,7 @@ export default function DiagramaClasificador() {
                         {paso.fiabilidad}%
                       </span>
                     </div>
-                    <p className="text-[10px] text-spice-text-muted mt-0.5 text-right">
+                    <p className="text-[10px] text-prometh-muted mt-0.5 text-right">
                       fiabilidad
                     </p>
                   </div>
@@ -159,46 +159,46 @@ export default function DiagramaClasificador() {
           ))}
 
           {/* Conector a cuarentena */}
-          <div className="ml-6 border-l-2 border-spice-red/40 h-8" />
+          <div className="ml-6 border-l-2 border-prometh-red/40 h-8" />
 
           {/* Nodo cuarentena */}
           <div
-            className={`glass-card border-spice-red p-5 flex items-start gap-4 transition-all duration-700 ${
+            className={`glass-card border-prometh-red p-5 flex items-start gap-4 transition-all duration-700 ${
               visible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-8'
             }`}
             style={{ transitionDelay: '900ms' }}
           >
-            <AlertTriangle className="w-6 h-6 text-spice-red flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-6 h-6 text-prometh-red flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-heading font-bold text-spice-red">
+              <p className="font-heading font-bold text-prometh-red">
                 CUARENTENA
               </p>
-              <p className="text-sm text-spice-text-muted">
+              <p className="text-sm text-prometh-muted">
                 El gestor decide, con opciones sugeridas por SPICE
               </p>
             </div>
           </div>
 
           {/* Conector a aprendizaje */}
-          <div className="ml-6 border-l-2 border-spice-gold/40 h-8" />
+          <div className="ml-6 border-l-2 border-prometh-amber/40 h-8" />
 
           {/* Nodo aprendizaje */}
           <div
-            className={`glass-card border-spice-gold p-5 flex items-start gap-4 transition-all duration-700 ${
+            className={`glass-card border-prometh-amber p-5 flex items-start gap-4 transition-all duration-700 ${
               visible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-8'
             }`}
             style={{ transitionDelay: '1050ms' }}
           >
-            <Lightbulb className="w-6 h-6 text-spice-gold flex-shrink-0 mt-0.5" />
+            <Lightbulb className="w-6 h-6 text-prometh-amber flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-heading font-bold text-spice-gold">
+              <p className="font-heading font-bold text-prometh-amber">
                 SPICE APRENDE
               </p>
-              <p className="text-sm text-spice-text-muted">
+              <p className="text-sm text-prometh-muted">
                 La proxima vez ya sabra donde va. El gestor entrena al sistema
                 con cada decision.
               </p>
@@ -208,7 +208,7 @@ export default function DiagramaClasificador() {
 
         {/* Nota inferior */}
         <p
-          className={`text-sm text-spice-text-muted text-center mt-8 transition-all duration-700 ${
+          className={`text-sm text-prometh-muted text-center mt-8 transition-all duration-700 ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
           style={{ transitionDelay: '1200ms' }}

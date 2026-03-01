@@ -38,21 +38,21 @@ function NodoPipeline({ fase, indice }: { fase: FasePipeline; indice: number }) 
       }}
     >
       {/* Circulo numerado */}
-      <div className="relative z-10 flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-spice-emerald text-white font-heading font-bold text-sm">
+      <div className="relative z-10 flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-prometh-amber text-white font-heading font-bold text-sm">
         {fase.numero}
       </div>
 
       {/* Caja de contenido */}
       <div className="glass-card p-4 md:p-5 flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <Icono className="text-spice-emerald" size={18} />
-          <h3 className="font-heading font-bold text-spice-text text-sm md:text-base tracking-wide">
+          <Icono className="text-prometh-amber" size={18} />
+          <h3 className="font-heading font-bold text-prometh-text text-sm md:text-base tracking-wide">
             {fase.nombre}
           </h3>
         </div>
-        <p className="text-spice-text text-sm mb-1">{fase.descripcion}</p>
-        <p className="text-spice-text-muted text-xs leading-relaxed mb-2">{fase.detalle}</p>
-        <p className="text-spice-gold text-sm font-medium">{fase.datoClave}</p>
+        <p className="text-prometh-text text-sm mb-1">{fase.descripcion}</p>
+        <p className="text-prometh-muted text-xs leading-relaxed mb-2">{fase.detalle}</p>
+        <p className="text-prometh-amber text-sm font-medium">{fase.datoClave}</p>
       </div>
     </div>
   )
@@ -64,7 +64,7 @@ function CajaEntrada() {
   return (
     <div
       ref={ref}
-      className="glass-card p-5 md:p-6 border-spice-gold/40 transition-all duration-600 max-w-2xl mx-auto"
+      className="glass-card p-5 md:p-6 border-prometh-amber/40 transition-all duration-600 max-w-2xl mx-auto"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(24px)',
@@ -72,12 +72,12 @@ function CajaEntrada() {
       }}
     >
       <div className="flex items-center gap-3">
-        <FolderOpen className="text-spice-gold flex-shrink-0" size={28} />
+        <FolderOpen className="text-prometh-amber flex-shrink-0" size={28} />
         <div>
-          <p className="font-heading font-bold text-spice-text text-sm md:text-base">
+          <p className="font-heading font-bold text-prometh-text text-sm md:text-base">
             Documentos del cliente
           </p>
-          <p className="text-spice-text-muted text-xs md:text-sm">
+          <p className="text-prometh-muted text-xs md:text-sm">
             Facturas, nominas, extractos bancarios, recibos de la Seguridad Social, impuestos, seguros...
           </p>
         </div>
@@ -100,12 +100,12 @@ function CajaSalida() {
       }}
     >
       <div className="flex items-center gap-3">
-        <CheckCircle className="text-spice-emerald flex-shrink-0" size={28} />
+        <CheckCircle className="text-prometh-amber flex-shrink-0" size={28} />
         <div>
-          <p className="font-heading font-bold text-spice-text text-sm md:text-base">
+          <p className="font-heading font-bold text-prometh-text text-sm md:text-base">
             Contabilidad verificada
           </p>
-          <p className="text-spice-text-muted text-xs md:text-sm">
+          <p className="text-prometh-muted text-xs md:text-sm">
             Indice de fiabilidad 95%+ — Libros, modelos fiscales e informes listos para presentar
           </p>
         </div>
@@ -119,10 +119,10 @@ export default function DiagramaPipeline() {
     <section id="proceso" className="py-20 px-4">
       {/* Titulo */}
       <div className="text-center mb-12 max-w-3xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-heading font-bold text-spice-text mb-3">
+        <h2 className="text-3xl md:text-4xl font-heading font-bold text-prometh-text mb-3">
           Proceso de contabilizacion en 7 pasos
         </h2>
-        <p className="text-spice-text-muted text-base md:text-lg">
+        <p className="text-prometh-muted text-base md:text-lg">
           Desde que el documento entra hasta que el asiento esta verificado
         </p>
       </div>
@@ -156,7 +156,7 @@ export default function DiagramaPipeline() {
         </div>
 
         {/* Linea vertical mobile */}
-        <div className="md:hidden absolute left-5 top-0 bottom-0 w-px bg-spice-emerald/20" />
+        <div className="md:hidden absolute left-5 top-0 bottom-0 w-px bg-prometh-amber/20" />
 
         {/* Nodos */}
         <div className="flex flex-col gap-6">

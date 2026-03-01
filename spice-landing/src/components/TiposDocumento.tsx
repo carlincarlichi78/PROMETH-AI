@@ -27,8 +27,8 @@ function TarjetaTipo({
   const esFactura = tipo.grupo === 'factura'
 
   const badgeClase = esFactura
-    ? 'bg-spice-emerald/20 text-spice-emerald'
-    : 'bg-spice-gold/20 text-spice-gold'
+    ? 'bg-prometh-amber/20 text-prometh-amber'
+    : 'bg-prometh-amber/20 text-prometh-amber'
 
   return (
     <div
@@ -45,24 +45,24 @@ function TarjetaTipo({
             {tipo.codigo}
           </span>
           <div className="min-w-0">
-            <h3 className="text-spice-text font-semibold text-sm md:text-base truncate">
+            <h3 className="text-prometh-text font-semibold text-sm md:text-base truncate">
               {tipo.nombre}
             </h3>
-            <p className="text-spice-text-muted text-xs mt-0.5">
+            <p className="text-prometh-muted text-xs mt-0.5">
               {tipo.asiento}
             </p>
           </div>
         </div>
         <ChevronDown
           size={18}
-          className={`text-spice-text-muted shrink-0 transition-transform duration-300 ${
+          className={`text-prometh-muted shrink-0 transition-transform duration-300 ${
             expandido ? 'rotate-180' : ''
           }`}
         />
       </div>
 
       {/* Descripcion */}
-      <p className="text-spice-text-muted text-sm mt-2">{tipo.descripcion}</p>
+      <p className="text-prometh-muted text-sm mt-2">{tipo.descripcion}</p>
 
       {/* Panel expandible con ejemplo */}
       <div
@@ -70,9 +70,9 @@ function TarjetaTipo({
           expandido ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
         }`}
       >
-        <div className="border-t border-spice-border pt-4">
+        <div className="border-t border-prometh-border pt-4">
           {/* Concepto del ejemplo */}
-          <p className="text-spice-text text-sm font-medium mb-3">
+          <p className="text-prometh-text text-sm font-medium mb-3">
             {tipo.ejemplo.concepto}
           </p>
 
@@ -80,17 +80,17 @@ function TarjetaTipo({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-spice-border">
-                  <th className="text-left text-spice-text-muted font-normal py-1.5 pr-2">
+                <tr className="border-b border-prometh-border">
+                  <th className="text-left text-prometh-muted font-normal py-1.5 pr-2">
                     Subcuenta
                   </th>
-                  <th className="text-left text-spice-text-muted font-normal py-1.5 pr-2">
+                  <th className="text-left text-prometh-muted font-normal py-1.5 pr-2">
                     Concepto
                   </th>
-                  <th className="text-right text-spice-text-muted font-normal py-1.5 pl-2 w-20">
+                  <th className="text-right text-prometh-muted font-normal py-1.5 pl-2 w-20">
                     Debe
                   </th>
-                  <th className="text-right text-spice-text-muted font-normal py-1.5 pl-2 w-20">
+                  <th className="text-right text-prometh-muted font-normal py-1.5 pl-2 w-20">
                     Haber
                   </th>
                 </tr>
@@ -99,20 +99,20 @@ function TarjetaTipo({
                 {tipo.ejemplo.partidas.map((partida, idx) => (
                   <tr
                     key={idx}
-                    className="border-b border-spice-border/50 last:border-b-0"
+                    className="border-b border-prometh-border/50 last:border-b-0"
                   >
-                    <td className="py-1.5 pr-2 text-spice-emerald font-mono text-xs">
+                    <td className="py-1.5 pr-2 text-prometh-amber font-mono text-xs">
                       {partida.subcuenta}
                     </td>
-                    <td className="py-1.5 pr-2 text-spice-text">
+                    <td className="py-1.5 pr-2 text-prometh-text">
                       {partida.nombre}
                     </td>
-                    <td className="py-1.5 pl-2 text-right text-spice-text font-mono text-xs">
+                    <td className="py-1.5 pl-2 text-right text-prometh-text font-mono text-xs">
                       {partida.debe !== undefined
                         ? formatoImporte(partida.debe)
                         : ''}
                     </td>
-                    <td className="py-1.5 pl-2 text-right text-spice-text font-mono text-xs">
+                    <td className="py-1.5 pl-2 text-right text-prometh-text font-mono text-xs">
                       {partida.haber !== undefined
                         ? formatoImporte(partida.haber)
                         : ''}
@@ -145,7 +145,7 @@ export default function TiposDocumento() {
         {/* Encabezado */}
         <div className="text-center mb-14">
           <h2
-            className={`text-3xl md:text-4xl font-heading font-bold text-spice-text mb-4 transition-all duration-700 ${
+            className={`text-3xl md:text-4xl font-heading font-bold text-prometh-text mb-4 transition-all duration-700 ${
               visible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-6'
@@ -160,11 +160,11 @@ export default function TiposDocumento() {
             {/* Grupo: Facturas */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-px flex-1 bg-spice-emerald/30" />
-                <span className="text-spice-emerald font-heading font-semibold text-sm uppercase tracking-wider">
+                <div className="h-px flex-1 bg-prometh-amber/30" />
+                <span className="text-prometh-amber font-heading font-semibold text-sm uppercase tracking-wider">
                   Facturas
                 </span>
-                <div className="h-px flex-1 bg-spice-emerald/30" />
+                <div className="h-px flex-1 bg-prometh-amber/30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {facturas.map((tipo, idx) => (
@@ -182,11 +182,11 @@ export default function TiposDocumento() {
             {/* Grupo: Otros documentos */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-px flex-1 bg-spice-gold/30" />
-                <span className="text-spice-gold font-heading font-semibold text-sm uppercase tracking-wider">
+                <div className="h-px flex-1 bg-prometh-amber/30" />
+                <span className="text-prometh-amber font-heading font-semibold text-sm uppercase tracking-wider">
                   Otros documentos
                 </span>
-                <div className="h-px flex-1 bg-spice-gold/30" />
+                <div className="h-px flex-1 bg-prometh-amber/30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {otros.map((tipo, idx) => (
