@@ -51,7 +51,7 @@ async def ingestar_documento(
             dir_final = DIRECTORIO_DOCS / str(empresa_id) / "inbox"
             dir_final.mkdir(parents=True, exist_ok=True)
             ruta_final = dir_final / preflight.nombre_sanitizado
-            tmp_ruta.rename(ruta_final)
+            tmp_ruta.replace(ruta_final)  # replace() sobrescribe si ya existe (Windows safe)
 
             # Trust level segun rol del usuario
             trust = calcular_trust_level(fuente="portal", rol=getattr(usuario, "rol", ""))
