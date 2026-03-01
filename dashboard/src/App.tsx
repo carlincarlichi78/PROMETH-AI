@@ -55,6 +55,10 @@ const Comparativa = lazy(() => import('@/features/economico/comparativa-page'))
 const Scoring = lazy(() => import('@/features/economico/scoring-page'))
 const Informes = lazy(() => import('@/features/economico/informes-page'))
 
+// --- Salud del Sistema ---
+const SaludPage = lazy(() => import('@/features/salud/salud-page'))
+const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
+
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
 const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
@@ -140,6 +144,10 @@ export function App() {
           <Route path="/empresa/:id/comparativa" element={<Comparativa />} />
           <Route path="/empresa/:id/scoring" element={<Scoring />} />
           <Route path="/empresa/:id/informes" element={<Informes />} />
+
+          {/* Salud del Sistema */}
+          <Route path="/salud" element={<SaludPage />} />
+          <Route path="/salud/:id" element={<SesionDetallePage />} />
 
           {/* Portal Cliente */}
           <Route path="/empresa/:id/portal" element={<Portal />} />
