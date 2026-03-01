@@ -142,3 +142,36 @@ def test_finalizar_sesion(tmp_path):
     sesion = conn.execute("SELECT estado FROM sesiones WHERE id=?", (int(sesion_id),)).fetchone()
     assert sesion[0] == "completada"
     conn.close()
+
+
+def test_generar_reporte_html(tmp_path):
+    """--generar-reporte crea un archivo HTML con los datos de la sesión."""
+    db_path = tmp_path / "test_motor.db"
+    reportes_dir = tmp_path / "reportes"
+
+    r = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--init-sesion", "--db", str(db_path)],
+        capture_output=True, text=True
+    )
+    sesion_id = r.stdout.strip()
+
+    reporte = {"summary": {"total": 5, "passed": 4, "failed": 1}, "duration": 2.1,
+               "tests": [{"nodeid": "tests/t.py::test_x", "outcome": "failed",
+                           "duration": 0.5, "call": {"longrepr": "Error: fallo"}}]}
+    rp = tmp_path / "r.json"
+    rp.write_text(json.dumps(reporte))
+    subprocess.run([sys.executable, "scripts/motor_testeo.py", "--registrar-resultados",
+                    "--sesion-id", sesion_id, "--reporte-json", str(rp), "--db", str(db_path)])
+
+    r2 = subprocess.run(
+        [sys.executable, "scripts/motor_testeo.py", "--generar-reporte",
+         "--sesion-id", sesion_id, "--db", str(db_path),
+         "--reportes-dir", str(reportes_dir)],
+        capture_output=True, text=True
+    )
+    assert r2.returncode == 0
+    archivos = list(reportes_dir.glob("*.html"))
+    assert len(archivos) == 1
+    html = archivos[0].read_text()
+    assert "Motor de Testeo SFCE" in html
+    assert "tests/t.py::test_x" in html

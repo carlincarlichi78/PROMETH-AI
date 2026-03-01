@@ -197,6 +197,77 @@ def cmd_finalizar_sesion(db_path: Path, sesion_id: int) -> None:
     conn.close()
 
 
+def cmd_generar_reporte(db_path: Path, sesion_id: int, reportes_dir: Path) -> Path:
+    reportes_dir.mkdir(parents=True, exist_ok=True)
+    conn = _conectar(db_path)
+
+    sesion = conn.execute("SELECT * FROM sesiones WHERE id=?", (sesion_id,)).fetchone()
+    fallos = conn.execute(
+        "SELECT * FROM resultados_test WHERE sesion_id=? AND estado='failed'",
+        (sesion_id,)
+    ).fetchall()
+    fixes = conn.execute("SELECT * FROM fixes_aplicados WHERE sesion_id=?", (sesion_id,)).fetchall()
+    tests_gen = conn.execute("SELECT * FROM tests_generados WHERE sesion_id=?", (sesion_id,)).fetchall()
+    cobertura = conn.execute(
+        "SELECT modulo, pct_cobertura FROM cobertura_modulo WHERE sesion_id=? ORDER BY pct_cobertura",
+        (sesion_id,)
+    ).fetchall()
+    conn.close()
+
+    fecha_str = sesion["fecha"][:19].replace(":", "-").replace("T", "_")
+    nombre = f"{fecha_str}_sesion_{sesion_id}.html"
+    ruta = reportes_dir / nombre
+
+    filas_fallos = "".join(
+        f"<tr><td>{f['nombre']}</td><td><pre>{f['error_msg'] or ''}</pre></td>"
+        f"<td>{'Si' if f['es_regresion'] else 'No'}</td></tr>"
+        for f in fallos
+    )
+    filas_cob = "".join(
+        f"<tr><td>{c[0]}</td><td class=\"{'ok' if c[1]>=80 else 'warn'}\">{c[1]:.1f}%</td></tr>"
+        for c in cobertura
+    )
+
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Motor de Testeo SFCE - Sesion {sesion_id}</title>
+<style>
+  body{{font-family:monospace;margin:2rem;background:#0f172a;color:#e2e8f0}}
+  h1{{color:#f59e0b}} h2{{color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:.5rem}}
+  .kpi{{display:flex;gap:2rem;margin:1rem 0}}
+  .kpi div{{background:#1e293b;padding:1rem 2rem;border-radius:.5rem;text-align:center}}
+  .kpi .val{{font-size:2rem;font-weight:bold;color:#f59e0b}}
+  table{{width:100%;border-collapse:collapse;margin:1rem 0}}
+  th{{background:#1e293b;padding:.5rem;text-align:left}}
+  td{{padding:.5rem;border-bottom:1px solid #1e293b}}
+  pre{{white-space:pre-wrap;font-size:.8rem;color:#f87171;max-height:100px;overflow:auto}}
+  .ok{{color:#4ade80}} .warn{{color:#f87171}}
+</style>
+</head>
+<body>
+<h1>Motor de Testeo SFCE</h1>
+<p>Sesion {sesion_id} - {sesion['fecha'][:19]} - Rama: {sesion['rama_git']} - Commit: {sesion['commit_hash']}</p>
+<div class="kpi">
+  <div><div class="val">{sesion['tests_total']}</div>Tests totales</div>
+  <div><div class="val" style="color:#4ade80">{sesion['tests_pass']}</div>Pasados</div>
+  <div><div class="val" style="color:#f87171">{sesion['tests_fail']}</div>Fallidos</div>
+  <div><div class="val">{sesion['cobertura_pct']:.1f}%</div>Cobertura</div>
+  <div><div class="val" style="color:#60a5fa">{len(fixes)}</div>Fixes aplicados</div>
+  <div><div class="val" style="color:#a78bfa">{len(tests_gen)}</div>Tests generados</div>
+</div>
+<h2>Fallos</h2>
+<table><tr><th>Test</th><th>Error</th><th>Regresion</th></tr>{filas_fallos or '<tr><td colspan="3">Sin fallos</td></tr>'}</table>
+<h2>Cobertura por modulo</h2>
+<table><tr><th>Modulo</th><th>Cobertura</th></tr>{filas_cob or '<tr><td colspan="2">Sin datos</td></tr>'}</table>
+</body>
+</html>"""
+
+    ruta.write_text(html, encoding="utf-8")
+    return ruta
+
+
 def main():
     argv = sys.argv[1:]
 
@@ -224,6 +295,13 @@ def main():
     if "--finalizar-sesion" in argv:
         sesion_id = int(_get_arg(argv, "--sesion-id"))
         cmd_finalizar_sesion(db_path, sesion_id)
+        return
+
+    if "--generar-reporte" in argv:
+        sesion_id = int(_get_arg(argv, "--sesion-id"))
+        reportes_dir = Path(_get_arg(argv, "--reportes-dir")) if "--reportes-dir" in argv else Path("data/reportes")
+        ruta = cmd_generar_reporte(db_path, sesion_id, reportes_dir)
+        print(str(ruta))
         return
 
     print("Uso: motor_testeo.py [--db PATH] --init-sesion")
