@@ -22,6 +22,8 @@ class Gestoria(Base):
     activa = Column(Boolean, nullable=False, default=True)
     fecha_alta = Column(DateTime, nullable=False, default=datetime.utcnow)
     fecha_vencimiento = Column(DateTime, nullable=True)
+    plan_tier         = Column(String(10), nullable=False, default="basico", server_default="basico")
+    limite_empresas   = Column(Integer, nullable=True)  # None = ilimitado
 
     usuarios = relationship("Usuario", back_populates="gestoria")
 
@@ -57,6 +59,7 @@ class Usuario(Base):
     invitacion_token = Column(String(128), nullable=True, unique=True, index=True)
     invitacion_expira = Column(DateTime, nullable=True)
     forzar_cambio_password = Column(Boolean, nullable=False, default=False)
+    plan_tier = Column(String(10), nullable=False, default="basico", server_default="basico")
 
     gestoria = relationship("Gestoria", back_populates="usuarios")
 
