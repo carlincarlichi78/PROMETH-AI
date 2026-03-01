@@ -1,0 +1,97 @@
+sector: hosteleria_restauracion
+cnae: ["5610", "5621", "5629", "5630"]
+nombre: "Hostelería y Restauración"
+
+dimensiones:
+  - covers
+  - servicio
+  - mesa
+  - familia_producto
+  - metodo_pago
+
+kpis:
+  revpash:
+    nombre: "RevPASH"
+    descripcion: "Revenue per Available Seat Hour"
+    formula: "ventas_totales / (num_plazas * horas_apertura)"
+    unidad: "€/plaza/hora"
+    benchmarks:
+      p25: 12.0
+      p50: 21.0
+      p75: 31.0
+      alerta_baja: 10.0
+
+  food_cost_pct:
+    nombre: "Food Cost %"
+    formula: "coste_materia_prima / ventas_cocina * 100"
+    unidad: "%"
+    benchmarks:
+      p25: 22.0
+      p50: 29.0
+      p75: 34.0
+      alerta_alta: 38.0
+
+  ticket_medio:
+    nombre: "Ticket Medio"
+    formula: "ventas_totales / covers"
+    unidad: "€/comensal"
+    benchmarks:
+      p25: 16.0
+      p50: 22.0
+      p75: 32.0
+
+  rotacion_mesas:
+    nombre: "Rotación de Mesas"
+    formula: "covers / num_mesas"
+    unidad: "veces/día"
+    benchmarks:
+      p25: 2.0
+      p50: 2.8
+      p75: 3.8
+
+  ratio_personal:
+    nombre: "Coste Personal / Ventas"
+    formula: "gasto_personal / ventas_totales * 100"
+    unidad: "%"
+    benchmarks:
+      p25: 26.0
+      p50: 32.0
+      p75: 40.0
+      alerta_alta: 45.0
+
+  margen_bebidas:
+    nombre: "Margen Bebidas"
+    formula: "(ventas_bebidas - coste_bebidas) / ventas_bebidas * 100"
+    unidad: "%"
+    benchmarks:
+      p50: 68.0
+      alerta_baja: 55.0
+
+  ocupacion_pct:
+    nombre: "Ocupación %"
+    formula: "covers / (num_plazas * num_servicios) * 100"
+    unidad: "%"
+    benchmarks:
+      p50: 62.0
+      alerta_baja: 40.0
+
+alertas:
+  - id: food_cost_spike
+    condicion: "food_cost_pct > benchmarks_p75 AND tendencia_7d > 3"
+    mensaje: "Food cost {valor:.1f}% — por encima del P75 sectorial y subiendo {tendencia:.1f}pp en 7 días"
+    severidad: alta
+
+  - id: revpash_bajo
+    condicion: "revpash < benchmarks_p25"
+    mensaje: "RevPASH {valor:.2f}€ — en el cuartil inferior del sector (P25: {benchmark:.2f}€)"
+    severidad: media
+
+  - id: proveedor_escalada
+    condicion: "variacion_mom_pct > 15"
+    mensaje: "Proveedor {proveedor} ha subido {variacion:.1f}% en 30 días"
+    severidad: media
+
+  - id: sin_datos_tpv
+    condicion: "dias_sin_tpv >= 3"
+    mensaje: "Sin datos TPV desde hace {dias} días — revisar ingesta"
+    severidad: alta
