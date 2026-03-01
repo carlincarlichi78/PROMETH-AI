@@ -1,6 +1,6 @@
 """Tests para checks de pre-validacion de tipos nuevos."""
 import pytest
-from scripts.phases.pre_validation import (
+from sfce.phases.pre_validation import (
     _check_nomina_cuadre,
     _check_nomina_irpf,
     _check_nomina_ss,

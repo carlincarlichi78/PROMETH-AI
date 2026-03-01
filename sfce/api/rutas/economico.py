@@ -8,7 +8,7 @@ from sqlalchemy import select, func as sqlfunc
 from sqlalchemy.orm import Session
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import (
     RatiosEmpresaOut, RatioOut, TesoreriaOut, ScoringOut,
     PresupuestoLineaOut, ComparativaOut, KPIOut,
@@ -189,15 +189,12 @@ def obtener_ratios(
     empresa_id: int,
     ejercicio: Optional[str] = None,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Calcula ratios financieros PGC desde datos contables de la empresa."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
 
@@ -223,15 +220,12 @@ def obtener_ratios(
 def obtener_kpis(
     empresa_id: int,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """KPIs sectoriales basados en CNAE/sector de la empresa."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         # KPIs genericos para cualquier empresa — en produccion se filtran por CNAE
         ej = _ejercicio_activo(sesion, empresa_id)
@@ -270,15 +264,12 @@ def obtener_kpis(
 def obtener_tesoreria(
     empresa_id: int,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Estado de tesoreria con saldo actual y prevision."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = _ejercicio_activo(sesion, empresa_id)
         stmt = (
@@ -310,15 +301,12 @@ def obtener_tesoreria(
 def obtener_cashflow(
     empresa_id: int,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Cash flow historico mensual del ejercicio activo."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = _ejercicio_activo(sesion, empresa_id)
         stmt = (
@@ -348,11 +336,12 @@ def obtener_scoring(
     empresa_id: int,
     tipo: str = "proveedor",
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Credit scoring de clientes y proveedores basado en historial de pagos."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
         stmt = (
             select(ScoringHistorial)
             .where(ScoringHistorial.empresa_id == empresa_id)
@@ -380,15 +369,12 @@ def obtener_presupuesto(
     empresa_id: int,
     ejercicio: Optional[str] = None,
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Presupuesto vs real por partida contable."""
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = ejercicio or _ejercicio_activo(sesion, empresa_id)
 
@@ -429,18 +415,15 @@ def obtener_comparativa(
     empresa_id: int,
     ejercicios: str = "",
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Comparativa interanual de metricas clave.
 
     Parametro ejercicios: coma-separado, ej: "2023,2024,2025"
     """
-    sf = request.app.state.sesion_factory
-    with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            from fastapi import HTTPException
-            raise HTTPException(404, "Empresa no encontrada")
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej_actuales = ejercicios.split(",") if ejercicios else []
         if not ej_actuales:

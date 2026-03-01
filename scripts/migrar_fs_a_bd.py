@@ -16,8 +16,8 @@ from pathlib import Path
 RAIZ = Path(__file__).parent.parent
 sys.path.insert(0, str(RAIZ))
 
-from scripts.core.logger import crear_logger
-from scripts.core.fs_api import api_get
+from sfce.core.logger import crear_logger
+from sfce.core.fs_api import api_get
 
 from sfce.db.base import crear_motor, crear_sesion, inicializar_bd
 from sfce.db.modelos import (

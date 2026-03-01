@@ -392,17 +392,19 @@ class TestRoles:
 
 
 class TestEndpointsExistentes:
-    """Verifica que los endpoints existentes siguen funcionando SIN auth."""
+    """Verifica comportamiento de endpoints ante ausencia de auth."""
 
-    def test_empresas_sin_auth(self, client):
+    def test_empresas_sin_auth_requiere_401(self, client):
+        # listar_empresas ahora requiere autenticacion
         resp = client.get("/api/empresas")
-        assert resp.status_code == 200
+        assert resp.status_code == 401
 
-    def test_documentos_sin_auth_404(self, client):
-        # 404 porque no hay empresa 1, pero NO 401
+    def test_documentos_sin_auth_401(self, client):
+        # ahora requiere autenticacion → 401
         resp = client.get("/api/documentos/1")
-        assert resp.status_code == 404
+        assert resp.status_code == 401
 
-    def test_contabilidad_sin_auth_404(self, client):
+    def test_contabilidad_sin_auth_401(self, client):
+        # ahora requiere autenticacion → 401
         resp = client.get("/api/contabilidad/1/pyg")
-        assert resp.status_code == 404
+        assert resp.status_code == 401

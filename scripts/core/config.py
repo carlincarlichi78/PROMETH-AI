@@ -3,7 +3,7 @@ import re
 import yaml
 from pathlib import Path
 from typing import Optional
-from .logger import crear_logger
+from sfce.core.logger import crear_logger
 
 logger = crear_logger("config")
 

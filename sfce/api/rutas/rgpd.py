@@ -13,7 +13,7 @@ import jwt
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
-from sfce.api.auth import JWT_ALGORITHM, _get_secret, obtener_usuario_actual
+from sfce.api.auth import JWT_ALGORITHM, _get_secret, obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.audit import AuditAccion, auditar, ip_desde_request
 from sfce.db.modelos import Asiento, Documento, Partida
 
@@ -55,6 +55,11 @@ def _generar_csv(filas: list[dict], campos: list[str]) -> str:
 def generar_token_exportacion(empresa_id: int, request: Request):
     """Genera token de un solo uso (24h) para descarga RGPD de la empresa."""
     _verificar_rol_exportacion(request)
+    usuario = obtener_usuario_actual(request)
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
 
     nonce = str(uuid4())
     expira = datetime.now(timezone.utc) + timedelta(hours=24)
@@ -125,8 +130,11 @@ def descargar_exportacion(token: str, request: Request):
     # Marcar como usado ANTES de generar el ZIP
     request.app.state.rgpd_nonces_usados.add(nonce)
 
-    # Generar ZIP en memoria
+    # El token JWT ya acredita la empresa y fue generado por un usuario autenticado.
+    # No se requiere auth adicional — el nonce de un solo uso es el mecanismo de seguridad.
     sf = request.app.state.sesion_factory
+
+    # Generar ZIP en memoria
     with sf() as sesion:
         asientos = sesion.query(Asiento).filter(Asiento.empresa_id == empresa_id).all()
         asiento_ids = [a.id for a in asientos]

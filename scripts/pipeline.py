@@ -23,9 +23,9 @@ RAIZ = Path(__file__).parent.parent
 sys.path.insert(0, str(RAIZ))
 
 from scripts.core.config import cargar_config
-from scripts.core.confidence import calcular_nivel
-from scripts.core.errors import CatalogoErrores
-from scripts.core.logger import AuditoriaLogger, crear_logger
+from sfce.core.confidence import calcular_nivel
+from sfce.core.errors import CatalogoErrores
+from sfce.core.logger import AuditoriaLogger, crear_logger
 from sfce.core.recurrentes import generar_alertas_recurrentes
 
 # Importacion condicional del repositorio BD (puede fallar en modo offline/tests)
@@ -36,13 +36,13 @@ try:
 except ImportError:
     _BD_DISPONIBLE = False
 
-from scripts.phases.intake import ejecutar_intake
-from scripts.phases.pre_validation import ejecutar_pre_validacion
-from scripts.phases.registration import ejecutar_registro
-from scripts.phases.asientos import ejecutar_asientos
-from scripts.phases.correction import ejecutar_correccion
-from scripts.phases.cross_validation import ejecutar_cruce
-from scripts.phases.output import ejecutar_salidas
+from sfce.phases.intake import ejecutar_intake
+from sfce.phases.pre_validation import ejecutar_pre_validacion
+from sfce.phases.registration import ejecutar_registro
+from sfce.phases.asientos import ejecutar_asientos
+from sfce.phases.correction import ejecutar_correccion
+from sfce.phases.cross_validation import ejecutar_cruce
+from sfce.phases.output import ejecutar_salidas
 
 logger = crear_logger("pipeline")
 

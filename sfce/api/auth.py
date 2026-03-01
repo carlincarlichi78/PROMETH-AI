@@ -170,3 +170,29 @@ def crear_admin_por_defecto(sesion_factory) -> None:
             )
             sesion.add(admin)
             sesion.commit()
+
+
+from sfce.db.modelos import Empresa
+
+
+def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
+    """Devuelve la empresa si el usuario tiene acceso, lanza 403/404 si no.
+
+    Superadmin (gestoria_id=None) tiene acceso total.
+    Resto solo a empresas de su gestoría.
+    """
+    empresa = sesion.get(Empresa, empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+    # Superadmin ve todo
+    if usuario.gestoria_id is None:
+        return empresa
+
+    # Gestoría: solo sus empresas
+    if empresa.gestoria_id != usuario.gestoria_id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes acceso a esta empresa",
+        )
+    return empresa

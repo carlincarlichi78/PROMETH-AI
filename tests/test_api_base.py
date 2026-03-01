@@ -13,12 +13,17 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import os
+os.environ.setdefault("SFCE_JWT_SECRET", "a" * 32)
+
 from sfce.db.base import Base
 from sfce.db.modelos import (
     Empresa, ProveedorCliente, Trabajador, Documento, Asiento,
     Partida, Factura, ActivoFijo, Cuarentena,
 )
+from sfce.db.modelos_auth import Usuario
 from sfce.api.app import crear_app
+from sfce.api.auth import hashear_password
 
 
 @pytest.fixture
@@ -45,6 +50,27 @@ def client(sesion_factory):
     """TestClient con BD inyectada."""
     app = crear_app(sesion_factory=sesion_factory)
     return TestClient(app)
+
+
+@pytest.fixture
+def token_superadmin(sesion_factory, client):
+    """Crea usuario superadmin (gestoria_id=None) y devuelve su token JWT."""
+    with sesion_factory() as s:
+        u = Usuario(
+            email="superadmin@test.com",
+            nombre="SuperAdmin",
+            hash_password=hashear_password("pass"),
+            rol="superadmin",
+            activo=True,
+            gestoria_id=None,
+            empresas_asignadas=[],
+        )
+        s.add(u)
+        s.commit()
+    resp = client.post("/api/auth/login", json={
+        "email": "superadmin@test.com", "password": "pass"
+    })
+    return resp.json()["access_token"]
 
 
 @pytest.fixture
@@ -180,13 +206,13 @@ def datos_base(sesion_factory):
 class TestEmpresas:
     """Tests para /api/empresas."""
 
-    def test_listar_empresas_vacio(self, client):
-        resp = client.get("/api/empresas")
+    def test_listar_empresas_vacio(self, client, token_superadmin):
+        resp = client.get("/api/empresas", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_listar_empresas(self, client, datos_base):
-        resp = client.get("/api/empresas")
+    def test_listar_empresas(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/empresas", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -194,19 +220,19 @@ class TestEmpresas:
         assert data[0]["nombre"] == "Test S.L."
         assert data[0]["forma_juridica"] == "sl"
 
-    def test_obtener_empresa(self, client, datos_base):
-        resp = client.get("/api/empresas/1")
+    def test_obtener_empresa(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/empresas/1", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert data["id"] == 1
         assert data["cif"] == "B12345678"
 
-    def test_obtener_empresa_404(self, client):
-        resp = client.get("/api/empresas/999")
+    def test_obtener_empresa_404(self, client, token_superadmin):
+        resp = client.get("/api/empresas/999", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 404
 
-    def test_listar_proveedores(self, client, datos_base):
-        resp = client.get("/api/empresas/1/proveedores")
+    def test_listar_proveedores(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/empresas/1/proveedores", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         # Incluye proveedor y cliente (ambos activos)
@@ -215,20 +241,20 @@ class TestEmpresas:
         assert "Proveedor Test" in nombres
         assert "Cliente Test" in nombres
 
-    def test_listar_proveedores_empresa_404(self, client):
-        resp = client.get("/api/empresas/999/proveedores")
+    def test_listar_proveedores_empresa_404(self, client, token_superadmin):
+        resp = client.get("/api/empresas/999/proveedores", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 404
 
-    def test_listar_trabajadores(self, client, datos_base):
-        resp = client.get("/api/empresas/1/trabajadores")
+    def test_listar_trabajadores(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/empresas/1/trabajadores", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]["nombre"] == "Juan Perez"
         assert data[0]["bruto_mensual"] == 2000.00
 
-    def test_listar_trabajadores_empresa_404(self, client):
-        resp = client.get("/api/empresas/999/trabajadores")
+    def test_listar_trabajadores_empresa_404(self, client, token_superadmin):
+        resp = client.get("/api/empresas/999/trabajadores", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 404
 
 
@@ -237,67 +263,71 @@ class TestEmpresas:
 class TestDocumentos:
     """Tests para /api/documentos."""
 
-    def test_listar_documentos(self, client, datos_base):
-        resp = client.get("/api/documentos/1")
+    def test_listar_documentos(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/documentos/1", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
 
-    def test_listar_documentos_filtro_estado(self, client, datos_base):
-        resp = client.get("/api/documentos/1?estado=registrado")
+    def test_listar_documentos_filtro_estado(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/documentos/1?estado=registrado", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]["estado"] == "registrado"
 
-    def test_listar_documentos_filtro_tipo(self, client, datos_base):
-        resp = client.get("/api/documentos/1?tipo_doc=FC")
+    def test_listar_documentos_filtro_tipo(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/documentos/1?tipo_doc=FC", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2  # ambos son FC
 
-    def test_listar_documentos_empresa_404(self, client):
-        resp = client.get("/api/documentos/999")
+    def test_listar_documentos_empresa_404(self, client, token_superadmin):
+        resp = client.get("/api/documentos/999", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 404
 
-    def test_obtener_documento(self, client, datos_base):
+    def test_obtener_documento(self, client, datos_base, token_superadmin):
         # Obtener el primero (registrado)
-        resp_lista = client.get("/api/documentos/1?estado=registrado")
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp_lista = client.get("/api/documentos/1?estado=registrado", headers=hdrs)
         doc_id = resp_lista.json()[0]["id"]
-        resp = client.get(f"/api/documentos/1/{doc_id}")
+        resp = client.get(f"/api/documentos/1/{doc_id}", headers=hdrs)
         assert resp.status_code == 200
         assert resp.json()["estado"] == "registrado"
 
-    def test_obtener_documento_404(self, client, datos_base):
-        resp = client.get("/api/documentos/1/999")
+    def test_obtener_documento_404(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/documentos/1/999", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 404
 
-    def test_listar_cuarentena(self, client, datos_base):
-        resp = client.get("/api/documentos/1/cuarentena")
+    def test_listar_cuarentena(self, client, datos_base, token_superadmin):
+        resp = client.get("/api/documentos/1/cuarentena", headers={"Authorization": f"Bearer {token_superadmin}"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]["tipo_pregunta"] == "subcuenta"
         assert data[0]["resuelta"] is False
 
-    def test_resolver_cuarentena(self, client, datos_base):
+    def test_resolver_cuarentena(self, client, datos_base, token_superadmin):
         # Obtener ID de cuarentena
-        resp_lista = client.get("/api/documentos/1/cuarentena")
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp_lista = client.get("/api/documentos/1/cuarentena", headers=hdrs)
         cuarentena_id = resp_lista.json()[0]["id"]
 
         resp = client.post(
             f"/api/documentos/1/cuarentena/{cuarentena_id}/resolver",
             json={"respuesta": "6210000000"},
+            headers=hdrs,
         )
         assert resp.status_code == 200
         data = resp.json()
         assert data["resuelta"] is True
         assert data["respuesta"] == "6210000000"
 
-    def test_resolver_cuarentena_404(self, client, datos_base):
+    def test_resolver_cuarentena_404(self, client, datos_base, token_superadmin):
         resp = client.post(
             "/api/documentos/1/cuarentena/999/resolver",
             json={"respuesta": "6210000000"},
+            headers={"Authorization": f"Bearer {token_superadmin}"},
         )
         assert resp.status_code == 404
 
@@ -307,8 +337,9 @@ class TestDocumentos:
 class TestContabilidad:
     """Tests para /api/contabilidad."""
 
-    def test_pyg(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/pyg")
+    def test_pyg(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/pyg", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert data["ingresos"] == 2000.0
@@ -317,18 +348,21 @@ class TestContabilidad:
         assert "6000000000" in data["detalle_gastos"]
         assert "7000000000" in data["detalle_ingresos"]
 
-    def test_pyg_con_ejercicio(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/pyg?ejercicio=2025")
+    def test_pyg_con_ejercicio(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/pyg?ejercicio=2025", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert data["resultado"] == 1000.0
 
-    def test_pyg_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/pyg")
+    def test_pyg_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/pyg", headers=hdrs)
         assert resp.status_code == 404
 
-    def test_balance(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/balance")
+    def test_balance(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/balance", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         # activo: subcuenta 4300 (2420) > 0 → activo
@@ -337,12 +371,14 @@ class TestContabilidad:
         assert data["pasivo"] == 1420.0
         assert data["patrimonio_neto"] == 1000.0
 
-    def test_balance_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/balance")
+    def test_balance_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/balance", headers=hdrs)
         assert resp.status_code == 404
 
-    def test_diario(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/diario")
+    def test_diario(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/diario", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         # El endpoint devuelve respuesta paginada: {"asientos": [...], "total": N, ...}
@@ -352,48 +388,55 @@ class TestContabilidad:
         assert asiento1["numero"] == 1
         assert len(asiento1["partidas"]) == 2
 
-    def test_diario_paginacion(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/diario?limit=1&offset=0")
+    def test_diario_paginacion(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/diario?limit=1&offset=0", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data["asientos"]) == 1
         assert data["asientos"][0]["numero"] == 1
 
-        resp2 = client.get("/api/contabilidad/1/diario?limit=1&offset=1")
+        resp2 = client.get("/api/contabilidad/1/diario?limit=1&offset=1", headers=hdrs)
         data2 = resp2.json()
         assert len(data2["asientos"]) == 1
         assert data2["asientos"][0]["numero"] == 2
 
-    def test_diario_filtro_fecha(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/diario?desde=2025-01-16&hasta=2025-01-31")
+    def test_diario_filtro_fecha(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/diario?desde=2025-01-16&hasta=2025-01-31", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data["asientos"]) == 1
         assert data["asientos"][0]["numero"] == 2
 
-    def test_diario_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/diario")
+    def test_diario_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/diario", headers=hdrs)
         assert resp.status_code == 404
 
-    def test_saldo_subcuenta(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/saldo/6000000000")
+    def test_saldo_subcuenta(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/saldo/6000000000", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert data["subcuenta"] == "6000000000"
         assert data["saldo"] == 1000.0
 
-    def test_saldo_subcuenta_sin_movimientos(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/saldo/9990000000")
+    def test_saldo_subcuenta_sin_movimientos(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/saldo/9990000000", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert data["saldo"] == 0.0
 
-    def test_saldo_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/saldo/6000000000")
+    def test_saldo_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/saldo/6000000000", headers=hdrs)
         assert resp.status_code == 404
 
-    def test_facturas(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/facturas")
+    def test_facturas(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/facturas", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -401,30 +444,34 @@ class TestContabilidad:
         assert data[0]["total"] == 1210.0
         assert data[0]["pagada"] is False
 
-    def test_facturas_filtro_tipo(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/facturas?tipo=recibida")
+    def test_facturas_filtro_tipo(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/facturas?tipo=recibida", headers=hdrs)
         data = resp.json()
         assert len(data) == 1
 
-        resp2 = client.get("/api/contabilidad/1/facturas?tipo=emitida")
+        resp2 = client.get("/api/contabilidad/1/facturas?tipo=emitida", headers=hdrs)
         data2 = resp2.json()
         assert len(data2) == 0
 
-    def test_facturas_filtro_pagada(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/facturas?pagada=false")
+    def test_facturas_filtro_pagada(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/facturas?pagada=false", headers=hdrs)
         data = resp.json()
         assert len(data) == 1
 
-        resp2 = client.get("/api/contabilidad/1/facturas?pagada=true")
+        resp2 = client.get("/api/contabilidad/1/facturas?pagada=true", headers=hdrs)
         data2 = resp2.json()
         assert len(data2) == 0
 
-    def test_facturas_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/facturas")
+    def test_facturas_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/facturas", headers=hdrs)
         assert resp.status_code == 404
 
-    def test_activos(self, client, datos_base):
-        resp = client.get("/api/contabilidad/1/activos")
+    def test_activos(self, client, datos_base, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/1/activos", headers=hdrs)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -432,6 +479,7 @@ class TestContabilidad:
         assert data[0]["valor_adquisicion"] == 1200.0
         assert data[0]["amortizacion_acumulada"] == 100.0
 
-    def test_activos_empresa_404(self, client):
-        resp = client.get("/api/contabilidad/999/activos")
+    def test_activos_empresa_404(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/contabilidad/999/activos", headers=hdrs)
         assert resp.status_code == 404

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from scripts.core.aprendizaje import BaseConocimiento, Resolutor
+from sfce.core.aprendizaje import BaseConocimiento, Resolutor
 
 
 # ============================================================
@@ -232,7 +232,7 @@ class TestResolutor:
         datos = resultado["datos_corregidos"]["datos_extraidos"]
         assert datos["neto"] == 1966.0
 
-    @patch("scripts.core.fs_api.api_get")
+    @patch("sfce.core.fs_api.api_get")
     def test_buscar_entidad_fuzzy(self, mock_get, tmp_path):
         mock_get.return_value = [
             {"cifnif": "A28054609", "nombre": "MAKRO", "codproveedor": "P001"}
@@ -255,9 +255,9 @@ class TestResolutor:
         assert datos["emisor_cif"] == "A28054609"
         assert datos["_cif_corregido_por_aprendizaje"] is True
 
-    @patch("scripts.core.fs_api.api_post")
-    @patch("scripts.core.fs_api.api_put")
-    @patch("scripts.core.fs_api.api_get")
+    @patch("sfce.core.fs_api.api_post")
+    @patch("sfce.core.fs_api.api_put")
+    @patch("sfce.core.fs_api.api_get")
     def test_crear_entidad_desde_ocr(self, mock_get, mock_put, mock_post, tmp_path):
         mock_get.return_value = []  # No hay proveedores existentes
         mock_post.return_value = {

@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.db.modelos import Empresa, InformeProgramado
 
 router = APIRouter(prefix="/api/informes", tags=["informes"])
@@ -65,6 +65,7 @@ def generar_informe(
     ejercicio: Optional[str] = None,
     periodo: Optional[str] = None,
     secciones: Optional[str] = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Genera un informe PDF segun plantilla.
@@ -78,9 +79,7 @@ def generar_informe(
     """
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(404, "Empresa no encontrada")
+        empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = ejercicio or empresa.ejercicio_activo or str(date.today().year)
         plantilla = next((p for p in PLANTILLAS_DISPONIBLES if p["id"] == plantilla_id), None)
@@ -143,11 +142,13 @@ def _generar_pdf_texto(empresa, ejercicio: str, periodo, plantilla: dict, seccio
 def listar_programados(
     empresa_id: int,
     request: Request,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Lista informes programados de una empresa."""
     sf = request.app.state.sesion_factory
     with sf() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
         programados = list(sesion.execute(
             select(InformeProgramado)
             .where(InformeProgramado.empresa_id == empresa_id)
@@ -175,11 +176,13 @@ def crear_programado(
     plantilla: str = "mensual",
     periodicidad: str = "mensual",
     email_destino: str = "",
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Crea un informe programado para generacion automatica."""
     sf = request.app.state.sesion_factory
     with sf() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
         nuevo = InformeProgramado(
             empresa_id=empresa_id,
             nombre=nombre,

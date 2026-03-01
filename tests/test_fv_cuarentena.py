@@ -115,28 +115,28 @@ class TestIdentificarEntidadFV:
     """Tests para _identificar_entidad con tipo FV."""
 
     def test_fv_con_cif_conocido(self, config):
-        from scripts.phases.intake import _identificar_entidad
+        from sfce.phases.intake import _identificar_entidad
         datos = {"receptor_cif": "G1802214E", "receptor_nombre": "CLUB DEPORTIVO"}
         entidad = _identificar_entidad(datos, "FV", config)
         assert entidad is not None
         assert entidad["_nombre_corto"] == "club-deportivo-municipal"
 
     def test_fv_sin_cif_busca_por_nombre(self, config):
-        from scripts.phases.intake import _identificar_entidad
+        from sfce.phases.intake import _identificar_entidad
         datos = {"receptor_cif": "", "receptor_nombre": "PACIENTES FISIOTERAPIA"}
         entidad = _identificar_entidad(datos, "FV", config)
         assert entidad is not None
         assert entidad["_nombre_corto"] == "pacientes-fisioterapia"
 
     def test_fv_cif_interrogacion_busca_por_nombre(self, config):
-        from scripts.phases.intake import _identificar_entidad
+        from sfce.phases.intake import _identificar_entidad
         datos = {"receptor_cif": "???", "receptor_nombre": "ALUMNOS CLASES DE PILATES"}
         entidad = _identificar_entidad(datos, "FV", config)
         assert entidad is not None
         assert entidad["_nombre_corto"] == "alumnos-pilates"
 
     def test_fv_nombre_parcial_alias(self, config):
-        from scripts.phases.intake import _identificar_entidad
+        from sfce.phases.intake import _identificar_entidad
         datos = {"receptor_cif": "", "receptor_nombre": "FISIOTERAPIA GENERAL"}
         entidad = _identificar_entidad(datos, "FV", config)
         assert entidad is not None
@@ -147,7 +147,7 @@ class TestValidarEntidadExisteFV:
     """Tests para _validar_entidad_existe con tipo FV."""
 
     def test_fv_con_cif_valido(self, config):
-        from scripts.phases.pre_validation import _validar_entidad_existe
+        from sfce.phases.pre_validation import _validar_entidad_existe
         doc = {"datos_extraidos": {
             "receptor_cif": "G1802214E",
             "receptor_nombre": "CLUB DEPORTIVO"
@@ -156,7 +156,7 @@ class TestValidarEntidadExisteFV:
         assert resultado is None  # Sin error
 
     def test_fv_sin_cif_con_nombre(self, config):
-        from scripts.phases.pre_validation import _validar_entidad_existe
+        from sfce.phases.pre_validation import _validar_entidad_existe
         doc = {"datos_extraidos": {
             "receptor_cif": "",
             "receptor_nombre": "PACIENTES"
@@ -165,7 +165,7 @@ class TestValidarEntidadExisteFV:
         assert resultado is None  # Sin error — encontrado por nombre
 
     def test_fv_sin_cif_sin_nombre_falla(self, config):
-        from scripts.phases.pre_validation import _validar_entidad_existe
+        from sfce.phases.pre_validation import _validar_entidad_existe
         doc = {"datos_extraidos": {
             "receptor_cif": "",
             "receptor_nombre": ""
@@ -174,7 +174,7 @@ class TestValidarEntidadExisteFV:
         assert resultado is not None  # Error: no encontrado
 
     def test_fv_cif_desconocido_nombre_desconocido(self, config):
-        from scripts.phases.pre_validation import _validar_entidad_existe
+        from sfce.phases.pre_validation import _validar_entidad_existe
         doc = {"datos_extraidos": {
             "receptor_cif": "X9999999Z",
             "receptor_nombre": "EMPRESA RARA"

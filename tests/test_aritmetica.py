@@ -1,6 +1,6 @@
 """Tests para checks aritmeticos."""
 import pytest
-from scripts.core.aritmetica import (
+from sfce.core.aritmetica import (
     check_cuadre_linea,
     check_suma_lineas,
     check_base_por_iva,

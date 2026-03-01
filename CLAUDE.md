@@ -18,7 +18,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 - **Uptime Kuma**: Docker `127.0.0.1:3001`. Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N`
 - **Firewall**: ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior
 - **Seguridad nginx**: `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts
-- **Backups**: Restic cron 02:00 diario → `/etc/cron.d/sfce-backup`. Activar: rellenar `.env` con Hetzner S3 creds + `backup.sh --init`
+- **Backups TOTAL**: `/opt/apps/sfce/backup_total.sh` cron 02:00 diario. Cubre 6 PG + 2 MariaDB + configs + SSL + Vaultwarden → Hetzner Helsinki (`hel1.your-objectstorage.com/sfce-backups`). Retención 7d/4w/12m. Credenciales en ACCESOS.md sec.22.
 - **Scripts infra**: `scripts/infra/backup.sh`, `scripts/infra/docker-user-firewall.sh`
 - **Templates nginx**: `infra/nginx/00-security.conf`, `infra/nginx/uptime-kuma.conf` (activar con dominio)
 
@@ -99,11 +99,11 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 | Componente | Ubicacion | Descripcion |
 |------------|-----------|-------------|
-| Pipeline v1 | `scripts/phases/`, `scripts/core/` | 7 fases, quality gates, 18/18 tasks |
-| Motor Autoevaluacion v2 | `scripts/core/ocr_*.py`, `reglas/*.yaml` | 6 capas, triple OCR, 21 tests |
-| Intake Multi-Tipo | `scripts/phases/intake.py` | FC/FV/NC/NOM/SUM/BAN/RLC/IMP, 67 tests |
-| Motor Aprendizaje | `scripts/core/aprendizaje.py` | 6 estrategias, auto-update YAML, 21 tests |
-| OCR por Tiers | `scripts/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
+| Pipeline v1 | `sfce/phases/`, `sfce/core/` | 7 fases, quality gates, 18/18 tasks (unificado 01/03) |
+| Motor Autoevaluacion v2 | `sfce/core/ocr_*.py`, `reglas/*.yaml` | 6 capas, triple OCR, 21 tests |
+| Intake Multi-Tipo | `sfce/phases/intake.py` | FC/FV/NC/NOM/SUM/BAN/RLC/IMP, 67 tests |
+| Motor Aprendizaje | `sfce/core/aprendizaje.py` | 6 estrategias, auto-update YAML, 21 tests |
+| OCR por Tiers | `sfce/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
 | SFCE v2 (5 fases) | `sfce/` | Normativa, perfil fiscal, clasificador, BD, API, dashboard. 954 tests |
 | Modelos Fiscales | `sfce/modelos_fiscales/` | 28 modelos, MotorBOE, GeneradorPDF, API+dashboard. 544 tests |
 | Directorio Empresas | `sfce/db/modelos.py`, `sfce/api/rutas/directorio.py` | CIF unico global, verificacion AEAT/VIES. 65 tests |
@@ -111,19 +111,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`
-**Tests totales**: 1563 PASS (+9 bancario)
+**Tests totales**: 1793 PASS
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 4 commits.
-- `.claude/launch.json` configurado: api (puerto 8000, autoPort:false) + dashboard (puerto 3000)
+- **Estado actual**: **Frontend PWA + Seguridad + Portal + Notificaciones COMPLETO** — rama `feat/frontend-pwa`, 5 commits.
+- `.claude/launch.json` configurado con env vars inline (SFCE_JWT_SECRET, etc.) — `preview_start` funciona directamente
+- `iniciar_dashboard.bat` en raíz para arranque manual alternativo
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify**
 - **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 13 modulos
 - **Backend extendido**: 66+ rutas, 25 tablas BD.
-- **PR abierto**: https://github.com/carlincarlichi78/SPICE/pull/2
-- **Pendiente**: tests E2E dashboard (Playwright), merge a main, activar VITE_VAPID_PUBLIC_KEY para push real
+- **Mergeado a main**: PR #3 cerrado (28/02/2026). Main = estado actual.
+- **Bug corregido**: `contabilidad.py` — `int(codejercicio)` con "C422" y `func.case()` SQLAlchemy 2.x
+- **Pendiente**: tests E2E dashboard (Playwright), activar VITE_VAPID_PUBLIC_KEY + endpoint `/api/notificaciones/suscribir`
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -135,7 +137,18 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
+### 0. **Plataforma Unificada — Plan listo, PENDIENTE ejecucion**
+- **Sesion 28/02/2026**: Analisis profundo de 3 proyectos: CAP-WEB (email SaaS) + CertiGestor/findiur (certs digitales + AAPP) + SPICE
+- **Plan**: `docs/plans/2026-02-28-plataforma-unificada-integracion.md` — 14 tasks, 4 fases, TDD
+- **Fase 1** (9 tasks): Modulo correo SPICE — IMAP+Graph, clasificacion 3 niveles, extractor enlaces, renombrado post-OCR, API REST, frontend
+- **Fase 2** (3 tasks): Bridge CertiGestor — cliente HTTP, webhook receiver AAPP, scrapers→inbox SPICE
+- **Fase 3** (1 task): Portal cliente unificado SPICE+CertiGestor
+- **Fase 4** (1 task): Exportacion iCal plazos fiscales
+- **Variables .env nuevas**: `SFCE_FERNET_KEY`, `CERTIGESTOR_URL`, `CERTIGESTOR_API_KEY`, `CERTIGESTOR_WEBHOOK_SECRET`
+- **Deps nuevas**: `pip install cryptography lxml`
+- **Sinergia clave**: scrapers AAPP CertiGestor Desktop → inbox SPICE → OCR triple → asiento → modelo 303. Nadie mas tiene esto en Espana.
+
+### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
 - **Parsers**: `sfce/conectores/bancario/parser_c43.py` (Norma 43 TXT + CaixaBank extendido auto-detect) + `parser_xls.py` (CaixaBank XLS)
 - **Fix parser C43**: detecta formato CaixaBank (R22 80 chars, prefijo 8 chars antes de fechas). Signo inferido de concepto_común. 44 tests incluyendo 7 contra archivo real TT191225.208.txt.
@@ -161,9 +174,39 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Total**: 39 tests seguridad, 1706 tests resto sin regresiones.
 - **Ejecutar migración**: `python sfce/db/migraciones/003_account_lockout.py`
 
-### 2. **PENDIENTE (baja prioridad)**
-- Task 4 Seguridad: Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
+### 1c. **Multi-Tenant COMPLETADO — rama: feat/frontend-pwa**
+- **Tasks 1-4** (sesion anterior): migracion 004 gestoria_id en empresas, JWT incluye gestoria_id, helper verificar_acceso_empresa, listar_empresas filtra por gestoria.
+- **Tasks 5-7** (esta sesion): todos los endpoints con empresa_id protegidos, gestorias asignadas a BD real, test E2E aislamiento 4/4 PASS.
+- **BD real**: Gestoria Principal (id=1) creada, 5 empresas asignadas.
+- **Tests**: 1660 passed, 0 failed. Rama: `feat/frontend-pwa`, 7 commits multi-tenant.
+- **Pendiente**: añadir `sfce.db`, `tmp/`, `.coverage` a `.gitignore` (se colaron en commit).
+
+### 1d. **Auditoria + Refactor Arquitectura COMPLETADO — commit: 94448e1**
+- **Auditoria 93 hallazgos**: 4 agentes paralelos cubrieron api/, core/db/phases/, dashboard/src/, scripts/
+- **8 bugs criticos corregidos** (session 01/03/2026):
+  - `portal.py`: `Asiento.codejercicio`→`.ejercicio`, `p.codsubcuenta`→`.subcuenta`, `d.tipo`→`.tipo_doc`
+  - `sfce/core/backend.py`, `exportador.py`, `importador.py`: cross-import `scripts.core.logger` → `sfce.core.logger`
+  - `sfce/phases/correction.py:548`: token hardcodeado → `obtener_token()` + `API_BASE`
+  - `sfce/api/websocket.py`: except silencioso → logger.warning
+- **Unificacion arquitectura** (2001 lineas eliminadas, 40 archivos):
+  - 11 archivos duplicados `scripts/core/` eliminados → todo en `sfce/core/`
+  - `scripts/core/config.py` y `asientos_directos.py` conservados (divergencia funcional real)
+  - `scripts/pipeline.py` migrado a `sfce/phases/` (unico pipeline activo)
+  - Feature "FV sin CIF buscar por nombre" portada a `sfce/core/config.py` + `sfce/phases/`
+  - Tests actualizados: `sfce.core.*` en lugar de `scripts.core.*`
+- **scripts/phases/** sigue existiendo como codigo muerto (puede borrarse en proxima sesion)
+
+### 2. **Bugs auditoria — COMPLETADOS (sesion 01/03/2026 parte 2)**
+- ✅ `modelos.py` — `POST /calcular` añadido `verificar_acceso_empresa()` con DI
+- ✅ `rgpd.py` — descarga RGPD verifica acceso empresa antes de generar ZIP
+- ✅ `economico.py` — 7 endpoints migrados de `request.app.state.sesion_factory` a DI inyectada
+- ✅ `documentos.py` — ya tenia la verificacion correcta (false positive del audit)
+- ✅ `scripts/phases/` — borrado (codigo muerto post-unificacion)
+- ✅ Frontend: `src/api/client.ts`, `Sidebar.tsx`, `Layout.tsx` — borrados. Build OK.
+
+### 3. **PENDIENTE (baja prioridad)**
+- Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
 - Backups automaticos BD FacturaScripts
 - Tests E2E dashboard (Playwright)
-- Merge a main (PR #2 abierto)
+- Merge a main (PR pendiente)
 - Backend: endpoint `/api/notificaciones/suscribir` para push real

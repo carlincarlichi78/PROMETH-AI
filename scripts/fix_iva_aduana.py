@@ -16,7 +16,7 @@ import os
 sys.path.insert(0, "C:/Users/carli/PROYECTOS/CONTABILIDAD")
 os.environ.setdefault("FS_API_TOKEN", "iOXmrA1Bbn8RDWXLv91L")
 
-from scripts.core.fs_api import api_get, api_put, api_get_one
+from sfce.core.fs_api import api_get, api_put, api_get_one
 
 # Patrones de lineas que deben ser IVA0 en facturas de agente aduanero
 # Basado en las facturas correctas de Pastorino (Primatransit)

@@ -26,7 +26,7 @@ sys.path.insert(0, str(DIR_MOTOR))
 RAIZ = DIR_MOTOR.parents[2]  # raiz proyecto CONTABILIDAD
 sys.path.insert(0, str(RAIZ))
 
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 from utils.pdf_renderer import renderizar_html, html_a_pdf, html_a_pdf_bytes
 from utils.fechas import trimestre_de_fecha
 from utils.ruido import aplicar_ruido, aplicar_degradacion, generar_html_degradacion

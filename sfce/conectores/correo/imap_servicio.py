@@ -1,0 +1,168 @@
+"""Conector IMAP con descarga incremental por UID.
+
+La interfaz de _conn espera:
+  - search(criteria) → list[bytes]       # lista de UID bytes
+  - fetch(uids, fmt) → dict[bytes, dict] # {uid_bytes: {b"RFC822": raw_bytes}}
+
+En producción, _conectar() asigna un adaptador sobre imaplib que
+implementa esta interfaz. En tests, _conn se sustituye por un MagicMock.
+"""
+import email
+import imaplib
+from email.header import decode_header as _decode_header
+from typing import Any
+
+
+class _ImaplibAdapter:
+    """Adaptador fino sobre imaplib.IMAP4 con la misma interfaz que los mocks."""
+
+    def __init__(self, conn: imaplib.IMAP4) -> None:
+        self._raw = conn
+
+    def search(self, criterio: str) -> list[bytes]:
+        _status, data = self._raw.uid("search", None, criterio)
+        if not data or not data[0]:
+            return []
+        return data[0].split()
+
+    def fetch(self, uids: list[bytes], fmt: str = "RFC822") -> dict[bytes, dict]:
+        uid_str = b",".join(uids)
+        _status, data = self._raw.uid("fetch", uid_str, f"({fmt})")
+        resultado: dict[bytes, dict] = {}
+        # imaplib devuelve pares (header_bytes, raw_bytes) + b")"
+        i = 0
+        while i < len(data):
+            parte = data[i]
+            if isinstance(parte, tuple):
+                # parte[0] contiene "N (RFC822 {size})", parte[1] es el raw
+                header = parte[0]
+                raw = parte[1]
+                # Extraer UID del header: b"3 (RFC822 ...)"
+                uid = header.split()[0]
+                resultado[uid] = {b"RFC822": raw}
+            i += 1
+        return resultado
+
+    def logout(self) -> None:
+        try:
+            self._raw.logout()
+        except Exception:
+            pass
+
+
+class ImapServicio:
+    """Descarga emails nuevos de un buzón IMAP usando UIDs incrementales."""
+
+    def __init__(
+        self,
+        servidor: str,
+        puerto: int,
+        ssl: bool,
+        usuario: str,
+        contrasena: str,
+        carpeta: str = "INBOX",
+    ) -> None:
+        self._servidor = servidor
+        self._puerto = puerto
+        self._ssl = ssl
+        self._usuario = usuario
+        self._contrasena = contrasena
+        self._carpeta = carpeta
+        self._conn: Any = None  # _ImaplibAdapter o MagicMock en tests
+
+    def _conectar(self) -> None:
+        if self._ssl:
+            raw = imaplib.IMAP4_SSL(self._servidor, self._puerto)
+        else:
+            raw = imaplib.IMAP4(self._servidor, self._puerto)
+        raw.login(self._usuario, self._contrasena)
+        raw.select(self._carpeta)
+        self._conn = _ImaplibAdapter(raw)
+
+    def _desconectar(self) -> None:
+        if self._conn:
+            try:
+                self._conn.logout()
+            except Exception:
+                pass
+            self._conn = None
+
+    def descargar_nuevos(self, ultimo_uid: int = 0) -> list[dict[str, Any]]:
+        """Devuelve emails con UID > ultimo_uid."""
+        self._conectar()
+        try:
+            uids_raw = self._conn.search(f"UID {ultimo_uid + 1}:*")
+            # Normalizar: puede ser lista de bytes individuales
+            uids: list[bytes] = []
+            for u in uids_raw:
+                if isinstance(u, bytes):
+                    uids.append(u)
+                else:
+                    uids.append(str(u).encode())
+
+            # Filtrar UIDs realmente mayores que ultimo_uid
+            uids = [u for u in uids if u.isdigit() and int(u) > ultimo_uid]
+            if not uids:
+                return []
+
+            fetch_result = self._conn.fetch(uids, "RFC822")
+            resultados = []
+            for uid in uids:
+                entrada = fetch_result.get(uid)
+                if not entrada:
+                    continue
+                raw = entrada.get(b"RFC822")
+                if raw:
+                    resultados.append(self._parsear_email(uid.decode(), raw))
+            return resultados
+        finally:
+            self._desconectar()
+
+    def _parsear_email(self, uid: str, raw: bytes) -> dict[str, Any]:
+        msg = email.message_from_bytes(raw)
+        remitente = self._decodificar_header(msg.get("From", ""))
+        asunto = self._decodificar_header(msg.get("Subject", ""))
+        message_id = msg.get("Message-ID", "")
+        fecha = msg.get("Date", "")
+        cuerpo_texto = ""
+        cuerpo_html = ""
+        adjuntos: list[dict] = []
+
+        for parte in msg.walk():
+            ct = parte.get_content_type()
+            cd = str(parte.get("Content-Disposition", ""))
+            if ct == "text/plain" and "attachment" not in cd:
+                payload = parte.get_payload(decode=True)
+                if payload:
+                    cuerpo_texto = payload.decode("utf-8", errors="replace")
+            elif ct == "text/html" and "attachment" not in cd:
+                payload = parte.get_payload(decode=True)
+                if payload:
+                    cuerpo_html = payload.decode("utf-8", errors="replace")
+            elif "attachment" in cd or parte.get_filename():
+                nombre = self._decodificar_header(parte.get_filename() or "adjunto")
+                datos = parte.get_payload(decode=True)
+                if datos:
+                    adjuntos.append({"nombre": nombre, "datos_bytes": datos, "mime_type": ct})
+
+        return {
+            "uid": uid,
+            "message_id": message_id,
+            "remitente": remitente,
+            "asunto": asunto,
+            "fecha": fecha,
+            "cuerpo_texto": cuerpo_texto,
+            "cuerpo_html": cuerpo_html,
+            "adjuntos": adjuntos,
+        }
+
+    @staticmethod
+    def _decodificar_header(valor: str) -> str:
+        partes = _decode_header(valor)
+        resultado = []
+        for texto, enc in partes:
+            if isinstance(texto, bytes):
+                resultado.append(texto.decode(enc or "utf-8", errors="replace"))
+            else:
+                resultado.append(texto)
+        return "".join(resultado)

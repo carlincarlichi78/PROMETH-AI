@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.db.modelos import Empresa, Factura, Asiento, Partida
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/portal", tags=["portal"])
 def resumen_portal(
     empresa_id: int,
     request: Request,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Resumen simplificado para la vista del portal cliente.
@@ -25,9 +26,7 @@ def resumen_portal(
     """
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(404, "Empresa no encontrada")
+        empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
 
         ej = empresa.ejercicio_activo or str(date.today().year)
 
@@ -36,13 +35,13 @@ def resumen_portal(
             select(Partida)
             .join(Asiento, Asiento.id == Partida.asiento_id)
             .where(Asiento.empresa_id == empresa_id)
-            .where(Asiento.codejercicio == ej)
+            .where(Asiento.ejercicio == ej)
         ).scalars().all())
 
         ingresos = sum(float(p.haber or 0) - float(p.debe or 0)
-                      for p in partidas if (p.codsubcuenta or "").startswith("7"))
+                      for p in partidas if (p.subcuenta or "").startswith("7"))
         gastos = sum(float(p.debe or 0) - float(p.haber or 0)
-                     for p in partidas if (p.codsubcuenta or "").startswith("6"))
+                     for p in partidas if (p.subcuenta or "").startswith("6"))
         resultado = ingresos - gastos
 
         # Facturas pendientes
@@ -76,14 +75,13 @@ def resumen_portal(
 def documentos_portal(
     empresa_id: int,
     request: Request,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Lista documentos disponibles en el portal cliente."""
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(404, "Empresa no encontrada")
+        verificar_acceso_empresa(_user, empresa_id, sesion)
 
         from sfce.db.modelos import Documento
         docs = list(sesion.execute(
@@ -99,7 +97,7 @@ def documentos_portal(
                 {
                     "id": d.id,
                     "nombre": d.nombre_archivo,
-                    "tipo": d.tipo,
+                    "tipo": d.tipo_doc,
                     "estado": d.estado,
                     "fecha": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
                 }

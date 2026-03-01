@@ -8,10 +8,10 @@ from pathlib import Path
 # Raiz del proyecto
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.core.ocr_mistral import extraer_batch_mistral
-from scripts.core.ocr_gemini import extraer_batch_gemini
+from sfce.core.ocr_mistral import extraer_batch_mistral
+from sfce.core.ocr_gemini import extraer_batch_gemini
 from scripts.core.config import cargar_config
-from scripts.core.logger import crear_logger
+from sfce.core.logger import crear_logger
 from scripts.phases.ocr_consensus import ejecutar_consenso
 
 logger = crear_logger("batch_ocr")
