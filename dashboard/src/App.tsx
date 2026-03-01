@@ -55,6 +55,9 @@ const Comparativa = lazy(() => import('@/features/economico/comparativa-page'))
 const Scoring = lazy(() => import('@/features/economico/scoring-page'))
 const Informes = lazy(() => import('@/features/economico/informes-page'))
 
+// --- Colas de revisión ---
+const ColaRevision = lazy(() => import('@/features/colas/cola-revision-page'))
+
 // --- Salud del Sistema ---
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
@@ -136,6 +139,7 @@ export function App() {
           <Route path="/empresa/:id/modelos-fiscales/historico" element={<HistoricoModelos />} />
 
           {/* Documentos */}
+          <Route path="/empresa/:id/cola-revision" element={<ColaRevision />} />
           <Route path="/empresa/:id/inbox" element={<Inbox />} />
           <Route path="/empresa/:id/pipeline" element={<PipelinePage />} />
           <Route path="/empresa/:id/cuarentena" element={<CuarentenaPage />} />
