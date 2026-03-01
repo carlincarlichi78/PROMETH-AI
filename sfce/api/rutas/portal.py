@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from sqlalchemy import select
 
@@ -183,3 +183,83 @@ def calendario_ical(
         media_type="text/calendar; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="fiscal_{empresa_id}.ics"'},
     )
+
+
+@router.post("/{empresa_id}/documentos/subir", status_code=201)
+async def subir_documento(
+    empresa_id: int,
+    archivo: UploadFile = File(...),
+    request: Request = None,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Sube un documento desde la app movil (camara o galeria)."""
+    import hashlib
+    from sfce.db.modelos import Documento
+
+    contenido = await archivo.read()
+    sha256 = hashlib.sha256(contenido).hexdigest()
+    nombre_archivo = archivo.filename or "documento.pdf"
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = sesion.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        doc = Documento(
+            empresa_id=empresa_id,
+            ruta_pdf=nombre_archivo,
+            tipo_doc="FV",  # tipo por defecto; el pipeline reclasificara
+            estado="pendiente",
+            hash_pdf=sha256,
+            datos_ocr={},
+        )
+        sesion.add(doc)
+        sesion.commit()
+        sesion.refresh(doc)
+
+        return {"id": doc.id, "nombre": doc.ruta_pdf, "estado": doc.estado}
+
+
+@router.get("/{empresa_id}/notificaciones")
+def notificaciones_portal(
+    empresa_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Alertas fiscales y documentos pendientes para el empresario."""
+    from sfce.db.modelos import Documento
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = sesion.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        notificaciones = []
+
+        # Onboarding pendiente
+        if empresa.estado_onboarding == "pendiente_cliente":
+            notificaciones.append({
+                "tipo": "onboarding",
+                "prioridad": "alta",
+                "titulo": "Completa tu alta",
+                "descripcion": "Tu gestoria necesita que completes tus datos.",
+            })
+
+        # Documentos en espera (max 5)
+        docs_pendientes = (
+            sesion.query(Documento)
+            .filter_by(empresa_id=empresa_id, estado="pendiente")
+            .limit(5)
+            .all()
+        )
+        if docs_pendientes:
+            notificaciones.append({
+                "tipo": "documentos",
+                "prioridad": "media",
+                "titulo": f"{len(docs_pendientes)} documentos pendientes",
+                "descripcion": "Tu gestoria esta procesando documentos recientes.",
+            })
+
+        return {"notificaciones": notificaciones}
