@@ -119,3 +119,43 @@ def notificar_cliente(
         )
         sesion.commit()
         return {"id": notif.id, "ok": True}
+
+
+@router.get("/documentos/revision")
+def listar_docs_revision(
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista documentos REVISION_PENDIENTE de las empresas del gestor."""
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403)
+
+    from sfce.db.modelos import ColaProcesamiento, Documento
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        empresas_ids = list(getattr(usuario, "empresas_ids", []) or [])
+
+        query = (
+            s.query(ColaProcesamiento, Documento, Empresa)
+            .join(Documento, ColaProcesamiento.documento_id == Documento.id)
+            .join(Empresa, ColaProcesamiento.empresa_id == Empresa.id)
+            .filter(ColaProcesamiento.estado == "REVISION_PENDIENTE")
+        )
+        if empresas_ids and usuario.rol not in ("superadmin", "admin_gestoria"):
+            query = query.filter(ColaProcesamiento.empresa_id.in_(empresas_ids))
+
+        rows = query.all()
+        return [
+            {
+                "id": doc.id,
+                "cola_id": cola.id,
+                "nombre": doc.ruta_pdf,
+                "tipo_doc": doc.tipo_doc,
+                "empresa_id": cola.empresa_id,
+                "empresa_nombre": empresa.nombre,
+                "fecha_subida": doc.fecha_proceso.isoformat() if doc.fecha_proceso else None,
+                "datos_ocr": doc.datos_ocr,
+            }
+            for cola, doc, empresa in rows
+        ]

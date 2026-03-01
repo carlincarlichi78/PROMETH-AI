@@ -6,7 +6,7 @@ import {
   DoorClosed, DoorOpen, Wallet, PiggyBank, Target, GitCompare, CreditCard,
   FileBarChart, ExternalLink, Database, Palette, HardDrive, Key, UserCog,
   Briefcase, Receipt, Activity, Archive, HeartPulse, ChevronRight, ChevronsUpDown,
-  Shield,
+  Shield, ClipboardCheck,
 } from 'lucide-react'
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -88,6 +88,7 @@ export function AppSidebar() {
       items: [
         { titulo: 'Bandeja Entrada', ruta: `/empresa/${eId}/inbox`, icono: Upload },
         { titulo: 'Pipeline', ruta: `/empresa/${eId}/pipeline`, icono: Activity },
+        { titulo: 'Revisión Docs', ruta: `/revision`, icono: ClipboardCheck },
         { titulo: 'Cuarentena', ruta: `/empresa/${eId}/cuarentena`, icono: AlertTriangle },
         { titulo: 'Archivo Digital', ruta: `/empresa/${eId}/archivo`, icono: Archive },
       ],
@@ -120,6 +121,7 @@ export function AppSidebar() {
         { titulo: 'Backup / Restore', ruta: `/empresa/${eId}/config/backup`, icono: HardDrive },
         { titulo: 'Licencia', ruta: `/empresa/${eId}/config/licencia`, icono: Key },
         { titulo: 'Apariencia', ruta: `/empresa/${eId}/config/apariencia`, icono: Palette },
+        { titulo: 'Pipeline Docs', ruta: `/empresa/${eId}/config/procesamiento`, icono: Activity },
       ],
     },
   ] : []

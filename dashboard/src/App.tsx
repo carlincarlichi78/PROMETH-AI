@@ -45,6 +45,7 @@ const Inbox = lazy(() => import('@/features/documentos/inbox-page'))
 const PipelinePage = lazy(() => import('@/features/documentos/pipeline-page'))
 const CuarentenaPage = lazy(() => import('@/features/documentos/cuarentena-page'))
 const Archivo = lazy(() => import('@/features/documentos/archivo-page'))
+const RevisionPage = lazy(() => import('@/features/documentos/revision-page').then(m => ({ default: m.RevisionPage })))
 
 // --- Economico-Financiero (Stream B) ---
 const Ratios = lazy(() => import('@/features/economico/ratios-page'))
@@ -90,6 +91,7 @@ const ConfigIntegraciones = lazy(() => import('@/features/configuracion/integrac
 const ConfigBackup = lazy(() => import('@/features/configuracion/backup-page'))
 const ConfigLicencia = lazy(() => import('@/features/configuracion/licencia-page'))
 const ConfigApariencia = lazy(() => import('@/features/configuracion/apariencia-page'))
+const ConfigProcesamientoPage = lazy(() => import('@/features/configuracion/config-procesamiento-page'))
 
 function SuspenseFallback() {
   return (
@@ -157,6 +159,7 @@ export function App() {
           <Route path="/empresa/:id/pipeline" element={<PipelinePage />} />
           <Route path="/empresa/:id/cuarentena" element={<CuarentenaPage />} />
           <Route path="/empresa/:id/archivo" element={<Archivo />} />
+          <Route path="/revision" element={<RevisionPage />} />
 
           {/* Economico-Financiero */}
           <Route path="/empresa/:id/ratios" element={<Ratios />} />
@@ -199,6 +202,7 @@ export function App() {
           <Route path="/empresa/:id/config/backup" element={<ConfigBackup />} />
           <Route path="/empresa/:id/config/licencia" element={<ConfigLicencia />} />
           <Route path="/empresa/:id/config/apariencia" element={<ConfigApariencia />} />
+          <Route path="/empresa/:id/config/procesamiento" element={<ConfigProcesamientoPage />} />
         </Route>
 
         {/* Portal Cliente — layout propio, sin AppShell */}
