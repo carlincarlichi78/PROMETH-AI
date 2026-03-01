@@ -39,5 +39,7 @@ export const api = {
     fetchApi<T>(ruta, { method: 'POST', body: JSON.stringify(body) }),
   put: <T>(ruta: string, body: unknown) =>
     fetchApi<T>(ruta, { method: 'PUT', body: JSON.stringify(body) }),
+  patch: <T>(ruta: string, body: unknown) =>
+    fetchApi<T>(ruta, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T>(ruta: string) => fetchApi<T>(ruta, { method: 'DELETE' }),
 }

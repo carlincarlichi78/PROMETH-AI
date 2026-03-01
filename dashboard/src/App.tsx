@@ -59,6 +59,9 @@ const Informes = lazy(() => import('@/features/economico/informes-page'))
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
 
+// --- Onboarding ---
+const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
+
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
 const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
@@ -144,6 +147,9 @@ export function App() {
           <Route path="/empresa/:id/comparativa" element={<Comparativa />} />
           <Route path="/empresa/:id/scoring" element={<Scoring />} />
           <Route path="/empresa/:id/informes" element={<Informes />} />
+
+          {/* Onboarding */}
+          <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />
 
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
