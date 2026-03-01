@@ -46,7 +46,10 @@ _SERVICIO_MAP = [
 
 
 def _parse_float(texto: str) -> float:
-    return float(texto.replace(".", "").replace(",", "."))
+    try:
+        return float(texto.replace(".", "").replace(",", "."))
+    except ValueError:
+        return 0.0
 
 
 class ParserTPV:
