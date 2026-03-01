@@ -1,6 +1,10 @@
 """SFCE API — Endpoints del portal cliente (vista simplificada)."""
 
-from datetime import date
+import hashlib
+import json
+import uuid
+from datetime import date, datetime as dt
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
@@ -9,7 +13,14 @@ from sqlalchemy import select
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.core.exportar_ical import generar_ical, DeadlineFiscal
-from sfce.db.modelos import Empresa, Factura, Asiento, Partida, SupplierRule
+from sfce.db.modelos import (
+    Empresa, Factura, Asiento, Partida, SupplierRule,
+    ColaProcesamiento, ConfigProcesamientoEmpresa,
+)
+
+_DIRECTORIO_UPLOADS = Path("docs/uploads")
+_TIPOS_MIME_PERMITIDOS = {"application/pdf", "image/jpeg", "image/png"}
+_TAMANO_MAXIMO_BYTES = 25 * 1024 * 1024  # 25 MB
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
@@ -220,8 +231,8 @@ async def subir_documento(
     request: Request = None,
     usuario=Depends(obtener_usuario_actual),
 ):
-    """Sube un documento desde la app movil (camara o galeria)."""
-    # Gestores y admins pueden subir siempre; para empresarios aplicar tier
+    """Sube un documento desde la app movil o portal. Guarda en disco y encola para pipeline."""
+    # 1. Verificar tier
     if usuario.rol not in _ROLES_GESTOR:
         from sfce.core.tiers import tiene_feature_empresario
         if not tiene_feature_empresario(usuario, "subir_docs"):
@@ -230,30 +241,68 @@ async def subir_documento(
                 detail={"error": "plan_insuficiente", "feature": "subir_docs", "requiere": "pro"},
             )
 
-    import hashlib
-    from sfce.db.modelos import Documento
-
+    # 2. Leer contenido y validar tamaño
     contenido = await archivo.read()
+    if len(contenido) > _TAMANO_MAXIMO_BYTES:
+        raise HTTPException(status_code=422, detail="Archivo demasiado grande (máx 25 MB)")
+
+    # 3. Validar tipo MIME
+    content_type = archivo.content_type or ""
+    if content_type not in _TIPOS_MIME_PERMITIDOS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Tipo de archivo no permitido: {content_type}. Sólo PDF, JPEG o PNG.",
+        )
+
+    # 4. Validación mínima de estructura PDF
+    if content_type == "application/pdf" and not contenido.startswith(b"%PDF"):
+        raise HTTPException(status_code=422, detail="El archivo no es un PDF válido")
+
+    # 5. Hash SHA256
     sha256 = hashlib.sha256(contenido).hexdigest()
-    nombre_archivo = archivo.filename or "documento.pdf"
+
+    # 6. Nombre único en disco
+    timestamp = dt.utcnow().strftime("%Y%m%d_%H%M%S")
+    uid = uuid.uuid4().hex[:8]
+    ext = Path(archivo.filename or "doc.pdf").suffix.lower() or ".pdf"
+    nombre_unico = f"{timestamp}_{uid}{ext}"
+
+    # 7. Guardar en disco
+    dir_uploads = getattr(request.app.state, "directorio_uploads", _DIRECTORIO_UPLOADS)
+    dir_empresa = Path(dir_uploads) / str(empresa_id)
+    dir_empresa.mkdir(parents=True, exist_ok=True)
+    ruta_archivo = dir_empresa / nombre_unico
+    ruta_archivo.write_bytes(contenido)
+
+    nombre_original = archivo.filename or nombre_unico
     tipo_doc = _TIPO_MAP.get(tipo, "FV")
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
         empresa = sesion.get(Empresa, empresa_id)
         if not empresa:
+            ruta_archivo.unlink(missing_ok=True)
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
+        # 8. Determinar modo (auto o revision)
+        cfg = sesion.query(ConfigProcesamientoEmpresa).filter_by(
+            empresa_id=empresa_id
+        ).first()
+        modo = cfg.modo if cfg else "revision"
+        estado_cola = "PENDIENTE" if modo == "auto" else "REVISION_PENDIENTE"
+
+        # 9. Datos extra del formulario
         datos_extra = {}
         if proveedor_cif:
             datos_extra["proveedor_cif"] = proveedor_cif
         if proveedor_nombre:
             datos_extra["proveedor_nombre"] = proveedor_nombre
-        def _parse_importe(v: str | None) -> float | None:
+
+        def _parse_importe(v):
             if not v:
                 return None
             try:
-                return float(v.replace(",", ".").replace("€", "").strip())
+                return float(str(v).replace(",", ".").replace("€", "").strip())
             except ValueError:
                 return None
 
@@ -272,19 +321,49 @@ async def subir_documento(
             if valor:
                 datos_extra[campo] = valor
 
+        # 10. Crear Documento
+        from sfce.db.modelos import Documento
         doc = Documento(
             empresa_id=empresa_id,
-            ruta_pdf=nombre_archivo,
+            ruta_pdf=nombre_original,
+            ruta_disco=str(ruta_archivo.resolve()),
             tipo_doc=tipo_doc,
             estado="pendiente",
             hash_pdf=sha256,
             datos_ocr=datos_extra,
         )
         sesion.add(doc)
+        sesion.flush()  # obtener doc.id
+
+        # 11. Crear ColaProcesamiento
+        from sfce.core.gate0 import calcular_trust_level
+        trust = calcular_trust_level("portal", usuario.rol)
+        cola = ColaProcesamiento(
+            empresa_id=empresa_id,
+            documento_id=doc.id,
+            nombre_archivo=nombre_original,
+            ruta_archivo=str(ruta_archivo.resolve()),
+            estado=estado_cola,
+            trust_level=trust.value,
+            hints_json=json.dumps(datos_extra),
+            sha256=sha256,
+        )
+        sesion.add(cola)
+        sesion.flush()
+
+        doc.cola_id = cola.id
         sesion.commit()
         sesion.refresh(doc)
 
-        return {"id": doc.id, "nombre": doc.ruta_pdf, "estado": doc.estado, "tipo_doc": doc.tipo_doc}
+        return {
+            "id": doc.id,
+            "cola_id": cola.id,
+            "nombre": doc.ruta_pdf,
+            "ruta_disco": doc.ruta_disco,
+            "estado": "encolado",
+            "modo": modo,
+            "tipo_doc": doc.tipo_doc,
+        }
 
 
 @router.get("/{empresa_id}/notificaciones")
