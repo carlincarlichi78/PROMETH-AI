@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from sqlalchemy import select
 
@@ -185,20 +185,36 @@ def calendario_ical(
     )
 
 
+_ROLES_GESTOR = {"superadmin", "admin_gestoria", "gestor", "asesor", "asesor_independiente"}
+
+_TIPO_MAP = {
+    "Factura": "FV",
+    "Ticket":  "FV",
+    "Nómina":  "NOM",
+    "Extracto": "BAN",
+    "Otro":    "FV",
+}
+
+
 @router.post("/{empresa_id}/documentos/subir", status_code=201)
 async def subir_documento(
     empresa_id: int,
     archivo: UploadFile = File(...),
+    tipo: str = Form("Factura"),
+    proveedor_cif: str = Form(None),
+    proveedor_nombre: str = Form(None),
     request: Request = None,
     usuario=Depends(obtener_usuario_actual),
 ):
     """Sube un documento desde la app movil (camara o galeria)."""
-    from sfce.core.tiers import tiene_feature_empresario
-    if not tiene_feature_empresario(usuario, "subir_docs"):
-        raise HTTPException(
-            status_code=403,
-            detail={"error": "plan_insuficiente", "feature": "subir_docs", "requiere": "pro"},
-        )
+    # Gestores y admins pueden subir siempre; para empresarios aplicar tier
+    if usuario.rol not in _ROLES_GESTOR:
+        from sfce.core.tiers import tiene_feature_empresario
+        if not tiene_feature_empresario(usuario, "subir_docs"):
+            raise HTTPException(
+                status_code=403,
+                detail={"error": "plan_insuficiente", "feature": "subir_docs", "requiere": "pro"},
+            )
 
     import hashlib
     from sfce.db.modelos import Documento
@@ -206,6 +222,7 @@ async def subir_documento(
     contenido = await archivo.read()
     sha256 = hashlib.sha256(contenido).hexdigest()
     nombre_archivo = archivo.filename or "documento.pdf"
+    tipo_doc = _TIPO_MAP.get(tipo, "FV")
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
@@ -213,19 +230,25 @@ async def subir_documento(
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
+        datos_extra = {}
+        if proveedor_cif:
+            datos_extra["proveedor_cif"] = proveedor_cif
+        if proveedor_nombre:
+            datos_extra["proveedor_nombre"] = proveedor_nombre
+
         doc = Documento(
             empresa_id=empresa_id,
             ruta_pdf=nombre_archivo,
-            tipo_doc="FV",  # tipo por defecto; el pipeline reclasificara
+            tipo_doc=tipo_doc,
             estado="pendiente",
             hash_pdf=sha256,
-            datos_ocr={},
+            datos_ocr=datos_extra,
         )
         sesion.add(doc)
         sesion.commit()
         sesion.refresh(doc)
 
-        return {"id": doc.id, "nombre": doc.ruta_pdf, "estado": doc.estado}
+        return {"id": doc.id, "nombre": doc.ruta_pdf, "estado": doc.estado, "tipo_doc": doc.tipo_doc}
 
 
 @router.get("/{empresa_id}/notificaciones")

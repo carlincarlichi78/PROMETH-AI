@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { Stack, router } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useAuthStore } from '@/store/auth'
 import { apiFetch } from '@/hooks/useApi'
 import '../global.css'
@@ -63,10 +64,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthGate>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthGate>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AuthGate>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   )
 }

@@ -6,13 +6,34 @@ export default function GestorLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarStyle: { backgroundColor: '#0f172a', borderTopColor: '#1e293b' },
-      tabBarActiveTintColor: '#fbbf24',
-      tabBarInactiveTintColor: '#64748b',
+      tabBarStyle: {
+        backgroundColor: '#1e293b',
+        borderTopWidth: 0,
+        height: 76,
+        paddingBottom: 12,
+        paddingTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 16,
+      },
+      tabBarActiveTintColor: '#f59e0b',
+      tabBarInactiveTintColor: '#475569',
+      tabBarLabelStyle: { fontSize: 13, fontWeight: '700', marginTop: 4 },
     }}>
-      <Tabs.Screen name="index" options={{ title: 'Empresas', tabBarIcon: ({ color }) => <Building2 size={22} color={color} /> }} />
-      <Tabs.Screen name="subir" options={{ title: 'Subir', tabBarIcon: ({ color }) => <Upload size={22} color={color} /> }} />
-      <Tabs.Screen name="alertas" options={{ title: 'Alertas', tabBarIcon: ({ color }) => <Bell size={22} color={color} /> }} />
+      <Tabs.Screen
+        name="index"
+        options={{ title: 'Empresas', tabBarIcon: ({ color, size }) => <Building2 size={28} color={color} /> }}
+      />
+      <Tabs.Screen
+        name="subir"
+        options={{ title: 'Subir doc', tabBarIcon: ({ color, size }) => <Upload size={28} color={color} /> }}
+      />
+      <Tabs.Screen
+        name="alertas"
+        options={{ title: 'Alertas', tabBarIcon: ({ color, size }) => <Bell size={28} color={color} /> }}
+      />
     </Tabs>
   )
 }
