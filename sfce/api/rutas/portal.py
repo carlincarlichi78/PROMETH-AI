@@ -203,6 +203,8 @@ async def subir_documento(
     tipo: str = Form("Factura"),
     proveedor_cif: str = Form(None),
     proveedor_nombre: str = Form(None),
+    base_imponible: str = Form(None),
+    total: str = Form(None),
     request: Request = None,
     usuario=Depends(obtener_usuario_actual),
 ):
@@ -235,6 +237,16 @@ async def subir_documento(
             datos_extra["proveedor_cif"] = proveedor_cif
         if proveedor_nombre:
             datos_extra["proveedor_nombre"] = proveedor_nombre
+        if base_imponible:
+            try:
+                datos_extra["base_imponible"] = float(base_imponible.replace(",", ".").replace("€", "").strip())
+            except ValueError:
+                pass
+        if total:
+            try:
+                datos_extra["total"] = float(total.replace(",", ".").replace("€", "").strip())
+            except ValueError:
+                pass
 
         doc = Documento(
             empresa_id=empresa_id,

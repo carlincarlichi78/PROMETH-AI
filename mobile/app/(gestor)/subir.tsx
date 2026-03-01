@@ -8,7 +8,8 @@ import { useQuery } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { apiFetch, apiUpload } from '@/hooks/useApi'
 import { ProveedorSelector } from '@/components/upload/ProveedorSelector'
-import { Camera, FileText, CheckCircle, Building2, ChevronRight, ArrowLeft } from 'lucide-react-native'
+import { Camera, FileText, CheckCircle, Building2, ChevronRight, ArrowLeft, ExternalLink } from 'lucide-react-native'
+import { Image, Linking } from 'react-native'
 
 const TIPOS_DOC = [
   { id: 'Factura',  icono: '🧾', desc: 'Factura de proveedor' },
@@ -39,7 +40,14 @@ export default function SubirGestor() {
 
   const seleccionarPDF = async () => {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/*'],
+      type: [
+        'application/pdf',
+        'image/*',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv',
+        'text/plain',
+      ],
       copyToCacheDirectory: true,
     })
     if (!result.canceled && result.assets[0]) {
@@ -176,7 +184,7 @@ export default function SubirGestor() {
                 <FileText size={38} color="#ef4444" />
               </View>
               <Text style={s.archivoTitulo}>PDF o imagen del móvil</Text>
-              <Text style={s.archivoDesc}>Elige un archivo de tu teléfono{'\n'}(PDF recomendado para mejor OCR)</Text>
+              <Text style={s.archivoDesc}>PDF · Excel · CSV · TXT · Imagen{'\n'}El sistema reconoce el texto automáticamente</Text>
             </TouchableOpacity>
 
             {/* Cámara — opción secundaria */}
@@ -190,15 +198,37 @@ export default function SubirGestor() {
           </View>
         )}
 
-        {/* ── Paso 3: Proveedor ── */}
+        {/* ── Paso 3: Proveedor + Preview ── */}
         {paso === 3 && empresa && (
           <View>
-            <Text style={s.seccionTitulo}>¿Quién es el proveedor?</Text>
+            {/* Preview del documento */}
+            {archivo?.esFoto ? (
+              <View style={s.previewBox}>
+                <Text style={s.previewLabel}>📄 Documento seleccionado</Text>
+                <Image source={{ uri: archivo.uri }} style={s.previewImagen} resizeMode="contain" />
+                <Text style={s.previewNombre}>{archivo.name}</Text>
+              </View>
+            ) : archivo ? (
+              <TouchableOpacity style={s.previewArchivo} onPress={() => Linking.openURL(archivo.uri)} activeOpacity={0.7}>
+                <View style={s.previewArchivoIcono}>
+                  <FileText size={28} color={archivo.mimeType.includes('pdf') ? '#ef4444' : archivo.mimeType.includes('sheet') || archivo.mimeType.includes('excel') || archivo.mimeType.includes('csv') ? '#10b981' : '#94a3b8'} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.previewArchivoNombre} numberOfLines={1}>{archivo.name}</Text>
+                  <Text style={s.previewArchivoTipo}>{archivo.mimeType.includes('pdf') ? 'PDF' : archivo.mimeType.includes('sheet') || archivo.mimeType.includes('excel') ? 'Excel' : archivo.mimeType.includes('csv') ? 'CSV' : 'Archivo'}</Text>
+                </View>
+                <ExternalLink size={18} color="#475569" />
+              </TouchableOpacity>
+            ) : null}
+
+            <Text style={s.seccionTitulo}>Datos del documento</Text>
             <Text style={s.seccionDesc}>Para {empresa.nombre}</Text>
             <ProveedorSelector empresaId={empresa.id} seleccionado={proveedor} onSeleccionar={(p) => { setProveedor(p); setPaso(4) }} obligatorio={archivo?.esFoto ?? false} />
-            <TouchableOpacity style={s.botonSecundario} onPress={() => setPaso(4)} activeOpacity={0.7}>
-              <Text style={s.botonSecundarioTexto}>Asignar después</Text>
-            </TouchableOpacity>
+            {!archivo?.esFoto && (
+              <TouchableOpacity style={s.botonSecundario} onPress={() => setPaso(4)} activeOpacity={0.7}>
+                <Text style={s.botonSecundarioTexto}>Omitir — el OCR extraerá los datos</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -275,6 +305,14 @@ const s = StyleSheet.create({
   botonSecundario: { paddingVertical: 18, alignItems: 'center' },
   botonSecundarioTexto: { fontSize: 16, color: '#475569', fontWeight: '600' },
 
+  previewBox: { backgroundColor: '#1e293b', borderRadius: 18, padding: 14, marginBottom: 20, alignItems: 'center', gap: 10 },
+  previewLabel: { fontSize: 13, color: '#64748b', fontWeight: '600', alignSelf: 'flex-start' },
+  previewImagen: { width: '100%', height: 220, borderRadius: 12 },
+  previewNombre: { fontSize: 12, color: '#475569', alignSelf: 'flex-start' },
+  previewArchivo: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
+  previewArchivoIcono: { width: 52, height: 52, backgroundColor: '#0f172a', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  previewArchivoNombre: { fontSize: 16, fontWeight: '700', color: '#f1f5f9' },
+  previewArchivoTipo: { fontSize: 13, color: '#64748b', marginTop: 2 },
   exitoIcono: { backgroundColor: '#10b98122', borderRadius: 44, padding: 28, marginBottom: 28 },
   exitoTitulo: { fontSize: 30, fontWeight: '800', color: '#ffffff', marginBottom: 14, textAlign: 'center' },
   exitoDesc: { fontSize: 17, color: '#94a3b8', textAlign: 'center', lineHeight: 26, marginBottom: 40 },
