@@ -65,3 +65,7 @@ preview/
 spice-landing/dist/
 sfce.egg-info/
 tmpclaude-*
+
+# Motor de testeo
+data/
+/tmp/sfce_*.json
