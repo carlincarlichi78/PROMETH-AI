@@ -23,6 +23,7 @@ import { cerrarBd } from '../offline/bd-local'
 import { terminarWorkerOcr } from '../ocr/ocr-imagen'
 import { configurarUpdater, verificarActualizacionManual } from '../updater/configurar-updater'
 import { clienteTelemetria } from '../telemetria/cliente-telemetria'
+import { registrarHandlersConfigPromethAI } from '../handlers/config-prometh-ai'
 
 // Configurar logger
 log.transports.file.level = 'info'
@@ -121,6 +122,7 @@ if (!lockObtenido) {
       registrarHandlersBackup(ventanaPrincipal)
       registrarHandlersMultiCert(ventanaPrincipal)
       registrarHandlersOcr()
+      registrarHandlersConfigPromethAI()
 
       // Offline: inicializar SQLite + handlers
       inicializarEsquemaLocal()
