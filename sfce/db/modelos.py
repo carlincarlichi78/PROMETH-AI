@@ -705,3 +705,34 @@ class NotificacionAAP(Base):
     url_documento = Column(String(500))
     origen = Column(String(50), default="certigestor")  # certigestor | manual | webhook
     creado_en = Column(DateTime, default=datetime.utcnow)
+
+
+class ColaProcesamiento(Base):
+    """Cola de procesamiento de documentos para Gate 0."""
+    __tablename__ = "cola_procesamiento"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, nullable=False, index=True)
+    documento_id = Column(Integer, nullable=True)
+    nombre_archivo = Column(String(500), nullable=False)
+    ruta_archivo = Column(String(1000), nullable=False)
+    estado = Column(String(20), default="PENDIENTE", index=True)
+    trust_level = Column(String(20), default="BAJA")
+    score_final = Column(Float, nullable=True)
+    decision = Column(String(30), nullable=True)
+    hints_json = Column(Text, default="{}")
+    sha256 = Column(String(64), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DocumentoTracking(Base):
+    """Tracking de estados de documentos."""
+    __tablename__ = "documento_tracking"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    documento_id = Column(Integer, nullable=False, index=True)
+    estado = Column(String(30), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    actor = Column(String(50), default="sistema")
+    detalle_json = Column(Text, default="{}")
