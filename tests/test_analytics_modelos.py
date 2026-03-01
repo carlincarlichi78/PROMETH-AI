@@ -34,3 +34,12 @@ def test_fact_venta_columnas(engine):
     cols = {c["name"] for c in ins.get_columns("fact_venta")}
     assert {"empresa_id", "fecha", "servicio", "producto_nombre",
             "familia", "qty", "pvp_unitario", "total"}.issubset(cols)
+
+
+def test_alerta_analitica_columnas(engine):
+    ins = inspect(engine)
+    tablas = ins.get_table_names()
+    assert "alertas_analiticas" in tablas
+    cols = {c["name"] for c in ins.get_columns("alertas_analiticas")}
+    assert {"empresa_id", "alerta_id", "severidad", "mensaje",
+            "activa", "creada_en"}.issubset(cols)

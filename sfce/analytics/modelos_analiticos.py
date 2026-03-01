@@ -3,7 +3,7 @@
 NUNCA consultar partidas/asientos directamente desde el módulo advisor.
 Toda la lectura va contra estas tablas.
 """
-from datetime import datetime
+from datetime import date, datetime, timezone
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Float, ForeignKey,
     Integer, String, Text, JSON, Index,
@@ -29,7 +29,7 @@ class EventoAnalitico(BaseAnalitica):
     fecha_evento = Column(Date, nullable=False, index=True)
     payload = Column(JSON, nullable=False)  # datos crudos del evento
     procesado = Column(Boolean, default=False)
-    creado_en = Column(DateTime, default=datetime.now)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("ix_evento_empresa_fecha", "empresa_id", "fecha_evento"),
@@ -129,7 +129,7 @@ class AlertaAnalitica(BaseAnalitica):
     valor_actual = Column(Float, nullable=True)
     benchmark_referencia = Column(Float, nullable=True)
     activa = Column(Boolean, default=True)
-    creada_en = Column(DateTime, default=datetime.now)
+    creada_en = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     resuelta_en = Column(DateTime, nullable=True)
 
     __table_args__ = (
