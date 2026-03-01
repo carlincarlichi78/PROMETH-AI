@@ -168,7 +168,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: **Rediseño Total COMPLETADO** (01/03/2026) — main, build ✓ 4.65s, 109 entries precacheadas.
+- **Estado actual**: build ✓ 4.60s, 119 entries precacheadas. Sesión 9: +RevisionPage + ConfigProcesamientoCard.
 - `.claude/launch.json` configurado con env vars inline — `preview_start` funciona directamente
 - `iniciar_dashboard.bat` en raíz para arranque manual alternativo
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify** + **Inter**
@@ -188,10 +188,26 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 8 — notificaciones + docs histórico)
+## Estado actual (01/03/2026, sesión 9 — flujo documentos portal→pipeline)
 
 **Rama activa**: `main`
-**Tests**: 2147 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Tests**: 2205 PASS (+58). Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+
+### Flujo documentos portal→pipeline COMPLETADO (sesión 9)
+- `sfce/db/migraciones/migracion_013.py` — config_procesamiento_empresa + slug/ruta_disco/cola_id en documentos
+- `sfce/db/modelos.py` — modelo ConfigProcesamientoEmpresa + campos nuevos Empresa/Documento
+- `sfce/core/pipeline_runner.py` — ResultadoPipeline + lock por empresa + ejecutar_pipeline_empresa
+- `sfce/core/worker_pipeline.py` — daemon async: cola cada 60s, schedule por empresa, lock concurrencia
+- `sfce/core/notificaciones.py` — clasificar_motivo_cuarentena + notificar_cuarentena (cliente vs gestor)
+- `sfce/api/rutas/portal.py` — subir_documento: guarda PDF en docs/uploads/{id}/ + crea ColaProcesamiento; endpoints aprobar/rechazar
+- `sfce/api/rutas/admin.py` — GET/PUT /api/admin/empresas/{id}/config-procesamiento
+- `sfce/api/rutas/gestor.py` — GET /api/gestor/documentos/revision (REVISION_PENDIENTE cross-empresa)
+- `sfce/api/app.py` — arranca loop_worker_pipeline junto al worker OCR en lifespan
+- `dashboard/src/features/documentos/revision-page.tsx` — RevisionPage con DocCard (tipo/CIF/nombre/total + aprobar/rechazar)
+- `dashboard/src/features/configuracion/config-procesamiento-card.tsx` — ConfigProcesamientoCard (modo/schedule/OCR/notifs)
+- `dashboard/src/features/configuracion/config-procesamiento-page.tsx` — página wrapper /empresa/:id/config/procesamiento
+- Sidebar: Revisión Docs (/revision) en grupo Documentos; Pipeline Docs en Configuracion Empresa
+- 34 tests nuevos: migracion_013, modelos_campos, portal_subir, portal_revision, pipeline_runner, worker_pipeline, api_config_procesamiento, notificaciones_pipeline
 
 ### App Móvil COMPLETADA (sesiones 7+8)
 - `mobile/` — monorepo Expo SDK 54 + Expo Router v3, todo StyleSheet.create() (sin NativeWind)
