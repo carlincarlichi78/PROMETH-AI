@@ -11,12 +11,17 @@ from sfce.db.modelos import Empresa
 
 MIN_EMPRESAS = 5  # mínimo para mostrar benchmarks anónimos
 
+KPI_SOPORTADOS = {"ticket_medio"}
+
 
 def calcular_percentiles_sector(sesion: Session, cnae: str, kpi: str) -> dict | None:
     """Calcula percentiles P25/P50/P75 del KPI para todas las empresas del mismo CNAE.
 
-    Retorna None si no hay suficientes datos para garantizar anonimato.
+    Retorna None si el KPI no está soportado o no hay suficientes datos para garantizar anonimato.
     """
+    if kpi not in KPI_SOPORTADOS:
+        return None  # KPI no soportado
+
     empresas = sesion.execute(
         select(Empresa.id).where(Empresa.cnae == cnae).where(Empresa.activa == True)  # noqa: E712
     ).scalars().all()

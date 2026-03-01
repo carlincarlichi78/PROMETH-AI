@@ -274,12 +274,23 @@ def sector_brain(
     Solo disponible cuando hay 5+ empresas activas con el mismo CNAE.
     Los datos son agregados y anónimos — nunca se exponen valores individuales.
     """
-    from sfce.analytics.benchmark_engine import calcular_percentiles_sector, posicion_en_sector
+    from sfce.analytics.benchmark_engine import (
+        calcular_percentiles_sector,
+        posicion_en_sector,
+        _calcular_kpi_empresa,
+        KPI_SOPORTADOS,
+    )
     with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         empresa = sesion.get(Empresa, empresa_id)
         if not empresa or not empresa.cnae:
             raise HTTPException(status_code=404, detail="Empresa sin CNAE configurado")
+
+        if kpi not in KPI_SOPORTADOS:
+            return {
+                "disponible": False,
+                "razon": f"KPI '{kpi}' no disponible. KPIs soportados: {', '.join(sorted(KPI_SOPORTADOS))}",
+            }
 
         percentiles = calcular_percentiles_sector(sesion, empresa.cnae, kpi)
         if not percentiles:
@@ -288,17 +299,13 @@ def sector_brain(
                 "razon": "Pocos datos del sector (mínimo 5 empresas)",
             }
 
-        engine = SectorEngine()
-        engine.cargar(empresa.cnae)
-        kpi_empresa = engine.calcular_kpi(kpi, {})
+        valor_empresa = _calcular_kpi_empresa(sesion, empresa_id, kpi)
 
         return {
             "disponible": True,
             "cnae": empresa.cnae,
             "kpi": kpi,
             "percentiles_sector": percentiles,
-            "valor_empresa": kpi_empresa.valor if kpi_empresa else None,
-            "posicion": posicion_en_sector(
-                kpi_empresa.valor if kpi_empresa else 0, percentiles
-            ) if kpi_empresa else None,
+            "valor_empresa": valor_empresa,
+            "posicion": posicion_en_sector(valor_empresa, percentiles) if valor_empresa is not None else None,
         }

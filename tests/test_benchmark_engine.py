@@ -66,6 +66,13 @@ def test_cinco_empresas_devuelve_percentiles(sesion):
     assert result["n_empresas"] == 5
 
 
+def test_kpi_no_soportado_retorna_none(sesion):
+    """KPI desconocido retorna None inmediatamente."""
+    from sfce.analytics.benchmark_engine import calcular_percentiles_sector
+    result = calcular_percentiles_sector(sesion, "5610", "kpi_no_existe")
+    assert result is None
+
+
 def test_posicion_en_sector_cuartiles(sesion):
     """posicion_en_sector clasifica correctamente."""
     from sfce.analytics.benchmark_engine import posicion_en_sector
