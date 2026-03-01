@@ -6,7 +6,7 @@ Cubre: login, /me, CRUD usuarios, roles, token expirado.
 import time
 
 import pytest
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
@@ -408,3 +408,86 @@ class TestEndpointsExistentes:
         # ahora requiere autenticacion → 401
         resp = client.get("/api/contabilidad/1/pyg")
         assert resp.status_code == 401
+
+
+class TestAceptarInvitacion:
+    """Tests para endpoint POST /api/auth/aceptar-invitacion (T-INVIT)."""
+
+    @pytest.fixture
+    def usuario_con_invitacion(self, sesion_factory):
+        from datetime import timedelta
+        from sfce.api.auth import hashear_password
+        from sfce.db.modelos_auth import Usuario
+        import secrets
+
+        token = secrets.token_urlsafe(32)
+        with sesion_factory() as s:
+            u = Usuario(
+                email="nuevo@test.com",
+                nombre="Nuevo Usuario",
+                hash_password=hashear_password("PENDIENTE"),
+                rol="asesor",
+                invitacion_token=token,
+                invitacion_expira=datetime.utcnow() + timedelta(days=7),
+                forzar_cambio_password=True,
+                activo=True,
+                empresas_asignadas=[],
+            )
+            s.add(u)
+            s.commit()
+        return token
+
+    def test_aceptar_invitacion_correcta(self, client, usuario_con_invitacion):
+        resp = client.post("/api/auth/aceptar-invitacion", json={
+            "token": usuario_con_invitacion,
+            "password": "MiNuevaClave123!",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "access_token" in data
+
+    def test_aceptar_invitacion_token_invalido(self, client):
+        resp = client.post("/api/auth/aceptar-invitacion", json={
+            "token": "token-que-no-existe",
+            "password": "MiNuevaClave123!",
+        })
+        assert resp.status_code == 404
+
+    def test_aceptar_invitacion_token_expirado(self, client, sesion_factory):
+        from sfce.api.auth import hashear_password
+        from sfce.db.modelos_auth import Usuario
+        import secrets
+        from datetime import timedelta
+
+        token = secrets.token_urlsafe(32)
+        with sesion_factory() as s:
+            u = Usuario(
+                email="expirado@test.com",
+                nombre="Expirado",
+                hash_password=hashear_password("PENDIENTE"),
+                rol="asesor",
+                invitacion_token=token,
+                invitacion_expira=datetime.utcnow() - timedelta(hours=1),
+                forzar_cambio_password=True,
+                activo=True,
+                empresas_asignadas=[],
+            )
+            s.add(u)
+            s.commit()
+
+        resp = client.post("/api/auth/aceptar-invitacion", json={
+            "token": token,
+            "password": "MiNuevaClave123!",
+        })
+        assert resp.status_code == 410
+
+    def test_token_consumido_no_reutilizable(self, client, usuario_con_invitacion):
+        client.post("/api/auth/aceptar-invitacion", json={
+            "token": usuario_con_invitacion,
+            "password": "MiNuevaClave123!",
+        })
+        resp = client.post("/api/auth/aceptar-invitacion", json={
+            "token": usuario_con_invitacion,
+            "password": "OtraClave456!",
+        })
+        assert resp.status_code == 404

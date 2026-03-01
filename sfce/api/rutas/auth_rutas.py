@@ -246,6 +246,54 @@ def crear_usuario(body: CrearUsuarioRequest, request: Request):
         }
 
 
+class AceptarInvitacionRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/aceptar-invitacion")
+def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request):
+    """Canjea un token de invitacion, establece la password definitiva y devuelve JWT."""
+    sf = request.app.state.sesion_factory
+
+    with sf() as sesion:
+        usuario = sesion.query(Usuario).filter(
+            Usuario.invitacion_token == body.token,
+        ).first()
+
+        if not usuario:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Token de invitacion no encontrado.",
+            )
+
+        ahora = datetime.utcnow()
+        if usuario.invitacion_expira is None or usuario.invitacion_expira < ahora:
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail="El token de invitacion ha expirado.",
+            )
+
+        # Activar cuenta: establecer password, limpiar token, desmarcar cambio forzado
+        usuario.hash_password = hashear_password(body.password)
+        usuario.invitacion_token = None
+        usuario.invitacion_expira = None
+        usuario.forzar_cambio_password = False
+
+        # Capturar valores antes de commit (evita DetachedInstanceError)
+        u_email = usuario.email
+        u_rol = usuario.rol
+        u_gestoria_id = usuario.gestoria_id
+
+        sesion.commit()
+
+    token = crear_token({"sub": u_email, "rol": u_rol, "gestoria_id": u_gestoria_id})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+    }
+
+
 @router.get("/usuarios")
 def listar_usuarios(request: Request):
     """Lista todos los usuarios. Requiere rol admin."""
