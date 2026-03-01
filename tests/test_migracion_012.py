@@ -1,6 +1,12 @@
 import sqlite3
 import tempfile
 import os
+import importlib
+
+
+def _cargar_ejecutar():
+    mod = importlib.import_module("sfce.db.migraciones.012_star_schema")
+    return mod.ejecutar
 
 
 def test_migracion_012_crea_tablas():
@@ -8,7 +14,7 @@ def test_migracion_012_crea_tablas():
         db_path = f.name
     try:
         os.environ["SFCE_DB_PATH"] = db_path
-        from sfce.db.migraciones.migracion_012_star_schema import ejecutar
+        ejecutar = _cargar_ejecutar()
         ejecutar()
         conn = sqlite3.connect(db_path)
         tablas = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
@@ -28,7 +34,7 @@ def test_migracion_012_idempotente():
         db_path = f.name
     try:
         os.environ["SFCE_DB_PATH"] = db_path
-        from sfce.db.migraciones.migracion_012_star_schema import ejecutar
+        ejecutar = _cargar_ejecutar()
         ejecutar()
         ejecutar()  # segunda vez no debe fallar
     finally:
