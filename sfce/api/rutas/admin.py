@@ -1,6 +1,7 @@
 """Endpoints exclusivos de superadmin: gestorias, usuarios globales."""
 import secrets
 from datetime import datetime, timedelta
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
@@ -89,6 +90,8 @@ def listar_gestorias(
                 "activa": g.activa,
                 "plan_asesores": g.plan_asesores,
                 "plan_clientes_tramo": g.plan_clientes_tramo,
+                "plan_tier": g.plan_tier,
+                "limite_empresas": g.limite_empresas,
             }
             for g in sesion.query(Gestoria).all()
         ]
@@ -252,6 +255,67 @@ def invitar_usuario(
             "invitacion_url": f"/auth/aceptar-invitacion?token={token}",
             "expira": expira.isoformat(),
         }
+
+
+# ──────────────────────────────────────────────────────────────────
+# Endpoints de gestion de tiers
+# ──────────────────────────────────────────────────────────────────
+
+class ActualizarPlanRequest(BaseModel):
+    plan_tier: Literal["basico", "pro", "premium"]
+    limite_empresas: int | None = None
+
+
+@router.put("/gestorias/{gestoria_id}/plan")
+def actualizar_plan_gestoria(
+    gestoria_id: int,
+    datos: ActualizarPlanRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Actualiza el tier y limite de empresas de una gestoria. Solo superadmin."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+
+    with sesion_factory() as sesion:
+        g = sesion.get(Gestoria, gestoria_id)
+        if not g:
+            raise HTTPException(status_code=404, detail="Gestoria no encontrada")
+        g.plan_tier = datos.plan_tier
+        g.limite_empresas = datos.limite_empresas
+        sesion.commit()
+        return {
+            "id": g.id,
+            "nombre": g.nombre,
+            "plan_tier": g.plan_tier,
+            "limite_empresas": g.limite_empresas,
+        }
+
+
+class ActualizarPlanUsuarioRequest(BaseModel):
+    plan_tier: Literal["basico", "pro", "premium"]
+
+
+@router.put("/usuarios/{usuario_id}/plan")
+def actualizar_plan_usuario(
+    usuario_id: int,
+    datos: ActualizarPlanUsuarioRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Actualiza el tier de un usuario empresario. Superadmin o admin_gestoria."""
+    solicitante = obtener_usuario_actual(request)
+    if solicitante.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403, detail="Sin permisos")
+
+    with sesion_factory() as sesion:
+        u = sesion.get(Usuario, usuario_id)
+        if not u:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        u.plan_tier = datos.plan_tier
+        sesion.commit()
+        return {"id": u.id, "email": u.email, "plan_tier": u.plan_tier}
 
 
 @router.post("/clientes-directos", status_code=201)

@@ -112,3 +112,82 @@ def test_limite_empresas_bloquea_al_llegar():
 def test_tier_invalido_cae_a_basico():
     u = MockUsuario("enterprise")  # valor invalido
     assert tiene_feature_empresario(u, "subir_docs") is False
+
+
+# ──────────────────────────────────────────────────────────────────
+# Task 3: tests endpoints API
+# ──────────────────────────────────────────────────────────────────
+from fastapi.testclient import TestClient
+from sfce.api.app import crear_app
+from sfce.api.auth import hashear_password
+
+
+def _seed_admin(sesion_factory):
+    """Crea superadmin + gestoria de prueba."""
+    with sesion_factory() as s:
+        admin = Usuario(
+            email="admin@sfce.local", nombre="Admin",
+            hash_password=hashear_password("admin"),
+            rol="superadmin", activo=True, empresas_asignadas=[],
+        )
+        s.add(admin)
+        g = Gestoria(nombre="Gestoria Test", email_contacto="g@test.com", cif="B00000001")
+        s.add(g)
+        s.commit()
+        s.refresh(g)
+        return g.id
+
+
+@pytest.fixture
+def sf_tiers():
+    eng = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(eng)
+    return sessionmaker(bind=eng)
+
+
+@pytest.fixture
+def client_tiers(sf_tiers):
+    gestoria_id = _seed_admin(sf_tiers)
+    app = crear_app(sesion_factory=sf_tiers)
+    return TestClient(app), gestoria_id
+
+
+def _tok(client):
+    r = client.post("/api/auth/login", json={"email": "admin@sfce.local", "password": "admin"})
+    return r.json()["access_token"]
+
+
+def test_put_plan_gestoria(client_tiers):
+    client, gid = client_tiers
+    tok = _tok(client)
+    r = client.put(
+        f"/api/admin/gestorias/{gid}/plan",
+        json={"plan_tier": "pro", "limite_empresas": 25},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 200
+    assert r.json()["plan_tier"] == "pro"
+    assert r.json()["limite_empresas"] == 25
+
+
+def test_put_plan_gestoria_tier_invalido(client_tiers):
+    client, gid = client_tiers
+    tok = _tok(client)
+    r = client.put(
+        f"/api/admin/gestorias/{gid}/plan",
+        json={"plan_tier": "enterprise"},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 422
+
+
+def test_me_incluye_plan_tier(client_tiers):
+    client, _ = client_tiers
+    tok = _tok(client)
+    r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {tok}"})
+    assert r.status_code == 200
+    assert "plan_tier" in r.json()

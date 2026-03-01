@@ -213,6 +213,7 @@ def me(request: Request):
         "gestoria_id": usuario.gestoria_id,
         "empresas_ids": empresas,
         "empresas_asignadas": empresas,
+        "plan_tier": getattr(usuario, "plan_tier", "basico"),
     }
 
 
