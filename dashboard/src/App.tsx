@@ -71,6 +71,9 @@ const CorreoPage = lazy(() => import('@/features/correo/index'))
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 
+// --- Admin ---
+const GestoriasPage = lazy(() => import('@/features/admin/gestorias-page'))
+
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
 const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
@@ -157,6 +160,9 @@ export function App() {
           <Route path="/empresa/:id/comparativa" element={<Comparativa />} />
           <Route path="/empresa/:id/scoring" element={<Scoring />} />
           <Route path="/empresa/:id/informes" element={<Informes />} />
+
+          {/* Admin */}
+          <Route path="/admin/gestorias" element={<GestoriasPage />} />
 
           {/* Onboarding */}
           <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />

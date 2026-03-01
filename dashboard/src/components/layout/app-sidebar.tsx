@@ -6,6 +6,7 @@ import {
   DoorClosed, DoorOpen, Wallet, PiggyBank, Target, GitCompare, CreditCard,
   FileBarChart, ExternalLink, Database, Palette, HardDrive, Key, UserCog,
   Briefcase, Receipt, Activity, Archive, HeartPulse, ChevronRight, ChevronsUpDown,
+  Shield,
 } from 'lucide-react'
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -250,6 +251,26 @@ export function AppSidebar() {
             </SidebarGroup>
           )
         })}
+
+        {/* Admin — solo superadmin */}
+        {usuario?.rol === 'admin' && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname.startsWith('/admin/gestorias')}
+                    onClick={() => navigate('/admin/gestorias')}
+                    tooltip="Gestorias"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Gestorias</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Sistema — siempre visible */}
         <SidebarGroup>
