@@ -7,12 +7,14 @@ import { Toaster } from '@/components/ui/sonner'
 import { useUIStore } from '@/stores/ui-store'
 import { useThemeEffect } from '@/hooks/use-theme'
 import { useEmpresaStore } from '@/stores/empresa-store'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 export function AppShell() {
   const sidebarColapsado = useUIStore((s) => s.sidebarColapsado)
   const { empresaActiva, setEmpresaActiva } = useEmpresaStore()
   const location = useLocation()
   useThemeEffect()
+  useKeyboardShortcuts()
 
   // Auto-hidratar empresaActiva desde la URL cuando se accede directamente a /empresa/:id/...
   useEffect(() => {
