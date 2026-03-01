@@ -54,6 +54,11 @@ clientes/**/*.json
 !clientes/*/config.yaml
 !clientes/*/manifiesto_prueba.json
 
+# App móvil Expo
+mobile/.expo/
+mobile/.env.local
+mobile/.env.production
+
 # Build artifacts
 node_modules/
 dist/
