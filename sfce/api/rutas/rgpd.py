@@ -96,6 +96,7 @@ def generar_token_exportacion(empresa_id: int, request: Request):
     return {
         "token": token,
         "url": url,
+        "url_descarga": url,
         "expira": expira.isoformat(),
     }
 

@@ -187,16 +187,17 @@ def main():
 
         print("4. Verificando resultado...")
         contenido = page.content()
-        if "aceptar-invitacion" in contenido or EMAIL_C in contenido:
+        # Verificar que aparece la URL de invitacion (no solo el email en el input)
+        if "aceptar-invitacion" in contenido:
             print(f"   PASS - URL de invitacion del cliente visible")
         else:
             dialog_abierto = page.locator("[role='dialog']").count() > 0
             if dialog_abierto:
                 texto_dialog = page.locator("[role='dialog']").inner_text()
-                print(f"   FALLO - Dialog abierto: {texto_dialog[:300]}")
+                print(f"   FALLO - Dialog sigue abierto (API error?): {texto_dialog[:300]}")
             else:
                 texto = page.locator("body").inner_text()
-                print(f"   FALLO - Sin confirmacion. Texto: {texto[:500]}")
+                print(f"   FALLO - Sin URL de invitacion. Texto: {texto[:500]}")
 
         browser.close()
     print("\nScreenshots en /tmp/t2_*.png")

@@ -392,7 +392,7 @@ def invitar_cliente_a_empresa(
     from sfce.api.auth import hashear_password
     from sfce.db.modelos_auth import Usuario
 
-    roles_permitidos = ("superadmin", "admin_gestoria", "asesor", "asesor_independiente")
+    roles_permitidos = ("superadmin", "admin_gestoria", "gestor", "asesor", "asesor_independiente")
     if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="Sin permisos")
 

@@ -1,6 +1,10 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export default function PortalLayout() {
+  const { token, cargando } = useAuth()
+  if (cargando) return null
+  if (!token) return <Navigate to="/login" replace />
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white px-6 py-3 flex items-center gap-3 shadow-sm">
