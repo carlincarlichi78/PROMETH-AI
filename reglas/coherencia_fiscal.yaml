@@ -2,27 +2,10 @@
 # Usado en check F1
 
 prefijos_cif:
-  # Espana
-  - prefijos: ["A", "B", "C", "D", "E", "F", "G", "H", "J", "N", "P", "Q", "R", "S", "U", "V", "W"]
-    pais: ESP
-    regimen: general
-    iva_factura: [0, 4, 5, 10, 21]
-    nota: "CIF espanol (letra + 7dig + control)"
+  # NOTA: los prefijos multi-caracter (2+ letras) van ANTES que los de una sola letra
+  # para evitar que "PT" matchee como "P" (CIF español), etc.
 
-  - prefijos: ["ES"]
-    pais: ESP
-    regimen: general
-    iva_factura: [0, 4, 5, 10, 21]
-    nota: "NIF con prefijo pais"
-
-  # NIE espanol
-  - prefijos: ["X", "Y", "Z"]
-    pais: ESP
-    regimen: general
-    iva_factura: [0, 4, 5, 10, 21]
-    nota: "NIE (extranjero residente)"
-
-  # UE intracomunitario
+  # UE intracomunitario (2 letras — van primero)
   - prefijos: ["PT"]
     pais: PRT
     regimen: intracomunitario
@@ -204,6 +187,63 @@ prefijos_cif:
     regimen: extracomunitario
     iva_factura: [0]
     nota: "Chile"
+
+  - prefijos: ["AR"]
+    pais: ARG
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Argentina"
+
+  - prefijos: ["BR"]
+    pais: BRA
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Brasil"
+
+  - prefijos: ["MX"]
+    pais: MEX
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Mexico"
+
+  - prefijos: ["UY"]
+    pais: URY
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Uruguay"
+
+  - prefijos: ["PE"]
+    pais: PER
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Peru"
+
+  - prefijos: ["CO"]
+    pais: COL
+    regimen: extracomunitario
+    iva_factura: [0]
+    nota: "Colombia"
+
+  # NIF con prefijo pais (antes de letras sueltas)
+  - prefijos: ["ES"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "NIF con prefijo pais"
+
+  # NIE espanol (X, Y, Z — letra unica, antes del bloque CIF general)
+  - prefijos: ["X", "Y", "Z"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "NIE (extranjero residente)"
+
+  # CIF espanol letra unica — AL FINAL para no enmascarar prefijos 2 letras
+  - prefijos: ["A", "B", "C", "D", "E", "F", "G", "H", "J", "N", "P", "Q", "R", "S", "U", "V", "W"]
+    pais: ESP
+    regimen: general
+    iva_factura: [0, 4, 5, 10, 21]
+    nota: "CIF espanol (letra + 7dig + control)"
 
 # Regla por defecto para prefijos no reconocidos
 default:

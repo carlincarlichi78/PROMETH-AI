@@ -394,7 +394,8 @@ categorias:
     preguntas: []
     keywords_proveedor: [agencia publicidad, marketing, diseño gráfico, branding, community manager,
                           seo, sem, redes sociales, prensa, radio, televisión, vallas, imprenta,
-                          fotografía, vídeo producción]
+                          fotografía, vídeo producción, artes graficas, rotulacion, serigrafía,
+                          reprografía, publicidad exterior, buzoneo, graficas]
     keywords_lineas: [campaña, anuncio, publicidad, marketing, diseño, branding, fotografía,
                       vídeo, contenidos, google ads, facebook ads, instagram, linkedin, banner,
                       impresión, díptico, folleto]
@@ -496,8 +497,8 @@ categorias:
                           adeslas, aseguradora, mutualidad, mútua, caser, catalana occidente,
                           helvetia, hiscox, ergo, reale, pelayo, aig, liberty seguros,
                           segurcaixa, bnp paribas cardif, zurich vida, linea directa]
-    keywords_lineas: [prima, seguro, cobertura, póliza, siniestro, franquicia, asistencia en viaje,
-                      recibo seguro, renovación póliza, seguro de accidentes]
+    keywords_lineas: [prima seguro, cuota seguro, recibo seguro, renovación póliza, seguro de accidentes,
+                      cobertura, póliza, siniestro, franquicia, asistencia en viaje]
     base_legal: "Art.20.Uno.16 LIVA"
     notas: "Los seguros están EXENTOS de IVA. No hay cuenta 472. La prima es el gasto bruto. No aplica criterio turismo/comercial para el seguro (sí para reparaciones y combustible)."
 
@@ -603,7 +604,8 @@ categorias:
     operaciones_extra: []
     preguntas: []
     keywords_proveedor: [restaurante, bar, cafetería, catering, comedor, taberna,
-                          chiringuito, terraza, mesón, venta]
+                          chiringuito, terraza, mesón, venta, gastro, gastrobar, gastronomia,
+                          cocina, tasca, bodegon, asador, marisqueria, cerveceria]
     keywords_lineas: [menú, cubierto, almuerzo, cena, desayuno, comida, bebida, servicio mesa,
                       cóctel, aperitivo, habitación hotel, noche, check-in, room service]
     base_legal: "Art.91.Uno.2.i LIVA"
@@ -804,7 +806,7 @@ categorias:
     preguntas: []
     keywords_proveedor: [peluquería, barbería, estética, salón de belleza, spa, masaje,
                           fisioterapia no sanitaria, depilación]
-    keywords_lineas: [corte, peluquería, depilación, manicura, pedicura, masaje, tratamiento estético]
+    keywords_lineas: [corte de pelo, corte cabello, peluquería, depilación, manicura, pedicura, masaje, tratamiento estético]
     base_legal: "Art.91.Uno.2.j LIVA"
     notas: "IVA reducido 10% para peluquería e higiene personal."
 
