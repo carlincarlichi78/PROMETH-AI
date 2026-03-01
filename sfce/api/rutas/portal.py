@@ -140,7 +140,7 @@ def documentos_portal(
             "documentos": [
                 {
                     "id": d.id,
-                    "nombre": d.nombre_archivo,
+                    "nombre": d.ruta_pdf,
                     "tipo": d.tipo_doc,
                     "estado": d.estado,
                     "fecha": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
@@ -205,6 +205,18 @@ async def subir_documento(
     proveedor_nombre: str = Form(None),
     base_imponible: str = Form(None),
     total: str = Form(None),
+    # Nómina
+    salario_bruto: str = Form(None),
+    retencion_irpf: str = Form(None),
+    cuota_ss: str = Form(None),
+    # Extracto
+    entidad: str = Form(None),
+    iban: str = Form(None),
+    periodo: str = Form(None),
+    saldo_final: str = Form(None),
+    # Otro
+    descripcion: str = Form(None),
+    importe: str = Form(None),
     request: Request = None,
     usuario=Depends(obtener_usuario_actual),
 ):
@@ -237,16 +249,28 @@ async def subir_documento(
             datos_extra["proveedor_cif"] = proveedor_cif
         if proveedor_nombre:
             datos_extra["proveedor_nombre"] = proveedor_nombre
-        if base_imponible:
+        def _parse_importe(v: str | None) -> float | None:
+            if not v:
+                return None
             try:
-                datos_extra["base_imponible"] = float(base_imponible.replace(",", ".").replace("€", "").strip())
+                return float(v.replace(",", ".").replace("€", "").strip())
             except ValueError:
-                pass
-        if total:
-            try:
-                datos_extra["total"] = float(total.replace(",", ".").replace("€", "").strip())
-            except ValueError:
-                pass
+                return None
+
+        for campo, valor in [
+            ("base_imponible", base_imponible), ("total", total),
+            ("salario_bruto", salario_bruto), ("retencion_irpf", retencion_irpf), ("cuota_ss", cuota_ss),
+            ("saldo_final", saldo_final), ("importe", importe),
+        ]:
+            parsed = _parse_importe(valor)
+            if parsed is not None:
+                datos_extra[campo] = parsed
+
+        for campo, valor in [
+            ("entidad", entidad), ("iban", iban), ("periodo", periodo), ("descripcion", descripcion),
+        ]:
+            if valor:
+                datos_extra[campo] = valor
 
         doc = Documento(
             empresa_id=empresa_id,

@@ -224,7 +224,7 @@ export default function SubirGestor() {
 
             <Text style={s.seccionTitulo}>Datos del documento</Text>
             <Text style={s.seccionDesc}>Para {empresa.nombre}</Text>
-            <ProveedorSelector empresaId={empresa.id} seleccionado={proveedor} onSeleccionar={(p) => { setProveedor(p); setPaso(4) }} obligatorio={archivo?.esFoto ?? false} />
+            <ProveedorSelector empresaId={empresa.id} seleccionado={proveedor} onSeleccionar={(p) => { setProveedor(p); setPaso(4) }} obligatorio={archivo?.esFoto ?? false} tipoDoc={tipo ?? 'Factura'} />
             {!archivo?.esFoto && (
               <TouchableOpacity style={s.botonSecundario} onPress={() => setPaso(4)} activeOpacity={0.7}>
                 <Text style={s.botonSecundarioTexto}>Omitir — el OCR extraerá los datos</Text>
