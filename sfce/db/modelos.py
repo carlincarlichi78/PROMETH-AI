@@ -736,3 +736,24 @@ class DocumentoTracking(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     actor = Column(String(50), default="sistema")
     detalle_json = Column(Text, default="{}")
+
+
+class SupplierRule(Base):
+    """Reglas aprendidas por proveedor para pre-rellenar campos en Gate 0."""
+    __tablename__ = "supplier_rules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, nullable=True, index=True)
+    emisor_cif = Column(String(20), nullable=True, index=True)
+    emisor_nombre_patron = Column(String(200), nullable=True)
+    tipo_doc_sugerido = Column(String(10), nullable=True)
+    subcuenta_gasto = Column(String(20), nullable=True)
+    codimpuesto = Column(String(10), nullable=True)
+    regimen = Column(String(30), nullable=True)
+    aplicaciones = Column(Integer, default=0)
+    confirmaciones = Column(Integer, default=0)
+    tasa_acierto = Column(Float, default=0.0)
+    auto_aplicable = Column(Boolean, default=False)
+    nivel = Column(String(20), default="empresa")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
