@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { GitBranch, Activity, CheckCircle, AlertCircle } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { queryKeys } from '@/lib/query-keys'
 import { KPICard } from '@/components/charts/kpi-card'
 import { PageHeader } from '@/components/page-header'
-import { EstadoVacio } from '@/components/estado-vacio'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,6 +20,7 @@ interface FasePipeline {
 
 export default function PipelinePage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const empresaId = Number(id)
 
   const { data: fases = [], isLoading } = useQuery({
@@ -84,10 +85,11 @@ export default function PipelinePage() {
       </div>
 
       {fases.length === 0 ? (
-        <EstadoVacio
+        <EmptyState
+          icono={<GitBranch className="h-8 w-8" />}
           titulo="Sin pipeline activo"
-          descripcion="No hay fases de pipeline en curso para esta empresa"
-          icono={GitBranch}
+          descripcion="Cuando proceses documentos desde la Bandeja de Entrada, verás el progreso en tiempo real por cada fase del pipeline."
+          accion={{ texto: 'Ir a Bandeja de Entrada', onClick: () => navigate(`/empresa/${id}/inbox`) }}
         />
       ) : (
         <Card className="bg-[var(--surface-1)] border-border/50">

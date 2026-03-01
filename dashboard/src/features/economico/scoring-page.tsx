@@ -1,11 +1,11 @@
 // Pagina: Credit Scoring
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import type { ScoringEmpresa } from '@/types/economico'
 import { economicoApi } from './api'
 import { PageTitle } from '@/components/ui/page-title'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Shield } from 'lucide-react'
+import { BarChart2 } from 'lucide-react'
 
 function ScoreBadge({ puntuacion }: { puntuacion: number }) {
   const cls = puntuacion >= 70
@@ -22,6 +22,7 @@ function ScoreBadge({ puntuacion }: { puntuacion: number }) {
 
 export default function ScoringPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const empresaId = Number(id)
   const [tipo, setTipo] = useState<'proveedor' | 'cliente'>('proveedor')
   const [datos, setDatos] = useState<ScoringEmpresa | null>(null)
@@ -62,9 +63,10 @@ export default function ScoringPage() {
 
       {!cargando && datos?.scoring.length === 0 && (
         <EmptyState
-          icono={<Shield className="h-8 w-8" />}
-          titulo="Sin datos de scoring"
-          descripcion="Los scores se calculan con historial de pagos. Registra más operaciones para ver puntuaciones."
+          icono={<BarChart2 className="h-8 w-8" />}
+          titulo="Sin historial de pagos aún"
+          descripcion="El Credit Scoring se calcula automáticamente a partir del historial de pagos de facturas. Procesa documentos para generar scores."
+          accion={{ texto: 'Ir a Bandeja de Entrada', onClick: () => navigate(`/empresa/${id}/inbox`) }}
         />
       )}
 
