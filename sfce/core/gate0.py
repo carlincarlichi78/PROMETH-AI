@@ -6,6 +6,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
+from sfce.core.coherencia_fiscal import ResultadoCoherencia
+
 logger = logging.getLogger(__name__)
 
 MAX_BYTES = 25 * 1024 * 1024  # 25 MB
@@ -110,10 +112,11 @@ class Decision(str, Enum):
     CUARENTENA = "CUARENTENA"
 
 
-_PESO_OCR = 0.50
-_PESO_TRUST = 0.25
-_PESO_SUPPLIER = 0.15
-_PESO_CHECKS = 0.10
+_PESO_OCR        = 0.45  # reducido para dar cabida a coherencia
+_PESO_TRUST      = 0.25
+_PESO_SUPPLIER   = 0.15
+_PESO_COHERENCIA = 0.10  # 5º factor: coherencia fiscal post-OCR
+_PESO_CHECKS     = 0.05  # reducido de 0.10
 
 _TRUST_BONUS = {
     TrustLevel.MAXIMA: 25,
@@ -129,20 +132,43 @@ def calcular_score(
     supplier_rule_aplicada: bool,
     checks_pasados: int,
     checks_totales: int,
+    coherencia: Optional[ResultadoCoherencia] = None,
 ) -> float:
-    """Calcula score 0-100 para la decision automatica."""
+    """Calcula score 0-100 para la decision automatica (5 factores).
+
+    Pesos:
+      OCR          45%  (reducido para dar cabida al 5º factor)
+      Trust        25%
+      Supplier     15%
+      Coherencia   10%  (5º factor: validación fiscal post-OCR)
+      Checks        5%  (reducido de 10%)
+    """
     base_ocr = confianza_ocr * 100 * _PESO_OCR
     bonus_trust = _TRUST_BONUS[trust_level]
     bonus_supplier = 15 if supplier_rule_aplicada else 0
     ratio_checks = (checks_pasados / checks_totales) if checks_totales > 0 else 0
     base_checks = ratio_checks * 100 * _PESO_CHECKS
 
-    score = base_ocr + bonus_trust + bonus_supplier + base_checks
+    base_coherencia = 0.0
+    if coherencia is not None:
+        base_coherencia = coherencia.score * _PESO_COHERENCIA
+
+    score = base_ocr + bonus_trust + bonus_supplier + base_coherencia + base_checks
     return round(min(score, 100.0), 2)
 
 
-def decidir_destino(score: float, trust: TrustLevel) -> Decision:
-    """Decide el destino del documento basandose en score y trust."""
+def decidir_destino(
+    score: float,
+    trust: TrustLevel,
+    coherencia: Optional[ResultadoCoherencia] = None,
+) -> Decision:
+    """Decide el destino del documento basandose en score, trust y coherencia.
+
+    Bloqueo duro: si coherencia tiene errores graves → CUARENTENA inmediata.
+    """
+    if coherencia is not None and coherencia.errores_graves:
+        return Decision.CUARENTENA
+
     if score >= 95 and trust in (TrustLevel.MAXIMA, TrustLevel.ALTA):
         return Decision.AUTO_PUBLICADO
     if score >= 85 and trust == TrustLevel.ALTA:
