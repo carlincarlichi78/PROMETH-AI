@@ -1,4 +1,10 @@
-# Gate 0 — Preflight, Cola y Scoring
+# 04 — Gate 0: Preflight, Cola y Scoring
+
+> **Estado:** ✅ COMPLETADO
+> **Actualizado:** 2026-03-01
+> **Fuentes:** `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py`, `sfce/db/modelos.py`
+
+---
 
 Gate 0 es el punto de entrada unificado para todos los documentos del sistema. Antes de iniciar el
 pipeline de 7 fases, cada archivo pasa por un proceso de validación, deduplicación, cálculo de
