@@ -1,5 +1,45 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 (sesión 5) — Actualización Libro Instrucciones
+
+**Objetivo**: Actualizar los archivos del libro (`docs/LIBRO/_temas/`) con todos los cambios de la sesión 4 que habían quedado sin documentar.
+
+**Archivos actualizados**:
+- `11-api-endpoints.md`: rol `gestor` en jerarquía, `/me` documenta `gestoria_id`+`empresas_asignadas`, `aceptar-invitacion` con rate limit, `invitar-cliente` roles actualizados, `mis-empresas` acceso gestor
+- `13-dashboard-modulos.md`: página `aceptar-invitacion-page`, PortalLayout con guard, ProtectedRoute bloquea clientes, InvitarClienteDialog, loginConToken, patrón redirect-por-rol
+- `22-seguridad.md`: nueva sección §11 "Guards de autenticación en el frontend" (ProtectedRoute, PortalLayout, redirect por rol)
+- `28-roadmap.md`: Tests E2E tablero completados (4 PASS), nueva sección "Canal de acceso y onboarding" como próxima sesión
+
+---
+
+## 2026-03-01 (sesión 4) — Tablero de Usuarios E2E + Fixes de Seguridad
+
+**Objetivo**: Verificar end-to-end los 4 niveles del tablero de usuarios con Playwright. Corregir bugs encontrados durante el testing.
+
+**Tests Playwright E2E (4 scripts, todos PASS)**:
+- `scripts/test_crear_gestoria.py` — nivel 0: superadmin crea gestoría + invita admin
+- `scripts/test_nivel1_invitar_gestor.py` — nivel 1: admin acepta invitación + invita gestor
+- `scripts/test_nivel2_invitar_cliente.py` — nivel 2: gestor acepta invitación + invita cliente al portal (idempotente)
+- `scripts/test_nivel3_cliente_directo.py` — nivel 3: superadmin crea cliente directo sin gestoría
+
+**Bugs corregidos**:
+- `InvitarClienteDialog` no importada en ningún componente → añadida a `usuarios-page.tsx`
+- Inputs del dialog sin `id` → añadidos `id="nombre"` e `id="email"`
+- Rol `gestor` ausente en `roles_permitidos` de `invitar-cliente` → añadido
+- Redirect post-aceptación a `/` en lugar de `/portal` para clientes → decode JWT para detectar rol
+- `PortalLayout` sin guard de autenticación → añadido `if (!token) return <Navigate to="/login">`
+- `ProtectedRoute` no bloqueaba clientes del dashboard → añadido check `if (usuario?.rol === 'cliente')`
+- `/me` devolvía `empresas_ids` pero portal usaba `empresas_asignadas` → campos unificados
+- `aceptar-invitacion` sin rate limit → añadido `Depends(_rate_limit_login)`
+- `usuarios-page.tsx` mostraba lista global de usuarios (leak) → eliminado, solo `InvitarClienteDialog`
+- `rgpd.py` devolvía `url` pero portal esperaba `url_descarga` → añadido alias
+- `button.tsx` + `dialog.tsx` sin `forwardRef` → convertidos (Radix Slot compat)
+- Seed `auth.py`: `rol='admin'` en lugar de `'superadmin'` → corregido
+
+**Commits**: `a618356`, `a95a713`, `3aa24af`, `e3fc088`
+
+---
+
 ## 2026-03-01 (sesión 3) — Tablero de Usuarios SFCE — 12 tasks implementados
 
 **Objetivo**: Diseñar e implementar el sistema completo de jerarquía de usuarios en 4 niveles (tablero de juego).
@@ -519,3 +559,31 @@ Puesta al día del Libro de Instrucciones (`docs/LIBRO/_temas/`) tras innumerabl
 
 ### Nueva obligación añadida a CLAUDE.md
 Actualizar el libro en cada cierre de sesión, con el mismo nivel de detalle con que fue elaborado.
+
+---
+
+## Sesión 4 — 01/03/2026: Tablero Usuarios E2E + Auditoría Seguridad
+
+### Tests E2E Playwright implementados y verificados (PASS)
+- `test_crear_gestoria.py` (nivel 0), `test_nivel1_invitar_gestor.py`, `test_nivel2_invitar_cliente.py`, `test_nivel3_cliente_directo.py`
+- Descubierto: nivel 2 era falso positivo (email en input, no en URL de invitación) → fijo
+
+### Bugs corregidos
+| Bug | Archivo | Fix |
+|-----|---------|-----|
+| seed rol="admin" en lugar de "superadmin" | `sfce/api/auth.py` | Correcto a "superadmin" |
+| /me sin gestoria_id | `auth_rutas.py` | Añadido + empresas_asignadas unificado |
+| Radix Slot requiere forwardRef | `button.tsx`, `dialog.tsx` | Convertidos con React.forwardRef |
+| Redirect post-invitación igual para todos | `aceptar-invitacion-page.tsx`, `login-page.tsx` | Decode JWT → cliente va a /portal |
+| Cliente accedía al AppShell | `ProtectedRoute.tsx` | Bloqueo → /portal si rol=cliente |
+| PortalLayout sin auth | `portal-layout.tsx` | Guard → /login si sin token |
+| gestor no podía invitar cliente | `empresas.py` | Añadido "gestor" a roles_permitidos |
+| url_descarga mismatch | `rgpd.py` | Añadido campo alias |
+| usuarios-page filtraba todos usuarios | `usuarios-page.tsx` | Eliminado leak global |
+| aceptar-invitacion sin rate limit | `auth_rutas.py` | Añadido Depends(_rate_limit_login) |
+
+### Commits
+- `a618356` feat: tablero usuarios — flujo invitaciones E2E completo (niveles 0-3)
+- `a95a713` fix: redirect cliente a /portal, unificar empresas en /me
+- `3aa24af` fix: seguridad roles — cliente bloqueado AppShell, rate limit invitacion
+- `e3fc088` fix: 4 bugs reales — url_descarga, portal auth guard, gestor invita cliente, usuarios-page

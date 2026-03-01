@@ -188,7 +188,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 3)
+## Estado actual (01/03/2026, sesión 4+5)
 
 **Rama activa**: `main`
 **Tests**: 2133 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
@@ -202,26 +202,37 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - Wizard MCF en `intake._descubrimiento_interactivo` — reemplaza 8 inputs manuales
 - 70 tests: `test_clasificador_fiscal.py` (53) + `test_informe_cuarentena.py` (17)
 
-## Tablero Usuarios SFCE — COMPLETADO (sesión 3, 01/03/2026)
+## Tablero Usuarios SFCE — COMPLETADO + E2E VERIFICADO (sesión 4, 01/03/2026)
 
-**12 tasks implementados**. Jerarquía completa: superadmin → gestoría → gestor → cliente.
+**Fase 0 completada**: jerarquía superadmin → gestoría → gestor → cliente, todos los flujos verificados E2E con Playwright.
 
-Nuevas rutas frontend: `/admin/gestorias`, `/mi-gestoria`, `/portal` (índice multi-empresa)
-Nuevos componentes backend: `auth_rutas` (aceptar-invitación), `email_service`, `ocr_036`, `ocr_escritura`, `fs_setup`, `migracion_historica`
-Flujos: invitación token 7 días → aceptar → JWT; clientes directos (gestoria_id=NULL); invitar cliente final al portal
+### Tests E2E Playwright (todos PASS)
+- `scripts/test_crear_gestoria.py` — nivel 0: superadmin crea gestoría desde UI
+- `scripts/test_nivel1_invitar_gestor.py` — nivel 1: gestoría invita gestor via /mi-gestoria
+- `scripts/test_nivel2_invitar_cliente.py` — nivel 2: gestor invita cliente a empresa (idempotente)
+- `scripts/test_nivel3_cliente_directo.py` — nivel 3: superadmin crea cliente directo sin gestoría
 
-## Próxima sesión — PRIORIDAD: Test Nivel 0 end-to-end
+### Fixes aplicados en sesión 4
+- `button.tsx` + `dialog.tsx`: forwardRef (Radix Slot compat)
+- `auth.py` seed: `rol='superadmin'` (no 'admin')
+- `auth_rutas.py /me`: incluye `gestoria_id` + `empresas_asignadas`
+- `aceptar-invitacion-page.tsx`: página pública nueva, redirect por rol (cliente→/portal)
+- `login-page.tsx`: decode JWT post-login → cliente va a /portal
+- `ProtectedRoute`: bloquea clientes del AppShell (→/portal)
+- `portal-layout.tsx`: auth guard (→/login si sin token)
+- `invitar-cliente-dialog.tsx`: IDs en inputs, roles_permitidos incluye "gestor"
+- `rgpd.py`: añade campo `url_descarga` (alias de `url`)
+- `usuarios-page.tsx`: eliminado leak global `/api/auth/usuarios`
+- `aceptar-invitacion` endpoint: rate limiting
 
-**Contexto**: Las 4 levels del tablero están implementadas pero NO probadas en real.
-**Regla del tablero**: no avanzar de nivel sin que el anterior funcione end-to-end.
+## Próxima sesión — Canal de acceso y onboarding
 
-**Nivel 0 a probar** (superadmin operativo):
-1. Superadmin crea gestoría desde `/admin/gestorias` en el dashboard
-2. Superadmin invita a admin de gestoría (token generado, email enviado o visible en respuesta)
-3. Admin gestoría acepta invitación (`POST /api/auth/aceptar-invitacion?token=xxx`)
-4. Admin gestoría entra al dashboard → ve `/mi-gestoria`
+**Pregunta abierta**: ¿Cómo acceden los distintos tipos de usuario?
+- **Opciones**: web (actual), app móvil, app escritorio — definir qué canal para quién
+- **Onboarding**: ¿el gestor hace el onboarding del cliente (crea empresa en SFCE) o el propio cliente?
+- **Flujo alta cliente gestoría**: cuando admin_gestoria invita cliente → ¿inicia wizard de empresa automáticamente?
 
-Usar `superpowers:webapp-testing` (Playwright) para el flujo completo. Corregir lo que falle → verificar → solo entonces pasar a Nivel 1.
+Profundizar en la próxima sesión antes de implementar nada.
 
 ## Pendiente (baja prioridad)
 - Motor de Escenarios de Campo (`scripts/motor_campo.py --modo rapido`)

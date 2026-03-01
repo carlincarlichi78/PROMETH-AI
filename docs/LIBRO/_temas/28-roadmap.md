@@ -1,7 +1,7 @@
 # Roadmap y Estado del Sistema
 
-> **Estado:** EN PRODUCCION — SFCE completado, tablero operativo
-> **Actualizado:** 2026-03-01
+> **Estado:** EN PRODUCCION — SFCE completado, tablero operativo, E2E niveles 0-3 validados
+> **Actualizado:** 2026-03-01 (sesión 4)
 > **Tests totales:** 2133 PASS
 > **Branch activa:** main
 > **Tags:** `fase6-ingesta-360`, `c1-c4-pipeline-completion`
@@ -86,19 +86,40 @@
 
 ---
 
-## Proxima sesion — PRIORIDAD: Test Nivel 0 end-to-end
+## Tests E2E Tablero — COMPLETADOS (sesión 4, 01/03/2026)
 
-**Contexto**: Las 4 levels del tablero estan implementadas pero NO probadas en real.
-**Regla del tablero**: no avanzar de nivel sin que el anterior funcione end-to-end.
+**Scripts** en `scripts/test_*.py`. Cuatro niveles probados con Playwright:
 
-**Nivel 0 a probar** con Playwright (`superpowers:webapp-testing`):
+| Script | Nivel | Flujo | Estado |
+|--------|-------|-------|--------|
+| `test_crear_gestoria.py` | 0 | Superadmin crea gestoría + invita admin | PASS |
+| `test_nivel1_invitar_gestor.py` | 1 | Admin gestoría acepta invitación + invita gestor | PASS |
+| `test_nivel2_invitar_cliente.py` | 2 | Gestor acepta invitación + invita cliente al portal | PASS |
+| `test_nivel3_cliente_directo.py` | 3 | Superadmin crea cliente directo (sin gestoría) | PASS |
 
-1. Superadmin crea gestoria desde `/admin/gestorias` en el dashboard
-2. Superadmin invita a admin de gestoria (token generado, email enviado o visible en respuesta)
-3. Admin gestoria acepta invitacion (`POST /api/auth/aceptar-invitacion?token=xxx`)
-4. Admin gestoria entra al dashboard y ve `/mi-gestoria`
+**Bugs resueltos durante testing** (ver CHANGELOG sesión 4):
+- `InvitarClienteDialog` no importada en ningún componente
+- Inputs del dialog sin `id` (Playwright no podía rellenarlos)
+- Rol `gestor` no estaba en `roles_permitidos` de `invitar-cliente`
+- Redirect post-aceptación mandaba a `/` en lugar de `/portal`
+- `PortalLayout` sin guard de autenticación
+- `ProtectedRoute` no bloqueaba clientes del dashboard
+- `/me` devolvía `empresas_ids` pero portal usaba `empresas_asignadas`
+- `aceptar-invitacion` sin rate limit
 
-Corregir lo que falle → verificar → solo entonces pasar a Nivel 1.
+---
+
+## Proxima sesion — Canal de Acceso y Onboarding
+
+**Contexto**: Fase 0 completada. Jerarquía de usuarios implementada y validada E2E.
+
+**Preguntas a explorar en profundidad**:
+1. ¿Cómo accede cada actor al sistema? Web / móvil / escritorio
+2. ¿Onboarding diferenciado por tipo de usuario?
+3. ¿El alta de clientes de la gestoría la hacen los propios gestores o los clientes se auto-registran?
+4. ¿Qué ocurre en el primer login? ¿Hay un wizard de bienvenida?
+
+No implementar nada aún — explorar y definir el diseño antes de escribir código.
 
 ---
 

@@ -126,15 +126,17 @@ El `temp_token` se genera con `expires_delta=timedelta(minutes=5)` y lleva `"tot
 Los usuarios creados por admin de gestoría o superadmin reciben un token de invitación de 7 días. El flujo de aceptación:
 
 ```
-POST /api/auth/aceptar-invitacion
+POST /api/auth/aceptar-invitacion  ← tiene rate limit (mismo que login: 5 req/min por IP)
   → Body: {token, password}
   → Busca usuario por invitacion_token (campo en tabla usuarios)
   → Verifica invitacion_expira > now() — si ha expirado: HTTP 410 Gone
   → Establece hash_password con la nueva contraseña
   → Limpia invitacion_token, invitacion_expira; forzar_cambio_password = False
-  → Captura email, rol, gestoria_id ANTES del commit
+  → Captura email, rol, gestoria_id ANTES del commit (evitar DetachedInstanceError)
   → Retorna HTTP 200 + token JWT listo para usar
 ```
+
+**Frontend `aceptar-invitacion-page.tsx`:** página pública (sin `ProtectedRoute`) que recibe el token por query param, llama al endpoint y hace `loginConToken(response.access_token)`. Tras login decodifica el JWT para obtener el rol y redirige: `cliente → /portal`, otros → `/`.
 
 Campos implicados en tabla `usuarios`:
 
@@ -437,7 +439,44 @@ Configurados en `infra/nginx/00-security.conf` e incluidos en todos los vhosts:
 
 ---
 
-## 11. Bugs y trampas conocidas
+## 11. Guards de autenticación en el frontend
+
+### ProtectedRoute (`dashboard/src/components/ProtectedRoute.tsx`)
+
+Envuelve todas las rutas del dashboard (AppShell). Tiene dos responsabilidades:
+
+1. **Sin token** → `<Navigate to="/login" state={{ from: location }} replace />`
+2. **Rol `cliente`** → `<Navigate to="/portal" replace />` — impide que clientes accedan al dashboard de contabilidad
+
+```tsx
+if (!token) return <Navigate to="/login" state={{ from: location }} replace />
+if (usuario?.rol === 'cliente') return <Navigate to="/portal" replace />
+```
+
+### PortalLayout (`dashboard/src/features/portal/portal-layout.tsx`)
+
+Guard en el layout del portal cliente. Si no hay token (sesión expirada, acceso directo), redirige a `/login`:
+
+```tsx
+if (!token) return <Navigate to="/login" replace />
+```
+
+Esto garantiza que `/portal` y `/portal/:id` nunca son accesibles sin sesión activa.
+
+### Redirección por rol post-login
+
+Tanto `login-page.tsx` como `aceptar-invitacion-page.tsx` decodifican el JWT para leer el rol y redirigir al destino correcto:
+
+```ts
+const rol = JSON.parse(atob(token.split('.')[1]!))?.rol ?? ''
+navigate(rol === 'cliente' ? '/portal' : destinoDeseado, { replace: true })
+```
+
+Esto garantiza que los clientes nunca aterrizan en el dashboard aunque intenten acceder directamente.
+
+---
+
+## 12. Bugs y trampas conocidas
 
 ### DetachedInstanceError en login (SQLAlchemy 2.0)
 

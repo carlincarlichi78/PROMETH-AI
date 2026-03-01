@@ -1,7 +1,7 @@
 # 13 — Dashboard: Módulos y Arquitectura
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-01 (sesión 4)
 > **Fuentes:** `dashboard/src/features/`, `dashboard/package.json`, `dashboard/src/index.css`
 
 ---
@@ -96,6 +96,22 @@ El proxy WS debe declararse antes del HTTP porque Vite aplica el primero que coi
 - `useEmpresaStore` — empresa activa (`empresaActiva`, `setEmpresaActiva`)
 - `useAuthStore` — usuario autenticado, token JWT en sessionStorage
 
+**AuthContext (`src/context/AuthContext.tsx`):**
+
+- `login(email, password)` — login estándar con credenciales
+- `loginConToken(accessToken)` — login directo con JWT ya obtenido (usado por `aceptar-invitacion-page` y `2fa/confirm`)
+- `logout()` — limpia sessionStorage y estado
+- Token almacenado en `sessionStorage` (key: `sfce_token`). Auto-expiración por inactividad: 30 min idle timer.
+
+**Redirect por rol post-login:**
+
+```ts
+// Patrón usado en login-page.tsx y aceptar-invitacion-page.tsx
+const token = sessionStorage.getItem('sfce_token') ?? ''
+const rol = JSON.parse(atob(token.split('.')[1]!))?.rol ?? ''
+navigate(rol === 'cliente' ? '/portal' : destinoDeseado, { replace: true })
+```
+
 ---
 
 ## Tema visual
@@ -126,7 +142,7 @@ Directorios en `dashboard/src/features/` (25 entradas incluye `not-found.tsx`):
 | Módulo | Ruta URL | Feature dir | Estado | Descripción |
 |--------|----------|-------------|--------|-------------|
 | Home | `/` o `/empresa/:id` | `home/` | Completado | Sin empresa → `<SelectorEmpresa />`. Con id → KPI strip con tarjetas individuales + resumen empresa |
-| Auth | `/login` | `auth/` | Completado | Login + 2FA TOTP (flujo 202 + temp_token) |
+| Auth | `/login`, `/auth/aceptar-invitacion` | `auth/` | Completado | Login + 2FA TOTP (flujo 202 + temp_token). `aceptar-invitacion-page.tsx` es pública (sin auth), acepta token de invitación, establece contraseña, redirige según rol (`cliente` → `/portal`, otros → `/`) |
 | Onboarding | `/onboarding` | `onboarding/` | Completado | Alta interactiva empresa nueva |
 | Empresa | `/empresa/:id` | `empresa/` | Completado | AppShell por empresa, hidratación store desde URL |
 | Económico / PyG | `/empresa/:id/pyg` | `economico/` | Completado | PyG, balance, ratios financieros |
@@ -144,7 +160,7 @@ Directorios en `dashboard/src/features/` (25 entradas incluye `not-found.tsx`):
 | Configuración | `/empresa/:id/config` | `configuracion/` | Completado | 18 secciones: empresa, proveedores, reglas, usuarios… |
 | Mi Gestoría | `/mi-gestoria` | `mi-gestoria/` | Completado | Panel admin gestoría (nivel gestor/admin) |
 | Admin Gestorías | `/admin/gestorias` | `admin/` | Completado | Gestión gestorías (nivel superadmin) |
-| Portal cliente | `/portal` | `portal/` | Completado | Índice multi-empresa + redirección automática si hay 1 |
+| Portal cliente | `/portal`, `/portal/:id` | `portal/` | Completado | Índice multi-empresa + redirección automática si hay 1. `PortalLayout` tiene guard de auth: redirige a `/login` si no hay token |
 | OmniSearch | barra superior | `omnisearch/` | Completado | Búsqueda global (cmdk) entre empresas, facturas, docs |
 | Notificaciones | topbar deslizante | `notificaciones/` | Completado | Panel Web Push, suscripción VAPID, listado alertas |
 | Salud | `/salud` | `salud/` | Completado | Health check API, BD, workers |
@@ -163,6 +179,8 @@ Directorios en `dashboard/src/features/` (25 entradas incluye `not-found.tsx`):
 | `EmptyState` | `src/components/empty-state.tsx` | Placeholder estado vacío |
 | `PageTitle` | `src/components/page-title.tsx` | Cabecera de página estandarizada |
 | `ChartWrapper` | `src/components/charts/chart-wrapper.tsx` | Wrapper Recharts con CHART_COLORS y tema |
+| `ProtectedRoute` | `src/components/ProtectedRoute.tsx` | Guard de rutas autenticadas. Redirige a `/login` sin token. **Bloquea clientes** (`rol==="cliente"`) y los manda a `/portal` |
+| `InvitarClienteDialog` | `src/features/empresa/invitar-cliente-dialog.tsx` | Dialog con form `#nombre` + `#email`. Llama a `POST /api/empresas/{id}/invitar-cliente`. Muestra URL de invitación en respuesta |
 
 ---
 

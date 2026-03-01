@@ -1,7 +1,7 @@
 # 11 — API: Todos los Endpoints
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-01 (sesión 4)
 > **Fuentes:** `sfce/api/rutas/*.py`, `sfce/api/auth.py`
 
 ---
@@ -61,7 +61,8 @@ superadmin
 |-----|-------------|----------------------|
 | `superadmin` | Administrador global del sistema | `POST /api/admin/gestorias`, `PATCH /api/admin/gestorias/{id}` |
 | `admin_gestoria` | Admin de una gestoría concreta | `GET/PUT /api/admin/gestorias/{id}`, invitar asesores y clientes |
-| `asesor` / `asesor_independiente` | Gestor de empresas asignadas | Acceso a empresas de su cartera |
+| `gestor` | Gestor de empresas de una gestoría | Acceso a empresas de su cartera, puede invitar clientes |
+| `asesor` / `asesor_independiente` | Asesor de empresas asignadas | Acceso a empresas de su cartera |
 | `cliente` | Cliente final | `GET /api/portal/mis-empresas`, resumen simplificado |
 
 El JWT incluye `gestoria_id` y `rol`. Los endpoints verifican automaticamente que la empresa pertenece a la gestoria del usuario (403 si no).
@@ -78,10 +79,10 @@ El JWT incluye `gestoria_id` y `rol`. Los endpoints verifican automaticamente qu
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
 | POST | `/api/auth/login` | No | Login. Body: `{email, password}`. Devuelve JWT o 202+temp_token si 2FA activo |
-| GET | `/api/auth/me` | Si | Perfil del usuario autenticado |
+| GET | `/api/auth/me` | Si | Perfil del usuario autenticado. Devuelve: `{id, email, nombre, rol, activo, gestoria_id, empresas_ids, empresas_asignadas}`. Los campos `empresas_ids` y `empresas_asignadas` están unificados: ambos devuelven la misma lista |
 | POST | `/api/auth/usuarios` | Si (admin) | Crear usuario directamente. Body: `{email, nombre, password, rol, empresas_ids}` |
 | GET | `/api/auth/usuarios` | Si (admin) | Listar todos los usuarios |
-| POST | `/api/auth/aceptar-invitacion` | No | Canjear token de invitacion. Body: `{token, password}`. Devuelve JWT definitivo |
+| POST | `/api/auth/aceptar-invitacion` | No | Canjear token de invitacion. Body: `{token, password}`. Devuelve JWT definitivo. **Tiene rate limit** (mismo límite que login: 5 req/min por IP) |
 | POST | `/api/auth/2fa/setup` | Si | Iniciar configuracion 2FA TOTP. Devuelve `{secret, qr_uri, qr_base64}` |
 | POST | `/api/auth/2fa/verify` | Si | Verificar codigo TOTP durante setup y activar 2FA |
 | POST | `/api/auth/2fa/confirm` | No* | Confirmar login con 2FA. Body: `{temp_token, codigo}`. Devuelve JWT definitivo |
@@ -140,7 +141,7 @@ Solo accesible para roles `superadmin` y `admin_gestoria` (este ultimo solo sobr
 | GET | `/api/empresas/{empresa_id}/proveedores` | Si | Listar proveedores y clientes de empresa |
 | GET | `/api/empresas/{empresa_id}/trabajadores` | Si | Listar trabajadores (RRHH) |
 | GET | `/api/empresas/{empresa_id}/resumen` | Si | Resumen operativo: bandeja (pendientes/errores/cuarentena), fiscal (proximo_modelo), contabilidad (asientos descuadrados), facturacion (ventas_ytd), ventas_6m (array 6 ultimos meses) |
-| POST | `/api/empresas/{empresa_id}/invitar-cliente` | Si (asesor+) | Invitar cliente final al portal de esta empresa. Body: `{email, nombre}`. Si el email ya existe, solo anade la empresa a sus empresas_asignadas |
+| POST | `/api/empresas/{empresa_id}/invitar-cliente` | Si (gestor+) | Invitar cliente final al portal de esta empresa. Body: `{email, nombre}`. Si el email ya existe, solo anade la empresa a sus empresas_asignadas. Roles permitidos: `superadmin`, `admin_gestoria`, `gestor`, `asesor`, `asesor_independiente` |
 
 **Nota sobre `/estadisticas-globales`:** debe declararse ANTES de `/{empresa_id}` en el router para evitar que FastAPI lo interprete como un ID. El orden en el codigo es el correcto.
 
@@ -167,7 +168,7 @@ Los roles superadmin/admin_gestoria/asesor ven todas sus empresas via este mismo
 
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
-| GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus empresas_asignadas. Asesores/admin: todas las de su gestoria. Superadmin: todas. El frontend redirige automaticamente si solo hay 1 empresa |
+| GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus `empresas_asignadas`. Gestores/asesores/admin: todas las de su gestoria (o `empresas_asignadas` si no tiene `gestoria_id`). Superadmin: todas. El frontend redirige automaticamente si solo hay 1 empresa |
 | GET | `/api/portal/{empresa_id}/resumen` | Si | Resumen simplificado para el cliente: resultado_acumulado, facturas_pendientes_cobro, importe_pendiente_cobro, facturas_pendientes_pago, importe_pendiente_pago |
 | GET | `/api/portal/{empresa_id}/documentos` | Si | Ultimos 50 documentos disponibles para descarga por el cliente |
 | GET | `/api/portal/{empresa_id}/calendario.ics` | Si | Calendario fiscal en formato iCal (archivo .ics con deadlines del ejercicio) |
