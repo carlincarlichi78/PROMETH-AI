@@ -1,0 +1,38 @@
+from scripts.motor_campo.modelos import Escenario, ResultadoEsperado
+
+
+def obtener_escenarios_dashboard() -> list[Escenario]:
+    return [
+        Escenario(id="dash_pyg", grupo="dashboard", descripcion="PYG retorna ingresos y gastos",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/contabilidad/3/pyg",
+                                        "verificacion_tipo": "pyg"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_balance", grupo="dashboard", descripcion="Balance activo == pasivo + PN",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/contabilidad/3/balance",
+                                        "verificacion_tipo": "balance"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_libro_diario", grupo="dashboard", descripcion="Libro diario DEBE == HABER",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/contabilidad/3/diario",
+                                        "verificacion_tipo": "libro_diario"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_ratios", grupo="dashboard", descripcion="Ratios económicos calculados",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/economico/3/ratios",
+                                        "verificacion_tipo": "ratios"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_facturas", grupo="dashboard", descripcion="Listado facturas paginado",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/contabilidad/3/facturas",
+                                        "verificacion_tipo": "listado"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_saldo_subcuenta", grupo="dashboard", descripcion="Saldo subcuenta 4720000000",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/contabilidad/3/saldo/4720000000",
+                                        "verificacion_tipo": "saldo"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_conciliacion", grupo="dashboard", descripcion="Estado conciliación bancaria",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/bancario/3/estado_conciliacion",
+                                        "verificacion_tipo": "conciliacion"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="dash_kpis", grupo="dashboard", descripcion="KPIs económicos empresa",
+                  datos_extraidos_base={"tipo": "_DASHBOARD", "endpoint": "/api/economico/3/kpis",
+                                        "verificacion_tipo": "kpis"},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+    ]

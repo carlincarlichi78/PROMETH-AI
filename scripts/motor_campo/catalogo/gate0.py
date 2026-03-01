@@ -1,0 +1,36 @@
+from scripts.motor_campo.modelos import Escenario, ResultadoEsperado
+
+
+def obtener_escenarios_gate0() -> list[Escenario]:
+    return [
+        Escenario(id="gate0_trust_maxima", grupo="gate0", descripcion="Trust MAXIMA → AUTO_PUBLICADO",
+                  datos_extraidos_base={"tipo": "_GATE0", "trust_level": "MAXIMA",
+                                        "base_imponible": 1000.0, "iva_porcentaje": 21, "total": 1210.0,
+                                        "emisor_cif": "A11111111", "fecha": "2025-06-15"},
+                  resultado_esperado=ResultadoEsperado(http_status=200,
+                                                       campos_extra={"decision": "AUTO_PUBLICADO"})),
+        Escenario(id="gate0_trust_baja", grupo="gate0", descripcion="Trust BAJA → CUARENTENA",
+                  datos_extraidos_base={"tipo": "_GATE0", "trust_level": "BAJA",
+                                        "base_imponible": 0.01, "iva_porcentaje": 21, "total": 0.01,
+                                        "emisor_cif": "", "fecha": "2020-01-01"},
+                  resultado_esperado=ResultadoEsperado(http_status=200,
+                                                       campos_extra={"decision": "CUARENTENA"})),
+        Escenario(id="gate0_duplicado", grupo="gate0", descripcion="SHA256 duplicado → 409",
+                  datos_extraidos_base={"tipo": "_GATE0", "trust_level": "ALTA",
+                                        "sha256_duplicado": True,
+                                        "base_imponible": 500.0, "iva_porcentaje": 21, "total": 605.0,
+                                        "emisor_cif": "A11111111", "fecha": "2025-06-15"},
+                  resultado_esperado=ResultadoEsperado(http_status=409)),
+        Escenario(id="gate0_supplier_auto", grupo="gate0", descripcion="Supplier rule auto-aplicable",
+                  datos_extraidos_base={"tipo": "_GATE0", "trust_level": "ALTA",
+                                        "emisor_cif": "A11111111",
+                                        "base_imponible": 800.0, "iva_porcentaje": 21, "total": 968.0,
+                                        "fecha": "2025-06-15", "supplier_rule_test": True},
+                  resultado_esperado=ResultadoEsperado(http_status=200)),
+        Escenario(id="gate0_cola_revision", grupo="gate0", descripcion="Score medio → COLA_REVISION",
+                  datos_extraidos_base={"tipo": "_GATE0", "trust_level": "MEDIA",
+                                        "base_imponible": 750.0, "iva_porcentaje": 21, "total": 907.5,
+                                        "emisor_cif": "B99999999", "fecha": "2025-06-15"},
+                  resultado_esperado=ResultadoEsperado(http_status=200,
+                                                       campos_extra={"decision": "COLA_REVISION"})),
+    ]
