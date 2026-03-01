@@ -139,15 +139,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dual Backend | `sfce/core/backend.py` | FS+BD local, sync automatico asientos |
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
 
-| Gate 0 | `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py` | Trust levels + preflight SHA256 + scoring + decisión automática |
+| Gate 0 | `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py` | Trust levels + preflight SHA256 + scoring 5 factores + decisión automática |
 | Onboarding | `sfce/api/rutas/admin.py`, `sfce/api/rutas/empresas.py`, `sfce/db/migraciones/006_onboarding.py` | Alta gestorías + invitación asesores + wizard 5 pasos |
 | Certificados AAPP | `sfce/core/certificados_aapp.py` | Modelos + servicio portado de CertiGestor |
 | Webhook CertiGestor | `sfce/api/rutas/certigestor.py` | Notificaciones AAPP con auth HMAC-SHA256 |
 | iCal Export | `sfce/core/exportar_ical.py` | Deadlines fiscales → .ics |
 | config_desde_bd | `sfce/core/config_desde_bd.py` | Bridge BD → pipeline sin cambiar pipeline |
+| Coherencia Fiscal | `sfce/core/coherencia_fiscal.py` | Validador post-OCR: bloqueos duros + alertas -score. 13 tests |
+| OCR GPT Companion | `sfce/core/ocr_gpt.py` | GPT-4o Tier 1: texto pdfplumber + fallback Vision. 4 tests |
+| Worker OCR Gate0 | `sfce/core/worker_ocr_gate0.py` | Daemon async OCR Tiers 0/1/2 + coherencia + recovery cada 10 ciclos. 7 tests |
+| Recovery Bloqueados | `sfce/core/recovery_bloqueados.py` | Retry docs atascados en PROCESANDO >1h; CUARENTENA tras MAX_REINTENTOS. 6 tests |
+| Supplier Rules BD | `sfce/core/supplier_rules.py` | Jerarquía 3 niveles: CIF+empresa > CIF global > nombre patron. 5 tests |
+| Migración YAML->BD | `scripts/migrar_aprendizaje_yaml_a_supplier_rules.py` | evol_001..005 → SupplierRule global_nombre. Idempotente. 4 tests |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`
-**Tests totales**: 1911 PASS (Fases 0-6 Tasks 1-6 completados 01/03/2026)
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`
+**Tests totales**: 2025 PASS (C1-C4 completados 01/03/2026, tag `c1-c4-pipeline-completion`)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -168,7 +174,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## GitHub
 - **Repo**: `carlincarlichi78/SPICE` (privado)
-- **Branch activa**: `feat/frontend-pwa`
+- **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
 ## Proximos pasos
@@ -191,12 +197,17 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
   - `prometh-desktop/` — fork CertiGestor: cliente HMAC, config IPC, pantalla Configuracion.tsx
 - **Nuevas rutas API**: `/api/colas/revision`, `/api/colas/{id}/aprobar|rechazar|escalar`, `/api/gate0/ingestar-zip`
 - **Migración ejecutada**: 008_supplier_rules.py en sfce.db
-- **C1-C4 DISEÑO + PLAN LISTOS (01/03/2026)**:
-  - Design doc: `docs/plans/2026-03-01-c1-c4-pipeline-completion-design.md`
-  - Plan implementación: `docs/plans/2026-03-01-c1-c4-pipeline-completion-plan.md` (8 tasks, ~35 tests)
-  - **Para ejecutar**: nueva sesión → leer CLAUDE.md + plan → invocar `superpowers:executing-plans`
-  - Orden tasks: T1 coherencia_fiscal → T2 gate0 5 factores → T3 ocr_gpt → T4 worker → T5 lifespan → T6 recovery → T7 migración YAML → T8 verificación
-- **Siguiente alternativa**: I1-I6 issues-patch, o Libro de Instrucciones (`docs/plans/2026-03-01-libro-instrucciones-plan.md`)
+- **C1-C4 COMPLETADO (01/03/2026)**, tag `c1-c4-pipeline-completion`, 2025 tests:
+  - `sfce/core/coherencia_fiscal.py` — validador fiscal post-OCR (13 tests)
+  - `sfce/core/ocr_gpt.py` — módulo GPT-4o companion Tier 1 (4 tests)
+  - `sfce/core/worker_ocr_gate0.py` — daemon async OCR + recovery cada 10 ciclos (7 tests)
+  - `sfce/core/recovery_bloqueados.py` — retry automático docs bloqueados en cola (6 tests)
+  - Gate 0 score extendido a 5 factores: OCR 45%, Trust 25%, Supplier 15%, Coherencia 10%, Checks 5%
+  - `sfce/core/supplier_rules.py` — jerarquía 3 niveles con busqueda por nombre patron
+  - `scripts/migrar_aprendizaje_yaml_a_supplier_rules.py` — evol_001..005 → BD (idempotente)
+  - Worker integrado en lifespan FastAPI + `GET /api/gate0/worker/estado`
+  - `ColaProcesamiento` extendida: `datos_ocr_json`, `coherencia_score`, `worker_inicio`, `reintentos`
+- **Siguiente**: I1-I6 issues-patch, o Libro de Instrucciones (`docs/plans/2026-03-01-libro-instrucciones-plan.md`)
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
