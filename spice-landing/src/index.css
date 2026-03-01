@@ -31,9 +31,9 @@
   h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 
-/* Animaciones */
+/* ─── Animaciones base ─── */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -54,7 +54,46 @@
   75%       { transform: scaleY(0.97) scaleX(1.03); }
 }
 
-/* Utilidades globales */
+/* ─── Hero: orbes ─── */
+@keyframes orb-drift-amber {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(-45px, -65px) scale(1.07); }
+  55%  { transform: translate(-20px, -90px) scale(1.03); }
+  80%  { transform: translate(35px, -40px) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes orb-drift-violet {
+  0%   { transform: translate(0, 0) scale(1); }
+  30%  { transform: translate(55px, -50px) scale(1.09); }
+  65%  { transform: translate(18px, 60px) scale(0.93); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes orb-drift-orange {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(-60px, 50px) scale(1.13); }
+  75%  { transform: translate(40px, 60px) scale(0.90); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes orb-drift-cyan {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(50px, -60px) scale(1.20); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ─── Hero: shimmer border ─── */
+@keyframes spin-border {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Hero: scroll indicator ─── */
+@keyframes scroll-drop {
+  0%        { transform: translateY(-6px); opacity: 0; }
+  40%, 60%  { opacity: 0.7; }
+  100%      { transform: translateY(10px); opacity: 0; }
+}
+
+/* ─── Utilidades globales ─── */
 @layer components {
   .glass-card {
     background: var(--color-prometh-card);
@@ -69,10 +108,14 @@
     font-weight: 600;
     padding: 0.875rem 2rem;
     border-radius: 0.75rem;
-    transition: opacity 0.2s, transform 0.2s;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
   }
-  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-  .animate-fade-in-up  { animation: fade-in-up 0.6s ease-out forwards; }
+  .btn-primary:hover {
+    opacity: 0.92;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.35);
+  }
+  .animate-fade-in-up  { animation: fade-in-up 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
   .animate-float       { animation: float 7s ease-in-out infinite; }
   .animate-pulse-amber { animation: pulse-glow-amber 2.5s ease-in-out infinite; }
   .animate-flame       { animation: flame-flicker 3s ease-in-out infinite; }
@@ -81,5 +124,129 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* ─── Hero: orbes ─── */
+  .hero-orb {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .orb-amber {
+    width: 640px; height: 640px;
+    top: -140px; right: -140px;
+    background: radial-gradient(circle at 38% 38%,
+      rgba(245, 158, 11, 0.55) 0%,
+      rgba(245, 158, 11, 0.22) 38%,
+      transparent 68%
+    );
+    filter: blur(88px);
+    animation: orb-drift-amber 30s ease-in-out infinite;
+  }
+  .orb-violet {
+    width: 540px; height: 540px;
+    bottom: -110px; left: -110px;
+    background: radial-gradient(circle at 58% 58%,
+      rgba(139, 92, 246, 0.45) 0%,
+      rgba(139, 92, 246, 0.16) 42%,
+      transparent 68%
+    );
+    filter: blur(100px);
+    animation: orb-drift-violet 36s ease-in-out infinite;
+  }
+  .orb-orange {
+    width: 400px; height: 400px;
+    top: 28%; left: 0%;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(234, 88, 12, 0.38) 0%,
+      rgba(234, 88, 12, 0.12) 48%,
+      transparent 68%
+    );
+    filter: blur(78px);
+    animation: orb-drift-orange 24s ease-in-out infinite;
+  }
+  .orb-cyan {
+    width: 280px; height: 280px;
+    top: 6%; left: 16%;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(6, 182, 212, 0.32) 0%,
+      rgba(6, 182, 212, 0.09) 52%,
+      transparent 70%
+    );
+    filter: blur(62px);
+    animation: orb-drift-cyan 42s ease-in-out infinite;
+  }
+
+  /* ─── Hero: grid de puntos ─── */
+  .hero-dot-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.6) 1px, transparent 1px);
+    background-size: 44px 44px;
+    opacity: 0.042;
+  }
+
+  /* ─── Hero: wrapper con borde giratorio ─── */
+  .hero-shimmer-wrap {
+    position: relative;
+    z-index: 10;
+    border-radius: 2rem;
+  }
+
+  /* Borde cónico animado: efecto rayo que orbita el panel */
+  .hero-border-glow {
+    position: absolute;
+    inset: -1px;
+    border-radius: 2rem;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(245, 158, 11, 0.75) 45deg,
+      rgba(251, 191, 36, 0.9) 65deg,
+      rgba(234, 88, 12, 0.6) 90deg,
+      transparent 140deg
+    );
+    animation: spin-border 9s linear infinite;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    padding: 1px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Hero: panel glassmorphism ─── */
+  .hero-panel {
+    position: relative;
+    z-index: 1;
+    border-radius: calc(2rem - 1px);
+    background: rgba(10, 10, 15, 0.54);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    backdrop-filter: blur(26px) saturate(160%);
+    box-shadow:
+      0 32px 90px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(245, 158, 11, 0.08) inset,
+      0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  }
+
+  /* ─── Hero: indicador scroll ─── */
+  .hero-scroll-line {
+    width: 1px;
+    height: 2rem;
+    background: linear-gradient(to bottom, rgba(245, 158, 11, 0.5), transparent);
+  }
+  .hero-scroll-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: rgba(245, 158, 11, 0.5);
+    animation: scroll-drop 2s ease-in-out infinite;
   }
 }
