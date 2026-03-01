@@ -6,7 +6,7 @@ import {
   DoorClosed, DoorOpen, Wallet, PiggyBank, Target, GitCompare, CreditCard,
   FileBarChart, ExternalLink, Database, Palette, HardDrive, Key, UserCog,
   Briefcase, Receipt, Activity, Archive, HeartPulse, ChevronRight, ChevronsUpDown,
-  Shield, ClipboardCheck,
+  Shield, ClipboardCheck, Zap,
 } from 'lucide-react'
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -260,7 +260,7 @@ export function AppSidebar() {
         {tieneAdvisor && (
           <SidebarGroup>
             <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
-              ⚡ Advisor
+              Advisor
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -280,7 +280,7 @@ export function AppSidebar() {
                     onClick={() => navigate('/advisor/autopilot')}
                     tooltip="Autopilot"
                   >
-                    <Target className="h-4 w-4" />
+                    <Zap className="h-4 w-4" />
                     <span>Autopilot</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

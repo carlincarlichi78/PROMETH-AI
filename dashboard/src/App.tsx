@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { AdvisorGate } from './features/advisor/advisor-gate'
+import { AdvisorGate } from '@/features/advisor/advisor-gate'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // --- Auth ---
@@ -76,11 +76,11 @@ const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').t
 const WizardOnboardingClienteWrapper = lazy(() => import('@/features/onboarding/WizardOnboardingCliente').then((m) => ({ default: m.WizardOnboardingClienteWrapper })))
 
 // --- Advisor ---
-const CommandCenter = lazy(() => import('./features/advisor/command-center-page'))
-const Restaurant360 = lazy(() => import('./features/advisor/restaurant-360-page'))
-const ProductIntelligence = lazy(() => import('./features/advisor/product-intelligence-page'))
-const SalaEstrategia = lazy(() => import('./features/advisor/sala-estrategia-page'))
-const AutopilotPage = lazy(() => import('./features/advisor/autopilot-page'))
+const CommandCenter = lazy(() => import('@/features/advisor/command-center-page'))
+const Restaurant360 = lazy(() => import('@/features/advisor/restaurant-360-page'))
+const ProductIntelligence = lazy(() => import('@/features/advisor/product-intelligence-page'))
+const SalaEstrategia = lazy(() => import('@/features/advisor/sala-estrategia-page'))
+const AutopilotPage = lazy(() => import('@/features/advisor/autopilot-page'))
 
 // --- Admin ---
 const GestoriasPage = lazy(() => import('@/features/admin/gestorias-page'))
