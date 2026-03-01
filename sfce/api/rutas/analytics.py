@@ -2,7 +2,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -34,7 +34,6 @@ def _empresa_cnae(sesion: Session, empresa_id: int) -> str:
 def obtener_kpis(
     empresa_id: int,
     periodo: Optional[str] = None,
-    request: Request = None,
     sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
@@ -75,6 +74,8 @@ def obtener_kpis(
         personal = sesion.execute(
             select(FactPersonal)
             .where(FactPersonal.empresa_id == empresa_id)
+            .where(FactPersonal.periodo >= desde.strftime("%Y-%m"))
+            .where(FactPersonal.periodo <= hasta.strftime("%Y-%m"))
         ).scalars().all()
 
         familias_mp = {"alimentacion", "bebidas", "comida"}
@@ -120,7 +121,6 @@ def obtener_kpis(
 @router.get("/{empresa_id}/resumen-hoy")
 def resumen_hoy(
     empresa_id: int,
-    request: Request = None,
     sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):

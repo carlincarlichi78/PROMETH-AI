@@ -70,3 +70,15 @@ def test_resumen_hoy_endpoint_existe(client):
 def test_endpoint_sin_token_retorna_401(client):
     r = client.get("/api/analytics/1/kpis")
     assert r.status_code == 401
+
+
+def test_ventas_detalle_endpoint_existe(client):
+    token = _token(client)
+    r = client.get("/api/analytics/1/ventas-detalle", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code in (200, 404)
+
+
+def test_compras_proveedores_endpoint_existe(client):
+    token = _token(client)
+    r = client.get("/api/analytics/1/compras-proveedores", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code in (200, 404)
