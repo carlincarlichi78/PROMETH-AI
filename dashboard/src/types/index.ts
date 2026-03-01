@@ -16,6 +16,7 @@ export interface Empresa {
   territorio: string
   regimen_iva: string
   activa: boolean
+  estado_onboarding?: string
 }
 
 /** Cuenta de Perdidas y Ganancias (coincide con PyGOut) */

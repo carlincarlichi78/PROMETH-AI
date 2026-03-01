@@ -19,6 +19,7 @@ class EmpresaOut(BaseModel):
     territorio: str
     regimen_iva: str
     activa: bool
+    estado_onboarding: str = "configurada"
 
 
 # --- Proveedor/Cliente ---

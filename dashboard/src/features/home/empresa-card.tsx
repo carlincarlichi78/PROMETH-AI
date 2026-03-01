@@ -114,6 +114,16 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
             <p className="text-[11px] text-muted-foreground truncate capitalize">
               {empresa.forma_juridica} · {empresa.regimen_iva}
             </p>
+            {empresa.estado_onboarding === 'pendiente_cliente' && (
+              <span className="inline-flex items-center rounded-full border border-amber-300 px-1.5 py-0.5 text-[10px] text-amber-600 mt-1">
+                Pendiente cliente
+              </span>
+            )}
+            {empresa.estado_onboarding === 'cliente_completado' && (
+              <span className="inline-flex items-center rounded-full border border-blue-300 px-1.5 py-0.5 text-[10px] text-blue-600 mt-1">
+                Completar config
+              </span>
+            )}
           </div>
         </div>
       </div>
