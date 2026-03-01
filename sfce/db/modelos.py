@@ -55,6 +55,12 @@ class Empresa(Base):
     gestoria_id = Column(Integer, ForeignKey("gestorias.id"), nullable=True)
     fecha_alta = Column(Date, nullable=False, default=date.today)
     config_extra = Column(JSON, default=dict)  # datos adicionales del config.yaml
+    estado_onboarding = Column(
+        String(30),
+        nullable=False,
+        default="configurada",
+        server_default="configurada",
+    )
 
     # Relaciones
     proveedores_clientes = relationship("ProveedorCliente", back_populates="empresa")
@@ -63,6 +69,22 @@ class Empresa(Base):
     asientos = relationship("Asiento", back_populates="empresa")
     activos = relationship("ActivoFijo", back_populates="empresa")
     gestoria = relationship("Gestoria", foreign_keys=[gestoria_id])
+
+
+class OnboardingCliente(Base):
+    """Datos operativos que completa el empresario al aceptar la invitación."""
+    __tablename__ = "onboarding_cliente"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False, unique=True)
+    iban = Column(String(34))
+    banco_nombre = Column(String(100))
+    email_facturas = Column(String(200))
+    proveedores_json = Column(Text, default="[]")  # JSON array de nombres
+    completado_en = Column(DateTime)
+    completado_por = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+
+    empresa = relationship("Empresa", foreign_keys=[empresa_id])
 
 
 class ProveedorCliente(Base):
