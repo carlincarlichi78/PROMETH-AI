@@ -80,6 +80,7 @@ const MiGestoriaPage = lazy(() => import('@/features/mi-gestoria/mi-gestoria-pag
 // --- Portal, Directorio, Configuracion (Stream B) ---
 const Portal = lazy(() => import('@/features/portal/portal-page'))
 const PortalLayout = lazy(() => import('@/features/portal/portal-layout'))
+const MisEmpresasPage = lazy(() => import('@/features/portal/mis-empresas-page'))
 const Directorio = lazy(() => import('@/features/directorio/directorio-page'))
 const ConfigEmpresa = lazy(() => import('@/features/configuracion/empresa-page'))
 const ConfigUsuarios = lazy(() => import('@/features/configuracion/usuarios-page'))
@@ -198,6 +199,7 @@ export function App() {
 
         {/* Portal Cliente — layout propio, sin AppShell */}
         <Route element={<PortalLayout />}>
+          <Route path="/portal" element={<MisEmpresasPage />} />
           <Route path="/portal/:id" element={<Portal />} />
         </Route>
 

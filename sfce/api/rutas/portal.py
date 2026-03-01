@@ -14,6 +14,46 @@ from sfce.db.modelos import Empresa, Factura, Asiento, Partida
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
 
+@router.get("/mis-empresas")
+def mis_empresas(
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista las empresas accesibles para el usuario autenticado."""
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        from sfce.db.modelos import Empresa
+
+        ids_asignadas = list(getattr(usuario, "empresas_asignadas", []) or [])
+
+        if usuario.rol == "superadmin":
+            empresas = list(sesion.execute(select(Empresa)).scalars().all())
+        elif usuario.rol in ("admin_gestoria", "asesor", "asesor_independiente"):
+            q = select(Empresa)
+            if getattr(usuario, "gestoria_id", None):
+                if hasattr(Empresa, "gestoria_id"):
+                    q = q.where(Empresa.gestoria_id == usuario.gestoria_id)
+            empresas = list(sesion.execute(q).scalars().all())
+        else:
+            # cliente: solo sus empresas asignadas
+            if not ids_asignadas:
+                return {"empresas": []}
+            q = select(Empresa).where(Empresa.id.in_(ids_asignadas))
+            empresas = list(sesion.execute(q).scalars().all())
+
+        return {
+            "empresas": [
+                {
+                    "id": e.id,
+                    "nombre": e.nombre,
+                    "ejercicio": getattr(e, "ejercicio_activo", None),
+                }
+                for e in empresas
+            ]
+        }
+
+
 @router.get("/{empresa_id}/resumen")
 def resumen_portal(
     empresa_id: int,
