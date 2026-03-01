@@ -9,6 +9,7 @@ import { formatearImporte } from '@/lib/formatters'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import type { Balance2, BalanceLinea, BalanceRatios, BalanceAlerta } from '@/types'
 
 // Benchmarks sectoriales hostelería (CNAE 5610)
@@ -183,7 +184,7 @@ function PanelRatios({ ratios }: { ratios: BalanceRatios }) {
             <RadarChart data={radarData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-              <Radar dataKey="value" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+              <Radar dataKey="value" stroke={CHART_COLORS.primary} fill={CHART_COLORS.primary} fillOpacity={0.3} />
             </RadarChart>
           </ResponsiveContainer>
         </CardContent>

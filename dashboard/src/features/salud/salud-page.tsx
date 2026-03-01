@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useSesiones, useTendencias } from './api'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import type { SesionSalud } from './types'
 
 function KpiCard({ label, value, color = '#f59e0b' }: { label: string; value: string | number; color?: string }) {
@@ -47,8 +48,8 @@ export default function SaludPage() {
               <YAxis stroke="#64748b" />
               <Tooltip contentStyle={{ background: '#1e293b', border: 'none' }} />
               <Legend />
-              <Line type="monotone" dataKey="cobertura_pct" stroke="#f59e0b" name="Cobertura %" dot={false} />
-              <Line type="monotone" dataKey="tests_fail" stroke="#f87171" name="Fallos" dot={false} />
+              <Line type="monotone" dataKey="cobertura_pct" stroke={CHART_COLORS.primary} name="Cobertura %" dot={false} />
+              <Line type="monotone" dataKey="tests_fail" stroke={CHART_COLORS.danger} name="Fallos" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

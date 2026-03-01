@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { WaterfallChart } from '@/components/charts/waterfall-chart'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import type { PyG2, PyGLinea } from '@/types'
 
 function KpiCard({ titulo, valor, pct }: { titulo: string; valor: number; pct?: number }) {
@@ -209,9 +210,9 @@ export default function PyGPage() {
                     <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={v => `${((v as number) / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(v) => formatearImporte(v as number)} />
-                    <Bar dataKey="ingresos" fill="#10b981" name="Ingresos" />
-                    <Bar dataKey="gastos" fill="#f43f5e" name="Gastos" />
-                    <Line type="monotone" dataKey="resultado" stroke="#6366f1" strokeWidth={2} dot={false} name="Resultado" />
+                    <Bar dataKey="ingresos" fill={CHART_COLORS.success} name="Ingresos" />
+                    <Bar dataKey="gastos" fill={CHART_COLORS.danger} name="Gastos" />
+                    <Line type="monotone" dataKey="resultado" stroke={CHART_COLORS.primary} strokeWidth={2} dot={false} name="Resultado" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -227,7 +228,7 @@ export default function PyGPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
-                  <Treemap data={treemapData} dataKey="size" nameKey="name" fill="#6366f1" aspectRatio={4 / 3} />
+                  <Treemap data={treemapData} dataKey="size" nameKey="name" fill={CHART_COLORS.primary} aspectRatio={4 / 3} />
                 </ResponsiveContainer>
               </CardContent>
             </Card>

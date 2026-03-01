@@ -23,11 +23,16 @@ import { ChartCard } from '@/components/charts/chart-card'
 import { PageHeader } from '@/components/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import { SelectorEmpresa } from './selector-empresa'
 import type { PyG, Factura } from '@/types'
 
-// Colores para grafico de torta
-const COLORES_PIE = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
+// Colores para grafico de torta — paleta ámbar cohesiva
+const COLORES_PIE = [
+  CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.success,
+  CHART_COLORS.danger, CHART_COLORS.neutral, CHART_COLORS.primary,
+  CHART_COLORS.secondary, CHART_COLORS.success,
+]
 
 export default function HomePage() {
   const { id } = useParams<{ id: string }>()
@@ -124,12 +129,12 @@ function DashboardEmpresa({ empresaId }: { empresaId: number }) {
             <AreaChart data={datosEvolucion}>
               <defs>
                 <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="5%" stopColor={CHART_COLORS.success} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={CHART_COLORS.success} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradGastos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="5%" stopColor={CHART_COLORS.danger} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={CHART_COLORS.danger} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -144,7 +149,7 @@ function DashboardEmpresa({ empresaId }: { empresaId: number }) {
                 type="monotone"
                 dataKey="ingresos"
                 name="Ingresos"
-                stroke="#6366f1"
+                stroke={CHART_COLORS.success}
                 fill="url(#gradIngresos)"
                 strokeWidth={2}
               />
@@ -152,7 +157,7 @@ function DashboardEmpresa({ empresaId }: { empresaId: number }) {
                 type="monotone"
                 dataKey="gastos"
                 name="Gastos"
-                stroke="#ef4444"
+                stroke={CHART_COLORS.danger}
                 fill="url(#gradGastos)"
                 strokeWidth={2}
               />

@@ -19,6 +19,7 @@ import { ChartCard } from '@/components/charts/chart-card'
 import { DataTable } from '@/components/data-table/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import type { ColumnaTabla } from '@/components/data-table/data-table'
 import type { ActivoFijo } from '@/types'
 
@@ -178,7 +179,7 @@ export default function AmortizacionesPage() {
             />
             <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11 }} width={140} />
             <Tooltip formatter={(value: number | undefined) => formatearImporte(value)} />
-            <Bar dataKey="valor_neto" name="Valor neto" fill="#3b82f6" radius={[0, 3, 3, 0]} />
+            <Bar dataKey="valor_neto" name="Valor neto" fill={CHART_COLORS.primary} radius={[0, 3, 3, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>

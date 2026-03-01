@@ -21,6 +21,7 @@ import { DataTable, type ColumnaTabla } from '@/components/data-table/data-table
 import { PageHeader } from '@/components/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CHART_COLORS } from '@/components/ui/chart-wrapper'
 import type { Factura } from '@/types'
 
 const BUCKETS = ['0-30 dias', '31-60 dias', '61-90 dias', '+90 dias'] as const
@@ -219,8 +220,8 @@ export default function CobrosPagosPage() {
                 value === 'cobros' ? 'Pendiente cobro' : 'Pendiente pago'
               }
             />
-            <Bar dataKey="cobros" fill="#22c55e" radius={[4, 4, 0, 0]} name="cobros" />
-            <Bar dataKey="pagos" fill="#ef4444" radius={[4, 4, 0, 0]} name="pagos" />
+            <Bar dataKey="cobros" fill={CHART_COLORS.success} radius={[4, 4, 0, 0]} name="cobros" />
+            <Bar dataKey="pagos" fill={CHART_COLORS.danger} radius={[4, 4, 0, 0]} name="pagos" />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
