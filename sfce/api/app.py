@@ -6,8 +6,25 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 from sfce.db.base import Base, crear_motor, crear_sesion
+
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
+
+
+class LimiteTamanioMiddleware(BaseHTTPMiddleware):
+    """Rechaza requests con Content-Length superior a MAX_UPLOAD_BYTES."""
+
+    async def dispatch(self, request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_UPLOAD_BYTES:
+            return JSONResponse(
+                {"detail": "Archivo demasiado grande. Maximo 25 MB."},
+                status_code=413,
+            )
+        return await call_next(request)
 from sfce.db.repositorio import Repositorio
 from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en metadata
 from sfce.api.auth import crear_admin_por_defecto
@@ -115,6 +132,8 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
         **kwargs,
     )
 
+    app.add_middleware(LimiteTamanioMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_leer_cors_origins(),
@@ -150,6 +169,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.bancario import router as bancario_router
     from sfce.api.rutas.rgpd import router as rgpd_router
     from sfce.api.rutas.correo import router as correo_router
+    from sfce.api.rutas.salud import router as salud_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -167,6 +187,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(bancario_router)
     app.include_router(rgpd_router)
     app.include_router(correo_router)
+    app.include_router(salud_router)
 
     # Nonces RGPD usados (token de un solo uso)
     if not hasattr(app.state, "rgpd_nonces_usados"):
