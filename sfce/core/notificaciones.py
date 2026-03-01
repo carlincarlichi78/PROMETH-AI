@@ -329,3 +329,56 @@ def evaluar_motivo_auto(
             )
             return True
     return False
+
+
+# ── Clasificación y enrutamiento de motivos de cuarentena ──────────────────
+
+_MOTIVOS_CLIENTE = {
+    "foto borrosa", "ilegible", "duplicado", "sin datos extraibles",
+    "imagen borrosa", "calidad insuficiente",
+}
+_MOTIVOS_GESTOR = {
+    "entidad desconocida", "fecha fuera", "importe negativo",
+    "cif inválido", "cif invalido", "check bloqueante", "subcuenta",
+    "ejercicio incorrecto", "proveedor desconocido",
+}
+
+
+def clasificar_motivo_cuarentena(motivo: str) -> str:
+    """
+    Determina si el motivo de cuarentena es responsabilidad del cliente o del gestor.
+    Retorna 'cliente' o 'gestor'.
+    """
+    motivo_lower = motivo.lower()
+    for patron in _MOTIVOS_CLIENTE:
+        if patron in motivo_lower:
+            return "cliente"
+    return "gestor"
+
+
+def notificar_cuarentena(
+    sesion,
+    empresa_id: int,
+    motivo: str,
+    nombre_archivo: str,
+    documento_id: Optional[int] = None,
+) -> None:
+    """
+    Crea la notificación correcta según el tipo de motivo de cuarentena.
+    Motivos de calidad (foto borrosa, ilegible...) → notifica al cliente.
+    Motivos contables (entidad desconocida, CIF inválido...) → notifica al gestor.
+    """
+    destino = clasificar_motivo_cuarentena(motivo)
+
+    if destino == "cliente":
+        evaluar_motivo_auto(sesion, empresa_id, motivo, nombre_archivo, documento_id)
+    else:
+        crear_notificacion_bd(
+            sesion=sesion,
+            empresa_id=empresa_id,
+            titulo="Documento requiere revisión contable",
+            descripcion=f"El documento '{nombre_archivo}' fue a cuarentena: {motivo}",
+            tipo="aviso_gestor",
+            origen="pipeline",
+            documento_id=documento_id,
+        )
