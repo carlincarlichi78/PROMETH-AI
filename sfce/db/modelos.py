@@ -671,3 +671,37 @@ class ReglaClasificacionCorreo(Base):
     activa = Column(Boolean, default=True)
     prioridad = Column(Integer, default=100)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class CertificadoAAP(Base):
+    """Certificado digital de una empresa (metadatos, sin el P12)."""
+    __tablename__ = "certificados_aap"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False, index=True)
+    cif = Column(String(20), nullable=False)
+    nombre = Column(String(200), nullable=False)
+    tipo = Column(String(50), nullable=False)      # representante | firma | sello
+    organismo = Column(String(100))                # AEAT | SEDE | SEGURIDAD_SOCIAL
+    caducidad = Column(Date, nullable=False)
+    alertado_30d = Column(Boolean, default=False)
+    alertado_7d = Column(Boolean, default=False)
+    creado_en = Column(DateTime, default=datetime.utcnow)
+    actualizado_en = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotificacionAAP(Base):
+    """Notificacion/requerimiento de una AAPP para una empresa."""
+    __tablename__ = "notificaciones_aap"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False, index=True)
+    organismo = Column(String(100), nullable=False)  # AEAT | DGT | DEHU | JUNTA
+    asunto = Column(String(500), nullable=False)
+    tipo = Column(String(50), nullable=False)         # requerimiento | notificacion | sancion | embargo
+    fecha_recepcion = Column(DateTime, default=datetime.utcnow)
+    fecha_limite = Column(Date)
+    leida = Column(Boolean, default=False)
+    url_documento = Column(String(500))
+    origen = Column(String(50), default="certigestor")  # certigestor | manual | webhook
+    creado_en = Column(DateTime, default=datetime.utcnow)
