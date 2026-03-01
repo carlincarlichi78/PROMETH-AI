@@ -1,5 +1,6 @@
 import sqlite3
 import uuid
+from contextlib import closing
 from pathlib import Path
 
 class BugRegistry:
@@ -9,7 +10,7 @@ class BugRegistry:
         self._crear_tablas()
 
     def _conn(self):
-        return sqlite3.connect(self.ruta_db)
+        return closing(sqlite3.connect(self.ruta_db))
 
     def _crear_tablas(self):
         with self._conn() as con:
@@ -36,6 +37,7 @@ class BugRegistry:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 );
             """)
+            con.commit()
 
     def iniciar_sesion(self) -> str:
         return uuid.uuid4().hex[:8]
@@ -46,6 +48,7 @@ class BugRegistry:
                 "INSERT INTO ejecuciones (sesion_id,escenario_id,variante_id,resultado,duracion_ms) VALUES (?,?,?,?,?)",
                 (sesion_id, escenario_id, variante_id, resultado, duracion_ms)
             )
+            con.commit()
 
     def registrar_bug(self, sesion_id, escenario_id, variante_id, fase, descripcion, stack_trace, fix_intentado, fix_exitoso):
         resultado = "bug_arreglado" if fix_exitoso else "bug_pendiente"
@@ -58,6 +61,7 @@ class BugRegistry:
                 "INSERT INTO ejecuciones (sesion_id,escenario_id,variante_id,resultado,duracion_ms) VALUES (?,?,?,?,?)",
                 (sesion_id, escenario_id, variante_id, resultado, 0)
             )
+            con.commit()
 
     def stats_sesion(self, sesion_id) -> dict:
         with self._conn() as con:
