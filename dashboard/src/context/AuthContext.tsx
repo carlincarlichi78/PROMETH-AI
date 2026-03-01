@@ -5,6 +5,7 @@ interface AuthContextType {
   token: string | null
   usuario: Usuario | null
   login: (email: string, password: string) => Promise<void>
+  loginConToken: (accessToken: string) => Promise<void>
   logout: () => void
   cargando: boolean
 }
@@ -84,10 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await validarToken(nuevoToken)
   }, [validarToken])
 
+  const loginConToken = useCallback(async (accessToken: string) => {
+    sessionStorage.setItem(CLAVE_TOKEN, accessToken)
+    setToken(accessToken)
+    await validarToken(accessToken)
+  }, [validarToken])
+
   const logout = useCallback(() => limpiarSesion(), [limpiarSesion])
 
   return (
-    <AuthContext.Provider value={{ token, usuario, login, logout, cargando }}>
+    <AuthContext.Provider value={{ token, usuario, login, loginConToken, logout, cargando }}>
       {children}
     </AuthContext.Provider>
   )

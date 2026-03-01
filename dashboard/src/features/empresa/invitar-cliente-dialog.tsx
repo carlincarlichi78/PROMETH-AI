@@ -111,16 +111,18 @@ export function InvitarClienteDialog({ empresaId }: Props) {
             className="space-y-4"
           >
             <div>
-              <Label>Nombre del cliente</Label>
+              <Label htmlFor="nombre">Nombre del cliente</Label>
               <Input
+                id="nombre"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
               />
             </div>
             <div>
-              <Label>Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
+                id="email"
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}

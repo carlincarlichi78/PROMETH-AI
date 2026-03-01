@@ -197,6 +197,7 @@ def me(request: Request):
         "nombre": usuario.nombre,
         "rol": usuario.rol,
         "activo": usuario.activo,
+        "gestoria_id": usuario.gestoria_id,
         "empresas_ids": usuario.empresas_ids or [],
     }
 

@@ -154,17 +154,17 @@ def requiere_rol(*roles_permitidos: str) -> Callable:
 
 
 def crear_admin_por_defecto(sesion_factory) -> None:
-    """Crea usuario admin por defecto si no existe ninguno."""
+    """Crea usuario superadmin por defecto si no existe ninguno."""
     with sesion_factory() as sesion:
         admin_existente = sesion.query(Usuario).filter(
-            Usuario.rol == "admin"
+            Usuario.rol == "superadmin"
         ).first()
         if not admin_existente:
             admin = Usuario(
                 email="admin@sfce.local",
                 nombre="Administrador SFCE",
                 hash_password=hashear_password("admin"),
-                rol="admin",
+                rol="superadmin",
                 activo=True,
                 empresas_ids=[],
             )

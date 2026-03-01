@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 // --- Auth ---
 const Login = lazy(() => import('@/features/auth/login-page'))
+const AceptarInvitacion = lazy(() => import('@/features/auth/aceptar-invitacion-page'))
 const NotFound = lazy(() => import('@/features/not-found'))
 const OfflinePage = lazy(() => import('@/features/offline/offline-page'))
 
@@ -109,6 +110,7 @@ export function App() {
       <Routes>
         {/* Sin layout */}
         <Route path="/login" element={<Login />} />
+        <Route path="/auth/aceptar-invitacion" element={<AceptarInvitacion />} />
 
         {/* Rutas protegidas con AppShell */}
         <Route

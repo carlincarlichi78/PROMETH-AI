@@ -1,6 +1,8 @@
 // Configuracion: Usuarios y Roles
 import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import type { Usuario } from '@/types/config'
+import { InvitarClienteDialog } from '@/features/empresa/invitar-cliente-dialog'
 
 async function apiFetch<T>(url: string): Promise<T> {
   const token = sessionStorage.getItem('sfce_token')
@@ -16,6 +18,8 @@ const ROL_COLOR: Record<string, { bg: string; text: string }> = {
 }
 
 export default function UsuariosPage() {
+  const { id } = useParams<{ id: string }>()
+  const empresaId = Number(id) || 0
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [cargando, setCargando] = useState(true)
 
@@ -33,9 +37,12 @@ export default function UsuariosPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', margin: 0 }}>Usuarios y Roles</h1>
           <p style={{ color: '#6b7280', marginTop: 4, fontSize: 14 }}>Gestion de accesos al dashboard</p>
         </div>
-        <button style={{ padding: '8px 18px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
-          + Nuevo Usuario
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {empresaId > 0 && <InvitarClienteDialog empresaId={empresaId} />}
+          <button style={{ padding: '8px 18px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+            + Nuevo Usuario
+          </button>
+        </div>
       </div>
       {cargando && <p style={{ color: '#9ca3af' }}>Cargando usuarios...</p>}
       {!cargando && usuarios.length === 0 && (
