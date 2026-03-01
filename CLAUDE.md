@@ -137,30 +137,28 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Proximos pasos
 
-### 0. **PROMETH-AI — Planes REVISADOS Y LISTOS PARA EJECUTAR (SIGUIENTE SESION — PRIORIDAD)**
-- **Web multi-página**: `spice-landing/` convertida a PROMETH-AI. Deploy OK. SSL pendiente DNS.
-- **SSL PENDIENTE**: cuando `dig +short prometh-ai.es @8.8.8.8` = 65.108.60.69, ejecutar certbot (ver instrucción más abajo).
+### 0. **Motor de Testeo Automático SFCE — COMPLETADO (01/03/2026)**
+- **Skill**: `~/.claude/skills/test-engine.md` — invocar con `/test-engine` en cualquier sesión
+- **Orquestador**: `scripts/motor_testeo.py` (7 comandos: init, registrar-resultados, registrar-cobertura, finalizar, generar-reporte, push-dashboard)
+- **BD historial**: `data/motor_testeo.db` (SQLite, en .gitignore)
+- **API**: `sfce/api/rutas/salud.py` — 4 endpoints `/api/salud/*`
+- **Dashboard**: `dashboard/src/features/salud/` — sección "Sistema" en sidebar, rutas `/salud` y `/salud/:id`
+- **Tests**: 11 tests nuevos (7 unit + 1 E2E + 3 API), 1820 total, build OK. Mergeado a `main`.
+- **Diseño**: `docs/plans/2026-03-01-motor-testeo-design.md`
+
+### 0b. **PROMETH-AI — Web + SSL COMPLETADOS. Backend pendiente.**
+- **Web multi-página**: `spice-landing/` convertida a PROMETH-AI. 7 rutas. Deploy OK en `/opt/apps/spice-landing/`.
+- **SSL ACTIVO** (01/03/2026): cert Let's Encrypt emitido, expira 2026-05-30. HTTPS 200 OK + www→apex 301 OK. Nginx: `/opt/infra/nginx/conf.d/prometh-ai.conf`.
 - **Planes backend — LEER EN ORDEN**:
   1. `docs/plans/2026-03-01-prometh-ai-issues-patch.md` ← **LEER PRIMERO** (7 issues + 10 mejoras a aplicar)
   2. `docs/plans/2026-03-01-prometh-ai-fases-0-3.md` (21 tasks: seguridad P0, onboarding, correo, Gate 0)
   3. `docs/plans/2026-03-01-prometh-ai-fases-4-6.md` (12 tasks + Fase 11 Desktop)
-- **Revisión arquitectural completada** (sesion 01/03/2026): 17 parches documentados. Issues críticos: worker OCR, recovery bloqueados, codejercicio en Gate 0, coherencia fiscal, migración aprendizaje.yaml. Importantes: SLA, circuit breakers, accuracy_history, herencia Supplier Rules, Estado del sistema.
-- **Autonomía estimada con todos los parches**: 80-85% tras 6 meses de uso.
+- **Revisión arquitectural completada** (sesion 01/03/2026): 17 parches documentados.
 
 #### Integraciones planificadas en los planes:
 - **CAP-Web** (`C:/Users/carli/PROYECTOS/CAP-WEB/`) — código fuente de referencia para módulo correo (no integración de servicio). Ver Tasks 7-8 fases-4-6 y Task 12 fases-0-3.
 - **CertiGestor** (`C:/Users/carli/PROYECTOS/proyecto findiur/`) — módulo nativo `CertificadoAAP`+`NotificacionAAP` en SFCE (Task 13), webhook HMAC (Task 14), Desktop fork (Fase 11).
 - **Plataformas**: Web dashboard (gestor) + PWA móvil (cliente final, ya hecha) + Desktop Electron (Fase 11, fork de findiur).
-
-#### DNS / SSL prometh-ai.es:
-- **SSL PENDIENTE**: cuando `dig +short prometh-ai.es @8.8.8.8` = 65.108.60.69, ejecutar:
-  ```bash
-  docker exec certbot certbot certonly --webroot -w /var/www/certbot \
-    -d prometh-ai.es -d www.prometh-ai.es \
-    --email carlincarlichi@gmail.com --agree-tos --non-interactive
-  ```
-- **Nginx HTTP**: `/opt/infra/nginx/conf.d/prometh-ai.conf` ya creado.
-- **Web actual a reemplazar**: landing SPICE en `/opt/apps/spice-landing/`.
 
 ### 1. **Fase 1 Bancario COMPLETADA — tag: fase1-nucleo-bancario**
 - **Tasks 1-9 todas completadas**. 112 tests passing (44 parser_c43, 68 resto), build dashboard OK.
