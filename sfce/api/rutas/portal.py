@@ -29,11 +29,13 @@ def mis_empresas(
 
         if usuario.rol == "superadmin":
             empresas = list(sesion.execute(select(Empresa)).scalars().all())
-        elif usuario.rol in ("admin_gestoria", "asesor", "asesor_independiente"):
+        elif usuario.rol in ("admin_gestoria", "gestor", "asesor", "asesor_independiente"):
             q = select(Empresa)
-            if getattr(usuario, "gestoria_id", None):
-                if hasattr(Empresa, "gestoria_id"):
-                    q = q.where(Empresa.gestoria_id == usuario.gestoria_id)
+            if getattr(usuario, "gestoria_id", None) and hasattr(Empresa, "gestoria_id"):
+                q = q.where(Empresa.gestoria_id == usuario.gestoria_id)
+            elif ids_asignadas:
+                # gestor sin gestoria_id usa las empresas asignadas directamente
+                q = q.where(Empresa.id.in_(ids_asignadas))
             empresas = list(sesion.execute(q).scalars().all())
         else:
             # cliente: solo sus empresas asignadas

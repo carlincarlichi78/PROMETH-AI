@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
+function _rolDesdeToken(token: string): string {
+  try {
+    return JSON.parse(atob(token.split('.')[1]!))?.rol ?? ''
+  } catch {
+    return ''
+  }
+}
+
 export default function AceptarInvitacionPage() {
   const [params] = useSearchParams()
   const token = params.get('token') ?? ''
@@ -56,7 +64,8 @@ export default function AceptarInvitacionPage() {
 
       const datos = await respuesta.json()
       await loginConToken(datos.access_token)
-      navigate('/', { replace: true })
+      const rol = _rolDesdeToken(datos.access_token)
+      navigate(rol === 'cliente' ? '/portal' : '/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado.')
     } finally {

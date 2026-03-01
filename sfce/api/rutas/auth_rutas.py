@@ -191,6 +191,7 @@ async def login(body: LoginRequest, request: Request, response: Response):
 def me(request: Request):
     """Devuelve info del usuario autenticado."""
     usuario = obtener_usuario_actual(request)
+    empresas = list(usuario.empresas_asignadas or usuario.empresas_ids or [])
     return {
         "id": usuario.id,
         "email": usuario.email,
@@ -198,7 +199,8 @@ def me(request: Request):
         "rol": usuario.rol,
         "activo": usuario.activo,
         "gestoria_id": usuario.gestoria_id,
-        "empresas_ids": usuario.empresas_ids or [],
+        "empresas_ids": empresas,
+        "empresas_asignadas": empresas,
     }
 
 
