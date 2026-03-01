@@ -1,10 +1,10 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
-## 2026-03-01 (noche) — Dashboard Rediseño Total: Implementación COMPLETADA + Motor Campo Tasks 1-5
+## 2026-03-01 (noche) — Dashboard Rediseño Total: Implementación COMPLETADA
 
-**Objetivo**: Ejecutar el plan de implementación del dashboard redesign (FASES 5, 7, 8 pendientes) + iniciar motor de escenarios de campo.
+**Objetivo**: Ejecutar el plan de implementación del dashboard redesign (FASES 5, 7, 8 pendientes).
 
-**Dashboard — Completado**:
+**Completado**:
 - **Task 5.1**: CHART_COLORS en 6 archivos (pyg, balance, amortizaciones, cobros-pagos, salud, home) — elimina colores hardcodeados
 - **Task 5.2**: EmptyState con CTAs en scoring-page y pipeline-page
 - **Task 7.1**: Configuración page — sidebar 18 secciones/6 grupos, SeccionTarjetas con toggles localStorage
@@ -12,16 +12,7 @@
 - **Task 8.2**: `use-keyboard-shortcuts.ts` — G+C/F/D/E/R/H navega módulos empresa, ignora INPUT/TEXTAREA
 - **Build**: ✓ 4.65s, TypeScript clean, 109 entries precacheadas
 
-**Motor Campo — Tasks 1-5 completados**:
-- Task 1: `scripts/motor_campo/bug_registry.py` — SQLite foundation (29 tests)
-- Task 2: `scripts/motor_campo/cleanup.py` — borrar entidades FS + BD
-- Task 3: `scripts/motor_campo/modelos.py` — Escenario/VarianteEjecucion/ResultadoEsperado dataclasses
-- Task 4: `scripts/motor_campo/generador.py` — GeneradorVariaciones paramétrico
-- Task 5: `scripts/motor_campo/catalogo/fc.py` + `fv.py` — catálogo escenarios FC y FV
-
-**Commits**: `3835a2e`, `718d680`, `297f50e`, `8386606`, `4d355c2` (dashboard) + `4cd159d`, `1f1ef33`, `cc1e086`, `ad5cd7a`, `07e0134` (motor campo)
-
-**SIGUIENTE**: Motor Campo Tasks 6-13 (`docs/plans/2026-03-01-motor-campo-plan.md`)
+**Commits**: `3835a2e`, `718d680`, `297f50e`, `8386606`, `4d355c2`
 
 ---
 

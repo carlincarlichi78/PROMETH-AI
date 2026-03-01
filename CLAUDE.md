@@ -253,11 +253,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Fases completadas**: F0 design system, F1 sidebar, F2 OmniSearch, F3 Home, F5 charts+empty states, F7 Configuración, F8 polish
 - **Commits**: `3835a2e` (charts) + `718d680` (empty states) + `297f50e` (config) + `8386606` (transitions) + `4d355c2` (shortcuts)
 
-### 2b. **Motor de Escenarios de Campo — EN PROGRESO (Tasks 1-5 completadas)**
-- **Plan**: `docs/plans/2026-03-01-motor-campo-plan.md`
-- **Completado**: Task 1 BugRegistry SQLite, Task 2 Cleanup, Task 3 Dataclasses, Task 4 Generador variaciones, Task 5 Catálogo FC+FV
-- **Modulos**: `scripts/motor_campo/` — bug_registry.py, cleanup.py, modelos.py, generador.py, catalogo/fc.py + fv.py
-- **Siguiente**: Task 6 Catálogo docs especiales (NC/NOM/SUM/RLC/IMP), Task 7 Bancario/Gate0, Tasks 8-13 Executor+Validator+AutoFix+Reporter+Orquestador
 
 ### 3. **PENDIENTE (baja prioridad)**
 - Migración SQLite→PostgreSQL (`scripts/migrar_sqlite_a_postgres.py`)
