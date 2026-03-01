@@ -190,6 +190,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.colas import router as colas_router
     from sfce.api.rutas.migracion import router as migracion_router
     from sfce.api.rutas.onboarding import router as onboarding_router
+    from sfce.api.rutas.gestor import router as gestor_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -214,6 +215,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(colas_router)
     app.include_router(migracion_router)
     app.include_router(onboarding_router)
+    app.include_router(gestor_router)
 
     # Nonces RGPD usados (token de un solo uso)
     if not hasattr(app.state, "rgpd_nonces_usados"):
