@@ -1,133 +1,142 @@
+// Home — Centro de Operaciones: vista panorámica de toda la cartera
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Building2, ChevronRight, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { queryKeys } from '@/lib/query-keys'
-import { useEmpresaStore } from '@/stores/empresa-store'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { PageHeader } from '@/components/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { PageTitle } from '@/components/ui/page-title'
+import { EmpresaCard } from './empresa-card'
+import { useEstadisticasGlobales } from './api'
 import type { Empresa } from '@/types'
+
+function BarraEstadoGlobal() {
+  const { data, isLoading } = useEstadisticasGlobales()
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-border/50 mb-6 animate-pulse">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-[var(--surface-1)] h-16" />
+        ))}
+      </div>
+    )
+  }
+
+  const stats = data ?? {
+    total_clientes: 5,
+    docs_pendientes_total: 0,
+    alertas_urgentes: 0,
+    proximo_deadline: null,
+    volumen_gestionado: 0,
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-border/50 mb-6">
+      {[
+        { label: 'Clientes activos', valor: stats.total_clientes.toString(), icono: '🏢' },
+        { label: 'Docs pendientes', valor: stats.docs_pendientes_total.toLocaleString('es'), icono: '📥' },
+        {
+          label: 'Alertas urgentes',
+          valor: stats.alertas_urgentes.toString(),
+          icono: '⚠️',
+          clase: stats.alertas_urgentes > 0 ? 'text-[var(--state-danger)]' : '',
+        },
+        {
+          label: stats.proximo_deadline
+            ? `${stats.proximo_deadline.modelo} · ${stats.proximo_deadline.dias}d`
+            : 'Sin deadline',
+          valor: stats.proximo_deadline?.fecha ?? '—',
+          icono: '📅',
+        },
+        {
+          label: 'Volumen gestionado',
+          valor: `${(stats.volumen_gestionado / 1_000_000).toFixed(1)}M€`,
+          icono: '💰',
+        },
+      ].map((stat) => (
+        <div key={stat.label} className="bg-[var(--surface-1)] px-4 py-3 flex flex-col justify-between">
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            {stat.icono} {stat.label}
+          </span>
+          <span className={`text-[18px] font-bold tabular-nums ${stat.clase ?? ''}`}>
+            {stat.valor}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export function SelectorEmpresa() {
   const navigate = useNavigate()
-  const setEmpresaActiva = useEmpresaStore((s) => s.setEmpresaActiva)
 
   const { data: empresas, isLoading } = useQuery({
     queryKey: queryKeys.empresas.todas,
     queryFn: () => api.get<Empresa[]>('/api/empresas'),
   })
 
-  const handleSeleccionar = (empresa: Empresa) => {
-    setEmpresaActiva(empresa)
-    navigate(`/empresa/${empresa.id}/pyg`)
-  }
+  const empresasActivas = empresas?.filter((e) => e.activa) ?? []
+  const empresasInactivas = empresas?.filter((e) => !e.activa) ?? []
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <PageHeader titulo="Panel Principal" descripcion="Selecciona una empresa para comenzar" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="p-6 max-w-6xl">
+        <PageTitle titulo="Panel Principal" subtitulo="Centro de operaciones" />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-border/50 mb-6 animate-pulse">
+          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-[var(--surface-1)] h-16" />)}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
+            <StatCard key={i} titulo="" valor="" cargando className="min-h-[280px]" />
           ))}
         </div>
       </div>
     )
   }
 
-  const empresasActivas = empresas?.filter((e) => e.activa) ?? []
-  const empresasInactivas = empresas?.filter((e) => !e.activa) ?? []
-
   return (
-    <div className="space-y-6">
-      <PageHeader titulo="Panel Principal" descripcion="Selecciona una empresa para ver su contabilidad" />
+    <div className="p-6 max-w-6xl">
+      <PageTitle titulo="Panel Principal" subtitulo="Centro de operaciones de tu cartera" />
 
-      {empresasActivas.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-              <Building2 className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-medium">Sin empresas registradas</p>
-              <p className="text-sm text-muted-foreground">Crea una empresa para empezar</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <BarraEstadoGlobal />
 
-      {empresasActivas.length > 0 && (
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">Empresas activas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {empresasActivas.map((empresa) => (
-              <TarjetaEmpresa key={empresa.id} empresa={empresa} onSeleccionar={handleSeleccionar} />
-            ))}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide">
+          Empresas activas
+        </h2>
+      </div>
 
-            <button
-              onClick={() => navigate('/directorio')}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-8 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-            >
-              <Plus className="h-6 w-6" />
-              <span className="text-sm font-medium">Nuevo cliente</span>
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {empresasActivas.map((empresa) => (
+          <EmpresaCard key={empresa.id} empresa={empresa} />
+        ))}
+
+        <button
+          type="button"
+          onClick={() => navigate('/directorio')}
+          className="rounded-xl border-2 border-dashed border-border/50
+                     hover:border-[var(--primary)]/50 hover:bg-[var(--surface-1)]/50
+                     transition-all duration-150 flex flex-col items-center justify-center
+                     gap-2 p-8 text-muted-foreground hover:text-foreground min-h-[280px]"
+        >
+          <Plus className="h-8 w-8" />
+          <span className="text-[14px] font-medium">Nuevo cliente</span>
+        </button>
+      </div>
 
       {empresasInactivas.length > 0 && (
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">Inactivas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-8">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-3">
+            Inactivas
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 opacity-50">
             {empresasInactivas.map((empresa) => (
-              <TarjetaEmpresa key={empresa.id} empresa={empresa} onSeleccionar={handleSeleccionar} inactiva />
+              <EmpresaCard key={empresa.id} empresa={empresa} />
             ))}
           </div>
         </div>
       )}
     </div>
-  )
-}
-
-interface TarjetaEmpresaProps {
-  empresa: Empresa
-  onSeleccionar: (empresa: Empresa) => void
-  inactiva?: boolean
-}
-
-function TarjetaEmpresa({ empresa, onSeleccionar, inactiva }: TarjetaEmpresaProps) {
-  return (
-    <Card
-      className={`group cursor-pointer transition-all hover:shadow-md hover:border-primary/50 ${inactiva ? 'opacity-60' : ''}`}
-      onClick={() => onSeleccionar(empresa)}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <Building2 className="h-5 w-5 text-primary" />
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <CardTitle className="text-base leading-tight">{empresa.nombre}</CardTitle>
-        <p className="text-xs text-muted-foreground font-mono">{empresa.cif}</p>
-        <div className="flex flex-wrap gap-1 pt-1">
-          <Badge variant="secondary" className="text-xs">
-            {empresa.forma_juridica}
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            {empresa.regimen_iva}
-          </Badge>
-          {inactiva && (
-            <Badge variant="destructive" className="text-xs">
-              Inactiva
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   )
 }
