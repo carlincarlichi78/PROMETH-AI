@@ -167,7 +167,9 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Backend extendido**: 66+ rutas, 25 tablas BD.
 - **Tema Claude**: paleta ámbar OKLCh, dark mode, glassmorphism. Tokens en `src/index.css`. CHART_COLORS en `chart-wrapper.tsx`.
 - **Completado**: OmniSearch (cmdk), Home centro ops, AppSidebar rediseñado, KPICard/EmptyState/PageTitle, page transitions, keyboard shortcuts (G+C/F/D/E/R/H), Configuración 18 secciones.
-- **Pendiente**: tests E2E dashboard (Playwright), activar VITE_VAPID_PUBLIC_KEY + endpoint `/api/notificaciones/suscribir`
+- **Home Panel Principal**: sidebar cambiada a dark slate/navy (oklch 245°), KPI strip con tarjetas individuales y borde acento, quick-actions redundantes eliminadas de EmpresaCard.
+- **Endpoints dashboard home IMPLEMENTADOS**: `GET /api/empresas/estadisticas-globales` y `GET /api/empresas/{id}/resumen` — datos reales desde BD (bandeja, asientos descuadrados, ventas YTD, ventas 6M). Fiscal `proximo_modelo` sigue en null (requiere ServicioFiscal).
+- **Pendiente**: tests E2E dashboard (Playwright), activar VITE_VAPID_PUBLIC_KEY + endpoint `/api/notificaciones/suscribir`, `fiscal.proximo_modelo` en resumen empresa
 
 ## SPICE Landing Page
 **URL**: https://spice.carloscanetegomez.dev | **Servidor**: /opt/apps/spice-landing/
@@ -179,7 +181,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Estado actual (01/03/2026)
 
-**Todo completado y en main. Tests: 2025 PASS.**
+**Todo completado y en main. Tests: 2025 PASS. Dashboard home con datos reales.**
 
 Tags relevantes: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
