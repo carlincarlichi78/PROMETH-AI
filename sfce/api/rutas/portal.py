@@ -366,6 +366,67 @@ async def subir_documento(
         }
 
 
+@router.post("/{empresa_id}/documentos/{doc_id}/aprobar")
+async def aprobar_documento(
+    empresa_id: int,
+    doc_id: int,
+    body: dict,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Gestor aprueba documento en modo revisión, opcionalmente enriqueciendo con hints."""
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403, detail="Solo gestores pueden aprobar documentos")
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        from sfce.db.modelos import Documento
+        doc = s.query(Documento).filter_by(id=doc_id, empresa_id=empresa_id).first()
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+        cola = s.query(ColaProcesamiento).filter_by(documento_id=doc_id).first()
+        if not cola:
+            raise HTTPException(status_code=404, detail="Cola no encontrada para este documento")
+
+        hints_actuales = json.loads(cola.hints_json or "{}")
+        hints_actuales.update({k: v for k, v in body.items() if v is not None})
+        cola.hints_json = json.dumps(hints_actuales)
+        cola.estado = "APROBADO"
+        s.commit()
+
+    return {"doc_id": doc_id, "estado": "aprobado"}
+
+
+@router.post("/{empresa_id}/documentos/{doc_id}/rechazar")
+async def rechazar_documento(
+    empresa_id: int,
+    doc_id: int,
+    body: dict,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Gestor rechaza documento. Lo marca como rechazado en BD y cola."""
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403, detail="Solo gestores pueden rechazar documentos")
+
+    motivo = body.get("motivo", "Rechazado por gestor")
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        from sfce.db.modelos import Documento
+        doc = s.query(Documento).filter_by(id=doc_id, empresa_id=empresa_id).first()
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+        doc.estado = "rechazado"
+        doc.motivo_cuarentena = motivo
+        cola = s.query(ColaProcesamiento).filter_by(documento_id=doc_id).first()
+        if cola:
+            cola.estado = "RECHAZADO"
+        s.commit()
+
+    return {"doc_id": doc_id, "estado": "rechazado"}
+
+
 @router.get("/{empresa_id}/notificaciones")
 def notificaciones_portal(
     empresa_id: int,
