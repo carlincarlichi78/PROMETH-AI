@@ -41,6 +41,7 @@
 | `reglas_clasificacion_correo` | Correo | Regla de clasificacion automatica de emails | `empresas` |
 | `certificados_aap` | AAPP | Certificado digital de empresa (metadatos) | `empresas` |
 | `notificaciones_aap` | AAPP | Notificacion/requerimiento de AAPP | `empresas` |
+| `notificaciones_usuario` | App Movil | Notificaciones para el empresario (gestor manual + pipeline auto) | `empresas`, `documentos` |
 | `cola_procesamiento` | Gate 0 | Cola de documentos en preflight Gate 0 | `empresas` |
 | `documento_tracking` | Gate 0 | Audit trail de cambios de estado por documento | — |
 | `supplier_rules` | Gate 0 | Reglas aprendidas por proveedor para pre-relleno | — |
@@ -400,6 +401,12 @@ Indice: `ix_partida_subcuenta` para calculo de saldos por cuenta.
 **`notificaciones_aap`** — Notificaciones y requerimientos de administraciones publicas.
 
 - Campos clave: `organismo`, `tipo` (requerimiento|notificacion|sancion|embargo), `fecha_limite`, `leida`, `origen` (certigestor|manual|webhook)
+
+**`notificaciones_usuario`** — Notificaciones para el empresario. Visible en tab Alertas de la app movil.
+
+- Campos: `empresa_id` (FK), `documento_id` (FK nullable), `titulo`, `descripcion`, `tipo` (aviso_gestor|duplicado|doc_ilegible|...), `origen` (manual|pipeline), `leida` (bool), `fecha_creacion`, `fecha_lectura`
+- Migracion: `011_notificaciones_usuario.py`
+- Creadas por: gestor via `POST /api/gestor/empresas/{id}/notificar-cliente` (manual) o por `evaluar_motivo_auto()` en pipeline post-intake (auto para duplicado/ilegible/foto borrosa)
 
 ---
 

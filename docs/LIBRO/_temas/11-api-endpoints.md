@@ -168,20 +168,41 @@ Los roles superadmin/admin_gestoria/asesor ven todas sus empresas via este mismo
 
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
-| GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus `empresas_asignadas`. Gestores/asesores/admin: todas las de su gestoria (o `empresas_asignadas` si no tiene `gestoria_id`). Superadmin: todas. El frontend redirige automaticamente si solo hay 1 empresa |
-| GET | `/api/portal/{empresa_id}/resumen` | Si | Resumen simplificado para el cliente: resultado_acumulado, facturas_pendientes_cobro, importe_pendiente_cobro, facturas_pendientes_pago, importe_pendiente_pago |
-| GET | `/api/portal/{empresa_id}/documentos` | Si | Ultimos 50 documentos disponibles para descarga por el cliente |
+| GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus `empresas_asignadas`. Gestores/asesores/admin: todas las de su gestoria. Superadmin: todas |
+| GET | `/api/portal/{empresa_id}/resumen` | Si | Resumen simplificado: resultado_acumulado, facturas_pendientes_cobro/pago, importes |
+| GET | `/api/portal/{empresa_id}/documentos` | Si | Ultimos 50 documentos del cliente. Respuesta: `{id, nombre (ruta_pdf), tipo, estado, fecha}` |
+| POST | `/api/portal/{empresa_id}/documentos/subir` | Si | Sube documento desde la app movil. Form-multipart. Campos: `archivo`, `tipo` (Factura/Ticket/Nómina/Extracto/Otro), `proveedor_cif`, `proveedor_nombre`, `base_imponible`, `total`, `salario_bruto`, `retencion_irpf`, `cuota_ss`, `entidad`, `iban`, `periodo`, `saldo_final`, `descripcion`, `importe`. Datos extra se guardan en `datos_ocr` del Documento. Tier check: empresarios necesitan plan `pro`. |
+| GET | `/api/portal/{empresa_id}/notificaciones` | Si | Notificaciones del cliente. Incluye: onboarding pendiente, notifs BD (gestor+pipeline), docs pendientes. Devuelve `{notificaciones, no_leidas}` |
+| POST | `/api/portal/{empresa_id}/notificaciones/{notif_id}/leer` | Si | Marca una notificacion BD como leida. |
+| GET | `/api/portal/{empresa_id}/proveedores-frecuentes` | Si | Lista de SupplierRules de la empresa ordenadas por `aplicaciones` desc. Para el selector de proveedor en la app movil. |
 | GET | `/api/portal/{empresa_id}/calendario.ics` | Si | Calendario fiscal en formato iCal (archivo .ics con deadlines del ejercicio) |
+
+**Campos `datos_ocr` guardados segun tipo de documento:**
+- `Factura`/`Ticket`: `proveedor_cif`, `proveedor_nombre`, `base_imponible`, `total`
+- `Nómina`: `proveedor_nombre` (nombre trabajador), `proveedor_cif` (NIF), `salario_bruto`, `retencion_irpf`, `cuota_ss`
+- `Extracto`: `entidad`, `iban`, `periodo`, `saldo_final`
+- `Otro`: `descripcion`, `importe`
 
 **Respuesta de `/mis-empresas`:**
 ```json
 {
   "empresas": [
-    {"id": 1, "nombre": "Empresa S.L.", "ejercicio": "2025"},
-    {"id": 2, "nombre": "Otra S.L.", "ejercicio": "2025"}
+    {"id": 1, "nombre": "Empresa S.L.", "ejercicio": "2025"}
   ]
 }
 ```
+
+---
+
+## Gestor Movil — `/api/gestor`
+
+Endpoints de la vista ligera del gestor en la app movil. Solo accesible para roles: `superadmin`, `admin_gestoria`, `gestor`, `asesor`, `asesor_independiente`.
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/gestor/resumen` | Si (gestor+) | Lista de empresas activas con `{id, nombre, cif, estado_onboarding}`. Filtrado por `gestoria_id` del usuario |
+| GET | `/api/gestor/alertas` | Si (gestor+) | Alertas: onboardings pendientes_cliente + cliente_completado con lista de empresas afectadas |
+| POST | `/api/gestor/empresas/{empresa_id}/notificar-cliente` | Si (gestor+) | Crea notificacion BD para el empresario. Body JSON: `{titulo, descripcion?, tipo? (default: aviso_gestor), documento_id?}`. Aparece en tab Alertas de la app del empresario |
 
 ---
 
@@ -558,7 +579,8 @@ curl -H "Authorization: Bearer <token>" \
 | Autenticacion | `/api/auth` | 8 |
 | Administracion (gestorias) | `/api/admin` | 7 |
 | Empresas | `/api/empresas` | 11 |
-| Portal Cliente | `/api/portal` | 4 |
+| Portal Cliente | `/api/portal` | 8 |
+| Gestor Movil | `/api/gestor` | 3 |
 | Directorio | `/api/directorio` | 7 |
 | Documentos | `/api/documentos` | 4 |
 | Contabilidad | `/api/contabilidad` | 15 |
@@ -575,4 +597,4 @@ curl -H "Authorization: Bearer <token>" \
 | Configuracion | `/api/config` | 7 |
 | Salud | `/api/salud` | 4 |
 | WebSocket | `/api/ws` | 2 |
-| **Total** | | **125** |
+| **Total** | | **136** |

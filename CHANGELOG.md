@@ -1,5 +1,41 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-01 (sesión 8) — Notificaciones cliente + historial docs + campos adaptativos
+
+**Objetivo**: Completar la experiencia del empresario en la app móvil: recibe notificaciones del gestor, ve su historial de documentos, el formulario de subida se adapta al tipo de documento.
+
+**Sistema de Notificaciones BD** (para app móvil):
+- `sfce/db/migraciones/011_notificaciones_usuario.py` — nueva tabla `notificaciones_usuario` (empresa_id, documento_id, titulo, descripcion, tipo, origen, leida, fecha_creacion/lectura)
+- `sfce/core/notificaciones.py` — módulo completo satisfaciendo 59 tests preexistentes + nuevo bloque BD: `crear_notificacion_bd()`, `evaluar_motivo_auto()`, `MOTIVOS_AUTO_NOTIFICAR` (duplicado/ilegible/foto borrosa)
+- `scripts/pipeline.py` — hook post-intake: `_sincronizar_cuarentena_bd()` + `evaluar_motivo_auto` → notifica auto al empresario para motivos configurados
+- `sfce/api/rutas/gestor.py` — `POST /api/gestor/empresas/{id}/notificar-cliente` — gestor crea notificación manual desde dashboard
+- `sfce/api/rutas/portal.py` — `GET /{id}/notificaciones` (incluye notifs BD + onboarding + docs pendientes) + `POST /{id}/notificaciones/{id}/leer`
+- `dashboard/src/features/documentos/cuarentena-page.tsx` — botón "Notificar" por fila + `NotificarDialog` (título+mensaje editables)
+
+**ProveedorSelector adaptativo** (`mobile/components/upload/ProveedorSelector.tsx`):
+- Nueva prop `tipoDoc` — formula campos específicos por tipo documento
+- `CAMPOS_POR_TIPO`: Factura (nombre*, CIF*, base, total*), Ticket (nombre*, CIF, total*), Nómina (trabajador*, NIF*, salario*, retención, cuota SS), Extracto (entidad*, IBAN, período*, saldo), Otro (descripción*, importe)
+- Para Factura/Ticket muestra proveedores frecuentes; para el resto va directo al formulario
+- Fotos obligan a rellenar campos requeridos (`obligatorio=true`)
+
+**App Móvil — empresario** (`mobile/app/(empresario)/subir.tsx`):
+- Reescritura completa: NativeWind → StyleSheet.create()
+- `tipoDoc` + `obligatorio` siempre activo (empresario solo usa fotos)
+- Envía todos los campos extra en FormData; resumen paso 3 muestra entidad/descripción además de nombre
+
+**Nueva pantalla historial** (`mobile/app/(empresario)/documentos.tsx`):
+- Tab "Docs" en el layout del empresario
+- Lista de documentos con chip de estado coloreado (pendiente/procesado/cuarentena/error)
+- Consulta `GET /api/portal/{id}/documentos` — corregido `nombre_archivo` → `ruta_pdf`
+
+**Portal API extendido** (`sfce/api/rutas/portal.py`):
+- `POST /{id}/documentos/subir` — 9 campos extra opcionales (nómina/extracto/otro), guardados en `datos_ocr`
+- `GET /{id}/documentos` — fix campo `nombre` (usaba `d.nombre_archivo` inexistente → `d.ruta_pdf`)
+
+**Commits**: `24dd4c6` (sistema notificaciones), `f94ddb4` (historial docs + campos adaptativos)
+
+---
+
 ## 2026-03-01 (sesión 5) — Actualización Libro Instrucciones
 
 **Objetivo**: Actualizar los archivos del libro (`docs/LIBRO/_temas/`) con todos los cambios de la sesión 4 que habían quedado sin documentar.

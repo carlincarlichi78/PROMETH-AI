@@ -188,25 +188,32 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 7 — app móvil)
+## Estado actual (01/03/2026, sesión 8 — notificaciones + docs histórico)
 
 **Rama activa**: `main`
-**Tests**: 2147 PASS (2 nuevos: test_proveedores_frecuentes). Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Tests**: 2147 PASS. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
 
-### App Móvil COMPLETADA (01/03/2026, sesión 7)
-- `mobile/` — monorepo Expo SDK 54 + Expo Router v3 + NativeWind v4
-- **Stack**: Zustand v5, TanStack Query v5, expo-secure-store, expo-camera, expo-image-picker
+### App Móvil COMPLETADA (sesiones 7+8)
+- `mobile/` — monorepo Expo SDK 54 + Expo Router v3, todo StyleSheet.create() (sin NativeWind)
+- **Stack**: Zustand v5, TanStack Query v5, expo-secure-store, expo-camera, expo-image-picker, expo-sharing
 - `mobile/app/(auth)/login.tsx` — login email+password, redirect por rol
-- `mobile/app/(empresario)/` — Home KPIs, subir (4 pasos), notificaciones, perfil
+- `mobile/app/(empresario)/` — Home KPIs, subir (4 pasos), **documentos (historial)**, notificaciones, perfil
 - `mobile/app/(gestor)/` — lista empresas, subir (5 pasos + picker empresa), alertas
 - `mobile/app/onboarding/[id].tsx` — wizard 3 pasos completa estado `pendiente_cliente`
-- `mobile/store/auth.ts` — Zustand + SecureStore JWT
-- `mobile/hooks/useApi.ts` — fetch wrapper JWT + 401 handler
-- `mobile/hooks/useTiene.ts` — feature flags por tier (espejo de tiers.py)
-- `mobile/components/upload/ProveedorSelector.tsx` — selector con historial + añadir nuevo
-- `sfce/api/rutas/portal.py` — `GET /{id}/proveedores-frecuentes` (2 tests PASS)
+- `mobile/components/upload/ProveedorSelector.tsx` — **formulario adaptativo por tipo doc** (Factura/Ticket/Nómina/Extracto/Otro) con campos específicos de cada tipo
 - **Arrancar app**: `cd mobile && EXPO_PUBLIC_API_URL=http://localhost:8000 npx expo start --web`
-- **Nota SDK**: se generó SDK 54 (ultima versión) en lugar de 52 — sin diferencias funcionales
+
+### Sistema Notificaciones Usuario COMPLETADO (sesión 8)
+- `sfce/db/modelos.py` + `sfce/db/migraciones/011_notificaciones_usuario.py` — tabla `notificaciones_usuario`
+- `sfce/core/notificaciones.py` — módulo completo: GestorNotificaciones (in-memory) + crear_notificacion_bd + evaluar_motivo_auto (auto para duplicado/ilegible/foto borrosa)
+- `sfce/api/rutas/gestor.py` — `POST /api/gestor/empresas/{id}/notificar-cliente` (manual por gestor)
+- `sfce/api/rutas/portal.py` — `GET /{id}/notificaciones` + `POST /{id}/notificaciones/{id}/leer`
+- `dashboard/src/features/documentos/cuarentena-page.tsx` — botón "Notificar" en cada fila de cuarentena con dialog editable
+
+### Portal API actualizado (sesión 8)
+- `POST /{id}/documentos/subir` — acepta 13 campos extra según tipo (nómina/extracto/otro)
+- `GET /{id}/documentos` — fix `nombre_archivo`→`ruta_pdf`
+- `GET /{id}/proveedores-frecuentes` — lista SupplierRules por empresa
 
 ### Sistema Tiers COMPLETADO (01/03/2026)
 - `sfce/db/migraciones/010_plan_tiers.py` — migración 010 ejecutada en BD real
@@ -253,18 +260,11 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - `usuarios-page.tsx`: eliminado leak global `/api/auth/usuarios`
 - `aceptar-invitacion` endpoint: rate limiting
 
-## Próxima sesión — Canal de acceso y onboarding
-
-**Pregunta abierta**: ¿Cómo acceden los distintos tipos de usuario?
-- **Opciones**: web (actual), app móvil, app escritorio — definir qué canal para quién
-- **Onboarding**: ¿el gestor hace el onboarding del cliente (crea empresa en SFCE) o el propio cliente?
-- **Flujo alta cliente gestoría**: cuando admin_gestoria invita cliente → ¿inicia wizard de empresa automáticamente?
-
-Profundizar en la próxima sesión antes de implementar nada.
-
 ## Pendiente (baja prioridad)
+- Push notifications VAPID empresario — endpoint `/api/notificaciones/suscribir` + `VITE_VAPID_PUBLIC_KEY`
+- `fiscal.proximo_modelo` en resumen empresa (requiere ServicioFiscal)
+- Tests para nuevos endpoints portal (subir campos extra, notificaciones, documentos)
 - Motor de Escenarios de Campo (`scripts/motor_campo.py --modo rapido`)
-- Página cuarentena en dashboard
 - Integrar MCF en pipeline completo
-4. **Migración SQLite→PostgreSQL** (`scripts/migrar_sqlite_a_postgres.py`)
-5. **Tests E2E dashboard** (Playwright)
+- **Migración SQLite→PostgreSQL** (`scripts/migrar_sqlite_a_postgres.py`)
+- **Tests E2E dashboard** (Playwright)
