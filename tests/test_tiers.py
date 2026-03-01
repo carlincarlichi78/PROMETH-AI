@@ -56,3 +56,59 @@ def test_plan_tier_default_basico_usuario(sesion):
     sesion.commit()
     sesion.refresh(u)
     assert u.plan_tier == "basico"
+
+
+# ──────────────────────────────────────────────────────────────────
+# Task 2: tests helper tiers.py
+# ──────────────────────────────────────────────────────────────────
+from sfce.core.tiers import (
+    Tier, tiene_feature_empresario, tiene_feature_gestoria, verificar_limite_empresas
+)
+
+
+class MockUsuario:
+    def __init__(self, tier): self.plan_tier = tier
+
+class MockGestoria:
+    def __init__(self, tier, limite=None):
+        self.plan_tier = tier
+        self.limite_empresas = limite
+
+
+def test_basico_puede_consultar():
+    u = MockUsuario("basico")
+    assert tiene_feature_empresario(u, "consultar") is True
+
+def test_basico_no_puede_subir_docs():
+    u = MockUsuario("basico")
+    assert tiene_feature_empresario(u, "subir_docs") is False
+
+def test_pro_puede_subir_docs():
+    u = MockUsuario("pro")
+    assert tiene_feature_empresario(u, "subir_docs") is True
+
+def test_pro_no_puede_firmar():
+    u = MockUsuario("pro")
+    assert tiene_feature_empresario(u, "firmar") is False
+
+def test_premium_puede_todo():
+    u = MockUsuario("premium")
+    assert tiene_feature_empresario(u, "firmar") is True
+    assert tiene_feature_empresario(u, "chat_gestor") is True
+
+def test_feature_desconocida_requiere_premium():
+    u = MockUsuario("pro")
+    assert tiene_feature_empresario(u, "feature_inexistente") is False
+
+def test_limite_empresas_none_es_ilimitado():
+    g = MockGestoria("premium", limite=None)
+    assert verificar_limite_empresas(g, 9999) is True
+
+def test_limite_empresas_bloquea_al_llegar():
+    g = MockGestoria("basico", limite=5)
+    assert verificar_limite_empresas(g, 4) is True
+    assert verificar_limite_empresas(g, 5) is False
+
+def test_tier_invalido_cae_a_basico():
+    u = MockUsuario("enterprise")  # valor invalido
+    assert tiene_feature_empresario(u, "subir_docs") is False
