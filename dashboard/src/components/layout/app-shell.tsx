@@ -34,7 +34,7 @@ export function AppShell() {
       <AppSidebar />
       <SidebarInset>
         <Header />
-        <main className="flex-1 p-6 overflow-auto min-h-[calc(100vh-3.5rem)]">
+        <main key={location.pathname} className="flex-1 p-6 overflow-auto min-h-[calc(100vh-3.5rem)] page-enter">
           <Outlet />
         </main>
       </SidebarInset>
