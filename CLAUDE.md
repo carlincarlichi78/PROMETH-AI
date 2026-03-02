@@ -192,33 +192,33 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 31 — Motor Testing Caos P1 COMPLETADO 8/8)
+## Estado actual (02/03/2026, sesión 32 — Motor Testing Caos P2 Task 9 completada)
 
 **Rama activa**: `feat/motor-testing-caos-p1`
-**Tests**: 2437 PASS, 4 skipped, 0 FAILED. Commit: `90cb895`
+**Tests**: 2439 PASS, 4 skipped, 0 FAILED. Commit: `fe07c1d`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Motor Testing Caos — P1 COMPLETADO (sesión 31)
+### Motor Testing Caos — P2 EN PROGRESO (sesión 32)
 
-**Design doc**: `docs/plans/2026-03-02-motor-testing-chaos-design.md`
-**Plan P1** (Tasks 1-8): `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md` — COMPLETADO
-**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md` — próxima sesión
+**Plan P1** (Tasks 1-8): COMPLETADO
+**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md`
 
-| Task | Archivos | Tests |
-|------|---------|-------|
-| 1 — `ResultadoEjecucion` dataclass | `modelos.py` | 2 |
-| 2 — `executor.py` → retorna `ResultadoEjecucion` | `executor.py` | 2 |
-| 3 — `CleanupCompleto` 3 capas FS+BD+disco | `cleanup_completo.py` | 3 |
-| 4 — `ValidatorV2` IVA+razon_cuarentena+duracion | `validator_v2.py` | 5 |
-| 5 — `modelos_testing.py` + migración **020** | `020_testing.py` | 2 |
-| 6 — biblioteca/ + manifesto.json (17 docs) | `biblioteca/generar_biblioteca.py` | 3 |
-| 7 — `WorkerTesting` SMOKE+VIGILANCIA + lifespan | `worker_testing.py`, `app.py` | 4 |
-| 8 — API `/testing` (3 endpoints) + health workers | `testing.py`, `health.py` | 3 |
+| Task | Estado | Commit |
+|------|--------|--------|
+| 9 — `ExecutorPortal` + usuario `ci_cliente@sfce.local` | ✓ DONE | fe07c1d |
+| 10 — `ExecutorEmail` SMTP + poll cola IMAP | pendiente | — |
+| 11 — `ExecutorBancario` Norma 43 | pendiente | — |
+| 12 — Dashboard `/testing` — SFCE Health | pendiente | — |
+| 13 — CI/CD 5º job smoke-test post-deploy | pendiente | — |
+| 14 — Uptime Kuma heartbeats | pendiente | — |
+| 15 — Refactor scripts Playwright → `ejecutar()` | pendiente | — |
+| 16 — `ExecutorPlaywright` wrapper | pendiente | — |
+| 17 — Regression mode completo | pendiente | — |
 
 **NOTA migración**: usar `020_testing.py` (no 015 — ya existe 015_mensajes_empresa.py)
 **Pendiente producción**: `python sfce/db/migraciones/020_testing.py` vía SSH
-**Próxima sesión**: P2 — Tasks 9-17 (ExecutorPortal, ExecutorEmail, Dashboard, CI/CD, Playwright)
+**Próxima sesión**: continuar P2 con Tasks 10-12 usando `superpowers:executing-plans`
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
