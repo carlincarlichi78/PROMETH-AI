@@ -309,6 +309,26 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {/* Onboarding Masivo — superadmin, admin_gestoria, asesor */}
+        {['superadmin', 'admin_gestoria', 'asesor'].includes(usuario?.rol ?? '') && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === '/onboarding/masivo'}
+                    onClick={() => navigate('/onboarding/masivo')}
+                    tooltip="Onboarding Masivo"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Onboarding Masivo</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Mi Gestoria — solo admin_gestoria */}
         {usuario?.rol === 'admin_gestoria' && (
           <SidebarGroup>
