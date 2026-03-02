@@ -36,7 +36,7 @@ def client_con_empresa_revision(tmp_path):
         admin = Usuario(
             email="gestor@sfce.local", nombre="Gestor Test",
             hash_password=hashear_password("admin"),
-            rol="gestor", activo=True, empresas_ids=[5],
+            rol="asesor", activo=True, empresas_ids=[5],
         )
         s.add(emp)
         s.add(cfg)

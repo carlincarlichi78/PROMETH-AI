@@ -279,10 +279,11 @@ async def subir_documento(
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
+        try:
+            empresa = verificar_acceso_empresa(usuario, empresa_id, sesion)
+        except HTTPException:
             ruta_archivo.unlink(missing_ok=True)
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+            raise
 
         # 8. Determinar modo (auto o revision)
         cfg = sesion.query(ConfigProcesamientoEmpresa).filter_by(
@@ -380,6 +381,7 @@ async def aprobar_documento(
 
     sf = request.app.state.sesion_factory
     with sf() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         from sfce.db.modelos import Documento
         doc = s.query(Documento).filter_by(id=doc_id, empresa_id=empresa_id).first()
         if not doc:
@@ -413,6 +415,7 @@ async def rechazar_documento(
     motivo = body.get("motivo", "Rechazado por gestor")
     sf = request.app.state.sesion_factory
     with sf() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         from sfce.db.modelos import Documento
         doc = s.query(Documento).filter_by(id=doc_id, empresa_id=empresa_id).first()
         if not doc:
@@ -438,9 +441,7 @@ def notificaciones_portal(
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        empresa = verificar_acceso_empresa(usuario, empresa_id, sesion)
 
         notificaciones = []
 
@@ -531,6 +532,7 @@ def proveedores_frecuentes(
     """Lista de proveedores ya usados por la empresa — para el selector en la app."""
     sf = request.app.state.sesion_factory
     with sf() as sesion:
+        verificar_acceso_empresa(usuario, empresa_id, sesion)
         reglas = (
             sesion.execute(
                 select(SupplierRule)

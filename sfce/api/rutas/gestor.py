@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.db.modelos import Empresa
 
 router = APIRouter(prefix="/api/gestor", tags=["gestor-movil"])
@@ -104,7 +104,7 @@ def notificar_cliente(
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
-        empresa = sesion.get(Empresa, empresa_id)
+        empresa = verificar_acceso_empresa(usuario, empresa_id, sesion)
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 

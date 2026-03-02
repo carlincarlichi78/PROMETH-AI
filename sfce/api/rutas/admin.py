@@ -314,6 +314,15 @@ def actualizar_plan_usuario(
         u = sesion.get(Usuario, usuario_id)
         if not u:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        # admin_gestoria solo puede modificar usuarios de su propia gestoría
+        if solicitante.rol == "admin_gestoria":
+            if u.gestoria_id != solicitante.gestoria_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="No puedes modificar usuarios de otra gestoría",
+                )
+
         u.plan_tier = datos.plan_tier
         sesion.commit()
         return {"id": u.id, "email": u.email, "plan_tier": u.plan_tier}

@@ -181,19 +181,43 @@ from sfce.db.modelos import Empresa
 def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
     """Devuelve la empresa si el usuario tiene acceso, lanza 403/404 si no.
 
-    Superadmin (gestoria_id=None) tiene acceso total.
-    Resto solo a empresas de su gestoría.
+    Superadmin (rol='superadmin') tiene acceso total.
+    Clientes solo acceden a sus empresas_asignadas.
+    Gestores/asesores solo acceden a empresas de su gestoría.
     """
     empresa = sesion.get(Empresa, empresa_id)
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
     # Superadmin ve todo
-    if usuario.gestoria_id is None:
+    if usuario.rol == "superadmin":
         return empresa
 
-    # Gestoría: solo sus empresas
-    if empresa.gestoria_id != usuario.gestoria_id:
+    # Cliente (con o sin gestoría): solo sus empresas_asignadas
+    if usuario.rol == "cliente":
+        asignadas = list(getattr(usuario, "empresas_asignadas", None) or [])
+        if empresa_id not in asignadas:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta empresa",
+            )
+        return empresa
+
+    # Gestor/asesor con gestoría asignada: solo empresas de su gestoría
+    gestoria_id = getattr(usuario, "gestoria_id", None)
+    if gestoria_id is not None:
+        if empresa.gestoria_id != gestoria_id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta empresa",
+            )
+        return empresa
+
+    # Gestor/asesor sin gestoría: verificar por empresas_asignadas o empresas_ids
+    asignadas = list(getattr(usuario, "empresas_asignadas", None) or [])
+    if not asignadas:
+        asignadas = list(getattr(usuario, "empresas_ids", None) or [])
+    if empresa_id not in asignadas:
         raise HTTPException(
             status_code=403,
             detail="No tienes acceso a esta empresa",

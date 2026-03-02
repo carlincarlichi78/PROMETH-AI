@@ -65,19 +65,19 @@ def _crear_app_test():
             email="gestor@test.com",
             nombre="Gestor Test",
             hash_password=hashear_password("pass123"),
-            rol="gestor",
+            rol="asesor",
             activo=True,
             empresas_ids=[id_empresa],
             empresas_asignadas=[id_empresa],
         )
         s.add(gestor)
 
-        # Usuario readonly (no debe poder exportar)
+        # Usuario cliente (no debe poder exportar)
         readonly = Usuario(
             email="readonly@test.com",
             nombre="ReadOnly Test",
             hash_password=hashear_password("pass123"),
-            rol="readonly",
+            rol="cliente",
             activo=True,
             empresas_ids=[],
             empresas_asignadas=[],
