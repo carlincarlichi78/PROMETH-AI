@@ -1,5 +1,5 @@
 import PageLayout from '../components/layout/PageLayout'
-import { BarChart3, PieChart, CreditCard, FileCheck, TrendingUp, Database, ArrowRight } from 'lucide-react'
+import { BarChart3, PieChart, CreditCard, FileCheck, TrendingUp, Database, ArrowRight, Cpu, Star } from 'lucide-react'
 
 const features = [
   { icono: BarChart3,  titulo: 'PyG automático',          desc: 'Cuenta de pérdidas y ganancias generada por período sin intervención manual.' },
@@ -8,6 +8,14 @@ const features = [
   { icono: FileCheck,  titulo: 'Módulo fiscal completo',  desc: '303, 111, 130, 347, 390 y más. Datos pre-calculados, solo revisar y presentar.' },
   { icono: TrendingUp, titulo: 'Dashboard 16 módulos',    desc: 'Una pantalla con todo: económico, fiscal, bancario, documentos, RRHH.' },
   { icono: Database,   titulo: 'Historial completo',      desc: 'Acceso a todos los ejercicios. Comparativas interanuales en un clic.' },
+]
+
+const advisorItems = [
+  'Benchmarking sectorial automático (P25 / P50 / P75) por código CNAE',
+  'Briefings semanales generados por IA: alertas, tendencias y recomendaciones',
+  'Dashboards de PyG, Tesorería, Ventas, Compras, RRHH y Ratios',
+  'Star schema OLAP-lite + SectorEngine CNAE + BenchmarkEngine con percentiles',
+  'CommandCenter — visión global de toda la cartera de clientes',
 ]
 
 export default function Asesores() {
@@ -47,6 +55,48 @@ export default function Asesores() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Advisor Intelligence Platform */}
+      <section className="py-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-card p-8 border-prometh-amber/40">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 rounded-xl bg-prometh-amber/10 shrink-0">
+                <Cpu className="text-prometh-amber" size={32} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-2xl font-heading font-bold text-prometh-text">
+                    Advisor Intelligence Platform
+                  </h2>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold bg-prometh-amber/20 text-prometh-amber px-2 py-1 rounded-full">
+                    <Star size={10} />
+                    Solo plan Premium
+                  </span>
+                </div>
+                <p className="text-prometh-muted leading-relaxed">
+                  Benchmarking sectorial automático. Compara cada empresa contra su sector (P25/P50/P75).
+                  Briefings semanales generados por IA. Dashboards: PyG, Tesorería, Venta, Compras, RRHH, Ratios.
+                </p>
+              </div>
+            </div>
+            <ul className="space-y-3">
+              {advisorItems.map(item => (
+                <li key={item} className="flex items-start gap-3 text-sm text-prometh-muted">
+                  <div className="w-1.5 h-1.5 rounded-full bg-prometh-amber mt-1.5 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6">
+              <a href="mailto:hola@prometh-ai.es?subject=Demo Advisor Intelligence Platform"
+                className="btn-primary inline-flex items-center gap-2 text-sm">
+                Ver demo Advisor <ArrowRight size={14} />
+              </a>
+            </div>
           </div>
         </div>
       </section>

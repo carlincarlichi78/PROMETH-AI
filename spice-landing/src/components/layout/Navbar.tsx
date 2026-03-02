@@ -4,12 +4,12 @@ import { Menu, X } from 'lucide-react'
 import LogoPrometh from '../shared/LogoPrometh'
 
 const links = [
-  { href: '/gestorias',     label: 'Gestorías' },
-  { href: '/asesores',      label: 'Asesores' },
-  { href: '/clientes',      label: 'Clientes' },
-  { href: '/como-funciona', label: 'Cómo funciona' },
-  { href: '/seguridad',     label: 'Seguridad' },
-  { href: '/precios',       label: 'Precios' },
+  { href: '/gestorias',   label: 'Gestorías' },
+  { href: '/asesores',    label: 'Asesores' },
+  { href: '/clientes',    label: 'Clientes' },
+  { href: '/tecnologia',  label: 'Tecnología' },
+  { href: '/seguridad',   label: 'Seguridad' },
+  { href: '/precios',     label: 'Precios' },
 ]
 
 export default function Navbar() {
