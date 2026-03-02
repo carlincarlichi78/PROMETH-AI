@@ -1,5 +1,29 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 43 — 02/03/2026: Motor Testeo SFCE — ciclo completo
+
+### Resumen
+Primera ejecución completa del Motor de Testeo SFCE (skill `test-engine`). Ciclo 5 fases: reconocimiento → triage → corrección → cobertura → cierre. Suite: 2543→2565 passed, 3→0 fallos.
+
+### Fallos detectados y corregidos
+
+| Fallo | Causa raíz | Fix |
+|-------|-----------|-----|
+| `test_procesar_cuenta_gestoria_cuarentena_si_remitente_desconocido` | IA clasificaba emails de gestoría como SPAM→IGNORADO | `ingesta_correo.py`: si IA dice IGNORAR en cuenta gestoría, convertir a CUARENTENA |
+| `test_migracion_021 × 2` | Módulo `migracion_021_empresa_slug_backfill` eliminado en sesión 37, tests obsoletos | Recrear wrapper importable via `importlib` que apunta a `021_empresa_slug_backfill.py` |
+
+### Tests nuevos generados (cobertura < 80%)
+
+| Archivo | Tests | Qué cubre |
+|---------|-------|-----------|
+| `tests/test_worker_testing_extra.py` | 8 | Heartbeat Kuma (ok/bugs/error de red), modos vigilancia/regression en `_ids_por_modo`, resultados timeout/bug en `ejecutar_sesion_sincrona` |
+| `tests/test_procesador_lote_extra.py` | 5 | `agrupar_por_cliente` con ruta externa (ValueError), `_procesar_grupo` con directorio/excepción, `aptos_automatico`, idempotencia migración 022 |
+
+### Commit
+`00ae851` — test: tests adicionales worker_testing y procesador_lote (motor testeo sesion 43)
+
+---
+
 ## Sesión 39 — 02/03/2026: Onboarding Histórico + Mejoras Onboarding Masivo
 
 ### Resumen

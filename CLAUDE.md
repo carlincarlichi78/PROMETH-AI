@@ -256,22 +256,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 42 — Merge + Deploy producción COMPLETADO)
+## Estado actual (02/03/2026, sesión 43 — Motor Testeo ejecutado — 2565 tests)
 
 **Rama activa**: `main`
-**Último commit**: `5a7a34b`
-**Tests**: 2552 PASS, 4 skipped, 0 FAILED
-**API producción**: https://api.prometh-ai.es — ONLINE ✓
+**Último commit**: `00ae851`
+**Tests**: 2565 PASS, 4 skipped, 0 FAILED
 
-### Fixes CI/CD aplicados en esta sesión
+### Motor Testeo SFCE — ciclo completo ejecutado (sesión 43)
 
-| Fix | Commit | Detalle |
-|-----|--------|---------|
-| `SFCE_FERNET_KEY` en GitHub Secrets + workflow | `7ced756` | Era necesaria para tests con lifespan |
-| Mock `_obtener_flujo` en test Playwright | `7ced756` | Playwright no disponible en CI |
-| `scripts/motor_campo/` en Dockerfile | `5a7a34b` | `worker_testing` necesita este módulo |
-| Migraciones 018/022/023 + tablas onboarding | psql directo | Columnas y tablas faltantes en prod |
-| Volumen `scripts/motor_campo` en docker-compose | SSH | Workaround hasta que nueva imagen esté en GHCR |
+| Fix | Detalle |
+|-----|---------|
+| `ingesta_correo.py` — CUARENTENA gestoría | IA decía SPAM → IGNORADO. Ahora en gestoría: si IA dice SPAM, va a CUARENTENA para revisión manual |
+| `migracion_021_empresa_slug_backfill.py` — wrapper | Módulo con nombre que empieza en dígito no importable. Alias via `importlib` |
+| `test_worker_testing_extra.py` (+8 tests) | Heartbeat Kuma ok/bugs/error, modos vigilancia/regression, resultados timeout/bug |
+| `test_procesador_lote_extra.py` (+5 tests) | Archivo externo ValueError, no-file en grupo, excepción clasificación, aptos_automatico, migración 022 idempotente |
 
 ### Pendiente próxima sesión
 1. Onboarding histórico Tasks 5-8 (generar PDFs reales, crear empresas en FS, correr pipeline)
