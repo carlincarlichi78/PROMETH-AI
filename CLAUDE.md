@@ -192,32 +192,33 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 30 — Motor Testing Caos: diseño + plan + Tasks 1-2)
+## Estado actual (02/03/2026, sesión 31 — Motor Testing Caos P1 COMPLETADO 8/8)
 
-**Rama activa**: `feat/motor-testing-caos-p1` (merge a main al completar P1)
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `96fe4ff`
+**Rama activa**: `feat/motor-testing-caos-p1`
+**Tests**: 2437 PASS, 4 skipped, 0 FAILED. Commit: `90cb895`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Motor Testing Caos — sesión 30 (iniciado)
+### Motor Testing Caos — P1 COMPLETADO (sesión 31)
 
-**Design doc**: `docs/plans/2026-03-02-motor-testing-chaos-design.md` (commit 61d25c0)
-**Plan P1** (Tasks 1-8): `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md`
-**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md`
+**Design doc**: `docs/plans/2026-03-02-motor-testing-chaos-design.md`
+**Plan P1** (Tasks 1-8): `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md` — COMPLETADO
+**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md` — próxima sesión
 
-**Progreso plan P1:**
-| Task | Estado | Commit |
-|------|--------|--------|
-| 1 — `ResultadoEjecucion` dataclass en `modelos.py` | ✓ DONE | 25a8503 |
-| 2 — `executor.py` retorna `ResultadoEjecucion` con IDs | ✓ DONE | 96fe4ff |
-| 3 — `CleanupCompleto` 3 capas (FS+BD+disco) | ✓ DONE | c4f19c5 |
-| 4 — `ValidatorV2` IVA+razon_cuarentena+duracion | pendiente | — |
-| 5 — Migración 015 + `modelos_testing.py` | pendiente | — |
-| 6 — `biblioteca/` + `manifesto.json` | pendiente | — |
-| 7 — `WorkerTesting` SMOKE+VIGILANCIA + lifespan | pendiente | — |
-| 8 — API `/testing` (4 endpoints) + health extendido | pendiente | — |
+| Task | Archivos | Tests |
+|------|---------|-------|
+| 1 — `ResultadoEjecucion` dataclass | `modelos.py` | 2 |
+| 2 — `executor.py` → retorna `ResultadoEjecucion` | `executor.py` | 2 |
+| 3 — `CleanupCompleto` 3 capas FS+BD+disco | `cleanup_completo.py` | 3 |
+| 4 — `ValidatorV2` IVA+razon_cuarentena+duracion | `validator_v2.py` | 5 |
+| 5 — `modelos_testing.py` + migración **020** | `020_testing.py` | 2 |
+| 6 — biblioteca/ + manifesto.json (17 docs) | `biblioteca/generar_biblioteca.py` | 3 |
+| 7 — `WorkerTesting` SMOKE+VIGILANCIA + lifespan | `worker_testing.py`, `app.py` | 4 |
+| 8 — API `/testing` (3 endpoints) + health workers | `testing.py`, `health.py` | 3 |
 
-**Próxima sesión**: continuar con Task 3 usando `superpowers:executing-plans` + `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md`
+**NOTA migración**: usar `020_testing.py` (no 015 — ya existe 015_mensajes_empresa.py)
+**Pendiente producción**: `python sfce/db/migraciones/020_testing.py` vía SSH
+**Próxima sesión**: P2 — Tasks 9-17 (ExecutorPortal, ExecutorEmail, Dashboard, CI/CD, Playwright)
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
