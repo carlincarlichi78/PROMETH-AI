@@ -555,3 +555,171 @@ def proveedores_frecuentes(
                 for r in reglas
             ]
         }
+
+
+# ─── Semáforo fiscal ──────────────────────────────────────────────────────────
+
+@router.get("/{empresa_id}/semaforo")
+def semaforo_empresa(
+    empresa_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Semáforo fiscal: verde / amarillo / rojo con lista de alertas."""
+    from sfce.db.modelos import Documento, NotificacionUsuario
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
+        ej = getattr(empresa, "ejercicio_activo", None) or str(date.today().year)
+        alertas = []
+
+        # Documentos en cuarentena o revisión pendiente
+        docs_problema = list(sesion.execute(
+            select(Documento)
+            .where(Documento.empresa_id == empresa_id)
+            .where(Documento.estado.in_(["cuarentena", "REVISION_PENDIENTE"]))
+        ).scalars().all())
+        if docs_problema:
+            alertas.append({
+                "tipo": "documentos_problema",
+                "mensaje": f"{len(docs_problema)} documento(s) requieren atención",
+                "urgente": True,
+            })
+
+        # Notificaciones de error no leídas
+        try:
+            notifs_error = list(sesion.execute(
+                select(NotificacionUsuario)
+                .where(NotificacionUsuario.empresa_id == empresa_id)
+                .where(NotificacionUsuario.tipo == "error_doc")
+                .where(NotificacionUsuario.leida == False)  # noqa: E712
+            ).scalars().all())
+            if notifs_error:
+                alertas.append({
+                    "tipo": "docs_rechazados",
+                    "mensaje": f"{len(notifs_error)} documento(s) rechazado(s)",
+                    "urgente": True,
+                })
+        except Exception:
+            pass
+
+        # Resultado acumulado del año
+        partidas = list(sesion.execute(
+            select(Partida)
+            .join(Asiento, Asiento.id == Partida.asiento_id)
+            .where(Asiento.empresa_id == empresa_id)
+            .where(Asiento.ejercicio == ej)
+        ).scalars().all())
+        ingresos = sum(
+            float(p.haber or 0) - float(p.debe or 0)
+            for p in partidas
+            if (p.subcuenta or "").startswith("7")
+        )
+        gastos = sum(
+            float(p.debe or 0) - float(p.haber or 0)
+            for p in partidas
+            if (p.subcuenta or "").startswith("6")
+        )
+        resultado = ingresos - gastos
+        if resultado < -1000:
+            alertas.append({
+                "tipo": "resultado_negativo",
+                "mensaje": f"Resultado acumulado negativo: {resultado:,.0f}€",
+                "urgente": False,
+            })
+
+        hay_urgente = any(a["urgente"] for a in alertas)
+        color = "rojo" if hay_urgente else ("amarillo" if alertas else "verde")
+
+        return {
+            "empresa_id": empresa_id,
+            "color": color,
+            "alertas": alertas,
+            "resultado_acumulado": round(resultado, 2),
+        }
+
+
+# ─── Ahorra X€ al mes ─────────────────────────────────────────────────────────
+
+@router.get("/{empresa_id}/ahorra-mes")
+def ahorra_mes(
+    empresa_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Cuánto debe apartar el cliente al mes para sus impuestos del trimestre."""
+    from calendar import monthrange
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
+
+        hoy = date.today()
+        mes = hoy.month
+        trimestre = (mes - 1) // 3 + 1
+        mes_inicio = (trimestre - 1) * 3 + 1  # noqa: F841
+        mes_fin = trimestre * 3
+        dias_fin = monthrange(hoy.year, mes_fin)[1]
+        fecha_vencimiento = date(hoy.year, mes_fin, dias_fin)
+        meses_restantes = max(1, mes_fin - mes + 1)
+
+        ej = str(hoy.year)
+
+        partidas_477 = list(sesion.execute(
+            select(Partida)
+            .join(Asiento, Asiento.id == Partida.asiento_id)
+            .where(Asiento.empresa_id == empresa_id)
+            .where(Asiento.ejercicio == ej)
+            .where(Partida.subcuenta.like("477%"))
+        ).scalars().all())
+        iva_repercutido = sum(float(p.haber or 0) - float(p.debe or 0) for p in partidas_477)
+
+        partidas_472 = list(sesion.execute(
+            select(Partida)
+            .join(Asiento, Asiento.id == Partida.asiento_id)
+            .where(Asiento.empresa_id == empresa_id)
+            .where(Asiento.ejercicio == ej)
+            .where(Partida.subcuenta.like("472%"))
+        ).scalars().all())
+        iva_soportado = sum(float(p.debe or 0) - float(p.haber or 0) for p in partidas_472)
+
+        iva_neto = max(0.0, iva_repercutido - iva_soportado)
+
+        irpf_estimado = 0.0
+        if getattr(empresa, "tipo_persona", None) == "fisica":
+            partidas_todas = list(sesion.execute(
+                select(Partida)
+                .join(Asiento, Asiento.id == Partida.asiento_id)
+                .where(Asiento.empresa_id == empresa_id)
+                .where(Asiento.ejercicio == ej)
+            ).scalars().all())
+            ing = sum(
+                float(p.haber or 0) - float(p.debe or 0)
+                for p in partidas_todas
+                if (p.subcuenta or "").startswith("7")
+            )
+            gas = sum(
+                float(p.debe or 0) - float(p.haber or 0)
+                for p in partidas_todas
+                if (p.subcuenta or "").startswith("6")
+            )
+            resultado_anual = ing - gas
+            irpf_estimado = max(0.0, resultado_anual * 0.20)
+
+        total_trimestre = iva_neto + irpf_estimado
+        aparta_mes = round(total_trimestre / meses_restantes, 2)
+
+        return {
+            "empresa_id": empresa_id,
+            "trimestre": f"Q{trimestre} {hoy.year}",
+            "iva_estimado_trimestre": round(iva_neto, 2),
+            "irpf_estimado_trimestre": round(irpf_estimado, 2),
+            "total_estimado_trimestre": round(total_trimestre, 2),
+            "aparta_mes": aparta_mes,
+            "meses_restantes": meses_restantes,
+            "vencimiento_trimestre": fecha_vencimiento.isoformat(),
+            "nota": "Estimación basada en documentos registrados hasta hoy",
+        }
