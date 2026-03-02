@@ -197,6 +197,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 **Rama activa**: `main`
 **Tests**: 2270 PASS, 0 FAILED. Build: ✓. Commit: `b5d88f2`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
+**Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
 ### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
 
@@ -221,6 +222,11 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Permisos `/opt/apps/sfce/` | `chown carli:carli` para que CI pueda escribir |
 | Login GHCR en deploy | `docker login ghcr.io` antes de `docker compose pull` |
 | Secuencias PG | Reset post-migración SQLite→PG (UniqueViolation en audit_log) |
+| `pg_data` permisos | `chown -R carli` rompió PG. Fix: `chown -R 999:999 /opt/apps/sfce/pg_data` |
+| nginx `.tmp` configs | Los configs de app/api se copiaron con `.tmp`. Renombrar manualmente |
+| `sfce_api` docker-compose | Faltaba servicio en `/opt/apps/sfce/docker-compose.yml`. Subido con scp |
+| WeasyPrint Dockerfile | Añadir pango/cairo/gobject en runtime stage. `libgdk-pixbuf-2.0-0` (Bookworm) |
+| Uptime Kuma | Cuenta creada: admin/admin123. Monitores SFCE App + SFCE API Health |
 
 ### Sprint P2-P3 COMPLETADO (sesión 18 — 02/03/2026)
 
