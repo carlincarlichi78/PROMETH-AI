@@ -78,6 +78,9 @@ const CuentasCorreoPage = lazy(() =>
 const WhitelistPage = lazy(() =>
   import('@/features/correo/whitelist-page').then((m) => ({ default: m.WhitelistPage }))
 )
+const GestorEmailsPage = lazy(() =>
+  import('@/features/correo/gestor-emails-page').then((m) => ({ default: m.GestorEmailsPage }))
+)
 
 // --- Ayuda ---
 const GuiaCorreoPage = lazy(() =>
@@ -215,6 +218,7 @@ export function App() {
           {/* Correo */}
           <Route path="/empresa/:id/correo" element={<CorreoPage />} />
           <Route path="/empresa/:id/correo/whitelist" element={<WhitelistPage />} />
+          <Route path="/empresa/:id/correo/emails" element={<GestorEmailsPage />} />
           <Route path="/correo/cuentas" element={<CuentasCorreoPage />} />
 
           {/* Ayuda */}
