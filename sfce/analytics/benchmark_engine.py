@@ -14,6 +14,27 @@ MIN_EMPRESAS = 5  # mínimo para mostrar benchmarks anónimos
 KPI_SOPORTADOS = {"ticket_medio"}
 
 
+def _percentil(valores_ordenados: list[float], p: float) -> float:
+    """Percentil con interpolación lineal (equivalente a numpy.percentile).
+
+    Usa el método estándar estadístico: índice real = p/100 * (n-1), luego
+    interpolación lineal entre los dos valores adyacentes. Con n=5 y P25,
+    idx=1.0 → devuelve valores_ordenados[1] exacto (no valores_ordenados[1]
+    como antes, que era correcto en ese caso, pero con p=50 e n=5 devolvía
+    valores_ordenados[2] en lugar del interpolado entre índices 2 y 3).
+    """
+    n = len(valores_ordenados)
+    if n == 0:
+        return 0.0
+    if n == 1:
+        return valores_ordenados[0]
+    idx = p / 100.0 * (n - 1)
+    lower = int(idx)
+    upper = min(lower + 1, n - 1)
+    fraccion = idx - lower
+    return valores_ordenados[lower] * (1 - fraccion) + valores_ordenados[upper] * fraccion
+
+
 def calcular_percentiles_sector(sesion: Session, cnae: str, kpi: str) -> dict | None:
     """Calcula percentiles P25/P50/P75 del KPI para todas las empresas del mismo CNAE.
 
@@ -39,12 +60,11 @@ def calcular_percentiles_sector(sesion: Session, cnae: str, kpi: str) -> dict | 
         return None
 
     valores.sort()
-    n = len(valores)
     return {
-        "p25": valores[int(n * 0.25)],
-        "p50": valores[int(n * 0.50)],
-        "p75": valores[int(n * 0.75)],
-        "n_empresas": n,
+        "p25": _percentil(valores, 25),
+        "p50": _percentil(valores, 50),
+        "p75": _percentil(valores, 75),
+        "n_empresas": len(valores),
     }
 
 

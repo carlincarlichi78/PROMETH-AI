@@ -91,3 +91,25 @@ def test_ciclo_worker_no_lanza_si_schedule_no_cumplido(sf_completo):
     with patch("sfce.core.worker_pipeline.ejecutar_pipeline_empresa") as mock_pipe:
         ejecutar_ciclo_worker(sf_completo)
         assert not mock_pipe.called
+
+
+def test_clamar_docs_marca_procesando_atomicamente(sf_completo):
+    """El estado pasa a PROCESANDO antes de retornar los IDs.
+    Un segundo llamado inmediato no debe retornar los mismos documentos,
+    previniendo procesamiento doble (race condition BUG-RACE-2).
+    """
+    from sfce.core.worker_pipeline import _clamar_docs_para_empresa
+
+    # Primera reclamacion: debe retornar el documento
+    ids_primera = _clamar_docs_para_empresa(empresa_id=5, sesion_factory=sf_completo)
+    assert len(ids_primera) == 1
+
+    # Verificar que el estado en BD es ahora PROCESANDO
+    with sf_completo() as s:
+        entrada = s.query(ColaProcesamiento).filter_by(empresa_id=5).first()
+        assert entrada.estado == "PROCESANDO"
+        assert entrada.worker_inicio is not None
+
+    # Segunda reclamacion: no debe retornar nada (ya fue reclamado)
+    ids_segunda = _clamar_docs_para_empresa(empresa_id=5, sesion_factory=sf_completo)
+    assert ids_segunda == [], "Race condition: el mismo doc fue reclamado dos veces"

@@ -455,7 +455,7 @@ class TestAceptarInvitacion:
             "token": "token-que-no-existe",
             "password": "MiNuevaClave123!",
         })
-        assert resp.status_code == 404
+        assert resp.status_code == 400  # token inexistente → 400 (UPDATE atómico devuelve 0 filas)
 
     def test_aceptar_invitacion_token_expirado(self, client, sesion_factory):
         from sfce.api.auth import hashear_password
@@ -494,7 +494,7 @@ class TestAceptarInvitacion:
             "token": usuario_con_invitacion,
             "password": "OtraClave456!",
         })
-        assert resp.status_code == 404
+        assert resp.status_code == 400  # token ya consumido → 400 (UPDATE atómico, token NULL → no encontrado)
 
 
 class TestRefreshToken:

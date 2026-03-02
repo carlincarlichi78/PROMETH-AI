@@ -115,7 +115,7 @@ class TestLockout:
         usuario = _get_usuario(sf)
         assert usuario.failed_attempts >= 5
         assert usuario.locked_until is not None
-        assert usuario.locked_until > datetime.now()
+        assert usuario.locked_until > datetime.utcnow()  # locked_until se guarda en UTC (naive)
 
     def test_login_bloqueado_retorna_423_con_tiempo_restante(self, cliente_y_sf):
         """Con cuenta bloqueada, el login devuelve HTTP 423."""
@@ -160,7 +160,7 @@ class TestLockout:
         with sf() as s:
             u = s.query(Usuario).filter(Usuario.email == "test@test.com").first()
             u.failed_attempts = 5
-            u.locked_until = datetime.now() - timedelta(minutes=1)  # expirado
+            u.locked_until = datetime.utcnow() - timedelta(minutes=1)  # expirado (UTC naive, igual que lo escribe auth_rutas)
             s.commit()
 
         # Ahora el login correcto debe funcionar (bloqueo caducado → reset + acceso)

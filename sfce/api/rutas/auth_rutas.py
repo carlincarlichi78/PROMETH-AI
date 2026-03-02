@@ -1,6 +1,6 @@
 """SFCE API — Rutas de autenticacion y gestion de usuarios."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from math import ceil
 
 import base64
@@ -12,6 +12,8 @@ import qrcode.image.svg
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
+
+from sqlalchemy import update as sa_update
 
 from sfce.api.audit import auditar, AuditAccion, ip_desde_request
 from sfce.api.auth import (
@@ -91,9 +93,10 @@ async def login(body: LoginRequest, request: Request, response: Response):
 
         # --- Verificar bloqueo ANTES de comprobar password ---
         if usuario and usuario.locked_until:
-            ahora = datetime.now()
-            if usuario.locked_until > ahora:
-                segundos_restantes = ceil((usuario.locked_until - ahora).total_seconds())
+            ahora = datetime.now(timezone.utc)
+            locked_until_aware = usuario.locked_until.replace(tzinfo=timezone.utc) if usuario.locked_until.tzinfo is None else usuario.locked_until
+            if locked_until_aware > ahora:
+                segundos_restantes = ceil((locked_until_aware - ahora).total_seconds())
                 return JSONResponse(
                     status_code=423,
                     content={
@@ -113,7 +116,7 @@ async def login(body: LoginRequest, request: Request, response: Response):
             if usuario:
                 usuario.failed_attempts = (usuario.failed_attempts or 0) + 1
                 if usuario.failed_attempts >= LOCKOUT_ATTEMPTS:
-                    usuario.locked_until = datetime.now() + timedelta(minutes=LOCKOUT_MINUTES)
+                    usuario.locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)
             auditar(
                 sesion, AuditAccion.LOGIN_FAILED, "auth",
                 email_usuario=body.email,
@@ -271,29 +274,41 @@ class AceptarInvitacionRequest(BaseModel):
 def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request, response: Response):
     """Canjea un token de invitacion, establece la password definitiva y devuelve JWT."""
     sf = request.app.state.sesion_factory
+    ahora = datetime.now(timezone.utc)
 
     with sf() as sesion:
-        usuario = sesion.query(Usuario).filter(
-            Usuario.invitacion_token == body.token,
-        ).first()
+        # UPDATE atómico: consume el token solo si aún existe y no ha expirado.
+        # Previene race condition donde dos peticiones simultáneas consumen el mismo token.
+        resultado = sesion.execute(
+            sa_update(Usuario)
+            .where(
+                Usuario.invitacion_token == body.token,
+                Usuario.invitacion_expira > ahora,
+            )
+            .values(invitacion_token=None, invitacion_expira=None)
+            .returning(Usuario.id)
+        )
+        fila = resultado.fetchone()
 
-        if not usuario:
+        if not fila:
+            # Token no existe, ya fue consumido, o expiró — verificar cual para dar mensaje correcto
+            usuario_expirado = sesion.query(Usuario).filter(
+                Usuario.invitacion_token == body.token,
+            ).first()
+            if usuario_expirado:
+                raise HTTPException(
+                    status_code=status.HTTP_410_GONE,
+                    detail="El token de invitacion ha expirado.",
+                )
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Token de invitacion no encontrado.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token de invitacion invalido o ya usado.",
             )
 
-        ahora = datetime.utcnow()
-        if usuario.invitacion_expira is None or usuario.invitacion_expira < ahora:
-            raise HTTPException(
-                status_code=status.HTTP_410_GONE,
-                detail="El token de invitacion ha expirado.",
-            )
+        usuario = sesion.get(Usuario, fila[0])
 
-        # Activar cuenta: establecer password, limpiar token, desmarcar cambio forzado
+        # Activar cuenta: establecer password definitiva, desmarcar cambio forzado
         usuario.hash_password = hashear_password(body.password)
-        usuario.invitacion_token = None
-        usuario.invitacion_expira = None
         usuario.forzar_cambio_password = False
 
         # Capturar valores antes de commit (evita DetachedInstanceError)

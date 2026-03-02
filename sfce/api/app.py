@@ -106,6 +106,10 @@ async def lifespan(app: FastAPI):
     app.state.repo = Repositorio(sesion_factory)
     crear_admin_por_defecto(sesion_factory)
 
+    # Conectar gestor de notificaciones a la BD persistente
+    from sfce.core.notificaciones import inicializar_gestor
+    inicializar_gestor(sesion_factory)
+
     # Iniciar worker OCR en background
     from sfce.core.worker_ocr_gate0 import loop_worker_ocr
     worker_task = asyncio.create_task(
@@ -200,6 +204,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.onboarding import router as onboarding_router
     from sfce.api.rutas.gestor import router as gestor_router
     from sfce.api.rutas.analytics import router as analytics_router
+    from sfce.api.rutas.health import router as health_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -226,6 +231,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(onboarding_router)
     app.include_router(gestor_router)
     app.include_router(analytics_router)
+    app.include_router(health_router)
 
     # Nonces RGPD usados (token de un solo uso)
     if not hasattr(app.state, "rgpd_nonces_usados"):

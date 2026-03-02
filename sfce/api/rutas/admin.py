@@ -1,6 +1,6 @@
 """Endpoints exclusivos de superadmin: gestorias, usuarios globales."""
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -206,7 +206,7 @@ def invitar_usuario(
         raise HTTPException(status_code=403, detail="Sin acceso a esta gestoría")
 
     token = secrets.token_urlsafe(32)
-    expira = datetime.utcnow() + timedelta(days=7)
+    expira = datetime.now(timezone.utc) + timedelta(days=7)
 
     with sesion_factory() as sesion:
         # Verificar que la gestoría existe
@@ -340,7 +340,7 @@ def crear_cliente_directo(
         raise HTTPException(status_code=403, detail="Solo superadmin")
 
     token = secrets.token_urlsafe(32)
-    expira = datetime.utcnow() + timedelta(days=7)
+    expira = datetime.now(timezone.utc) + timedelta(days=7)
 
     with sesion_factory() as sesion:
         existente = sesion.query(Usuario).filter(Usuario.email == datos.email).first()

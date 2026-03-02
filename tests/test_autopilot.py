@@ -1,6 +1,6 @@
 """Tests TDD para sfce/analytics/autopilot.py — briefing semanal del asesor."""
 import pytest
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -35,7 +35,9 @@ def test_usuario_inexistente_retorna_lista_vacia(sesion):
 def test_empresa_sin_alertas_ni_tpv_es_rojo(sesion):
     """Empresa sin datos TPV (días ≥ 3) → urgencia rojo."""
     from sfce.analytics.autopilot import generar_briefing
-    empresa = Empresa(nombre="Bar Test", cif="B12345678", forma_juridica="sl", activa=True)
+    # fecha_alta antigua → empresa establecida, sin TPV = problema real (rojo)
+    empresa = Empresa(nombre="Bar Test", cif="B12345678", forma_juridica="sl", activa=True,
+                      fecha_alta=date.today() - timedelta(days=60))
     sesion.add(empresa)
     sesion.flush()
     usuario = Usuario(
@@ -90,7 +92,9 @@ def test_ordenacion_rojo_primero(sesion):
     """Empresas ordenadas: rojo → amarillo → verde."""
     from sfce.analytics.autopilot import generar_briefing
     e1 = Empresa(nombre="Verde SL", cif="B11111111", forma_juridica="sl", activa=True)
-    e2 = Empresa(nombre="Rojo SL", cif="B22222222", forma_juridica="sl", activa=True)
+    # fecha_alta antigua en e2 → empresa establecida sin datos TPV = rojo (no empresa nueva)
+    e2 = Empresa(nombre="Rojo SL", cif="B22222222", forma_juridica="sl", activa=True,
+                 fecha_alta=date.today() - timedelta(days=60))
     sesion.add_all([e1, e2])
     sesion.flush()
     # e1 con caja de hoy (verde), e2 sin datos (rojo)

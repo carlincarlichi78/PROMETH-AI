@@ -1,5 +1,5 @@
 """Advisor Autopilot — genera briefing semanal automático para cada asesor."""
-from datetime import date
+from datetime import date, timedelta
 from dataclasses import dataclass, field
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -50,7 +50,13 @@ def generar_briefing(sesion: Session, usuario_id: int) -> list[ItemBriefing]:
             .order_by(FactCaja.fecha.desc())
             .limit(1)
         ).scalar()
-        dias_sin_datos = (hoy - ultima_caja).days if ultima_caja else 999
+        if ultima_caja:
+            dias_sin_datos = (hoy - ultima_caja).days
+        else:
+            # Distinguir empresa nueva (< 30 días desde alta) de empresa establecida sin datos
+            fecha_alta = empresa.fecha_alta  # campo Date en modelos.py
+            es_empresa_nueva = fecha_alta and (hoy - fecha_alta) < timedelta(days=30)
+            dias_sin_datos = 0 if es_empresa_nueva else 999
 
         alertas_altas = [a for a in alertas if a.severidad == "alta"]
         alertas_medias = [a for a in alertas if a.severidad == "media"]

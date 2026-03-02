@@ -182,15 +182,54 @@ def canal_websocket(notif: Notificacion) -> bool:
 # ---------------------------------------------------------------------------
 
 class GestorNotificaciones:
-    def __init__(self):
+    """Gestor de notificaciones con persistencia opcional en BD.
+
+    Modos de operacion:
+    - Sin session_factory (tests): comportamiento in-memory puro.
+    - Con session_factory (produccion): persiste en BD en cada envio y
+      lee de BD en historial/obtener_pendientes/marcar_leida.
+      El historial in-memory actua como cache dentro de la misma sesion
+      de servidor para los canales (log, email, websocket).
+    """
+
+    def __init__(self, session_factory=None):
         self._historial: list = []
         self._canales: list = []
+        self._sf = session_factory  # puede ser None en tests
 
     def agregar_canal(self, canal: Callable) -> None:
         self._canales.append(canal)
 
+    def _persistir_en_bd(self, notif: Notificacion) -> None:
+        """Guarda la notificacion en BD si hay session_factory disponible."""
+        if self._sf is None:
+            return
+        try:
+            from sfce.db.modelos import NotificacionUsuario
+            from datetime import datetime as _dt
+            with self._sf() as sesion:
+                registro = NotificacionUsuario(
+                    empresa_id=notif.empresa_id,
+                    titulo=notif.titulo,
+                    descripcion=notif.mensaje,
+                    tipo=notif.tipo.value,
+                    origen="gestor",
+                    leida=False,
+                    fecha_creacion=_dt.utcnow(),
+                )
+                sesion.add(registro)
+                sesion.commit()
+                _logger.debug(
+                    "Notificacion persistida en BD: empresa=%s tipo=%s",
+                    notif.empresa_id, notif.tipo.value,
+                )
+        except Exception as exc:
+            _logger.error("Error al persistir notificacion en BD: %s", exc)
+
     def enviar(self, notif: Notificacion) -> dict:
         self._historial.append(notif)
+        # Persistir en BD (si hay session_factory)
+        self._persistir_en_bd(notif)
         ok = 0
         err = 0
         for canal in self._canales:
@@ -205,6 +244,32 @@ class GestorNotificaciones:
         return {"enviada": True, "canales_ok": ok, "canales_error": err}
 
     def marcar_leida(self, notif_id: str) -> bool:
+        """Marca una notificacion como leida.
+
+        En modo BD: interpreta notif_id como id entero de la tabla.
+        En modo in-memory: busca por UUID string en el historial local.
+        """
+        if self._sf is not None:
+            try:
+                from sfce.db.modelos import NotificacionUsuario
+                from datetime import datetime as _dt
+                from sqlalchemy import select
+                with self._sf() as sesion:
+                    try:
+                        bd_id = int(notif_id)
+                    except (ValueError, TypeError):
+                        return False
+                    registro = sesion.get(NotificacionUsuario, bd_id)
+                    if registro is None:
+                        return False
+                    registro.leida = True
+                    registro.fecha_lectura = _dt.utcnow()
+                    sesion.commit()
+                    return True
+            except Exception as exc:
+                _logger.error("Error al marcar notificacion como leida en BD: %s", exc)
+                return False
+        # Modo in-memory (tests)
         for n in self._historial:
             if n.id == notif_id:
                 n.leida = True
@@ -212,12 +277,65 @@ class GestorNotificaciones:
         return False
 
     def obtener_pendientes(self, empresa_id: Optional[int] = None) -> list:
+        """Retorna notificaciones no leidas.
+
+        En modo BD: consulta la tabla notificaciones_usuario.
+        En modo in-memory: filtra el historial local.
+        """
+        if self._sf is not None:
+            try:
+                from sfce.db.modelos import NotificacionUsuario
+                from sqlalchemy import select
+                with self._sf() as sesion:
+                    consulta = (
+                        select(NotificacionUsuario)
+                        .where(NotificacionUsuario.leida.is_(False))
+                        .order_by(NotificacionUsuario.fecha_creacion.desc())
+                        .limit(100)
+                    )
+                    if empresa_id is not None:
+                        consulta = consulta.where(
+                            NotificacionUsuario.empresa_id == empresa_id
+                        )
+                    return list(sesion.scalars(consulta).all())
+            except Exception as exc:
+                _logger.error("Error al obtener pendientes de BD: %s", exc)
+                return []
+        # Modo in-memory (tests)
         resultado = [n for n in self._historial if not n.leida]
         if empresa_id is not None:
             resultado = [n for n in resultado if n.empresa_id == empresa_id]
         return resultado
 
     def historial(self, empresa_id: Optional[int] = None, limite: Optional[int] = None) -> list:
+        """Retorna todas las notificaciones (leidas y no leidas).
+
+        En modo BD: consulta la tabla notificaciones_usuario.
+        En modo in-memory: filtra el historial local.
+        """
+        if self._sf is not None:
+            try:
+                from sfce.db.modelos import NotificacionUsuario
+                from sqlalchemy import select
+                _limite = limite or 200
+                consulta = (
+                    select(NotificacionUsuario)
+                    .order_by(NotificacionUsuario.fecha_creacion.desc())
+                    .limit(_limite)
+                )
+                if empresa_id is not None:
+                    consulta = consulta.where(
+                        NotificacionUsuario.empresa_id == empresa_id
+                    )
+                with self._sf() as sesion:
+                    resultados = list(sesion.scalars(consulta).all())
+                # historial() espera orden cronologico ASC (las ultimas al final)
+                resultados.reverse()
+                return resultados
+            except Exception as exc:
+                _logger.error("Error al leer historial de BD: %s", exc)
+                return []
+        # Modo in-memory (tests)
         resultado = list(self._historial)
         if empresa_id is not None:
             resultado = [n for n in resultado if n.empresa_id == empresa_id]
@@ -226,9 +344,29 @@ class GestorNotificaciones:
         return resultado
 
 
-# Instancia global
+# ---------------------------------------------------------------------------
+# Instancia global y funcion de inicializacion
+# ---------------------------------------------------------------------------
+
+# Instancia inicial sin BD (util antes de que el lifespan asigne la factory)
 gestor_notificaciones = GestorNotificaciones()
 gestor_notificaciones.agregar_canal(canal_log)
+
+
+def inicializar_gestor(session_factory: Any) -> None:
+    """Conecta el gestor global con la session_factory de la BD.
+
+    Debe llamarse desde el lifespan de la app (app.py) una vez que el
+    motor de BD esta listo, antes de arrancar los workers:
+
+        from sfce.core.notificaciones import inicializar_gestor
+        inicializar_gestor(sesion_factory)
+
+    A partir de ese momento, todas las llamadas a `notificar()` persisten
+    en la tabla notificaciones_usuario y sobreviven reinicios del servidor.
+    """
+    gestor_notificaciones._sf = session_factory
+    _logger.info("GestorNotificaciones: persistencia BD activada")
 
 
 def notificar(tipo: TipoNotificacion, empresa_id: Optional[int] = None, **kwargs) -> Notificacion:

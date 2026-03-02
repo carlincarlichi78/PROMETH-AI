@@ -9,6 +9,8 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
+from sqlalchemy import select, update
+
 from sfce.core.pipeline_runner import (
     ejecutar_pipeline_empresa,
     adquirir_lock_empresa,
@@ -53,21 +55,55 @@ def schedule_ok(empresa_id: int, sesion_factory) -> bool:
     return elapsed >= timedelta(minutes=cfg.schedule_minutos)
 
 
-def _docs_para_empresa(empresa_id: int, sesion_factory) -> list[int]:
-    """Retorna IDs de Documento listos para el pipeline de una empresa."""
+def _clamar_docs_para_empresa(empresa_id: int, sesion_factory) -> list[int]:
+    """Reclama atomicamente entradas de cola PENDIENTE/APROBADO → PROCESANDO.
+
+    El SELECT y el UPDATE ocurren dentro de la misma transaccion con
+    with_for_update(), lo que serializa el acceso a nivel de BD y evita
+    que dos workers distintos procesen el mismo documento.
+
+    SQLite (WAL + busy_timeout=5000) serializa writers; PostgreSQL usa
+    row-level locks. En ambos casos el par SELECT-UPDATE es atomico dentro
+    de la transaccion.
+
+    Retorna la lista de documento_id reclamados (puede ser menor que las
+    entradas si alguna entrada no tiene documento_id asociado aun).
+    """
     with sesion_factory() as s:
         cfg = s.query(ConfigProcesamientoEmpresa).filter_by(empresa_id=empresa_id).first()
         modo = cfg.modo if cfg else "revision"
         estados_validos = ["PENDIENTE"] if modo == "auto" else ["APROBADO"]
-        rows = (
-            s.query(ColaProcesamiento.documento_id)
-            .filter(
+
+        # SELECT con bloqueo de filas para evitar lectura simultanea por otro worker
+        ids_cola = s.scalars(
+            select(ColaProcesamiento.id)
+            .where(
                 ColaProcesamiento.empresa_id == empresa_id,
                 ColaProcesamiento.estado.in_(estados_validos),
             )
-            .all()
+            .with_for_update()
+        ).all()
+
+        if not ids_cola:
+            return []
+
+        # UPDATE atomico dentro de la misma transaccion (antes del commit)
+        s.execute(
+            update(ColaProcesamiento)
+            .where(ColaProcesamiento.id.in_(ids_cola))
+            .values(estado="PROCESANDO", worker_inicio=datetime.utcnow())
         )
-    return [r[0] for r in rows if r[0]]
+        s.flush()
+
+        # Recuperar documento_ids de las entradas reclamadas
+        filas = s.scalars(
+            select(ColaProcesamiento.documento_id)
+            .where(ColaProcesamiento.id.in_(ids_cola))
+        ).all()
+
+        s.commit()
+
+    return [doc_id for doc_id in filas if doc_id is not None]
 
 
 def _actualizar_ultimo_pipeline(empresa_id: int, sesion_factory) -> None:
@@ -119,7 +155,7 @@ def ejecutar_ciclo_worker(sesion_factory) -> None:
             continue
 
         try:
-            doc_ids = _docs_para_empresa(empresa_id, sesion_factory)
+            doc_ids = _clamar_docs_para_empresa(empresa_id, sesion_factory)
             if not doc_ids:
                 continue
 
