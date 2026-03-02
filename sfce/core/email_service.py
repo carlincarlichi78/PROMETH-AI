@@ -105,6 +105,36 @@ class EmailService:
         logger.info("Reset password enviado a %s", destinatario)
 
 
+    def enviar_raw(
+        self,
+        destinatario: str,
+        asunto: str,
+        cuerpo: str,
+        cabeceras_extra: Optional[dict] = None,
+    ) -> None:
+        """Envía un email de texto plano con cabeceras opcionales."""
+        if not self._config:
+            logger.warning(
+                "SFCE_SMTP_HOST no configurado — email NO enviado a %s", destinatario
+            )
+            return
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = asunto
+        msg["From"] = self._config.from_address
+        msg["To"] = destinatario
+        if cabeceras_extra:
+            for clave, valor in cabeceras_extra.items():
+                msg[clave] = valor
+        msg.attach(MIMEText(cuerpo, "plain"))
+
+        with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+            server.starttls()
+            server.login(self._config.smtp_user, self._config.smtp_password)
+            server.sendmail(self._config.from_address, destinatario, msg.as_string())
+        logger.info("Email enviado a %s — asunto: %s", destinatario, asunto)
+
+
 _servicio_global: Optional[EmailService] = None
 
 
