@@ -172,3 +172,58 @@ class TestInformeRendimientos:
             amortizaciones=5000, ejercicio=2025)
         assert resultado["rendimiento_neto"] == 35000
         assert resultado["tipo"] == "asistido"
+
+
+class TestModelo190:
+    """Automatico: resumen anual retenciones IRPF."""
+
+    def _perceptor(self, nif, nombre, percepcion, retencion, clave="A"):
+        return {
+            "nif": nif,
+            "nombre": nombre,
+            "clave_percepcion": clave,
+            "subclave": "01",
+            "percepcion_dineraria": percepcion,
+            "retencion_dineraria": retencion,
+            "porcentaje_retencion": round(retencion / percepcion * 100, 2) if percepcion else 0,
+            "ejercicio_devengo": 2025,
+            "naturaleza": "F",
+        }
+
+    def test_190_basico(self):
+        calc = CalculadorModelos(Normativa())
+        perceptores = [
+            self._perceptor("12345678A", "GARCIA JUAN", 24000, 3600),
+            self._perceptor("87654321B", "LOPEZ ANA", 18000, 2700),
+        ]
+        resultado = calc.calcular_190(perceptores, ejercicio=2025)
+        assert resultado["modelo"] == "190"
+        assert resultado["num_registros"] == 2
+        assert resultado["casilla_16"] == 42000.00
+        assert resultado["casilla_18"] == 6300.00
+        assert resultado["tipo"] == "automatico"
+
+    def test_190_mezcla_trabajo_profesional(self):
+        calc = CalculadorModelos(Normativa())
+        perceptores = [
+            self._perceptor("12345678A", "EMPLEADO S.A.", 24000, 3600, clave="A"),
+            self._perceptor("99887766C", "ASESOR FISCAL", 5000, 750, clave="E"),
+        ]
+        resultado = calc.calcular_190(perceptores, ejercicio=2025)
+        assert resultado["num_registros"] == 2
+        assert resultado["casilla_16"] == 29000.00
+        assert resultado["casilla_18"] == 4350.00
+
+    def test_190_sin_perceptores(self):
+        calc = CalculadorModelos(Normativa())
+        resultado = calc.calcular_190([], ejercicio=2025)
+        assert resultado["num_registros"] == 0
+        assert resultado["casilla_16"] == 0.0
+        assert resultado["casilla_18"] == 0.0
+
+    def test_190_decimales_redondeo(self):
+        calc = CalculadorModelos(Normativa())
+        perceptores = [self._perceptor("11111111H", "TRABAJADOR", 1000.333, 150.111)]
+        resultado = calc.calcular_190(perceptores, ejercicio=2025)
+        assert resultado["casilla_16"] == 1000.33
+        assert resultado["casilla_18"] == 150.11
