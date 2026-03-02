@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libglib2.0-0t64 \
     libffi8 \
     fonts-liberation \
