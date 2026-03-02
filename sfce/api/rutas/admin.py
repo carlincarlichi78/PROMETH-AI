@@ -1,4 +1,5 @@
 """Endpoints exclusivos de superadmin: gestorias, usuarios globales."""
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Literal
@@ -8,8 +9,11 @@ from pydantic import BaseModel, EmailStr
 
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, hashear_password
+from sfce.core.tiers import TIER_BASICO, TIER_PRO, TIER_PREMIUM
 from sfce.db.modelos_auth import Gestoria, Usuario
 from sfce.db.modelos import Empresa, ConfigProcesamientoEmpresa
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -183,6 +187,36 @@ def listar_usuarios_gestoria(
         ]
 
 
+def _crear_usuario_invitado(
+    db,
+    email: str,
+    nombre: str,
+    rol: str,
+    gestoria_id: int | None,
+    empresa_ids: list,
+) -> Usuario:
+    """Crea un usuario con token de invitación y contraseña temporal aleatoria."""
+    token = secrets.token_urlsafe(32)
+    expira = datetime.now(timezone.utc) + timedelta(hours=48)
+    password_temporal = secrets.token_hex(32)
+    usuario = Usuario(
+        email=email,
+        nombre=nombre,
+        rol=rol,
+        gestoria_id=gestoria_id,
+        hash_password=hashear_password(password_temporal),
+        invitacion_token=token,
+        invitacion_expira=expira,
+        forzar_cambio_password=True,
+        totp_habilitado=False,
+        activo=True,
+        empresas_asignadas=empresa_ids,
+    )
+    db.add(usuario)
+    db.flush()
+    return usuario, token, expira
+
+
 @router.post("/gestorias/{gestoria_id}/invitar", status_code=201)
 def invitar_usuario(
     gestoria_id: int,
@@ -190,7 +224,7 @@ def invitar_usuario(
     request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
-    """Invita a un usuario a una gestoría generando un token de 7 días.
+    """Invita a un usuario a una gestoría generando un token de 48 horas.
 
     Superadmin puede invitar a cualquier gestoría.
     Admin_gestoria solo puede invitar a su propia gestoría.
@@ -205,9 +239,6 @@ def invitar_usuario(
     else:
         raise HTTPException(status_code=403, detail="Sin acceso a esta gestoría")
 
-    token = secrets.token_urlsafe(32)
-    expira = datetime.now(timezone.utc) + timedelta(days=7)
-
     with sesion_factory() as sesion:
         # Verificar que la gestoría existe
         gestoria = sesion.get(Gestoria, gestoria_id)
@@ -219,20 +250,9 @@ def invitar_usuario(
         if existente:
             raise HTTPException(status_code=409, detail="Email ya registrado")
 
-        usuario = Usuario(
-            email=datos.email,
-            nombre=datos.nombre,
-            rol=datos.rol,
-            gestoria_id=gestoria_id,
-            hash_password=hashear_password("PENDIENTE"),
-            invitacion_token=token,
-            invitacion_expira=expira,
-            forzar_cambio_password=True,
-            totp_habilitado=False,
-            activo=True,
-            empresas_asignadas=[],
+        usuario, token, expira = _crear_usuario_invitado(
+            sesion, datos.email, datos.nombre, datos.rol, gestoria_id, []
         )
-        sesion.add(usuario)
         sesion.commit()
         sesion.refresh(usuario)
 
@@ -243,8 +263,8 @@ def invitar_usuario(
                 nombre=datos.nombre,
                 url_invitacion=f"/auth/aceptar-invitacion?token={token}",
             )
-        except Exception:
-            pass  # el token se devuelve en el response igualmente
+        except Exception as exc:
+            logger.error("Error enviando email de invitacion a %s: %s", datos.email, exc)
 
         return {
             "id": usuario.id,
@@ -263,7 +283,7 @@ def invitar_usuario(
 # ──────────────────────────────────────────────────────────────────
 
 class ActualizarPlanRequest(BaseModel):
-    plan_tier: Literal["basico", "pro", "premium"]
+    plan_tier: Literal["basico", "pro", "premium"]  # valores: TIER_BASICO, TIER_PRO, TIER_PREMIUM
     limite_empresas: int | None = None
 
 
@@ -295,7 +315,7 @@ def actualizar_plan_gestoria(
 
 
 class ActualizarPlanUsuarioRequest(BaseModel):
-    plan_tier: Literal["basico", "pro", "premium"]
+    plan_tier: Literal["basico", "pro", "premium"]  # valores: TIER_BASICO, TIER_PRO, TIER_PREMIUM
 
 
 @router.put("/usuarios/{usuario_id}/plan")
@@ -339,28 +359,14 @@ def crear_cliente_directo(
     if usuario.rol != "superadmin":
         raise HTTPException(status_code=403, detail="Solo superadmin")
 
-    token = secrets.token_urlsafe(32)
-    expira = datetime.now(timezone.utc) + timedelta(days=7)
-
     with sesion_factory() as sesion:
         existente = sesion.query(Usuario).filter(Usuario.email == datos.email).first()
         if existente:
             raise HTTPException(status_code=409, detail="Email ya registrado")
 
-        cliente = Usuario(
-            email=datos.email,
-            nombre=datos.nombre,
-            rol="cliente",
-            gestoria_id=None,
-            hash_password=hashear_password("PENDIENTE"),
-            invitacion_token=token,
-            invitacion_expira=expira,
-            forzar_cambio_password=True,
-            totp_habilitado=False,
-            activo=True,
-            empresas_asignadas=[],
+        cliente, token, expira = _crear_usuario_invitado(
+            sesion, datos.email, datos.nombre, "cliente", None, []
         )
-        sesion.add(cliente)
         sesion.commit()
         sesion.refresh(cliente)
 
@@ -371,8 +377,8 @@ def crear_cliente_directo(
                 nombre=datos.nombre,
                 url_invitacion=f"/auth/aceptar-invitacion?token={token}",
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.error("Error enviando email de invitacion a %s: %s", datos.email, exc)
 
         return {
             "id": cliente.id,

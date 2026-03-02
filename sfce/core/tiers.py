@@ -9,11 +9,19 @@ class Tier(IntEnum):
     PREMIUM  = 3
 
 
+# Constantes de string — usar estas en lugar de literals en todo el proyecto
+TIER_BASICO:   str = "basico"
+TIER_PRO:      str = "pro"
+TIER_PREMIUM:  str = "premium"
+
 TIER_MAP: dict[str, Tier] = {
-    "basico":   Tier.BASICO,
-    "pro":      Tier.PRO,
-    "premium":  Tier.PREMIUM,
+    TIER_BASICO:   Tier.BASICO,
+    TIER_PRO:      Tier.PRO,
+    TIER_PREMIUM:  Tier.PREMIUM,
 }
+
+# Valores válidos como tupla — útil para validaciones y Literal types
+TIERS_VALIDOS: tuple[str, ...] = (TIER_BASICO, TIER_PRO, TIER_PREMIUM)
 
 # ──────────────────────────────────────────────────────────────────
 # Contenido de tiers del EMPRESARIO
@@ -21,11 +29,15 @@ TIER_MAP: dict[str, Tier] = {
 # Clave: nombre de feature. Valor: tier minimo requerido.
 # ──────────────────────────────────────────────────────────────────
 FEATURES_EMPRESARIO: dict[str, Tier] = {
-    "consultar":   Tier.BASICO,    # KPIs, documentos procesados — siempre disponible
-    "subir_docs":  Tier.PRO,       # upload desde web/movil
-    "app_movil":   Tier.PRO,       # acceso a la app React Native
-    "firmar":      Tier.PREMIUM,   # firma digital legal
-    "chat_gestor": Tier.PREMIUM,   # mensajeria interna con el gestor
+    "consultar":              Tier.BASICO,    # KPIs, documentos procesados — siempre disponible
+    "subir_docs":             Tier.PRO,       # upload desde web/movil
+    "app_movil":              Tier.PRO,       # acceso a la app React Native
+    "firmar":                 Tier.PREMIUM,   # firma digital legal
+    "chat_gestor":            Tier.PREMIUM,   # mensajeria interna con el gestor
+    "advisor_premium":        Tier.PREMIUM,   # Advisor Intelligence Platform completo
+    "advisor_sector_brain":   Tier.PREMIUM,   # benchmarks anonimos del sector
+    "advisor_autopilot":      Tier.PREMIUM,   # briefing semanal automatico
+    "advisor_informes":       Tier.PRO,       # informes analiticos basicos
 }
 
 # ──────────────────────────────────────────────────────────────────
@@ -39,14 +51,14 @@ FEATURES_GESTORIA: dict[str, Tier] = {
 
 def tiene_feature_empresario(usuario, feature: str) -> bool:
     """¿El empresario tiene acceso a esta feature segun su plan_tier?"""
-    tier_usuario = TIER_MAP.get(getattr(usuario, "plan_tier", "basico"), Tier.BASICO)
+    tier_usuario = TIER_MAP.get(getattr(usuario, "plan_tier", TIER_BASICO), Tier.BASICO)
     tier_requerido = FEATURES_EMPRESARIO.get(feature, Tier.PREMIUM)
     return tier_usuario >= tier_requerido
 
 
 def tiene_feature_gestoria(gestoria, feature: str) -> bool:
     """¿La gestoria tiene acceso a esta feature segun su plan_tier?"""
-    tier_gestoria = TIER_MAP.get(getattr(gestoria, "plan_tier", "basico"), Tier.BASICO)
+    tier_gestoria = TIER_MAP.get(getattr(gestoria, "plan_tier", TIER_BASICO), Tier.BASICO)
     tier_requerido = FEATURES_GESTORIA.get(feature, Tier.PREMIUM)
     return tier_gestoria >= tier_requerido
 

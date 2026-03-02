@@ -445,6 +445,86 @@ def crear_notificacion_bd(
     return notif
 
 
+def crear_notificacion_usuario(
+    db,
+    empresa_id: int,
+    tipo: str,
+    mensaje: str,
+    usuario_id: Optional[int] = None,
+    titulo: Optional[str] = None,
+    documento_id: Optional[int] = None,
+    origen: str = "sistema",
+):
+    """Función unificada: persiste en BD Y despacha al GestorNotificaciones global.
+
+    Garantiza que CUALQUIER notificación destinada a un usuario quede guardada
+    en la tabla ``notificaciones_usuario`` (sobrevive reinicios) y adicionalmente
+    se despacha por los canales registrados en el gestor (log, email, websocket).
+
+    Parámetros
+    ----------
+    db:
+        Sesión SQLAlchemy activa (debe estar dentro de un bloque ``with``).
+    empresa_id:
+        ID de la empresa destinataria.
+    tipo:
+        Tipo de notificación (ej. "aviso_gestor", "doc_ilegible", "duplicado").
+    mensaje:
+        Texto descriptivo de la notificación.
+    usuario_id:
+        ID del usuario destinatario (opcional; campo reservado para cuando la
+        tabla incorpore la FK a usuarios).
+    titulo:
+        Título corto. Si se omite se usa el mensaje truncado a 100 chars.
+    documento_id:
+        FK al documento relacionado, si aplica.
+    origen:
+        Origen de la notificación: "manual", "pipeline", "sistema".
+
+    Retorna la instancia ``NotificacionUsuario`` recién creada.
+    """
+    _titulo = titulo or mensaje[:100]
+
+    # 1. Persistir en BD (fuente de verdad)
+    notif_bd = crear_notificacion_bd(
+        sesion=db,
+        empresa_id=empresa_id,
+        titulo=_titulo,
+        descripcion=mensaje,
+        tipo=tipo,
+        origen=origen,
+        documento_id=documento_id,
+    )
+
+    # 2. Despachar al gestor global (log, websocket, email) si está disponible
+    try:
+        _tipo_enum = None
+        for t in TipoNotificacion:
+            if t.value == tipo:
+                _tipo_enum = t
+                break
+        if _tipo_enum is None:
+            # Usar CUARENTENA como fallback genérico para el canal in-memory
+            _tipo_enum = TipoNotificacion.CUARENTENA
+
+        notif_mem = Notificacion(
+            tipo=_tipo_enum,
+            titulo=_titulo,
+            mensaje=mensaje,
+            empresa_id=empresa_id,
+        )
+        # Solo despachar canales, no persistir de nuevo en BD
+        for canal in gestor_notificaciones._canales:
+            try:
+                canal(notif_mem)
+            except Exception:
+                pass
+    except Exception as exc:
+        _logger.debug("Despacho de canales omitido: %s", exc)
+
+    return notif_bd
+
+
 def evaluar_motivo_auto(
     sesion,
     empresa_id: int,
@@ -511,12 +591,12 @@ def notificar_cuarentena(
     if destino == "cliente":
         evaluar_motivo_auto(sesion, empresa_id, motivo, nombre_archivo, documento_id)
     else:
-        crear_notificacion_bd(
-            sesion=sesion,
+        crear_notificacion_usuario(
+            db=sesion,
             empresa_id=empresa_id,
-            titulo="Documento requiere revisión contable",
-            descripcion=f"El documento '{nombre_archivo}' fue a cuarentena: {motivo}",
             tipo="aviso_gestor",
+            mensaje=f"El documento '{nombre_archivo}' fue a cuarentena: {motivo}",
+            titulo="Documento requiere revisión contable",
             origen="pipeline",
             documento_id=documento_id,
         )

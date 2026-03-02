@@ -34,20 +34,26 @@ class Ingestor:
         return len(eventos)
 
     def _procesar_tpv(self, evento: EventoAnalitico, payload: dict) -> None:
+        ventas_totales = payload.get("ventas_totales") or 0.0
+        covers = payload.get("covers") or 0
+        if not isinstance(ventas_totales, (int, float)):
+            raise ValueError(f"Evento {evento.id}: 'ventas_totales' debe ser numerico, recibido: {type(ventas_totales).__name__}")
+        if not isinstance(covers, (int, float)):
+            raise ValueError(f"Evento {evento.id}: 'covers' debe ser numerico, recibido: {type(covers).__name__}")
         caja = FactCaja(
             empresa_id=evento.empresa_id,
             fecha=evento.fecha_evento,
             servicio=payload.get("servicio", "general"),
-            covers=payload.get("covers", 0),
-            ventas_totales=payload.get("ventas_totales", 0.0),
+            covers=covers,
+            ventas_totales=ventas_totales,
             ticket_medio=(
-                payload["ventas_totales"] / payload["covers"]
-                if payload.get("covers", 0) > 0 else 0.0
+                ventas_totales / covers
+                if covers > 0 else 0.0
             ),
-            num_mesas_ocupadas=payload.get("num_mesas_ocupadas", 0),
-            metodo_pago_tarjeta=payload.get("metodo_pago_tarjeta", 0.0),
-            metodo_pago_efectivo=payload.get("metodo_pago_efectivo", 0.0),
-            metodo_pago_otros=payload.get("metodo_pago_otros", 0.0),
+            num_mesas_ocupadas=payload.get("num_mesas_ocupadas") or 0,
+            metodo_pago_tarjeta=payload.get("metodo_pago_tarjeta") or 0.0,
+            metodo_pago_efectivo=payload.get("metodo_pago_efectivo") or 0.0,
+            metodo_pago_otros=payload.get("metodo_pago_otros") or 0.0,
             evento_id=evento.id,
         )
         self._sesion.add(caja)
@@ -81,15 +87,20 @@ class Ingestor:
             self._sesion.add(compra)
 
     def _procesar_nom(self, evento: EventoAnalitico, payload: dict) -> None:
+        salario_bruto = payload.get("salario_bruto") or 0.0
+        ss_empresa = payload.get("ss_empresa") or 0.0
+        coste_total = payload.get("coste_total_empresa") or 0.0
+        if not isinstance(salario_bruto, (int, float)):
+            raise ValueError(f"Evento {evento.id}: 'salario_bruto' debe ser numerico, recibido: {type(salario_bruto).__name__}")
         periodo = evento.fecha_evento.strftime("%Y-%m")
         personal = FactPersonal(
             empresa_id=evento.empresa_id,
             periodo=periodo,
             empleado_nombre=payload.get("empleado_nombre"),
-            coste_bruto=payload.get("salario_bruto", 0.0),
-            coste_ss_empresa=payload.get("ss_empresa", 0.0),
-            coste_total=payload.get("coste_total_empresa", 0.0),
-            dias_baja=payload.get("dias_baja", 0),
+            coste_bruto=salario_bruto,
+            coste_ss_empresa=ss_empresa,
+            coste_total=coste_total,
+            dias_baja=payload.get("dias_baja") or 0,
             evento_id=evento.id,
         )
         self._sesion.add(personal)

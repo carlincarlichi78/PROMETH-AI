@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual
-from sfce.db.modelos import Empresa, OnboardingCliente
+from sfce.db.modelos import Empresa, EstadoOnboarding, OnboardingCliente
 
 router = APIRouter(prefix="/api/onboarding", tags=["onboarding"])
 
@@ -73,7 +73,7 @@ def completar_onboarding_cliente(
         onboarding.completado_en = datetime.now()
         onboarding.completado_por = usuario.id
 
-        empresa.estado_onboarding = "cliente_completado"
+        empresa.estado_onboarding = EstadoOnboarding.CLIENTE_COMPLETADO
         sesion.commit()
 
         return {"estado": empresa.estado_onboarding, "empresa_id": empresa_id}

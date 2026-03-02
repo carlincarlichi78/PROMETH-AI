@@ -16,9 +16,20 @@ from sfce.analytics.modelos_analiticos import (
     AlertaAnalitica,
 )
 from sfce.analytics.sector_engine import obtener_sector_engine
+from sfce.core.tiers import tiene_feature_empresario
 from sfce.db.modelos import Empresa
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+
+_ERROR_TIER = "Funcionalidad no disponible en tu plan"
+
+
+def _verificar_tier_advisor(usuario) -> None:
+    """Lanza 403 si el usuario no tiene tier premium para Advisor. Superadmin siempre pasa."""
+    if getattr(usuario, "rol", None) == "superadmin":
+        return
+    if not tiene_feature_empresario(usuario, "advisor_premium"):
+        raise HTTPException(status_code=403, detail=_ERROR_TIER)
 
 
 def _empresa_cnae(sesion: Session, empresa_id: int) -> str:
@@ -38,6 +49,7 @@ def obtener_kpis(
     _user=Depends(obtener_usuario_actual),
 ):
     """KPIs sectoriales calculados desde star schema. Período: YYYY-MM o YYYY."""
+    _verificar_tier_advisor(_user)
     with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         cnae = _empresa_cnae(sesion, empresa_id)
@@ -124,6 +136,7 @@ def resumen_hoy(
     _user=Depends(obtener_usuario_actual),
 ):
     """Datos del día de hoy en tiempo real para el Command Center."""
+    _verificar_tier_advisor(_user)
     with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         hoy = date.today()
@@ -181,6 +194,7 @@ def ventas_detalle(
     _user=Depends(obtener_usuario_actual),
 ):
     """Desglose de ventas por producto y familia para el período dado."""
+    _verificar_tier_advisor(_user)
     with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         hoy = date.today()
@@ -222,6 +236,7 @@ def compras_proveedores(
     _user=Depends(obtener_usuario_actual),
 ):
     """Historial de compras por proveedor para los últimos N meses."""
+    _verificar_tier_advisor(_user)
     with sesion_factory() as sesion:
         verificar_acceso_empresa(_user, empresa_id, sesion)
         desde = date.today() - timedelta(days=meses * 30)
@@ -273,6 +288,7 @@ def sector_brain(
     Solo disponible cuando hay 5+ empresas activas con el mismo CNAE.
     Los datos son agregados y anónimos — nunca se exponen valores individuales.
     """
+    _verificar_tier_advisor(_user)
     from sfce.analytics.benchmark_engine import (
         calcular_percentiles_sector,
         posicion_en_sector,
@@ -316,6 +332,7 @@ def obtener_briefing(
     _user=Depends(obtener_usuario_actual),
 ):
     """Briefing semanal del asesor — empresas priorizadas por urgencia."""
+    _verificar_tier_advisor(_user)
     from sfce.analytics.autopilot import generar_briefing
     with sesion_factory() as sesion:
         items = generar_briefing(sesion, _user.id)

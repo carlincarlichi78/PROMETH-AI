@@ -100,7 +100,7 @@ def notificar_cliente(
     if usuario.rol not in _ROLES_GESTOR:
         raise HTTPException(status_code=403, detail="Solo gestores")
 
-    from sfce.core.notificaciones import crear_notificacion_bd as crear_notificacion
+    from sfce.core.notificaciones import crear_notificacion_usuario
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:
@@ -108,12 +108,12 @@ def notificar_cliente(
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
-        notif = crear_notificacion(
-            sesion=sesion,
+        notif = crear_notificacion_usuario(
+            db=sesion,
             empresa_id=empresa_id,
-            titulo=titulo,
-            descripcion=descripcion,
             tipo=tipo,
+            mensaje=descripcion,
+            titulo=titulo,
             origen="manual",
             documento_id=documento_id,
         )

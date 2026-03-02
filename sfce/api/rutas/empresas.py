@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import EmpresaOut, ProveedorClienteOut, TrabajadorOut
-from sfce.db.modelos import Asiento, Documento, Empresa, Partida, ProveedorCliente, Trabajador
+from sfce.db.modelos import Asiento, Documento, Empresa, EstadoOnboarding, Partida, ProveedorCliente, Trabajador
 
 router = APIRouter(prefix="/api/empresas", tags=["empresas"])
 
@@ -482,7 +482,7 @@ def invitar_empresario_onboarding(
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
-        empresa.estado_onboarding = "pendiente_cliente"
+        empresa.estado_onboarding = EstadoOnboarding.PENDIENTE_CLIENTE
         sesion.commit()
 
         try:

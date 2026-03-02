@@ -1,5 +1,5 @@
 // dashboard/src/features/advisor/advisor-gate.tsx
-import { useTiene } from '@/hooks/useTiene'
+import { useTiene, TIER_PREMIUM } from '@/hooks/useTiene'
 import { Lock } from 'lucide-react'
 
 export function AdvisorGate({ children }: { children: React.ReactNode }) {
@@ -24,7 +24,7 @@ export function AdvisorGate({ children }: { children: React.ReactNode }) {
             Advisor Intelligence Platform
           </h2>
           <p style={{ color: 'var(--adv-text-muted)', fontSize: 14, marginBottom: 20 }}>
-            Disponible en tier Premium
+            Disponible en tier {TIER_PREMIUM.charAt(0).toUpperCase() + TIER_PREMIUM.slice(1)}
           </p>
           <a href="/configuracion/plan" style={{
             background: 'var(--adv-accent)', color: '#000',

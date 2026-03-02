@@ -2,10 +2,13 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, JSON, Index
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, String, JSON, Index
 from sqlalchemy.orm import relationship
 
+from sfce.core.tiers import TIER_BASICO, TIERS_VALIDOS
 from sfce.db.base import Base
+
+_TIERS_CHECK = f"plan_tier IN ({', '.join(repr(t) for t in TIERS_VALIDOS)})"
 
 
 class Gestoria(Base):
@@ -22,8 +25,12 @@ class Gestoria(Base):
     activa = Column(Boolean, nullable=False, default=True)
     fecha_alta = Column(DateTime, nullable=False, default=datetime.utcnow)
     fecha_vencimiento = Column(DateTime, nullable=True)
-    plan_tier         = Column(String(10), nullable=False, default="basico", server_default="basico")
+    plan_tier         = Column(String(10), nullable=False, default=TIER_BASICO, server_default=TIER_BASICO)
     limite_empresas   = Column(Integer, nullable=True)  # None = ilimitado
+
+    __table_args__ = (
+        CheckConstraint(_TIERS_CHECK, name="ck_gestorias_plan_tier"),
+    )
 
     usuarios = relationship("Usuario", back_populates="gestoria")
 
@@ -55,13 +62,26 @@ class Usuario(Base):
     totp_secret = Column(String(64), nullable=True)
     totp_habilitado = Column(Boolean, nullable=False, default=False)
 
-    # Onboarding: invitacion por email
+    # Onboarding: invitacion por email.
+    # invitacion_token es NULL cuando el token ya fue consumido (estado post-aceptacion).
+    # UNIQUE en NOT-NULL: SQL permite multiples NULL en columna UNIQUE sin violar la restriccion.
+    # El constraint garantiza coherencia: si hay expiracion, debe haber token (y viceversa).
     invitacion_token = Column(String(128), nullable=True, unique=True, index=True)
     invitacion_expira = Column(DateTime, nullable=True)
     forzar_cambio_password = Column(Boolean, nullable=False, default=False)
-    plan_tier = Column(String(10), nullable=False, default="basico", server_default="basico")
+    plan_tier = Column(String(10), nullable=False, default=TIER_BASICO, server_default=TIER_BASICO)
 
     gestoria = relationship("Gestoria", back_populates="usuarios")
+
+    __table_args__ = (
+        # Coherencia: token e invitacion_expira deben ser ambos NULL o ambos NOT NULL.
+        # Evita estados inconsistentes donde hay fecha de expiracion sin token o token sin fecha.
+        CheckConstraint(
+            "(invitacion_token IS NULL) = (invitacion_expira IS NULL)",
+            name="ck_invitacion_token_expira_coherentes",
+        ),
+        CheckConstraint(_TIERS_CHECK, name="ck_usuarios_plan_tier"),
+    )
 
 
 class AuditLog(Base):

@@ -103,3 +103,17 @@ def crear_dependencia_usuario(limiter: VentanaFijaLimiter):
                 headers={"Retry-After": "60"},
             )
     return _dep
+
+
+def crear_dependencia_invitacion(limiter: VentanaFijaLimiter):
+    """Devuelve función de dependencia FastAPI para rate limiting de aceptar-invitacion."""
+    async def _dep(request: Request, response: Response):
+        ip = _ip_desde_request(request)
+        clave = f"invitacion:{ip}"
+        if not limiter.permite(clave):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Demasiados intentos. Espera 1 minuto.",
+                headers={"Retry-After": "60"},
+            )
+    return _dep

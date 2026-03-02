@@ -16,6 +16,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import update as sa_update
 
 from sfce.api.audit import auditar, AuditAccion, ip_desde_request
+from sfce.core.tiers import TIER_BASICO
 from sfce.api.auth import (
     crear_token,
     hashear_password,
@@ -75,6 +76,13 @@ async def _rate_limit_login(request: Request, response: Response):
 async def _rate_limit_usuario(request: Request, response: Response):
     """Aplica rate limiting de usuario desde app.state (configurable en tests)."""
     dep = getattr(request.app.state, "dep_rate_usuario", None)
+    if dep:
+        await dep(request, response)
+
+
+async def _rate_limit_invitacion(request: Request, response: Response):
+    """Aplica rate limiting de aceptar-invitacion desde app.state (configurable en tests)."""
+    dep = getattr(request.app.state, "dep_rate_invitacion", None)
     if dep:
         await dep(request, response)
 
@@ -216,7 +224,7 @@ def me(request: Request):
         "gestoria_id": usuario.gestoria_id,
         "empresas_ids": empresas,
         "empresas_asignadas": empresas,
-        "plan_tier": getattr(usuario, "plan_tier", "basico"),
+        "plan_tier": getattr(usuario, "plan_tier", TIER_BASICO),
     }
 
 
@@ -230,7 +238,7 @@ def crear_usuario(body: CrearUsuarioRequest, request: Request):
     if body.rol not in roles_validos:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Rol invalido. Roles validos: {roles_validos}",
+            detail="Rol no permitido",
         )
 
     sf = request.app.state.sesion_factory
@@ -270,7 +278,7 @@ class AceptarInvitacionRequest(BaseModel):
     password: str
 
 
-@router.post("/aceptar-invitacion", dependencies=[Depends(_rate_limit_login)])
+@router.post("/aceptar-invitacion", dependencies=[Depends(_rate_limit_invitacion)])
 def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request, response: Response):
     """Canjea un token de invitacion, establece la password definitiva y devuelve JWT."""
     sf = request.app.state.sesion_factory
