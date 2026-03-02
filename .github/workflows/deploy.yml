@@ -1,0 +1,192 @@
+# deploy.yml — CI/CD: tests → build → Docker → deploy al servidor
+# Trigger: push a main
+# Secrets requeridos en GitHub:
+#   SSH_HOST, SSH_USER, SSH_PRIVATE_KEY
+#   SFCE_JWT_SECRET, SFCE_DB_PASSWORD
+#   MISTRAL_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, FS_API_TOKEN
+
+name: Deploy → prometh-ai.es
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:           # Permite trigger manual desde la UI de GitHub
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/spice
+
+jobs:
+
+  # ────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: sfce_test
+          POSTGRES_USER: sfce_user
+          POSTGRES_PASSWORD: test_password_ci
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      SFCE_DB_TYPE: postgresql
+      SFCE_DB_HOST: localhost
+      SFCE_DB_PORT: 5432
+      SFCE_DB_USER: sfce_user
+      SFCE_DB_PASSWORD: test_password_ci
+      SFCE_DB_NAME: sfce_test
+      SFCE_JWT_SECRET: ${{ secrets.SFCE_JWT_SECRET }}
+      # API keys: los tests OCR usan mocks, pero las vars deben existir
+      MISTRAL_API_KEY: test_key_ci
+      OPENAI_API_KEY: test_key_ci
+      GEMINI_API_KEY: test_key_ci
+      FS_API_TOKEN: test_key_ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt && pip install -e .
+
+      - name: Ejecutar tests
+        run: pytest --tb=short -q
+
+  # ────────────────────────────────────────────────────────────────────────────
+  build-frontend:
+    name: Build React dashboard
+    runs-on: ubuntu-latest
+    # Corre en PARALELO con `test` (sin dependencia)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Instalar dependencias npm
+        run: npm ci
+        working-directory: dashboard
+
+      - name: Build producción
+        run: npm run build
+        working-directory: dashboard
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dist
+          path: dashboard/dist/
+          retention-days: 1
+
+  # ────────────────────────────────────────────────────────────────────────────
+  build-docker:
+    name: Build y push imagen Docker
+    runs-on: ubuntu-latest
+    needs: test           # Solo si los tests pasan
+    permissions:
+      contents: read
+      packages: write     # Para push a GHCR
+
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login a GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadatos de imagen (tags y labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build y push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          platforms: linux/amd64
+          # Cache entre builds (más rápido cuando solo cambia código)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy al servidor
+    runs-on: ubuntu-latest
+    needs: [build-docker, build-frontend]   # Ambos deben completar
+
+    steps:
+      - name: Descargar artefacto frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-dist
+          path: dist/
+
+      - name: Copiar frontend al servidor (rsync via SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/"
+          target: "/opt/apps/sfce/dashboard_dist_new/"
+
+      - name: Deploy API y activar frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/apps/sfce
+
+            # Activar nuevo frontend (swap atómico)
+            rm -rf dashboard_dist_old
+            mv dashboard_dist dashboard_dist_old 2>/dev/null || true
+            mv dashboard_dist_new/dist dashboard_dist
+            rm -rf dashboard_dist_old dashboard_dist_new
+
+            # Actualizar imagen Docker
+            docker compose pull sfce_api
+
+            # Reiniciar con nueva imagen (compose espera al health check)
+            docker compose up -d --remove-orphans sfce_api
+
+            # Recargar nginx sin downtime
+            docker exec nginx nginx -s reload
+
+            echo "✓ Deploy completado: $(date)"
+            echo "  Imagen: $(docker inspect sfce_api --format '{{.Config.Image}}')"
