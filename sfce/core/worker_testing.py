@@ -104,7 +104,30 @@ class WorkerTesting:
             })
             db.commit()
 
+        self._enviar_heartbeat(modo, total_bugs)
         return sesion_id
+
+    def _enviar_heartbeat(self, modo: str, bugs: int) -> None:
+        """Notifica a Uptime Kuma que la sesion completo OK."""
+        import os
+        import requests as req
+        kuma_base = os.environ.get("UPTIME_KUMA_URL", "")
+        slugs = {
+            "smoke": os.environ.get("KUMA_SLUG_SMOKE", ""),
+            "vigilancia": os.environ.get("KUMA_SLUG_VIGILANCIA", ""),
+            "regression": os.environ.get("KUMA_SLUG_REGRESSION", ""),
+        }
+        slug = slugs.get(modo, "")
+        if not kuma_base or not slug:
+            return
+        if bugs > 0:
+            logger.info(f"Heartbeat Kuma omitido: {bugs} bugs en sesion {modo}")
+            return
+        try:
+            req.get(f"{kuma_base}/api/push/{slug}", timeout=5)
+            logger.info(f"Heartbeat Kuma enviado: {modo}")
+        except Exception as e:
+            logger.warning(f"Heartbeat Kuma error: {e}")
 
     def _ids_por_modo(self, modo: str) -> list[str]:
         if modo == "smoke":
