@@ -256,27 +256,31 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 39 — Onboarding Histórico + Fixes Masivo)
+## Estado actual (02/03/2026, sesión 40 — Onboarding Masivo Mejoras UX — Tasks 1-3)
 
 **Rama activa**: `feat/motor-testing-caos-p1`
-**Tests onboarding**: 39 PASS. Tests globales ~2530+.
+**Último commit**: `48a966f`
 
-### Clientes prueba creados
-- `clientes/marcos-ruiz/` — autónomo fontanero (NIF: 29457823K)
-- `clientes/restaurante-la-marea/` — SL hostelería (CIF: B29011236)
-- `scripts/generar_onboarding_historico.py` — genera PDFs desde YAML (WeasyPrint)
+### Onboarding Masivo Mejoras — progreso plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md`
 
-### Onboarding masivo — fixes (no solapan con plan mejoras)
-- `clasificador.py`: enum 115/180 + patterns
-- `parsers_modelos.py`: `parsear_modelo_115/180()`
-- `perfil_empresa.py`: campo `tiene_arrendamientos` + handlers (aditivo)
-- `procesador_lote.py`: `_PARSERS` 115/180 + `_extraer_identidad_de_pdf()` fallback NIF
+| Task | Estado | Commit |
+|------|--------|--------|
+| 1 — Migración 023 (`modo` en `onboarding_lotes`) | ✅ | b0c7253 |
+| 2 — `Acumulador.desde_perfil_existente()` + 5 tests | ✅ | 0a76fba |
+| 3 — Endpoint `POST /perfiles/{id}/completar` + 5 tests | ✅ | 48a966f |
+| 4 — Endpoints wizard backend (iniciar/subir-036/procesar) | ⏳ pendiente | — |
+| 5 — UI acordeón + botón modo guiado | ⏳ pendiente | — |
+| 6 — UI uploader inline bloqueados | ⏳ pendiente | — |
+| 7 — Wizard 4 pasos + ruta App.tsx | ⏳ pendiente | — |
+| 8 — Suite regresión | ⏳ pendiente | — |
 
-### onboarding.py — FsSetup integrado
-Nuevo flujo: pregunta si crear empresa → `FsSetup.setup_completo()` → guarda idempresa+codejercicio.
+### Lecciones de esta sesión
+- `ResultadoClasificacion` solo tiene `tipo`, `confianza`, `texto_extraido`, `error` (NO `paginas_analizadas`/`texto_muestra`)
+- `clasificar_documento` debe importarse a nivel de módulo en `onboarding_masivo.py` para poder mockearlo en tests
+- Fixture tests onboarding: usar `crear_app(sesion_factory=Session)` + login real vía `/api/auth/login` → yield `(c, token)`
 
 **Pendiente próxima sesión**:
-1. Ejecutar plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (Tasks 1-8)
+1. Continuar plan Tasks 4-8 (wizard backend + UI + regresión)
 2. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
 
 ---
