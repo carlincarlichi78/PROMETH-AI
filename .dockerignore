@@ -1,0 +1,56 @@
+# Git
+.git/
+.github/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Environments
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+env/
+
+# Local DB (never in image)
+sfce.db
+sfce.db-shm
+sfce.db-wal
+sfce.db.backup_*
+data/
+
+# Dashboard (deployed separately via rsync)
+dashboard/
+
+# Client & sensitive docs
+clientes/
+docs/uploads/
+docs/1/
+
+# Tests (not needed in production)
+tests/
+
+# Dev scripts
+scripts/
+
+# Other
+*.log
+*.tmp
+node_modules/
+mobile/
+infra/
