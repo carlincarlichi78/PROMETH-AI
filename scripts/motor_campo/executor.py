@@ -1,9 +1,11 @@
+from __future__ import annotations
 import requests
 import time
 import logging
-from scripts.motor_campo.modelos import VarianteEjecucion
+from scripts.motor_campo.modelos import VarianteEjecucion, ResultadoEjecucion
 
 logger = logging.getLogger(__name__)
+
 
 class Executor:
     def __init__(self, sfce_api_url: str, fs_api_url: str, fs_token: str,
@@ -26,40 +28,54 @@ class Executor:
             self._login()
         return {"Authorization": f"Bearer {self._jwt_token}"}
 
-    def ejecutar(self, variante: VarianteEjecucion) -> dict:
+    def ejecutar(self, variante: VarianteEjecucion) -> ResultadoEjecucion:
         inicio = time.monotonic()
         datos = variante.datos_extraidos
         tipo = datos.get("tipo", "")
-
         try:
             if tipo == "_API":
-                resultado = self._ejecutar_api(variante)
+                raw = self._ejecutar_api(variante)
             elif tipo == "BAN":
-                resultado = self._ejecutar_bancario(variante)
+                raw = self._ejecutar_bancario(variante)
             elif tipo == "_DASHBOARD":
-                resultado = self._ejecutar_dashboard(variante)
+                raw = self._ejecutar_dashboard(variante)
             elif tipo == "_GATE0":
-                resultado = self._ejecutar_gate0(variante)
+                raw = self._ejecutar_gate0(variante)
             else:
-                resultado = self._ejecutar_pipeline(variante)
+                raw = self._ejecutar_pipeline(variante)
         except Exception as e:
-            resultado = {"ok": False, "error": str(e), "tipo_error": type(e).__name__}
+            duracion = int((time.monotonic() - inicio) * 1000)
+            return ResultadoEjecucion(
+                escenario_id=variante.escenario_id, variante_id=variante.variante_id,
+                canal="http", resultado="error_sistema", duracion_ms=duracion,
+                detalles={"error": str(e), "tipo_error": type(e).__name__},
+            )
 
         duracion = int((time.monotonic() - inicio) * 1000)
-        return {
-            "escenario_id": variante.escenario_id,
-            "variante_id": variante.variante_id,
-            "duracion_ms": duracion,
-            **resultado,
-        }
+        ok = raw.get("ok", False)
+        resp = raw.get("response", {})
+        doc = resp.get("doc", {})
+        return ResultadoEjecucion(
+            escenario_id=variante.escenario_id, variante_id=variante.variante_id,
+            canal="http",
+            resultado="ok" if ok else "bug_pendiente",
+            duracion_ms=duracion,
+            estado_doc_final=resp.get("estado"),
+            tipo_doc_detectado=resp.get("tipo_doc"),
+            idasiento=doc.get("idasiento") or resp.get("idasiento"),
+            detalles={
+                "idfactura": doc.get("idfactura"),
+                "idasiento": doc.get("idasiento") or resp.get("idasiento"),
+                "http_status": raw.get("http_status"),
+                "response": resp,
+            },
+        )
 
     def _ejecutar_pipeline(self, variante: VarianteEjecucion) -> dict:
         datos = variante.datos_extraidos
         payload = {
-            "empresa_id": self.empresa_id,
-            "codejercicio": self.codejercicio,
-            "datos_extraidos": datos,
-            "bypass_ocr": True,
+            "empresa_id": self.empresa_id, "codejercicio": self.codejercicio,
+            "datos_extraidos": datos, "bypass_ocr": True,
             "nombre_archivo": f"{variante.escenario_id}_{variante.variante_id}.pdf",
         }
         r = requests.post(f"{self.sfce_api_url}/api/gate0/ingestar",
@@ -85,11 +101,9 @@ class Executor:
         datos = variante.datos_extraidos
         contenido = datos.get("contenido_archivo", "").encode()
         nombre = datos.get("nombre_archivo", "extracto_test.txt")
-        r = requests.post(
-            f"{self.sfce_api_url}/api/bancario/{self.empresa_id}/ingestar",
-            files={"archivo": (nombre, contenido, "text/plain")},
-            headers=self._headers_sfce(), timeout=30
-        )
+        r = requests.post(f"{self.sfce_api_url}/api/bancario/{self.empresa_id}/ingestar",
+                          files={"archivo": (nombre, contenido, "text/plain")},
+                          headers=self._headers_sfce(), timeout=30)
         return {"ok": r.status_code < 400, "http_status": r.status_code,
                 "response": r.json() if r.headers.get("content-type", "").startswith("application/json") else {}}
 
