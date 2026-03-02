@@ -120,8 +120,30 @@ def seccion_datos_basicos() -> dict:
     telefono = _input_opcional("Telefono")
     iban = _input_opcional("IBAN bancario")
 
-    idempresa = _input_numero("ID empresa en FacturaScripts", 0)
     ejercicio = _input_opcional("Ejercicio activo", "2025")
+
+    crear_en_fs = _input_si_no("¿Crear empresa en FacturaScripts automaticamente?", True)
+    if crear_en_fs:
+        try:
+            from sfce.core.fs_setup import FsSetup
+            print("  Conectando con FacturaScripts...")
+            fs = FsSetup()
+            resultado = fs.setup_completo(nombre=nombre, cif=cif, anio=int(ejercicio))
+            idempresa = resultado.idempresa_fs
+            codejercicio = resultado.codejercicio
+            print(f"  Empresa creada: idempresa={idempresa}, codejercicio={codejercicio}")
+            if resultado.pgc_importado:
+                print("  PGC importado correctamente.")
+            else:
+                print("  AVISO: PGC no importado, hazlo manualmente en FS.")
+        except Exception as exc:
+            print(f"  ERROR al crear en FS: {exc}")
+            print("  Introduce el ID manualmente.")
+            idempresa = _input_numero("ID empresa en FacturaScripts", 0)
+            codejercicio = f"{idempresa:04d}"
+    else:
+        idempresa = _input_numero("ID empresa en FacturaScripts", 0)
+        codejercicio = f"{idempresa:04d}"
 
     empresa = {
         "nombre": nombre,
@@ -129,6 +151,7 @@ def seccion_datos_basicos() -> dict:
         "tipo": tipo,
         "idempresa": idempresa,
         "ejercicio_activo": ejercicio,
+        "codejercicio": codejercicio,
     }
     if direccion:
         empresa["direccion"] = direccion
