@@ -3,10 +3,14 @@ import logging
 import tempfile
 from pathlib import Path
 
+import json as _json
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 
 from sfce.api.rutas.auth_rutas import obtener_usuario_actual
 from sfce.api.app import get_sesion_factory
+from sfce.core.onboarding.clasificador import clasificar_documento
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/onboarding", tags=["onboarding-masivo"])
@@ -136,3 +140,157 @@ def aprobar_perfil(
         )
         sesion.commit()
     return {"estado": "aprobado"}
+
+
+def _extraer_datos_completar(tipo_doc: str, archivo_bytes: bytes,
+                              nombre_archivo: str) -> dict:
+    """Extrae datos según tipo de documento. Usa parsers del onboarding."""
+    from sfce.core.onboarding.parsers_modelos import (
+        parsear_modelo_036_bytes, parsear_modelo_390, parsear_modelo_303,
+        parsear_modelo_200,
+    )
+    from sfce.core.onboarding.clasificador import TipoDocOnboarding
+
+    with tempfile.NamedTemporaryFile(
+        suffix=Path(nombre_archivo).suffix, delete=False
+    ) as f:
+        f.write(archivo_bytes)
+        ruta = Path(f.name)
+
+    try:
+        tipo = TipoDocOnboarding(tipo_doc)
+        if tipo == TipoDocOnboarding.CENSO_036_037:
+            return parsear_modelo_036_bytes(archivo_bytes)
+        elif tipo == TipoDocOnboarding.IVA_ANUAL_390:
+            return parsear_modelo_390(ruta)
+        elif tipo == TipoDocOnboarding.IVA_TRIMESTRAL_303:
+            return parsear_modelo_303(ruta)
+        elif tipo == TipoDocOnboarding.IS_ANUAL_200:
+            return parsear_modelo_200(ruta)
+        return {}
+    finally:
+        ruta.unlink(missing_ok=True)
+
+
+@router.post("/perfiles/{perfil_id}/completar", status_code=200)
+async def completar_perfil(
+    perfil_id: int,
+    archivos: List[UploadFile] = File(...),
+    usuario=Depends(obtener_usuario_actual),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Añade documentos a un perfil bloqueado para intentar desbloquearlo."""
+    from sqlalchemy import text
+    from sfce.core.onboarding.perfil_empresa import Acumulador, Validador
+
+    with sesion_factory() as sesion:
+        row = sesion.execute(
+            text("SELECT datos_json, bloqueos_json FROM onboarding_perfiles "
+                 "WHERE id = :id"),
+            {"id": perfil_id},
+        ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+
+    datos_json, _ = row
+    acum = Acumulador.desde_perfil_existente(datos_json or "{}")
+
+    for archivo in archivos:
+        contenido = await archivo.read()
+        with tempfile.NamedTemporaryFile(
+            suffix=Path(archivo.filename or "doc.pdf").suffix, delete=False
+        ) as f:
+            f.write(contenido)
+            ruta_tmp = Path(f.name)
+
+        try:
+            clf = clasificar_documento(ruta_tmp)
+            if clf.tipo.value != "desconocido":
+                datos = _extraer_datos_completar(
+                    clf.tipo.value, contenido, archivo.filename or "doc.pdf"
+                )
+                acum.incorporar(clf.tipo.value, datos)
+        finally:
+            ruta_tmp.unlink(missing_ok=True)
+
+    perfil_nuevo = acum.obtener_perfil()
+    resultado = Validador().validar(perfil_nuevo)
+
+    nuevo_estado = "bloqueado"
+    if resultado.bloqueado:
+        nuevo_estado = "bloqueado"
+    elif resultado.apto_creacion_automatica:
+        nuevo_estado = "apto"
+    else:
+        nuevo_estado = "revision"
+
+    import dataclasses
+    nuevo_datos_json = _json.dumps(dataclasses.asdict(perfil_nuevo))
+
+    with sesion_factory() as sesion:
+        sesion.execute(
+            text("""
+                UPDATE onboarding_perfiles
+                SET estado = :estado,
+                    confianza = :score,
+                    datos_json = :datos,
+                    bloqueos_json = :bloqueos,
+                    advertencias_json = :advertencias,
+                    nif = :nif,
+                    nombre_detectado = :nombre
+                WHERE id = :id
+            """),
+            {
+                "estado": nuevo_estado,
+                "score": resultado.score,
+                "datos": nuevo_datos_json,
+                "bloqueos": _json.dumps(resultado.bloqueos),
+                "advertencias": _json.dumps(resultado.advertencias),
+                "nif": perfil_nuevo.nif,
+                "nombre": perfil_nuevo.nombre,
+                "id": perfil_id,
+            },
+        )
+        sesion.commit()
+
+    # Notificación si se desbloqueó (score >= 60)
+    if resultado.score >= 60:
+        _crear_notificacion_fusion(perfil_id, perfil_nuevo.nombre,
+                                   resultado, usuario.id, sesion_factory)
+
+    return {
+        "nuevo_estado": nuevo_estado,
+        "score": resultado.score,
+        "bloqueos": resultado.bloqueos,
+        "advertencias": resultado.advertencias,
+    }
+
+
+def _crear_notificacion_fusion(perfil_id: int, nombre: str,
+                                resultado, usuario_id: int,
+                                sesion_factory) -> None:
+    """Crea notificación cuando un perfil bloqueado se desbloquea."""
+    try:
+        from sfce.core.notificaciones import crear_notificacion_bd
+        from sqlalchemy import text
+
+        if resultado.apto_creacion_automatica:
+            msg = f"Perfil {nombre} creado automáticamente"
+        else:
+            msg = f"Perfil {nombre} desbloqueado — revisa antes de aprobar"
+
+        with sesion_factory() as sesion:
+            crear_notificacion_bd(
+                sesion=sesion,
+                usuario_id=usuario_id,
+                tipo="onboarding_desbloqueado",
+                mensaje=msg,
+                datos={"perfil_id": perfil_id},
+            )
+    except Exception as exc:
+        logger.warning("No se pudo crear notificación de fusión: %s", exc)
+
+
+# Estado en memoria del wizard: {lote_id: {nif: {"datos_036": dict, "archivos_extra": list[Path]}}}
+_WIZARD_STATE: dict = {}
