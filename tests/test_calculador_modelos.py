@@ -227,3 +227,21 @@ class TestModelo190:
         resultado = calc.calcular_190(perceptores, ejercicio=2025)
         assert resultado["casilla_16"] == 1000.33
         assert resultado["casilla_18"] == 150.11
+
+    def test_190_percepciones_especie(self):
+        """Casillas 17 y 19: percepciones y retenciones en especie."""
+        calc = CalculadorModelos(Normativa())
+        perceptores = [{
+            "nif": "12345678A",
+            "nombre": "EMPLEADO",
+            "clave_percepcion": "A",
+            "percepcion_dineraria": 20000.0,
+            "retencion_dineraria": 3000.0,
+            "percepcion_especie_valor": 1200.0,
+            "ingreso_cuenta_especie": 228.0,
+        }]
+        resultado = calc.calcular_190(perceptores, ejercicio=2025)
+        assert resultado["casilla_16"] == 20000.0
+        assert resultado["casilla_17"] == 1200.0
+        assert resultado["casilla_18"] == 3000.0
+        assert resultado["casilla_19"] == 228.0

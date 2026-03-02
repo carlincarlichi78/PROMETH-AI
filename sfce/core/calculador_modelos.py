@@ -446,7 +446,7 @@ class CalculadorModelos:
             "casilla_17": total_percepciones_especie,
             "casilla_18": total_retenciones,
             "casilla_19": total_ingresos_cuenta_especie,
-            "perceptores": perceptores,
+            "declarados": perceptores,
             "tipo": "automatico",
         }
 
