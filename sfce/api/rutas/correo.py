@@ -9,6 +9,7 @@ from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.core.cifrado import cifrar
 from sfce.db.modelos import (
     AdjuntoEmail, CuentaCorreo, EmailProcesado, ReglaClasificacionCorreo,
+    RemitenteAutorizado,
 )
 
 router = APIRouter(prefix="/api/correo", tags=["correo"])
@@ -73,6 +74,30 @@ class ActualizarEmailRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Cuentas IMAP
 # ---------------------------------------------------------------------------
+
+@router.get("/cuentas/{cuenta_id}")
+def obtener_cuenta(
+    cuenta_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """G8: devuelve 404 si la cuenta no existe o fue borrada."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        cuenta = s.get(CuentaCorreo, cuenta_id)
+        if not cuenta:
+            raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        verificar_acceso_empresa(usuario, cuenta.empresa_id, s)
+        return {
+            "id": cuenta.id,
+            "nombre": cuenta.nombre,
+            "usuario": cuenta.usuario,
+            "protocolo": cuenta.protocolo,
+            "activa": cuenta.activa,
+            "ultimo_uid": cuenta.ultimo_uid,
+            "empresa_id": cuenta.empresa_id,
+        }
+
 
 @router.get("/cuentas")
 def listar_cuentas(
@@ -255,6 +280,12 @@ def crear_regla(
     request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
+    # G12: CLASIFICAR requiere slug_destino
+    if datos.accion == "CLASIFICAR" and not datos.slug_destino:
+        raise HTTPException(
+            status_code=422,
+            detail="slug_destino es obligatorio cuando accion=CLASIFICAR",
+        )
     usuario = obtener_usuario_actual(request)
     with sesion_factory() as s:
         verificar_acceso_empresa(usuario, datos.empresa_id, s)
@@ -464,3 +495,73 @@ def gestoria_actualizar_cuenta(
             cuenta.activa = body.activa
         s.commit()
         return {"ok": True, "id": cuenta.id}
+
+
+# ---------------------------------------------------------------------------
+# Whitelist de remitentes autorizados (G5)
+# ---------------------------------------------------------------------------
+
+class AnadirRemitenteRequest(BaseModel):
+    email: str
+    nombre: str | None = None
+
+
+@router.get("/empresas/{empresa_id}/remitentes-autorizados")
+def listar_remitentes_autorizados(
+    empresa_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Lista los remitentes autorizados de una empresa e indica si la whitelist está activa."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+        remitentes = s.execute(
+            select(RemitenteAutorizado).where(
+                RemitenteAutorizado.empresa_id == empresa_id,
+                RemitenteAutorizado.activo == True,  # noqa: E712
+            )
+        ).scalars().all()
+        whitelist_activa = len(remitentes) > 0
+        return {
+            "remitentes": [
+                {"id": r.id, "email": r.email, "nombre": r.nombre}
+                for r in remitentes
+            ],
+            "whitelist_activa": whitelist_activa,
+            "aviso_primer_remitente": whitelist_activa and len(remitentes) == 1,
+        }
+
+
+@router.post("/empresas/{empresa_id}/remitentes-autorizados", status_code=201)
+def anadir_remitente_autorizado(
+    empresa_id: int,
+    body: AnadirRemitenteRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Añade un remitente a la whitelist de la empresa. Idempotente por email+empresa."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+        from sfce.conectores.correo.whitelist_remitentes import agregar_remitente
+        rem = agregar_remitente(body.email, empresa_id, s, nombre=body.nombre)
+        s.commit()
+        return {"id": rem.id, "email": rem.email}
+
+
+@router.delete("/remitentes/{remitente_id}", status_code=204)
+def eliminar_remitente_autorizado(
+    remitente_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Soft-delete de un remitente autorizado."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        rem = s.get(RemitenteAutorizado, remitente_id)
+        if not rem:
+            raise HTTPException(status_code=404, detail="Remitente no encontrado")
+        verificar_acceso_empresa(usuario, rem.empresa_id, s)
+        rem.activo = False
+        s.commit()
