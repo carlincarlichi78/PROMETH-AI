@@ -60,6 +60,9 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Instalar deps sistema (WeasyPrint)
+        run: sudo apt-get install -y -q libpango-1.0-0 libcairo2 libgdk-pixbuf2.0-0 libffi-dev
+
       - name: Instalar dependencias
         run: pip install -r requirements.txt && pip install -e ".[dev]"
 
