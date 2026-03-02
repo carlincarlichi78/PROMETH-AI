@@ -256,15 +256,24 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 38 — Plan Onboarding Masivo Mejoras)
+## Estado actual (02/03/2026, sesión 39 — Onboarding Histórico + Fixes Masivo)
 
-**Rama activa**: `feat/motor-testing-caos-p1` (58 commits adelante de main)
-**Tests**: 2530 PASS, 4 skipped, 0 FAILED
+**Rama activa**: `feat/motor-testing-caos-p1`
+**Tests onboarding**: 39 PASS. Tests globales ~2530+.
 
-### Onboarding Masivo Mejoras — DISEÑADO, PENDIENTE IMPLEMENTAR
+### Clientes prueba creados
+- `clientes/marcos-ruiz/` — autónomo fontanero (NIF: 29457823K)
+- `clientes/restaurante-la-marea/` — SL hostelería (CIF: B29011236)
+- `scripts/generar_onboarding_historico.py` — genera PDFs desde YAML (WeasyPrint)
 
-Plan listo en `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (8 tasks TDD).
-Abrir nueva sesión → `superpowers:executing-plans` para implementar.
+### Onboarding masivo — fixes (no solapan con plan mejoras)
+- `clasificador.py`: enum 115/180 + patterns
+- `parsers_modelos.py`: `parsear_modelo_115/180()`
+- `perfil_empresa.py`: campo `tiene_arrendamientos` + handlers (aditivo)
+- `procesador_lote.py`: `_PARSERS` 115/180 + `_extraer_identidad_de_pdf()` fallback NIF
+
+### onboarding.py — FsSetup integrado
+Nuevo flujo: pregunta si crear empresa → `FsSetup.setup_completo()` → guarda idempresa+codejercicio.
 
 **Pendiente próxima sesión**:
 1. Ejecutar plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (Tasks 1-8)
