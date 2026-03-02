@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from sfce.db.modelos import (
     CuentaCorreo, EmailProcesado, AdjuntoEmail,
-    EnlaceEmail, ReglaClasificacionCorreo, ContrasenaZip,
+    EnlaceEmail, ReglaClasificacionCorreo, ContrasenaZip, Empresa,
 )
 from sfce.conectores.correo.clasificacion.servicio_clasificacion import clasificar_email
 from sfce.conectores.correo.extractor_enlaces import extraer_enlaces
@@ -59,7 +59,14 @@ class IngestaCorreo:
                 return 0
             ultimo_uid = cuenta.ultimo_uid
             empresa_id = cuenta.empresa_id
-            reglas = self._cargar_reglas(sesion, empresa_id)
+            tipo = cuenta.tipo_cuenta or "empresa"
+            if tipo == "gestoria":
+                reglas, empresas_gestoria = self._cargar_reglas_gestoria(
+                    sesion, cuenta.gestoria_id
+                )
+            else:
+                reglas = self._cargar_reglas(sesion, empresa_id)
+                empresas_gestoria = []
 
         emails = self._descargar_emails_cuenta(cuenta_id, ultimo_uid)
         if not emails:
@@ -81,50 +88,89 @@ class IngestaCorreo:
                 asunto = email_data.get("asunto", "")
                 headers = email_data.get("headers", {})
 
-                # 1. Filtro anti-loop ACK
-                es_ack = es_respuesta_automatica(asunto) or tiene_cabecera_ack(headers)
-
-                # 2. Score multi-señal
-                if es_ack:
-                    score, _factores = 0.0, {}
-                    decision = "IGNORAR"
+                # Cuentas gestoría: clasificación por reglas, routing por slug
+                if tipo == "gestoria":
+                    clasificacion = clasificar_email(
+                        remitente=email_data["remitente"],
+                        asunto=asunto,
+                        cuerpo_texto=email_data.get("cuerpo_texto", ""),
+                        reglas=reglas,
+                    )
+                    accion = clasificacion.get("accion", "CUARENTENA")
+                    _ESTADO_POR_ACCION = {
+                        "CLASIFICAR": "CLASIFICADO",
+                        "APROBAR_MANUAL": "CUARENTENA",
+                        "IGNORAR": "IGNORADO",
+                        "CUARENTENA": "CUARENTENA",
+                    }
+                    estado_inicial = _ESTADO_POR_ACCION.get(accion, "CUARENTENA")
+                    empresa_destino_id = None
+                    if accion == "CLASIFICAR":
+                        slug = clasificacion.get("slug_destino")
+                        if slug and empresas_gestoria:
+                            empresa_destino_id = self._resolver_empresa_por_slug(
+                                slug, empresas_gestoria
+                            )
+                    email_bd = EmailProcesado(
+                        cuenta_id=cuenta_id,
+                        uid_servidor=email_data["uid"],
+                        message_id=email_data.get("message_id"),
+                        remitente=email_data["remitente"],
+                        asunto=asunto,
+                        fecha_email=email_data.get("fecha"),
+                        estado=estado_inicial,
+                        nivel_clasificacion=clasificacion["nivel"],
+                        empresa_destino_id=empresa_destino_id,
+                        confianza_ia=clasificacion.get("confianza"),
+                        es_respuesta_ack=False,
+                        score_confianza=None,
+                        motivo_cuarentena=None if estado_inicial != "CUARENTENA" else "SIN_REGLA",
+                    )
                 else:
-                    score, _factores = calcular_score_email(email_data, empresa_id, sesion)
-                    decision = decision_por_score(score)
+                    # 1. Filtro anti-loop ACK
+                    es_ack = es_respuesta_automatica(asunto) or tiene_cabecera_ack(headers)
 
-                # 3. Clasificación por reglas (para hints y nivel)
-                hints = extraer_hints_asunto(asunto)
-                clasificacion = clasificar_email(
-                    remitente=email_data["remitente"],
-                    asunto=asunto,
-                    cuerpo_texto=email_data.get("cuerpo_texto", ""),
-                    reglas=reglas,
-                )
-                if hints.tipo_doc and clasificacion.get("tipo_doc") is None:
-                    clasificacion["tipo_doc"] = hints.tipo_doc
+                    # 2. Score multi-señal
+                    if es_ack:
+                        score, _factores = 0.0, {}
+                        decision = "IGNORAR"
+                    else:
+                        score, _factores = calcular_score_email(email_data, empresa_id, sesion)
+                        decision = decision_por_score(score)
 
-                estado_inicial = {
-                    "AUTO": "CLASIFICADO",
-                    "REVISION": "CLASIFICADO",
-                    "CUARENTENA": "CUARENTENA",
-                    "IGNORAR": "IGNORADO",
-                }.get(decision, "PENDIENTE")
+                    # 3. Clasificación por reglas (para hints y nivel)
+                    hints = extraer_hints_asunto(asunto)
+                    clasificacion = clasificar_email(
+                        remitente=email_data["remitente"],
+                        asunto=asunto,
+                        cuerpo_texto=email_data.get("cuerpo_texto", ""),
+                        reglas=reglas,
+                    )
+                    if hints.tipo_doc and clasificacion.get("tipo_doc") is None:
+                        clasificacion["tipo_doc"] = hints.tipo_doc
 
-                email_bd = EmailProcesado(
-                    cuenta_id=cuenta_id,
-                    uid_servidor=email_data["uid"],
-                    message_id=email_data.get("message_id"),
-                    remitente=email_data["remitente"],
-                    asunto=asunto,
-                    fecha_email=email_data.get("fecha"),
-                    estado=estado_inicial,
-                    nivel_clasificacion=clasificacion["nivel"],
-                    empresa_destino_id=None,
-                    confianza_ia=clasificacion.get("confianza"),
-                    es_respuesta_ack=es_ack,
-                    score_confianza=score,
-                    motivo_cuarentena=None if decision != "CUARENTENA" else "SCORE_BAJO",
-                )
+                    estado_inicial = {
+                        "AUTO": "CLASIFICADO",
+                        "REVISION": "CLASIFICADO",
+                        "CUARENTENA": "CUARENTENA",
+                        "IGNORAR": "IGNORADO",
+                    }.get(decision, "PENDIENTE")
+
+                    email_bd = EmailProcesado(
+                        cuenta_id=cuenta_id,
+                        uid_servidor=email_data["uid"],
+                        message_id=email_data.get("message_id"),
+                        remitente=email_data["remitente"],
+                        asunto=asunto,
+                        fecha_email=email_data.get("fecha"),
+                        estado=estado_inicial,
+                        nivel_clasificacion=clasificacion["nivel"],
+                        empresa_destino_id=None,
+                        confianza_ia=clasificacion.get("confianza"),
+                        es_respuesta_ack=es_ack,
+                        score_confianza=score,
+                        motivo_cuarentena=None if decision != "CUARENTENA" else "SCORE_BAJO",
+                    )
                 sesion.add(email_bd)
                 sesion.flush()
 
@@ -147,8 +193,10 @@ class IngestaCorreo:
                             patron_detectado=enlace["patron"],
                         ))
 
-                # 4. Encolar adjuntos en pipeline si la decisión lo permite
-                if decision in ("AUTO", "REVISION"):
+                # 4. Encolar adjuntos en pipeline (solo cuentas no-gestoria)
+                if tipo == "gestoria":
+                    decision = None  # no se usa en el bloque de encola
+                if tipo != "gestoria" and decision in ("AUTO", "REVISION"):
                     try:
                         contrasenas = _cargar_contrasenas_zip(
                             sesion, empresa_id,
@@ -205,6 +253,55 @@ class IngestaCorreo:
                 return svc.descargar_nuevos(ultimo_uid)
         return []
 
+    def _cargar_reglas_gestoria(
+        self, sesion: Session, gestoria_id: int
+    ) -> tuple[list[dict], list[dict]]:
+        """Carga reglas de todas las empresas de la gestoría + globales.
+
+        Returns:
+            (reglas, empresas) donde empresas es [{id, nombre}]
+        """
+        empresas_ids = sesion.execute(
+            select(Empresa.id).where(Empresa.gestoria_id == gestoria_id)
+        ).scalars().all()
+
+        reglas_orm = sesion.execute(
+            select(ReglaClasificacionCorreo).where(
+                ReglaClasificacionCorreo.activa == True,  # noqa: E712
+                ReglaClasificacionCorreo.empresa_id.in_(empresas_ids)
+                | ReglaClasificacionCorreo.empresa_id.is_(None),
+            ).order_by(ReglaClasificacionCorreo.prioridad)
+        ).scalars().all()
+
+        empresas_orm = sesion.execute(
+            select(Empresa).where(Empresa.id.in_(empresas_ids))
+        ).scalars().all()
+
+        empresas = [{"id": e.id, "nombre": e.nombre} for e in empresas_orm]
+        return [self._regla_a_dict(r) for r in reglas_orm], empresas
+
+    def _resolver_empresa_por_slug(
+        self, slug: str, empresas: list[dict]
+    ) -> int | None:
+        """Busca empresa_id por slug (slug = nombre normalizado, primeros 20 chars)."""
+        import re
+        for emp in empresas:
+            nombre_slug = re.sub(r"[^a-z0-9]", "", emp["nombre"].lower())[:20]
+            if nombre_slug == slug:
+                return emp["id"]
+        return None
+
+    @staticmethod
+    def _regla_a_dict(r: ReglaClasificacionCorreo) -> dict:
+        return {
+            "tipo": r.tipo,
+            "condicion_json": r.condicion_json,
+            "accion": r.accion,
+            "slug_destino": r.slug_destino,
+            "prioridad": r.prioridad,
+            "activa": r.activa,
+        }
+
     def _cargar_reglas(self, sesion: Session, empresa_id: int) -> list[dict]:
         """Carga reglas activas de la empresa + reglas globales (empresa_id=None)."""
         reglas = sesion.execute(
@@ -228,10 +325,13 @@ class IngestaCorreo:
 
 
 def ejecutar_polling_todas_las_cuentas(engine: Engine) -> None:
-    """Entry point para scheduler: procesa todas las cuentas activas."""
+    """Entry point para scheduler: procesa todas las cuentas activas excepto 'sistema'."""
     with Session(engine) as sesion:
         cuentas = sesion.execute(
-            select(CuentaCorreo.id).where(CuentaCorreo.activa == True)  # noqa: E712
+            select(CuentaCorreo.id).where(
+                CuentaCorreo.activa == True,  # noqa: E712
+                CuentaCorreo.tipo_cuenta != "sistema",
+            )
         ).scalars().all()
 
     ingesta = IngestaCorreo(engine=engine)
