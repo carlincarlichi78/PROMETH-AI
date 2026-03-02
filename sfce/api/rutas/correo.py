@@ -8,8 +8,8 @@ from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.core.cifrado import cifrar
 from sfce.db.modelos import (
-    AdjuntoEmail, CuentaCorreo, EmailProcesado, ReglaClasificacionCorreo,
-    RemitenteAutorizado,
+    AdjuntoEmail, ColaProcesamiento, CuentaCorreo, EmailProcesado,
+    ReglaClasificacionCorreo, RemitenteAutorizado,
 )
 
 router = APIRouter(prefix="/api/correo", tags=["correo"])
@@ -565,3 +565,74 @@ def eliminar_remitente_autorizado(
         verificar_acceso_empresa(usuario, rem.empresa_id, s)
         rem.activo = False
         s.commit()
+
+
+# ---------------------------------------------------------------------------
+# Confirmar enriquecimiento (Task 11)
+# ---------------------------------------------------------------------------
+
+class ConfirmarEnriquecimientoRequest(BaseModel):
+    campos: dict  # {campo: valor}
+
+
+@router.post("/emails/{email_id}/confirmar")
+def confirmar_enriquecimiento(
+    email_id: int,
+    body: ConfirmarEnriquecimientoRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Confirma campos de enriquecimiento para un email procesado.
+
+    Actualiza los hints de los docs en cola que proceden de ese email
+    y crea una regla de aprendizaje para clasificaciones futuras.
+    """
+    import json as _json
+
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        ep = s.get(EmailProcesado, email_id)
+        if not ep:
+            raise HTTPException(status_code=404, detail="Email no encontrado")
+
+        empresa_id = ep.empresa_destino_id
+        if empresa_id:
+            verificar_acceso_empresa(usuario, empresa_id, s)
+
+        # 1. Actualizar hints en docs de cola que apuntan a este email
+        docs_en_cola = s.execute(
+            select(ColaProcesamiento).where(
+                ColaProcesamiento.empresa_origen_correo_id == email_id
+            )
+        ).scalars().all()
+
+        for doc in docs_en_cola:
+            try:
+                hints = _json.loads(doc.hints_json or "{}")
+                enr = hints.get("enriquecimiento", {})
+                enr.update(body.campos)
+                hints["enriquecimiento"] = enr
+                doc.hints_json = _json.dumps(hints)
+            except Exception:
+                pass
+
+        # 2. Crear regla de aprendizaje basada en el remitente
+        if empresa_id:
+            try:
+                regla = ReglaClasificacionCorreo(
+                    empresa_id=empresa_id,
+                    tipo="REMITENTE_EXACTO",
+                    condicion_json=_json.dumps({"remitente": ep.remitente}),
+                    accion="CLASIFICAR",
+                    slug_destino=None,
+                    confianza=1.0,
+                    origen="APRENDIZAJE",
+                    prioridad=50,
+                    activa=True,
+                )
+                s.add(regla)
+            except Exception:
+                pass
+
+        s.commit()
+        return {"confirmado": True, "campos_aplicados": body.campos}
