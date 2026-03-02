@@ -1,19 +1,32 @@
 # 26 — Infraestructura Docker y Backups
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
-> **Fuentes:** /opt/apps/sfce/, scripts/infra/, infra/nginx/
+> **Actualizado:** 2026-03-02
+> **Fuentes:** /opt/apps/sfce/, scripts/infra/, infra/nginx/, Dockerfile
 
 ---
 
-## Contenedores Docker activos
+## Contenedores Docker activos (SFCE)
+
+Compose file: `/opt/apps/sfce/docker-compose.yml` (también en repo: `infra/sfce/docker-compose.yml`)
 
 | Contenedor | Imagen | Puerto expuesto | Volumen principal | Descripcion |
 |------------|--------|-----------------|-------------------|-------------|
-| `facturascripts` | PHP/Apache custom | 443 (via nginx) | `/opt/apps/facturascripts/` | App contable PHP + MariaDB 10.11 integrada. NO TOCAR |
-| `sfce_db` | postgres:16 | `127.0.0.1:5433` | `/opt/apps/sfce/pgdata/` | BD principal SFCE. Solo accesible desde localhost |
-| `nginx` | nginx:alpine | 80, 443 | `/opt/infra/nginx/conf.d/` | Proxy inverso + SSL termination para todos los servicios |
-| `uptime_kuma` | louislam/uptime-kuma | `127.0.0.1:3001` | `/opt/apps/uptime-kuma/` | Monitoreo. Solo via SSH tunnel o proxy nginx (pendiente DNS) |
+| `sfce_api` | `ghcr.io/carlincarlichi78/spice:latest` | interno :8000 | `./docs/uploads`, `./reglas` | API FastAPI + workers OCR/pipeline. **PRODUCCIÓN** |
+| `sfce_db` | postgres:16-alpine | `127.0.0.1:5433` | `./pg_data/` | BD principal SFCE. Solo accesible desde localhost |
+| `uptime_kuma` | louislam/uptime-kuma:1 | `127.0.0.1:3001` | `./uptime_data/` | Monitoreo. Acceso via SSH tunnel |
+| `facturascripts` | PHP/Apache custom | 443 (via nginx) | `/opt/apps/facturascripts/` | App contable PHP + MariaDB 10.11. NO TOCAR |
+| `nginx` | nginx:alpine | 80, 443 | `/opt/infra/nginx/conf.d/` | Proxy inverso + SSL para todos los servicios |
+
+**CRITICO — permisos `pg_data`:**
+- `pg_data/` SIEMPRE debe ser `999:999` (usuario postgres del contenedor)
+- NUNCA ejecutar `chown -R carli /opt/apps/sfce/` sin excluir `pg_data`
+- Fix si se rompe: `chown -R 999:999 /opt/apps/sfce/pg_data && docker restart sfce_db`
+
+**Uptime Kuma:**
+- Credenciales: admin / admin123
+- Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N` → http://localhost:3001
+- Monitores activos: SFCE App (HTTP 200 app.prometh-ai.es) + SFCE API Health (keyword "ok")
 
 ## Diagrama de topologia
 
@@ -21,11 +34,15 @@
 graph TD
     INTERNET["Internet"] --> NGINX["nginx :80/:443"]
 
+    NGINX -->|"app.prometh-ai.es\n+ /api/ proxy"| API["sfce_api\nFastAPI :8000"]
+    NGINX -->|"api.prometh-ai.es\nproxy directo"| API
     NGINX --> FS["facturascripts\nPHP/Apache\nMariaDB 10.11"]
-    NGINX --> API["API FastAPI\n:8000 (interno)"]
     NGINX --> UK["uptime_kuma\n:3001 (interno)"]
 
     API --> PGDB["sfce_db\nPostgreSQL 16\n127.0.0.1:5433"]
+
+    GHA["GitHub Actions\npush a main"] -->|"docker pull + deploy SSH"| GHCR["GHCR\nghcr.io/.../spice:latest"]
+    GHA -->|"ssh deploy"| API
 
     DEV["Dev local\n:5173 Vite"] -->|"proxy /api"| API
 
@@ -39,6 +56,8 @@ graph TD
     style NGINX fill:#ccf5cc
     style SSH_TUNNEL fill:#cce0ff
     style SSH_TUNNEL2 fill:#cce0ff
+    style GHA fill:#ffe4cc
+    style GHCR fill:#ffe4cc
 ```
 
 ## Firewall
@@ -61,12 +80,22 @@ Ademas, ufw esta activo en el host con reglas basicas:
 - HTTP (80) y HTTPS (443): permitidos desde exterior
 - Todo lo demas: bloqueado por defecto
 
+## nginx — configs prometh-ai.es
+
+| Config en servidor | Repo local | Qué sirve |
+|--------------------|------------|-----------|
+| `/opt/infra/nginx/conf.d/app-prometh-ai.conf` | `infra/nginx/app-prometh-ai.conf` | React estático + proxy `/api/` → sfce_api:8000 |
+| `/opt/infra/nginx/conf.d/api-prometh-ai.conf` | `infra/nginx/api-prometh-ai.conf` | Proxy directo sfce_api:8000, CORS = solo app.prometh-ai.es |
+| `/opt/infra/nginx/conf.d/prometh-ai.conf` | — | Landing prometh-ai.es → /opt/apps/spice-landing/ |
+
+**CRITICO al copiar configs con scp**: verificar que el nombre de destino NO tenga `.tmp`. nginx ignora archivos `.tmp`.
+
 ## SSL / HTTPS
 
 - Certbot instalado en el **host** (NO dentro de Docker)
 - Certificados Let's Encrypt para todos los dominios activos
 - Los certs se montan en el contenedor nginx como volumen desde `/etc/letsencrypt/`
-- Expiracion proxima: **2026-05-30**
+- Expiracion: **2026-05-31** (app/api.prometh-ai.es obtenidos 2026-03-02)
 
 ```bash
 # Verificar certificados activos

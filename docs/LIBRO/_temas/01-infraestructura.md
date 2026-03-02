@@ -1,8 +1,8 @@
 # 01 — Infraestructura
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
-> **Fuentes:** CLAUDE.md, /opt/infra/nginx/conf.d/, scripts/infra/
+> **Actualizado:** 2026-03-02
+> **Fuentes:** CLAUDE.md, /opt/infra/nginx/conf.d/, scripts/infra/, .github/workflows/deploy.yml
 
 ---
 
@@ -93,9 +93,45 @@ Templates disponibles localmente:
 | Servicio | URL |
 |----------|-----|
 | FacturaScripts | https://contabilidad.lemonfresh-tuc.com |
-| PROMETH-AI web | https://prometh-ai.carloscanetegomez.dev |
+| SFCE Dashboard (producción) | https://app.prometh-ai.es |
+| SFCE API (producción) | https://api.prometh-ai.es |
+| SFCE API health | https://api.prometh-ai.es/api/health |
+| PROMETH-AI web | https://prometh-ai.es |
 | SPICE Landing | https://spice.carloscanetegomez.dev |
 | API FacturaScripts (prod) | https://contabilidad.lemonfresh-tuc.com/api/3/ |
+
+## CI/CD — GitHub Actions
+
+Repo: `carlincarlichi78/SPICE` (privado)
+Trigger: push a `main`
+
+**Pipeline: 4 jobs**
+
+| Job | Qué hace | Depende de |
+|-----|----------|------------|
+| `test` | pytest 2270 tests contra PostgreSQL efímero | — |
+| `build-frontend` | `npm run build` React + sube artefacto | — (paralelo a test) |
+| `build-docker` | Build + push imagen a GHCR (`ghcr.io/carlincarlichi78/spice:latest`) | test |
+| `deploy` | SCP frontend → servidor + SSH: docker pull + up + nginx reload | build-docker + build-frontend |
+
+**Secrets requeridos en GitHub:**
+
+| Secret | Valor |
+|--------|-------|
+| `SSH_HOST` | 65.108.60.69 |
+| `SSH_USER` | carli |
+| `SSH_PRIVATE_KEY` | Clave privada RSA para SSH |
+| `SFCE_JWT_SECRET` | >=64 chars |
+| `SFCE_DB_PASSWORD` | Password PostgreSQL prod |
+| `MISTRAL_API_KEY` | — |
+| `OPENAI_API_KEY` | — |
+| `GEMINI_API_KEY` | — |
+| `FS_API_TOKEN` | — |
+
+**Notas críticas CI/CD:**
+- El job `deploy` hace `docker login ghcr.io` antes del pull (imagen privada)
+- El deploy script en el servidor necesita que `/opt/apps/sfce/` sea propiedad de `carli:carli` (excepto `pg_data` que debe ser `999:999`)
+- `pg_data` NUNCA hacer `chown carli` → PostgreSQL necesita uid 999 (usuario postgres del contenedor)
 
 ## Credenciales
 
