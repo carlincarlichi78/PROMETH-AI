@@ -1,5 +1,36 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 21 — 02/03/2026: App móvil operativa + recuperar contraseña
+
+### Problema resuelto: app móvil no funcionaba en dispositivo real
+- `mobile/constants/api.ts`: fallback `localhost:8000` → `https://api.prometh-ai.es`
+- La app ya funciona desde cualquier dispositivo sin configuración extra
+
+### Recuperar contraseña
+- **Backend**: `POST /api/auth/recuperar-password` + `POST /api/auth/reset-password`
+  - Genera token 32-byte seguro, válido 2h, almacenado en `usuarios.reset_token`
+  - Con SMTP: envía email con código. Sin SMTP: loguea token (WARNING en logs)
+- **Mobile**: `mobile/app/(auth)/recuperar-password.tsx` — 2 pasos (email → token+nueva contraseña)
+- **Login**: enlace "¿Olvidaste tu contraseña?" bajo botón Entrar
+- **Migración 017**: columnas `reset_token` + `reset_token_expira` en `usuarios`
+- **Modelo**: `sfce/db/modelos_auth.py` — 2 campos nuevos en `Usuario`
+- **Email service**: método `enviar_reset_password()` añadido
+
+### Migraciones desplegadas en producción
+- 015 `mensajes_empresa` ✓
+- 016 `push_tokens` ✓
+- 017 `reset_token` (ALTER TABLE directamente en PG) ✓
+
+### Otros
+- `.gitignore`: añadir `sfce/docs/` (carpeta PDFs, no va a git)
+- `scripts/uk_crear_monitores.py`: script Playwright para Uptime Kuma
+
+### Commits
+- `7ba3f36` chore: ignorar sfce/docs/ + script Uptime Kuma
+- `92e3ea6` feat: recuperar contraseña en app móvil + fix URL API → producción
+
+---
+
 ## Sesión 20 — 02/03/2026: Onboarding Masivo — diseño y plan
 
 ### Solo diseño/planificación (sin código)

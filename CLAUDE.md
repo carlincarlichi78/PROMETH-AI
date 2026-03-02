@@ -192,25 +192,30 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 20 — Onboarding Masivo diseñado y planificado)
+## Estado actual (02/03/2026, sesión 21 — App móvil operativa + recuperar contraseña)
 
 **Rama activa**: `main`
-**Tests**: 2270 PASS, 0 FAILED. Build: ✓. Commit: `961de5b`
+**Tests**: 2285 PASS, 2 FAILED (pre-existentes onboarding masivo), 4 skipped. Build: ✓. Commit: `3bcd756`
+**Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
+**Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Onboarding Masivo — Plan listo para ejecutar (sesión 20)
+### Tests fallando (2, pre-existentes — no son de esta sesión)
+- `tests/test_fs_setup.py::TestFsSetup::test_setup_completo`
+- `tests/test_onboarding_parsers_libros.py::test_parsea_sumas_y_saldos`
+
+### App Móvil — COMPLETADA Y OPERATIVA
+- **Acceso**: `cd mobile && npx expo start --web` (apunta a `https://api.prometh-ai.es` por defecto)
+- **Credenciales admin**: `admin@sfce.local` / `admin` → abre vista gestor
+- **Recuperar contraseña**: `POST /api/auth/recuperar-password` + `POST /api/auth/reset-password`
+  - Sin SMTP: token aparece en logs del servidor (`docker compose logs sfce_api | grep RESET`)
+- **Migraciones en producción**: 015 (mensajes_empresa) + 016 (push_tokens) + 017 (reset_token) ✓
+
+### Onboarding Masivo — Implementación iniciada (sesión 20+)
 - Diseño: `docs/plans/2026-03-02-onboarding-masivo-design.md`
 - Plan Parte 1 (Tasks 1-6): `docs/plans/2026-03-02-onboarding-masivo-plan-parte1.md`
 - Plan Parte 2 (Tasks 7-12): `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md`
-- **Ejecución**: Parte 1 primero (sesión A), luego Parte 2 (sesión B) — dependencias secuenciales
-- **Próxima sesión**: ejecutar Parte 1 con `superpowers:executing-plans`
-
-### App Móvil — Plan listo para ejecutar (sesión 17)
-- Diseño: `docs/plans/2026-03-02-mobile-app-redesign-design.md`
-- Plan 10 tareas: `docs/plans/2026-03-02-mobile-app-redesign.md`
-- **Orden de ejecución**: Tasks 1→2→3→4→6→7→8→10→5→9
-- **Próxima sesión**: ejecutar Task 1 (endpoint semáforo) con `superpowers:executing-plans`
-**Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
-**Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+- **Implementado**: prerequisites (`CREADA_MASIVO`, arrendador, tipo_pgc, recc), migración 017 onboarding, clasificador 19 tipos
+- **Próxima sesión**: continuar Parte 1 con `superpowers:executing-plans`
 
 ### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
 
