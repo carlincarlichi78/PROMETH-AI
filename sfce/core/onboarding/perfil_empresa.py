@@ -87,6 +87,7 @@ class PerfilEmpresa:
     pagos_fraccionados: dict = field(default_factory=dict)
 
     tiene_trabajadores: bool = False
+    tiene_arrendamientos: bool = False
     socios: list = field(default_factory=list)
     operaciones_vinculadas: bool = False
     obligaciones_adicionales: list = field(default_factory=list)
@@ -132,6 +133,10 @@ class Acumulador:
             self._incorporar_100(datos)
         elif tipo_doc == "retenciones_111":
             self._incorporar_111(datos)
+        elif tipo_doc == "retenciones_115":
+            self._incorporar_115(datos)
+        elif tipo_doc == "arrendamiento_180":
+            self._incorporar_180(datos)
         elif tipo_doc == "libro_facturas_emitidas":
             self._perfil.clientes_habituales = datos.get("clientes", [])
         elif tipo_doc == "libro_facturas_recibidas":
@@ -191,6 +196,14 @@ class Acumulador:
     def _incorporar_111(self, datos: dict) -> None:
         if datos.get("tiene_trabajadores"):
             self._perfil.tiene_trabajadores = True
+
+    def _incorporar_115(self, datos: dict) -> None:
+        if datos.get("tiene_arrendamientos"):
+            self._perfil.tiene_arrendamientos = True
+
+    def _incorporar_180(self, datos: dict) -> None:
+        if datos.get("tiene_arrendamientos"):
+            self._perfil.tiene_arrendamientos = True
 
     def _verificar_cuentas_alerta(self, cuentas: list) -> None:
         for cuenta in cuentas:

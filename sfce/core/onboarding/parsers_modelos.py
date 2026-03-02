@@ -140,3 +140,37 @@ def parsear_modelo_111(ruta: Path) -> dict:
         resultado["retenciones_total"] = retenciones
         resultado["tiene_trabajadores"] = True
     return resultado
+
+
+def parsear_modelo_115(ruta: Path) -> dict:
+    """Retenciones e ingresos a cuenta — arrendamientos (trimestral)."""
+    texto = _extraer_texto_pdf(ruta)
+    resultado: dict = {}
+    trim = re.search(r"\b([1-4]T)\b", texto, re.IGNORECASE)
+    if trim:
+        resultado["trimestre"] = trim.group(1)
+    retenciones = _buscar_importe(
+        texto, r"retenciones\s+e\s+ingresos\s+a\s+cuenta[:\s]+([\d\.,]+)")
+    if retenciones is None:
+        retenciones = _buscar_importe(texto, r"resultado\s+a\s+ingresar[:\s]+([\d\.,]+)")
+    if retenciones:
+        resultado["retenciones_total"] = retenciones
+        resultado["tiene_arrendamientos"] = True
+    return resultado
+
+
+def parsear_modelo_180(ruta: Path) -> dict:
+    """Resumen anual retenciones e ingresos a cuenta — arrendamientos."""
+    texto = _extraer_texto_pdf(ruta)
+    resultado: dict = {}
+    retenciones = _buscar_importe(
+        texto, r"retenciones\s+e\s+ingresos\s+a\s+cuenta[:\s]+([\d\.,]+)")
+    if retenciones is None:
+        retenciones = _buscar_importe(texto, r"importe\s+a\s+ingresar[:\s]+([\d\.,]+)")
+    if retenciones:
+        resultado["retenciones_total_anual"] = retenciones
+        resultado["tiene_arrendamientos"] = True
+    ejercicio = re.search(r"ejercicio\s+(\d{4})", texto, re.IGNORECASE)
+    if ejercicio:
+        resultado["ejercicio"] = ejercicio.group(1)
+    return resultado
