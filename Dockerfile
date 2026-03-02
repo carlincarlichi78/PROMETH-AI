@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpangoft2-1.0-0 \
     libcairo2 \
     libgdk-pixbuf2.0-0 \
-    libglib2.0-0 \
+    libglib2.0-0t64 \
     libffi8 \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
