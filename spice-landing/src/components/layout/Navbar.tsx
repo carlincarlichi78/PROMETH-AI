@@ -42,6 +42,10 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <a href="https://app.prometh-ai.es"
+            className="text-sm font-semibold text-prometh-amber hover:text-prometh-amber/80 transition-colors">
+            Acceder →
+          </a>
           <a href="mailto:hola@prometh-ai.es"
             className="btn-primary text-sm py-2 px-4 rounded-lg">
             Solicitar demo
@@ -65,6 +69,10 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <a href="https://app.prometh-ai.es"
+            className="text-sm font-semibold text-prometh-amber py-2">
+            Acceder →
+          </a>
           <a href="mailto:hola@prometh-ai.es" className="btn-primary text-center text-sm">
             Solicitar demo
           </a>

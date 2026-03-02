@@ -49,9 +49,13 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-2">
+          <a href="https://app.prometh-ai.es"
+            className="btn-primary animate-pulse-amber text-center">
+            Acceder al dashboard
+          </a>
           <button
             onClick={() => document.getElementById('perfiles')?.scrollIntoView({ behavior: 'smooth' })}
-            className="btn-primary animate-pulse-amber">
+            className="px-8 py-3.5 rounded-xl border border-prometh-border text-prometh-text font-semibold hover:border-prometh-amber/50 transition-colors">
             Ver mi perfil
           </button>
           <Link to="/como-funciona"
