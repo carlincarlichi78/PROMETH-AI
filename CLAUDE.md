@@ -192,16 +192,24 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 23 — Email Ingesta Mejorada diseñada)
+## Estado actual (02/03/2026, sesión 24 — Onboarding Masivo COMPLETADO)
 
 **Rama activa**: `main`
-**Tests**: 2323 PASS, 0 FAILED, 4 skipped. Build: ✓. Commit: `195e570`
+**Tests**: 2320 PASS, 0 FAILED, 4 skipped. Build: ✓. Commit: `0724c7d`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
+### Onboarding Masivo — COMPLETADO (sesiones 22+24)
+- `sfce/core/onboarding/` — clasificador + parsers + perfil_empresa + motor_creacion + procesador_lote
+- `sfce/api/rutas/onboarding_masivo.py` — POST /lotes, GET /lotes/{id}, GET /lotes/{id}/perfiles, POST /perfiles/{id}/aprobar
+- `dashboard/src/features/onboarding/` — OnboardingMasivoPage + LoteProgressCard + PerfilRevisionCard
+- Sidebar: "Onboarding Masivo" visible para superadmin/admin_gestoria/asesor
+- **43 tests** en 12 archivos de test. Suite: 2320 PASS.
+- `procesador_lote.py` parsea PDFs reales con pdfplumber → ocr_036 → Acumulador → PerfilEmpresa
+
 ### Email Ingesta Mejorada — Plan listo para ejecutar (sesión 23)
 - Plan: `docs/plans/2026-03-02-email-ingesta-mejorada.md` — 10 tasks, 84 tests
-- **Próxima sesión A**: ejecutar con `superpowers:executing-plans`
+- **Próxima sesión**: ejecutar con `superpowers:executing-plans`
 - **Gaps que cierra**: ZIP+contraseña, loop ACK, whitelist remitentes, score multi-señal, ACK categorizado, IngestaCorreo→ColaProcesamiento, daemon lifespan, onboarding→email
 
 ### App Móvil — COMPLETADA Y OPERATIVA
@@ -210,12 +218,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Recuperar contraseña**: `POST /api/auth/recuperar-password` + `POST /api/auth/reset-password`
   - Sin SMTP: token aparece en logs del servidor (`docker compose logs sfce_api | grep RESET`)
 - **Migraciones en producción**: 015 (mensajes_empresa) + 016 (push_tokens) + 017 (reset_token) ✓
-
-### Onboarding Masivo — Parte 1 COMPLETADA (sesión 22), Parte 2 pendiente
-- `sfce/core/onboarding/` — clasificador + parsers_libros + parsers_modelos + perfil_empresa
-- Migración 017 ejecutada en BD real (4 tablas: onboarding_lotes/perfiles/documentos, bienes_inversion_iva)
-- Plan Parte 2 (Tasks 7-12): `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md`
-- **Próxima sesión B**: ejecutar Parte 2 con `superpowers:executing-plans`
 
 ### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
 
