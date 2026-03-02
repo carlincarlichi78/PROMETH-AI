@@ -256,6 +256,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
+## Estado actual (02/03/2026, sesión 38 — Plan Onboarding Masivo Mejoras)
+
+**Rama activa**: `feat/motor-testing-caos-p1` (58 commits adelante de main)
+**Tests**: 2530 PASS, 4 skipped, 0 FAILED
+
+### Onboarding Masivo Mejoras — DISEÑADO, PENDIENTE IMPLEMENTAR
+
+Plan listo en `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (8 tasks TDD).
+Abrir nueva sesión → `superpowers:executing-plans` para implementar.
+
+**Pendiente próxima sesión**:
+1. Ejecutar plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (Tasks 1-8)
+2. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
+
+---
+
 ## Estado actual (02/03/2026, sesión 36 — Email Enriquecimiento COMPLETADO)
 
 **Rama activa**: `feat/motor-testing-caos-p1` (56 commits adelante de main)

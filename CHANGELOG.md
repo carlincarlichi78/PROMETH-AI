@@ -1,5 +1,78 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 39 — 02/03/2026: Onboarding Histórico + Mejoras Onboarding Masivo
+
+### Resumen
+Ejecución del plan `docs/plans/2026-03-02-onboarding-historico.md`. Se generaron datos fiscales ficticios para dos clientes de prueba, se integró FsSetup en `onboarding.py`, y se corrigieron dos bloqueantes del onboarding masivo (soporte modelos 115/180 + fallback NIF desde cabecera PDF).
+
+### Clientes ficticios creados
+- **Marcos Ruiz Delgado** (`clientes/marcos-ruiz/`) — autónomo fontanero, ejercicio 2024
+  - `datos_fiscales_2024.yaml`: modelos 303×4T, 390, 130×4T, 111×4T, 190, balance, cuenta_pyg
+  - `config.yaml`: 5 proveedores, 3 clientes, 1 trabajador
+- **Restaurante La Marea S.L.** (`clientes/restaurante-la-marea/`) — SL hostelería, ejercicio 2024
+  - `datos_fiscales_2024.yaml`: modelos 303×4T, 390, 111×4T, 190, 115×4T, 180, balance, cuenta_pyg
+  - `config.yaml`: 8 proveedores, 3 clientes, 6 trabajadores
+
+### Generador PDFs histórico
+- `scripts/generar_onboarding_historico.py` — genera PDFs por cliente/ejercicio desde YAML
+- `tests/test_generar_onboarding_historico.py` — 6 tests (existencia, modelos requeridos, balance cuadra)
+- Fix: `abs()` eliminado en suma patrimonio_neto para balances con remanente negativo
+
+### FsSetup integrado en onboarding.py
+- `scripts/onboarding.py` — nuevo flujo automático FS: pregunta si crear empresa → `FsSetup.setup_completo()` → guarda `idempresa` + `codejercicio`
+- Fallback manual conservado para casos sin acceso a FS
+
+### Corrección onboarding masivo (modelos 115/180 + NIF fallback)
+Dos clientes pasaron de `BLOQUEADO` a `REVISION` con scores 65/100 y 55/100:
+- `sfce/core/onboarding/clasificador.py` — enum `RETENCIONES_115` + `ARRENDAMIENTO_180` + patterns
+- `sfce/core/onboarding/parsers_modelos.py` — `parsear_modelo_115()` + `parsear_modelo_180()`
+- `sfce/core/onboarding/perfil_empresa.py` — campo `tiene_arrendamientos` + handlers `_incorporar_115/180()`
+- `sfce/core/onboarding/procesador_lote.py` — `_PARSERS` actualizado + `_extraer_identidad_de_pdf()` como fallback NIF cuando no hay 036/037
+
+### Tests
+39 tests onboarding PASS. Cambios son aditivos (sin tocar lógica de validación que cubre plan de mejoras).
+
+### Próxima sesión
+Ejecutar `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (8 tasks):
+- Task 1: Migración 023 — columna `modo` en `onboarding_lotes`
+- Task 2: `Acumulador.desde_perfil_existente()`
+- Tasks 3-4: Endpoints wizard backend
+- Tasks 5-7: UI acordeón + uploader inline + wizard 4 pasos
+- Task 8: Suite regresión
+
+---
+
+## Sesión 38 — 02/03/2026: Diseño + Plan Onboarding Masivo Mejoras UX + Wizard
+
+### Resumen
+Sesión de diseño y planificación. No se escribió código de implementación.
+
+### Problema detectado
+El formulario de Onboarding Masivo decía "ZIP, PDFs, CSVs, Excel — todo vale" pero internamente el 036/037 es obligatorio. Sin él el perfil queda bloqueado sin forma de recuperarlo.
+
+### Solución diseñada (3 capas + 2 modos)
+- **Capa A**: acordeón informativo + texto claro sobre requisitos
+- **Capa B**: uploader inline en perfiles bloqueados para añadir documentos sin repetir lote
+- **Capa C**: fusión automática con notificación cuando llega un 036 que desbloquea un perfil
+- **Modo guiado**: wizard 4 pasos como alternativa al flujo ZIP
+
+### Artefactos creados
+- `docs/plans/2026-03-02-onboarding-masivo-mejoras-design.md` — documento de diseño aprobado
+- `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` — plan de implementación (8 tasks, ~20 tests)
+
+### Plan de implementación (para próxima sesión)
+8 tasks TDD listas para ejecutar con `superpowers:executing-plans`:
+1. Migración 023 — columna `modo` en `onboarding_lotes`
+2. `Acumulador.desde_perfil_existente()` — 5 tests
+3. Endpoint `POST /perfiles/{id}/completar` — 5 tests
+4. Endpoints wizard backend — 6 tests
+5. UI acordeón + botón modo guiado + bloqueados visibles
+6. UI uploader inline perfiles bloqueados
+7. UI wizard 4 pasos + ruta App.tsx
+8. Suite de regresión final
+
+---
+
 ## Sesión 37 — 02/03/2026: Auditoría Total + Fixes Producción
 
 ### Resumen
