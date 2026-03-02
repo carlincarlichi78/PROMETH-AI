@@ -1,7 +1,10 @@
 """SFCE API — Rutas de empresas."""
 
 import json as _json
+import logging
 from datetime import date
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
@@ -24,6 +27,7 @@ class EmpresaCreateRequest(BaseModel):
     regimen_iva: str = "general"
     idempresa_fs: int | None = None
     codejercicio_fs: str | None = None
+    email_empresario: str | None = None
 
 
 @router.post("", response_model=EmpresaOut, status_code=201)
@@ -51,6 +55,14 @@ def crear_empresa(
         sesion.add(empresa)
         sesion.commit()
         sesion.refresh(empresa)
+        if datos.email_empresario:
+            from sfce.conectores.correo.onboarding_email import configurar_email_empresa
+            config_email = configurar_email_empresa(
+                empresa_id=empresa.id,
+                email_empresario=datos.email_empresario,
+                sesion=sesion,
+            )
+            logger.info("Email dedicado: %s", config_email["direccion_email"])
         return EmpresaOut.model_validate(empresa)
 
 
