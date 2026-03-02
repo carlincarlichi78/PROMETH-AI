@@ -1,0 +1,232 @@
+# datos_fiscales_2024.yaml — Marcos Ruiz Delgado (autónomo fontanero)
+entidad: marcos-ruiz
+ejercicio: "2024"
+empresa:
+  nif: "29457823K"
+  nombre: "MARCOS RUIZ DELGADO"
+  domicilio: "Calle Larios 23, 2º B, 29015 Malaga"
+  telefono: "622334455"
+  email: "marcos.ruiz@fontaneriamalaga.es"
+  iae: "504.2"  # Fontanería y calefacción
+
+modelo_303:
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "01": 16200.00   # base repercutida general 21%
+        "03": 3402.00    # cuota repercutida general
+        "27": 15000.00   # base soportada corriente
+        "28": 3150.00    # cuota soportada corriente
+        "46": 252.00     # diferencia (03-28)
+        "65": 0.00       # compensación trimestres anteriores
+        "69": 252.00     # cuota resultante
+        "70": 252.00     # resultado ingreso
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "01": 18300.00
+        "03": 3843.00
+        "27": 16800.00
+        "28": 3528.00
+        "46": 315.00
+        "65": 0.00
+        "69": 315.00
+        "70": 315.00
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "01": 16800.00
+        "03": 3528.00
+        "27": 15400.00
+        "28": 3234.00
+        "46": 294.00
+        "65": 0.00
+        "69": 294.00
+        "70": 294.00
+    4T:
+      fecha_presentacion: "2025-01-20"
+      casillas:
+        "01": 16500.00
+        "03": 3465.00
+        "27": 15200.00
+        "28": 3192.00
+        "46": 273.00
+        "65": 0.00
+        "69": 273.00
+        "70": 273.00
+
+modelo_390:
+  fecha_presentacion: "2025-01-30"
+  casillas:
+    "01": 67800.00    # total base repercutida general
+    "03": 14238.00    # total cuota repercutida
+    "27": 62400.00    # total base soportada
+    "28": 13104.00    # total cuota soportada
+    "46": 1134.00     # diferencia
+    "69": 1134.00     # total resultado
+    "95": 67800.00    # volumen total operaciones
+    "108": 0.00       # operaciones intracomunitarias
+    "109": 0.00       # exportaciones
+
+modelo_130:
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "01": 16200.00    # ingresos computables
+        "02": 11200.00    # gastos deducibles
+        "03": 5000.00     # rendimiento neto (01-02)
+        "04": 20.00       # tipo IRPF %
+        "05": 1000.00     # cuota bruta (03×04%)
+        "06": 750.00      # retenciones soportadas en el trimestre
+        "07": 0.00        # pagos fraccionados anteriores
+        "08": 250.00      # resultado
+        "14": 880.00      # importe ingresado (después de compensar mínimo)
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "01": 34500.00    # ingresos acumulados
+        "02": 23000.00    # gastos acumulados
+        "03": 11500.00    # rendimiento acumulado
+        "05": 2300.00     # cuota acumulada
+        "06": 1600.00     # retenciones acumuladas
+        "07": 880.00      # pagos fraccionados anteriores
+        "08": -180.00     # resultado negativo → 0
+        "14": 880.00      # mínimo a ingresar
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "01": 51300.00
+        "02": 34200.00
+        "03": 17100.00
+        "05": 3420.00
+        "06": 2400.00
+        "07": 1760.00
+        "08": -740.00
+        "14": 880.00
+    4T:
+      fecha_presentacion: "2025-01-30"
+      casillas:
+        "01": 67800.00
+        "02": 45800.00
+        "03": 22000.00
+        "05": 4400.00
+        "06": 3200.00
+        "07": 2640.00
+        "08": -1440.00
+        "14": 880.00
+
+modelo_111:
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "01": 1          # perceptores rendimientos trabajo
+        "02": 4500.00    # importe rendimientos trabajo (empleado)
+        "03": 675.00     # retenciones trabajo (15%)
+        "16": 675.00     # total ingresar
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "01": 1
+        "02": 4500.00
+        "03": 675.00
+        "16": 675.00
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "01": 1
+        "02": 4500.00
+        "03": 675.00
+        "16": 675.00
+    4T:
+      fecha_presentacion: "2025-01-20"
+      casillas:
+        "01": 1
+        "02": 4500.00
+        "03": 675.00
+        "16": 675.00
+
+modelo_190:
+  fecha_presentacion: "2025-01-31"
+  casillas:
+    "01": 1            # número de perceptores
+    "02": 18000.00     # importe percepciones trabajo
+    "03": 2700.00      # retenciones e ingresos trabajo
+    "10": 0            # perceptores actividad profesional
+    "14": 0.00         # retenciones actividad profesional
+
+balance:
+  fecha: "2024-12-31"
+  activo:
+    inmovilizado:
+      - cuenta: "218"
+        descripcion: "Furgoneta de trabajo"
+        valor_bruto: 12000.00
+        amortizacion: 4800.00
+        valor_neto: 7200.00
+      - cuenta: "214"
+        descripcion: "Herramientas y maquinaria"
+        valor_bruto: 3000.00
+        amortizacion: 1500.00
+        valor_neto: 1500.00
+    circulante:
+      - cuenta: "430"
+        descripcion: "Clientes (facturas pendientes cobro)"
+        importe: 3200.00
+      - cuenta: "572"
+        descripcion: "Bancos c/c"
+        importe: 0.00
+  pasivo:
+    largo_plazo:
+      - cuenta: "1700"
+        descripcion: "Préstamo furgoneta"
+        importe: 6500.00
+    corto_plazo:
+      - cuenta: "4750"
+        descripcion: "HP acreedora IVA"
+        importe: 273.00
+      - cuenta: "4751"
+        descripcion: "HP acreedora IRPF"
+        importe: 880.00
+  patrimonio_neto:
+    - cuenta: "100"
+      descripcion: "Capital"
+      importe: 3000.00
+    - cuenta: "129"
+      descripcion: "Resultado del ejercicio"
+      importe: 22000.00
+    - cuenta: "120"
+      descripcion: "Remanente ejercicios anteriores"
+      importe: -20753.00
+
+cuenta_pyg:
+  fecha: "2024-12-31"
+  ingresos:
+    - cuenta: "705"
+      descripcion: "Prestaciones de servicios"
+      importe: 67800.00
+  gastos:
+    - cuenta: "601"
+      descripcion: "Compras de materiales"
+      importe: 14760.00
+    - cuenta: "621"
+      descripcion: "Arrendamientos"
+      importe: 0.00
+    - cuenta: "629"
+      descripcion: "Otros servicios"
+      importe: 2880.00
+    - cuenta: "640"
+      descripcion: "Sueldos y salarios (empleado)"
+      importe: 18000.00
+    - cuenta: "642"
+      descripcion: "Seguridad Social a cargo empresa"
+      importe: 6300.00
+    - cuenta: "641"
+      descripcion: "RETA (cuotas autónomo)"
+      importe: 4200.00
+    - cuenta: "681"
+      descripcion: "Amortización inmovilizado"
+      importe: 1860.00
+  resultado_ejercicio: 22000.00
