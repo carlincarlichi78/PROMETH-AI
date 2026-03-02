@@ -36,6 +36,7 @@ def configurar_email_empresa(
     empresa_id: int,
     email_empresario: str,
     sesion: Session,
+    remitentes_iniciales: list[dict] | None = None,  # [{email, nombre}]
 ) -> dict:
     """Configura la dirección email dedicada para una empresa.
 
@@ -81,6 +82,11 @@ def configurar_email_empresa(
 
     # Añadir email del empresario a whitelist
     agregar_remitente(email_empresario, empresa_id, sesion, nombre="Empresario")
+
+    # Añadir remitentes iniciales si se proporcionan
+    for rem in (remitentes_iniciales or []):
+        agregar_remitente(rem["email"], empresa_id, sesion, nombre=rem.get("nombre"))
+
     sesion.commit()
 
     return {"slug": empresa.slug, "direccion_email": direccion}
