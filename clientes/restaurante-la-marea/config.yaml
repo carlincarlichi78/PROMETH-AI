@@ -1,0 +1,204 @@
+empresa:
+  nombre: "RESTAURANTE LA MAREA S.L."
+  nombre_comercial: "La Marea"
+  cif: "B29011236"
+  tipo: sl
+  idempresa: 2
+  ejercicio_activo: "2025"
+  codejercicio: "0002"
+  regimen_iva: general
+  direccion: "Paseo Maritimo 18, Local 2, 29601 Marbella (Malaga)"
+  email: "admin@restaurantelamarea.es"
+  banco:
+    - "ES56 0049 3366 7123 4567 8902"
+
+perfil:
+  descripcion: "Restaurante en primera linea de playa, Marbella"
+  modelo_negocio: |
+    Restauracion IVA reducido 10%. 6 empleados (4 indefinidos + 2 fijos-discontinuos).
+    Local en alquiler con retencion 19% IRPF al arrendador.
+    Compras principales en Makro (IVA mixto 4/10/21%) y distribuidora de bebidas.
+    Integrado en Gastro Holding S.L. (management fee mensual 500€).
+    Leasing cocina industrial (60 meses, cuota 550€/mes).
+  actividades:
+    - codigo: "5610"
+      descripcion: "Restaurantes y puestos de comida"
+      iva_venta: 10
+      exenta: false
+      notas: "Restauracion comidas/cenas IVA reducido 10%"
+  particularidades:
+    - "IVA ventas 10% (restauracion)"
+    - "IVA compras mixto: alimentacion 4%/10%, bebidas+servicios 21%"
+    - "Retencion 19% IRPF alquiler local (modelos 115 + 180)"
+    - "6 empleados — modelos 111 trimestral + 190 anual"
+    - "Leasing cocina: cuota 550€/mes (capital + intereses)"
+    - "Management fee 500€/mes a Gastro Holding (factura intercompany)"
+  empleados: true
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores:
+  makro:
+    cif: "A28054609"
+    nombre_fs: "MAKRO AUTOSERVICIO S.A."
+    aliases: ["MAKRO", "MAKRO MARBELLA", "CASH&CARRY MAKRO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Alimentacion y bebidas — IVA mixto 4/10/21% segun producto. Procesar linea a linea."
+
+  distribuidora-bebidas-sur:
+    cif: "B29091105"
+    nombre_fs: "DISTRIBUIDORA DE BEBIDAS SUR S.L."
+    aliases: ["DISTRIBUIDORA BEBIDAS", "BEBIDAS SUR", "DIST. BEBIDAS SUR"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6000000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Vinos, cervezas, refrescos — IVA 21%"
+
+  lavanderia-industrial:
+    cif: "B29044328"
+    nombre_fs: "LAVANDERIA INDUSTRIAL MALAGA S.L."
+    aliases: ["LAVANDERIA INDUSTRIAL", "LAVANDERÍA MÁLAGA", "LAVANDERIA MALAGA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6270000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Lavado manteles, servilletas y uniformes"
+
+  naturgy:
+    cif: "A08032104"
+    nombre_fs: "NATURGY S.A."
+    aliases: ["NATURGY", "GAS NATURAL", "NATURGY GAS", "ENDESA GAS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro gas natural cocinas industriales"
+
+  endesa:
+    cif: "A81948077"
+    nombre_fs: "ENDESA ENERGIA S.A.U."
+    aliases: ["ENDESA", "ENDESA ENERGIA", "ENDESA ELECTRICIDAD"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Suministro electrico local"
+
+  arrendador-local:
+    cif: "27345678P"
+    nombre_fs: "MIGUEL ANGEL TORRES RIOS"
+    aliases: ["TORRES RIOS", "PROPIETARIO LOCAL", "ARRENDADOR"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6210000000"
+    codimpuesto: IVA21
+    regimen: general
+    retencion: 19
+    notas: "Alquiler local Paseo Maritimo — retencion 19% IRPF"
+
+  gastro-holding:
+    cif: "B29055407"
+    nombre_fs: "GRUPO GASTRO COSTA DEL SOL S.L."
+    aliases: ["GASTRO HOLDING", "GRUPO GASTRO", "GASTRO COSTA DEL SOL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Sociedad holding — management fee 500€/mes"
+
+  mapfre:
+    cif: "A28141935"
+    nombre_fs: "SEGUROS MAPFRE S.A."
+    aliases: ["MAPFRE", "SEGUROS MAPFRE", "MAPFRE SEGUROS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6250000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Seguro multirriesgo local + RC — exento IVA"
+
+clientes:
+  clientes-diarios:
+    cif: ""
+    nombre_fs: "CLIENTES DIARIOS (TICKETS)"
+    aliases: ["TICKETS", "CAJA DIARIA", "VENTAS DIARIAS", "CLIENTES"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA10
+    regimen: general
+    fallback_sin_cif: true
+    notas: "Facturacion simplificada agregada mensual — Art. 7.1 RD 1619/2012"
+
+  hotel-marbella-palace:
+    cif: "A29044153"
+    nombre_fs: "HOTEL MARBELLA PALACE S.A."
+    aliases: ["HOTEL MARBELLA PALACE", "MARBELLA PALACE", "PALACE HOTEL"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA10
+    regimen: general
+    notas: "Catering eventos del hotel — facturas nominales IVA 10%"
+
+  empresa-eventos:
+    cif: "B29066180"
+    nombre_fs: "EMPRESA EVENTOS CORPORATIVOS S.L."
+    aliases: ["EVENTOS CORPORATIVOS", "EMPRESA EVENTOS", "CORPORATIVOS"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA10
+    regimen: general
+    notas: "Comidas corporativas — IVA 10%"
+
+trabajadores:
+  - dni: "29512340H"
+    nombre: "Santiago Fernandez Ruiz"
+    puesto: "Jefe de Sala"
+    bruto_mensual: 2333.33
+    pagas: 12
+    confirmado: true
+  - dni: "45678123R"
+    nombre: "Ana Belen Castillo Vega"
+    puesto: "Cocinera"
+    bruto_mensual: 2166.67
+    pagas: 12
+    confirmado: true
+  - dni: "52134567G"
+    nombre: "Francisco Torres Medina"
+    puesto: "Camarero"
+    bruto_mensual: 1833.33
+    pagas: 12
+    confirmado: true
+  - dni: "31298765S"
+    nombre: "Dolores Pena Santos"
+    puesto: "Camarera"
+    bruto_mensual: 1833.33
+    pagas: 12
+    confirmado: true
+  - dni: "29876543C"
+    nombre: "Luis Garcia Moreno"
+    puesto: "Ayudante Cocina (Fijo Discontinuo)"
+    bruto_mensual: 1583.33
+    pagas: 12
+    confirmado: true
+  - dni: "45012367B"
+    nombre: "Rosa Maria Diaz Lopez"
+    puesto: "Auxiliar Sala (Fijo Discontinuo)"
+    bruto_mensual: 1500.00
+    pagas: 12
+    confirmado: true
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
