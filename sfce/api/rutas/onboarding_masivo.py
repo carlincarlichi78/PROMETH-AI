@@ -294,3 +294,181 @@ def _crear_notificacion_fusion(perfil_id: int, nombre: str,
 
 # Estado en memoria del wizard: {lote_id: {nif: {"datos_036": dict, "archivos_extra": list[Path]}}}
 _WIZARD_STATE: dict = {}
+
+
+@router.post("/wizard/iniciar", status_code=200)
+def wizard_iniciar(
+    usuario=Depends(obtener_usuario_actual),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Inicia un lote wizard en estado borrador."""
+    if usuario.rol not in ("superadmin", "admin_gestoria", "asesor"):
+        raise HTTPException(status_code=403, detail="Sin permisos")
+
+    from datetime import datetime
+    from sqlalchemy import text
+
+    gestoria_id = usuario.gestoria_id or 1
+    with sesion_factory() as sesion:
+        res = sesion.execute(text("""
+            INSERT INTO onboarding_lotes
+              (gestoria_id, nombre, fecha_subida, estado, modo, usuario_id)
+            VALUES (:gid, '', :fecha, 'borrador', 'wizard', :uid)
+        """), {"gid": gestoria_id, "fecha": datetime.now().isoformat(),
+               "uid": usuario.id})
+        sesion.commit()
+        lote_id = res.lastrowid
+
+    _WIZARD_STATE[lote_id] = {}
+    return {"lote_id": lote_id, "estado": "borrador"}
+
+
+@router.post("/wizard/{lote_id}/subir-036", status_code=200)
+async def wizard_subir_036(
+    lote_id: int,
+    archivo: UploadFile = File(...),
+    usuario=Depends(obtener_usuario_actual),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Sube un 036 al wizard. Devuelve empresa detectada o advertencia."""
+    from sfce.core.onboarding.clasificador import TipoDocOnboarding
+
+    if lote_id not in _WIZARD_STATE:
+        raise HTTPException(status_code=404, detail="Lote wizard no encontrado")
+
+    contenido = await archivo.read()
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        f.write(contenido)
+        ruta_tmp = Path(f.name)
+
+    try:
+        clf = clasificar_documento(ruta_tmp)
+        if clf.tipo != TipoDocOnboarding.CENSO_036_037:
+            return {
+                "reconocido": False,
+                "advertencia": f"El archivo '{archivo.filename}' no se reconoce como modelo 036/037",
+            }
+
+        datos = _extraer_datos_completar(
+            clf.tipo.value, contenido, archivo.filename or "036.pdf"
+        )
+        nif = datos.get("nif", "")
+        if not nif:
+            return {
+                "reconocido": False,
+                "advertencia": "No se pudo extraer el NIF del documento",
+            }
+
+        _WIZARD_STATE[lote_id][nif] = {
+            "datos_036": datos,
+            "archivos_extra": [],
+            "ruta_036": str(ruta_tmp),
+        }
+
+        return {
+            "reconocido": True,
+            "nif": nif,
+            "nombre": datos.get("nombre", ""),
+            "forma_juridica": datos.get("forma_juridica", "sl"),
+            "territorio": datos.get("territorio", "peninsula"),
+            "advertencias": [],
+        }
+    except Exception:
+        ruta_tmp.unlink(missing_ok=True)
+        raise
+
+
+@router.post("/wizard/{lote_id}/empresa/{nif}/documentos", status_code=200)
+async def wizard_empresa_documentos(
+    lote_id: int,
+    nif: str,
+    archivos: List[UploadFile] = File(...),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Añade documentos extra a una empresa del wizard."""
+    if lote_id not in _WIZARD_STATE:
+        raise HTTPException(status_code=404, detail="Lote wizard no encontrado")
+    if nif not in _WIZARD_STATE[lote_id]:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada en wizard")
+
+    tipos_detectados = []
+    for archivo in archivos:
+        contenido = await archivo.read()
+        with tempfile.NamedTemporaryFile(
+            suffix=Path(archivo.filename or "doc.pdf").suffix, delete=False
+        ) as f:
+            f.write(contenido)
+            ruta_tmp = Path(f.name)
+        clf = clasificar_documento(ruta_tmp)
+        _WIZARD_STATE[lote_id][nif]["archivos_extra"].append(str(ruta_tmp))
+        tipos_detectados.append(clf.tipo.value)
+
+    return {"documentos_añadidos": len(archivos), "tipos_detectados": tipos_detectados}
+
+
+@router.delete("/wizard/{lote_id}/empresa/{nif}", status_code=200)
+def wizard_eliminar_empresa(
+    lote_id: int,
+    nif: str,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Elimina una empresa del borrador wizard."""
+    if lote_id not in _WIZARD_STATE:
+        raise HTTPException(status_code=404, detail="Lote wizard no encontrado")
+    _WIZARD_STATE[lote_id].pop(nif, None)
+    return {"eliminado": True}
+
+
+@router.post("/wizard/{lote_id}/procesar", status_code=202)
+def wizard_procesar(
+    lote_id: int,
+    body: dict,
+    usuario=Depends(obtener_usuario_actual),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Procesa el lote wizard. Funciona igual que el flujo ZIP."""
+    if lote_id not in _WIZARD_STATE:
+        raise HTTPException(status_code=404, detail="Lote wizard no encontrado")
+
+    empresas = _WIZARD_STATE[lote_id]
+    if not empresas:
+        raise HTTPException(status_code=400, detail="El lote no tiene empresas")
+
+    nombre = body.get("nombre", f"Wizard lote {lote_id}")
+    gestoria_id = usuario.gestoria_id or 1
+
+    from sqlalchemy import text
+    from datetime import datetime
+
+    with sesion_factory() as sesion:
+        sesion.execute(text("""
+            UPDATE onboarding_lotes
+            SET nombre = :nombre, estado = 'procesando', fecha_subida = :fecha
+            WHERE id = :id
+        """), {"nombre": nombre, "fecha": datetime.now().isoformat(), "id": lote_id})
+        sesion.commit()
+
+    import threading
+    import zipfile
+    import os
+
+    def _build_and_process():
+        dir_trabajo = Path(os.getenv("SFCE_UPLOAD_DIR", "/tmp/sfce_onboarding"))
+        dir_trabajo.mkdir(parents=True, exist_ok=True)
+        ruta_zip = dir_trabajo / f"wizard_{lote_id}.zip"
+
+        with zipfile.ZipFile(ruta_zip, "w") as zf:
+            for nif, empresa in empresas.items():
+                ruta_036 = empresa.get("ruta_036")
+                if ruta_036:
+                    zf.write(ruta_036, f"{nif}/036.pdf")
+                for i, ruta_extra in enumerate(empresa.get("archivos_extra", [])):
+                    zf.write(ruta_extra, f"{nif}/extra_{i}.pdf")
+
+        _procesar_lote_background(lote_id, ruta_zip, sesion_factory, gestoria_id)
+        _WIZARD_STATE.pop(lote_id, None)
+
+    threading.Thread(target=_build_and_process, daemon=True).start()
+
+    return {"lote_id": lote_id, "estado": "procesando",
+            "mensaje": "Lote wizard en procesamiento"}
