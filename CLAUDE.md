@@ -137,6 +137,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | OCR por Tiers | `sfce/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
 | SFCE v2 (5 fases) | `sfce/` | Normativa, perfil fiscal, clasificador, BD, API, dashboard. 954 tests |
 | Modelos Fiscales | `sfce/modelos_fiscales/` | 28 modelos, MotorBOE, GeneradorPDF, API+dashboard. 544 tests |
+| Modelo 190 | `sfce/core/extractor_190.py`, `calculador_modelos.py`, `dashboard/.../modelo-190-page.tsx` | ExtractorPerceptores190 (NOM+FV→BD), calcular_190(), 3 endpoints API, página revisión+generación. 14 tests |
 | Directorio Empresas | `sfce/db/modelos.py`, `sfce/api/rutas/directorio.py` | CIF unico global, verificacion AEAT/VIES. 65 tests |
 | Dual Backend | `sfce/core/backend.py` | FS+BD local, sync automatico asientos |
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
@@ -165,8 +166,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dashboard Advisor | `dashboard/src/features/advisor/` | 6 páginas: CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia. AdvisorGate tier-premium. 6 feature flags en useTiene.ts |
 | CI/CD Deploy | `.github/workflows/deploy.yml`, `Dockerfile`, `requirements.txt` | 4 jobs GitHub Actions: test ‖ build-frontend → build-docker → deploy SSH. Imagen GHCR. health endpoint, docker-compose, nginx configs prometh-ai.es. Migración SQLite→PG one-time. 4 tests health |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`
-**Tests totales**: 2234 PASS (sesión 12 completada 02/03/2026)
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`, `docs/plans/2026-03-02-modelo-190*.md`, `docs/plans/2026-03-02-email-enriquecimiento*.md`
+**Tests totales**: 2530 PASS (sesión 36 completada 02/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`

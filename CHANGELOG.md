@@ -1,5 +1,29 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 36 (parte 1) — 02/03/2026: Modelo 190 COMPLETADO
+
+### Implementación completa Modelo 190 — resumen anual retenciones IRPF
+
+**Archivos nuevos:**
+- `sfce/core/extractor_190.py` — `ExtractorPerceptores190`: lee NOM+FV de BD, multi-candidate OCR lookup, agrupa por NIF. 5 tests.
+- `tests/test_extractor_190.py` — 5 tests extractor
+- `tests/test_api_modelos_190.py` — 4 tests API endpoints (perceptores, corregir, generar)
+- `dashboard/src/features/fiscal/modelo-190-page.tsx` — página revisión perceptores + inline editing + generación BOE
+
+**Archivos modificados:**
+- `sfce/core/calculador_modelos.py` — `calcular_190()`: casillas 16-19 (percepciones+retenciones dinerarias+especie), retorna `declarados`. 5 tests.
+- `sfce/api/rutas/modelos.py` — 3 endpoints: `GET /190/{id}/{ej}/perceptores`, `PUT /190/{id}/{ej}/perceptores/{nif}`, `POST /190/{id}/{ej}/generar`
+- `dashboard/src/App.tsx` + `app-sidebar.tsx` — ruta `/empresa/:id/modelo-190` + enlace Fiscal sidebar
+- `tests/test_calculador_modelos.py` — clase `TestModelo190` (5 tests)
+- `docs/LIBRO/_temas/15-modelos-fiscales.md` — secciones CalculadorModelos, calcular_190(), ExtractorPerceptores190, API endpoints, dashboard
+
+**Patrones clave:**
+- Descarga BOE: `fetch()` nativo (no `api.post()` que hace `.json()`)
+- `declarados` en lugar de `perceptores` (consistencia con calcular_180, calcular_193)
+- Perceptor incompleto si NIF=None o percepcion_dineraria<=0; FV excluida si retencion=0
+
+**Tests**: +14 (2413→2527). Commit checkpoint: `9ede1ca`
+
 ## Sesión 35 — 02/03/2026: Design + Plan Email Enriquecimiento
 
 ### Solo diseño y planificación (sin código implementado)
