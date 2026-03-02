@@ -1,5 +1,37 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 38 — 02/03/2026: Alta gestoría López de Uralde + limpieza BD
+
+### Resumen
+Primera sesión de onboarding con cliente real. BD SFCE local limpiada y reconfigurada.
+
+### Cambios BD SFCE local (sfce.db)
+- Todos los datos de prueba borrados (asientos, facturas, documentos, empresas, gestorias, usuarios)
+- Conservado: `admin@sfce.local` (superadmin)
+- Columnas `reset_token` + `reset_token_expira` añadidas a `usuarios` (faltaban tras limpieza manual sin migraciones)
+
+### Gestoría creada
+- **ASESORIA LOPEZ DE URALDE SL** (gestoria_id=1, CIF pendiente confirmar: B92010768)
+- 4 usuarios: Sergio (admin_gestoria), Francisco/María/Luis (asesor) — todos con `@prometh-ai.es`
+- 4 clientes vinculados con `idempresa_fs` correcto (chiringuito=8, elena=11)
+- Asignación: Francisco→Pastorino+Elena, María→Gerardo, Luis→Chiringuito
+
+### FS
+- Limpieza empresa 2: 106 FV + 24 asientos eliminados
+- Empresas de prueba restantes (1,6,7,8,11) siguen en FS — requieren borrado manual desde panel web
+
+### Carpetas
+- Creadas `inbox/` en `clientes/pastorino-costa-del-sol/` y `clientes/elena-navarro/`
+- Borrada carpeta `clientes/EMPRESA PRUEBA/` (datos de prueba)
+
+### Credenciales
+- `PROYECTOS/ACCESOS.md` sección 27 — gestoría + 4 usuarios + clientes asignados
+
+### Lección aprendida
+- Contraseñas con `!` deben crearse con script en fichero (`python archivo.py`), NO con `python -c "..."` en bash — el `!` corrompe el hash bcrypt
+
+---
+
 ## Sesión 36 (parte 1) — 02/03/2026: Modelo 190 COMPLETADO
 
 ### Implementación completa Modelo 190 — resumen anual retenciones IRPF

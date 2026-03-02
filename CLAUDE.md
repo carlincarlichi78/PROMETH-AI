@@ -79,13 +79,23 @@ Cargar: `export $(grep -v '^#' .env | xargs)` (`.env` en raiz, NO en git)
 Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 
 ## Clientes
-| Cliente | Carpeta | idempresa | Estado |
-|---------|---------|-----------|--------|
-| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa |
-| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado, carpetas creadas |
-| EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 3 | Pipeline 46/46 OK |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | **Datos inyectados**: 1200 FC + 596 FV + 112 asientos (nominas/amort/IVA). Ejercicios C422/C423/C424/0004. |
-| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | Pipeline completado |
+| Cliente | Carpeta | SFCE id | FS idempresa | Gestor SFCE | Estado |
+|---------|---------|---------|--------------|-------------|--------|
+| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | 1 | Francisco Rodríguez | activa=False en SFCE (oculta del dashboard) |
+| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | 2 | María García | En SFCE BD |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 3 | 8 | Luis Lupiañez | En SFCE BD |
+| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 4 | 11 | Francisco Rodríguez | En SFCE BD |
+
+## Gestoría activa (primer cliente real)
+| Dato | Valor |
+|------|-------|
+| Nombre | ASESORIA LOPEZ DE URALDE SL |
+| CIF | B92010768 (confirmar con Sergio) |
+| Email | comunicaciones@lopezdeuralde.es |
+| SFCE id | gestoria_id=1 |
+| Admin | sergio@prometh-ai.es / Uralde2025! |
+| Asesores | francisco@, maria@, luis@ @prometh-ai.es / Uralde2025! |
+| Credenciales completas | PROYECTOS/ACCESOS.md sección 27 |
 
 ## Scripts principales
 | Script | Uso |
@@ -192,6 +202,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Repo**: `carlincarlichi78/SPICE` (privado)
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
+
+## Estado actual (02/03/2026, sesión 38 — Gestoría López de Uralde dada de alta)
+
+**BD SFCE local**: limpiada completamente (datos de prueba borrados). Solo quedan datos reales.
+**Gestoría**: López de Uralde creada (gestoria_id=1) con 4 usuarios y 4 clientes asignados.
+**FS**: empresas de prueba siguen en FS (no borrables por API — requiere panel web FacturaScripts).
+**BD local dev**: SQLite `sfce.db`. Columnas `reset_token` + `reset_token_expira` añadidas manualmente (faltaban tras limpieza manual).
+
+**Pendiente próxima sesión**:
+1. Confirmar CIF B92010768 con Sergio López de Uralde
+2. Borrar empresas de prueba de FS desde panel web: https://contabilidad.lemonfresh-tuc.com
+3. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción (pendiente sesión 36)
+
+---
 
 ## Estado actual (02/03/2026, sesión 35 — Google Workspace configurado)
 
