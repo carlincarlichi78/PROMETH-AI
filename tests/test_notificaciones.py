@@ -48,7 +48,7 @@ class TestTipoNotificacion:
         assert TipoNotificacion.CUARENTENA.value == "cuarentena"
 
     def test_total_valores(self):
-        assert len(TipoNotificacion) == 7
+        assert len(TipoNotificacion) == 8
 
 
 # ===========================================================================
