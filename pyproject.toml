@@ -28,3 +28,6 @@ testing = [
 
 [tool.setuptools.packages.find]
 include = ["sfce*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
