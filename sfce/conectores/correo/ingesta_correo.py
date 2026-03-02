@@ -1,4 +1,5 @@
 """Orquestador de ingesta de emails: descarga → clasifica → guarda → encola OCR."""
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -7,11 +8,15 @@ from sqlalchemy.orm import Session
 
 from sfce.db.modelos import (
     CuentaCorreo, EmailProcesado, AdjuntoEmail,
-    EnlaceEmail, ReglaClasificacionCorreo,
+    EnlaceEmail, ReglaClasificacionCorreo, ContrasenaZip,
 )
 from sfce.conectores.correo.clasificacion.servicio_clasificacion import clasificar_email
 from sfce.conectores.correo.extractor_enlaces import extraer_enlaces
 from sfce.conectores.correo.parser_hints import extraer_hints_asunto
+from sfce.conectores.correo.filtro_ack import es_respuesta_automatica, tiene_cabecera_ack
+from sfce.conectores.correo.score_email import calcular_score_email, decision_por_score
+from sfce.conectores.correo.extractor_adjuntos import extraer_adjuntos, ErrorZipBomb, ErrorZipDemasiado
+from sfce.conectores.correo.worker_catchall import _encolar_archivo
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,22 @@ _ESTADO_POR_ACCION = {
     "IGNORAR": "IGNORADO",
     "CUARENTENA": "CUARENTENA",
 }
+
+
+def _cargar_contrasenas_zip(sesion: Session, empresa_id: int, remitente: str) -> list[str]:
+    """Carga contraseñas ZIP configuradas para la empresa/remitente."""
+    rows = sesion.execute(
+        select(ContrasenaZip).where(
+            ContrasenaZip.empresa_id == empresa_id,
+            ContrasenaZip.activo == True,  # noqa: E712
+        )
+    ).scalars().all()
+    passwords: list[str] = []
+    for row in rows:
+        patron = row.remitente_patron
+        if patron is None or remitente.endswith(patron.lstrip("*")):
+            passwords.extend(json.loads(row.contrasenas_json or "[]"))
+    return passwords
 
 
 class IngestaCorreo:
@@ -37,7 +58,8 @@ class IngestaCorreo:
             if not cuenta or not cuenta.activa:
                 return 0
             ultimo_uid = cuenta.ultimo_uid
-            reglas = self._cargar_reglas(sesion, cuenta.empresa_id)
+            empresa_id = cuenta.empresa_id
+            reglas = self._cargar_reglas(sesion, empresa_id)
 
         emails = self._descargar_emails_cuenta(cuenta_id, ultimo_uid)
         if not emails:
@@ -56,36 +78,57 @@ class IngestaCorreo:
                 if ya_existe:
                     continue
 
-                hints = extraer_hints_asunto(email_data.get("asunto", ""))
+                asunto = email_data.get("asunto", "")
+                headers = email_data.get("headers", {})
+
+                # 1. Filtro anti-loop ACK
+                es_ack = es_respuesta_automatica(asunto) or tiene_cabecera_ack(headers)
+
+                # 2. Score multi-señal
+                if es_ack:
+                    score, _factores = 0.0, {}
+                    decision = "IGNORAR"
+                else:
+                    score, _factores = calcular_score_email(email_data, empresa_id, sesion)
+                    decision = decision_por_score(score)
+
+                # 3. Clasificación por reglas (para hints y nivel)
+                hints = extraer_hints_asunto(asunto)
                 clasificacion = clasificar_email(
                     remitente=email_data["remitente"],
-                    asunto=email_data["asunto"],
+                    asunto=asunto,
                     cuerpo_texto=email_data.get("cuerpo_texto", ""),
                     reglas=reglas,
                 )
-                # Tipo de documento sugerido por hints tiene precedencia sobre clasificación IA
                 if hints.tipo_doc and clasificacion.get("tipo_doc") is None:
                     clasificacion["tipo_doc"] = hints.tipo_doc
-                estado_inicial = _ESTADO_POR_ACCION.get(
-                    clasificacion["accion"], "PENDIENTE"
-                )
+
+                estado_inicial = {
+                    "AUTO": "CLASIFICADO",
+                    "REVISION": "CLASIFICADO",
+                    "CUARENTENA": "CUARENTENA",
+                    "IGNORAR": "IGNORADO",
+                }.get(decision, "PENDIENTE")
 
                 email_bd = EmailProcesado(
                     cuenta_id=cuenta_id,
                     uid_servidor=email_data["uid"],
                     message_id=email_data.get("message_id"),
                     remitente=email_data["remitente"],
-                    asunto=email_data.get("asunto", ""),
+                    asunto=asunto,
                     fecha_email=email_data.get("fecha"),
                     estado=estado_inicial,
                     nivel_clasificacion=clasificacion["nivel"],
                     empresa_destino_id=None,
                     confianza_ia=clasificacion.get("confianza"),
+                    es_respuesta_ack=es_ack,
+                    score_confianza=score,
+                    motivo_cuarentena=None if decision != "CUARENTENA" else "SCORE_BAJO",
                 )
                 sesion.add(email_bd)
                 sesion.flush()
 
-                # Adjuntos
+                # Registrar adjuntos en BD
                 for adj in email_data.get("adjuntos", []):
                     sesion.add(AdjuntoEmail(
                         email_id=email_bd.id,
@@ -94,7 +137,7 @@ class IngestaCorreo:
                         mime_type=adj.get("mime_type", "application/pdf"),
                     ))
 
-                # Enlaces del cuerpo HTML
+                # Registrar enlaces del cuerpo HTML
                 if email_data.get("cuerpo_html"):
                     for enlace in extraer_enlaces(email_data["cuerpo_html"]):
                         sesion.add(EnlaceEmail(
@@ -104,12 +147,35 @@ class IngestaCorreo:
                             patron_detectado=enlace["patron"],
                         ))
 
+                # 4. Encolar adjuntos en pipeline si la decisión lo permite
+                if decision in ("AUTO", "REVISION"):
+                    try:
+                        contrasenas = _cargar_contrasenas_zip(
+                            sesion, empresa_id,
+                            email_data.get("remitente", ""),
+                        )
+                        archivos = extraer_adjuntos(
+                            email_data.get("adjuntos", []),
+                            contrasenas_zip=contrasenas,
+                        )
+                        for archivo in archivos:
+                            _encolar_archivo(
+                                archivo, empresa_id, email_bd.id,
+                                email_data, directorio=self._dir_adjuntos,
+                                sesion=sesion,
+                            )
+                    except (ErrorZipBomb, ErrorZipDemasiado) as exc:
+                        email_bd.motivo_cuarentena = type(exc).__name__
+                        email_bd.estado = "CUARENTENA"
+
                 procesados += 1
 
             # Actualizar ultimo_uid
             cuenta_obj = sesion.get(CuentaCorreo, cuenta_id)
             if emails and cuenta_obj:
-                max_uid = max(int(e["uid"]) for e in emails if e["uid"].isdigit())
+                max_uid = max(
+                    int(e["uid"]) for e in emails if str(e["uid"]).isdigit()
+                )
                 if max_uid > (cuenta_obj.ultimo_uid or 0):
                     cuenta_obj.ultimo_uid = max_uid
 
