@@ -45,6 +45,7 @@ FEATURES_EMPRESARIO: dict[str, Tier] = {
 # Pendiente decision comercial — vacio hasta entonces.
 # ──────────────────────────────────────────────────────────────────
 FEATURES_GESTORIA: dict[str, Tier] = {
+    "onboarding_masivo": Tier.PRO,        # alta masiva de clientes via documentacion
     # Ejemplo futuro: "soporte_prioritario": Tier.PREMIUM,
 }
 

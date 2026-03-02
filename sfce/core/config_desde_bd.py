@@ -6,6 +6,24 @@ from sqlalchemy.orm import Session
 from sfce.db.modelos import Empresa, ProveedorCliente
 from sfce.core.config import ConfigCliente
 
+# Mapa forma_juridica → tipo aceptado por ConfigCliente (a nivel de modulo para importar en tests)
+_FORMA_A_TIPO: dict[str, str] = {
+    "autonomo": "autonomo",
+    "sl": "sl",
+    "sa": "sa",
+    "slp": "sl",
+    "slu": "sl",
+    "cb": "comunidad_bienes",
+    "sc": "sociedad_civil",
+    "scp": "sociedad_civil",
+    "coop": "cooperativa",
+    "cooperativa": "cooperativa",
+    "asociacion": "asociacion",
+    "comunidad": "comunidad_propietarios",
+    "fundacion": "fundacion",
+    "arrendador": "arrendador",
+}
+
 
 def generar_config_desde_bd(empresa_id: int, sesion: Session) -> ConfigCliente:
     """Carga la configuracion de una empresa desde la BD.
@@ -47,22 +65,7 @@ def generar_config_desde_bd(empresa_id: int, sesion: Session) -> ConfigCliente:
     )
     ejercicio_activo = str(config_extra.get("ejercicio_activo", "2025"))
 
-    # Normalizar forma_juridica a los tipos que acepta ConfigCliente
-    _FORMA_A_TIPO = {
-        "autonomo": "autonomo",
-        "sl": "sl",
-        "sa": "sa",
-        "slp": "sl",
-        "slu": "sl",
-        "cb": "comunidad_bienes",
-        "sc": "sociedad_civil",
-        "scp": "sociedad_civil",
-        "coop": "cooperativa",
-        "cooperativa": "cooperativa",
-        "asociacion": "asociacion",
-        "comunidad": "comunidad_propietarios",
-        "fundacion": "fundacion",
-    }
+    # Normalizar forma_juridica usando el mapa a nivel de modulo
     tipo_empresa = _FORMA_A_TIPO.get(
         (empresa.forma_juridica or "sl").lower(), "sl"
     )
@@ -150,6 +153,13 @@ def generar_config_desde_bd(empresa_id: int, sesion: Session) -> ConfigCliente:
             "importador": perfil.get("importador", False),
             "exportador": perfil.get("exportador", False),
             "divisas_habituales": perfil.get("divisas_habituales", ["EUR"]),
+            "recc":              config_extra.get("recc", False),
+            "prorrata_historico": config_extra.get("prorrata_historico", {}),
+            "bins_por_anyo":     config_extra.get("bins_por_anyo", {}),
+            "tipo_is":           config_extra.get("tipo_is", 25),
+            "es_erd":            config_extra.get("es_erd", False),
+            "retencion_facturas_pct": config_extra.get("retencion_facturas_pct", None),
+            "obligaciones_adicionales": config_extra.get("obligaciones_adicionales", []),
         },
         "proveedores": proveedores_dict,
         "clientes": clientes_dict,

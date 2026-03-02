@@ -54,24 +54,39 @@ class FsSetup:
         logger.info("Ejercicio %s creado para empresa %s", codejercicio, idempresa)
         return ResultadoSetup(idempresa_fs=idempresa, codejercicio=codejercicio)
 
-    def importar_pgc(self, codejercicio: str) -> bool:
-        """Importa el Plan General Contable estandar para el ejercicio."""
+    def importar_pgc(self, codejercicio: str, tipo_pgc: str = "general") -> bool:
+        """Importa el Plan General Contable para el ejercicio.
+
+        Args:
+            codejercicio: Codigo del ejercicio en FacturaScripts.
+            tipo_pgc: Tipo de PGC a importar. Opciones: "general" (default),
+                      "pymes", "esfl", "cooperativas".
+        """
+        _PGC_MAP = {
+            "general":      "",
+            "pymes":        "pymes",
+            "esfl":         "esfl",
+            "cooperativas": "coops",
+        }
         base_app = self._base.replace("/api/3", "")
-        url = f"{base_app}/EditEjercicio?action=importar&code={codejercicio}"
+        sufijo = _PGC_MAP.get(tipo_pgc, "")
+        param_plan = f"&plan={sufijo}" if sufijo else ""
+        url = f"{base_app}/EditEjercicio?action=importar&code={codejercicio}{param_plan}"
         try:
             resp = requests.get(url, headers=self._headers, timeout=60)
             resp.raise_for_status()
-            logger.info("PGC importado para ejercicio %s", codejercicio)
+            logger.info("PGC '%s' importado para ejercicio %s", tipo_pgc, codejercicio)
             return True
         except Exception as exc:
             logger.error("Error importando PGC para %s: %s", codejercicio, exc)
             return False
 
-    def setup_completo(self, nombre: str, cif: str, anio: int, **kwargs) -> ResultadoSetup:
+    def setup_completo(self, nombre: str, cif: str, anio: int,
+                       tipo_pgc: str = "general", **kwargs) -> ResultadoSetup:
         """Crea empresa + ejercicio + importa PGC en un solo paso."""
         r_emp = self.crear_empresa(nombre, cif, **kwargs)
         r_ej = self.crear_ejercicio(r_emp.idempresa_fs, anio)
-        pgc_ok = self.importar_pgc(r_ej.codejercicio)
+        pgc_ok = self.importar_pgc(r_ej.codejercicio, tipo_pgc=tipo_pgc)
         return ResultadoSetup(
             idempresa_fs=r_emp.idempresa_fs,
             codejercicio=r_ej.codejercicio,

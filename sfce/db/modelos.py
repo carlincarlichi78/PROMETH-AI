@@ -18,6 +18,7 @@ class EstadoOnboarding(str, enum.Enum):
     CONFIGURADA = "configurada"           # Alta por el gestor, sin invitacion enviada aun
     PENDIENTE_CLIENTE = "pendiente_cliente"  # Invitacion enviada, empresario no ha completado
     CLIENTE_COMPLETADO = "cliente_completado"  # Empresario completo el wizard de onboarding
+    CREADA_MASIVO = "creada_masivo"       # Alta automatica via pipeline onboarding masivo
 
 
 class DirectorioEntidad(Base):
