@@ -256,10 +256,33 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
+## Estado actual (02/03/2026, sesión 42 — Merge + Deploy producción COMPLETADO)
+
+**Rama activa**: `main`
+**Último commit**: `5a7a34b`
+**Tests**: 2552 PASS, 4 skipped, 0 FAILED
+**API producción**: https://api.prometh-ai.es — ONLINE ✓
+
+### Fixes CI/CD aplicados en esta sesión
+
+| Fix | Commit | Detalle |
+|-----|--------|---------|
+| `SFCE_FERNET_KEY` en GitHub Secrets + workflow | `7ced756` | Era necesaria para tests con lifespan |
+| Mock `_obtener_flujo` en test Playwright | `7ced756` | Playwright no disponible en CI |
+| `scripts/motor_campo/` en Dockerfile | `5a7a34b` | `worker_testing` necesita este módulo |
+| Migraciones 018/022/023 + tablas onboarding | psql directo | Columnas y tablas faltantes en prod |
+| Volumen `scripts/motor_campo` en docker-compose | SSH | Workaround hasta que nueva imagen esté en GHCR |
+
+### Pendiente próxima sesión
+1. Onboarding histórico Tasks 5-8 (generar PDFs reales, crear empresas en FS, correr pipeline)
+2. Alias `documentacion@prometh-ai.es` en Google Admin
+3. Actualizar `docs/LIBRO/` (temas 11, 17, 20)
+
+---
+
 ## Estado actual (02/03/2026, sesión 41 — Onboarding Masivo Mejoras UX — COMPLETADO)
 
-**Rama activa**: `feat/motor-testing-caos-p1`
-**Último commit**: `60639da`
+**Rama activa**: mergeada en `main` (commit `e602318`)
 **Tests**: 2552 PASS, 4 skipped, 0 FAILED
 
 ### Onboarding Masivo Mejoras — plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` — COMPLETADO
@@ -274,9 +297,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | 6 — UI uploader inline bloqueados | ✅ | a41a245 |
 | 7 — Wizard 4 pasos + ruta App.tsx | ✅ | 79d94cd |
 | 8 — Suite regresión | ✅ | 60639da |
-
-**Pendiente próxima sesión**:
-1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
 
 ---
 
