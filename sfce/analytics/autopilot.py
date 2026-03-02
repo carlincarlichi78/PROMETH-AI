@@ -3,11 +3,13 @@ from datetime import date, timedelta
 from dataclasses import dataclass, field
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from sfce.analytics.modelos_analiticos import AlertaAnalitica, FactCaja
 from sfce.db.modelos import Empresa
 from sfce.db.modelos_auth import Usuario
+
+MAX_EMPRESAS = 50  # límite para evitar DoS con asesores de carteras muy grandes
 
 
 @dataclass
@@ -22,34 +24,63 @@ class ItemBriefing:
 
 
 def generar_briefing(sesion: Session, usuario_id: int) -> list[ItemBriefing]:
-    """Genera el briefing semanal del asesor: prioriza empresas por urgencia."""
+    """Genera el briefing semanal del asesor: prioriza empresas por urgencia.
+
+    Usa bulk queries para evitar N+1. Limita a MAX_EMPRESAS empresas por llamada.
+    """
     usuario = sesion.get(Usuario, usuario_id)
     if not usuario:
         return []
 
-    empresas_ids = [e for e in (usuario.empresas_asignadas or [])]
+    # Limitar a MAX_EMPRESAS para evitar DoS en carteras muy grandes
+    empresas_ids = list(usuario.empresas_asignadas or [])[:MAX_EMPRESAS]
+    if not empresas_ids:
+        return []
+
+    # Bulk query 1: todas las alertas activas de las empresas del asesor (una sola query)
+    todas_alertas = sesion.execute(
+        select(AlertaAnalitica)
+        .where(AlertaAnalitica.empresa_id.in_(empresas_ids))
+        .where(AlertaAnalitica.activa == True)  # noqa: E712
+        .order_by(AlertaAnalitica.empresa_id, AlertaAnalitica.creada_en.desc())
+    ).scalars().all()
+    alertas_por_empresa: dict[int, list] = {}
+    for a in todas_alertas:
+        alertas_por_empresa.setdefault(a.empresa_id, []).append(a)
+
+    # Bulk query 2: última FactCaja por empresa (GROUP BY, una sola query)
+    subq = (
+        select(FactCaja.empresa_id, func.max(FactCaja.fecha).label("ultima_fecha"))
+        .where(FactCaja.empresa_id.in_(empresas_ids))
+        .group_by(FactCaja.empresa_id)
+        .subquery()
+    )
+    ultima_caja_por_empresa: dict[int, date] = dict(
+        sesion.execute(select(subq.c.empresa_id, subq.c.ultima_fecha)).all()
+    )
+
+    # Bulk query 3: empresas activas
+    empresas_activas: dict[int, Empresa] = {
+        e.id: e
+        for e in sesion.execute(
+            select(Empresa)
+            .where(Empresa.id.in_(empresas_ids))
+            .where(Empresa.activa == True)  # noqa: E712
+        ).scalars().all()
+    }
+
     items = []
+    hoy = date.today()
 
     for emp_id in empresas_ids:
-        empresa = sesion.get(Empresa, emp_id)
-        if not empresa or not empresa.activa:
+        empresa = empresas_activas.get(emp_id)
+        if not empresa:
             continue
 
-        alertas = sesion.execute(
-            select(AlertaAnalitica)
-            .where(AlertaAnalitica.empresa_id == emp_id)
-            .where(AlertaAnalitica.activa == True)  # noqa: E712
-            .order_by(AlertaAnalitica.creada_en.desc())
-        ).scalars().all()
+        alertas = alertas_por_empresa.get(emp_id, [])
 
         # Días sin datos TPV
-        hoy = date.today()
-        ultima_caja = sesion.execute(
-            select(FactCaja.fecha)
-            .where(FactCaja.empresa_id == emp_id)
-            .order_by(FactCaja.fecha.desc())
-            .limit(1)
-        ).scalar()
+        ultima_caja = ultima_caja_por_empresa.get(emp_id)
         if ultima_caja:
             dias_sin_datos = (hoy - ultima_caja).days
         else:

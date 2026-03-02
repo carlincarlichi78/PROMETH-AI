@@ -81,3 +81,10 @@ def test_posicion_en_sector_cuartiles(sesion):
     assert posicion_en_sector(15.0, percentiles)["color"] == "amarillo"
     assert posicion_en_sector(25.0, percentiles)["color"] == "verde"
     assert posicion_en_sector(35.0, percentiles)["color"] == "verde"
+
+
+def test_cnae_vacio_retorna_none(sesion):
+    """CNAE vacío o sin empresas suficientes → None (sin benchmarks)."""
+    from sfce.analytics.benchmark_engine import calcular_percentiles_sector
+    assert calcular_percentiles_sector(sesion, "", "ticket_medio") is None
+    assert calcular_percentiles_sector(sesion, "9999", "ticket_medio") is None

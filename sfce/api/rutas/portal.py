@@ -241,8 +241,8 @@ async def subir_documento(
                 detail={"error": "plan_insuficiente", "feature": "subir_docs", "requiere": "pro"},
             )
 
-    # 2. Leer contenido y validar tamaño
-    contenido = await archivo.read()
+    # 2. Leer contenido y validar tamaño (máx+1 bytes para detectar exceso sin cargar todo)
+    contenido = await archivo.read(_TAMANO_MAXIMO_BYTES + 1)
     if len(contenido) > _TAMANO_MAXIMO_BYTES:
         raise HTTPException(status_code=422, detail="Archivo demasiado grande (máx 25 MB)")
 

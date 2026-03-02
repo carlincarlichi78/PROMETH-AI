@@ -88,6 +88,54 @@ def test_empresa_con_tpv_reciente_es_verde(sesion):
     assert result[0].urgencia == "verde"
 
 
+def test_empresa_nueva_sin_tpv_es_verde(sesion):
+    """Empresa < 30 días desde alta sin datos TPV → verde (empresa nueva, no es problema real)."""
+    from sfce.analytics.autopilot import generar_briefing
+    empresa = Empresa(nombre="Nuevo Restaurante", cif="B33333333", forma_juridica="sl", activa=True,
+                      fecha_alta=date.today() - timedelta(days=10))
+    sesion.add(empresa)
+    sesion.flush()
+    usuario = Usuario(
+        email="asesor4@test.com",
+        nombre="Test4",
+        rol="gestor",
+        hash_password="x",
+        activo=True,
+        empresas_asignadas=[empresa.id],
+    )
+    sesion.add(usuario)
+    sesion.commit()
+
+    result = generar_briefing(sesion, usuario.id)
+    assert len(result) == 1
+    assert result[0].urgencia == "verde"
+
+
+def test_limite_max_empresas(sesion):
+    """Con más de MAX_EMPRESAS asignadas, solo procesa hasta MAX_EMPRESAS."""
+    from sfce.analytics.autopilot import generar_briefing, MAX_EMPRESAS
+    empresas = []
+    for i in range(MAX_EMPRESAS + 10):
+        e = Empresa(nombre=f"Emp{i}", cif=f"B{i:08d}", forma_juridica="sl", activa=True,
+                    fecha_alta=date.today() - timedelta(days=60))
+        sesion.add(e)
+        empresas.append(e)
+    sesion.flush()
+    usuario = Usuario(
+        email="asesor5@test.com",
+        nombre="Test5",
+        rol="gestor",
+        hash_password="x",
+        activo=True,
+        empresas_asignadas=[e.id for e in empresas],
+    )
+    sesion.add(usuario)
+    sesion.commit()
+
+    result = generar_briefing(sesion, usuario.id)
+    assert len(result) <= MAX_EMPRESAS
+
+
 def test_ordenacion_rojo_primero(sesion):
     """Empresas ordenadas: rojo → amarillo → verde."""
     from sfce.analytics.autopilot import generar_briefing

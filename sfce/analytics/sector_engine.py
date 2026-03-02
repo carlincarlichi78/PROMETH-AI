@@ -27,6 +27,19 @@ class AlertaGenerada:
 
 _YAML_DIR_DEFAULT = Path(__file__).parent.parent.parent / "reglas" / "sectores"
 
+# Caché module-level: evita releer YAMLs en cada request
+_CACHE: dict[str, "SectorEngine"] = {}
+
+
+def obtener_sector_engine(cnae: str, yaml_dir: Path = _YAML_DIR_DEFAULT) -> "SectorEngine":
+    """Retorna un SectorEngine ya cargado para el CNAE dado (cacheado por CNAE+directorio)."""
+    cache_key = f"{yaml_dir}:{cnae}"
+    if cache_key not in _CACHE:
+        engine = SectorEngine(yaml_dir)
+        engine.cargar(cnae)
+        _CACHE[cache_key] = engine
+    return _CACHE[cache_key]
+
 
 class SectorEngine:
     def __init__(self, yaml_dir: Path = _YAML_DIR_DEFAULT):

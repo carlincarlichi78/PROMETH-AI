@@ -257,23 +257,57 @@ Si los tests de lockout usan `limite_login=5` (por defecto), el 6º intento reci
 
 ### `verificar_acceso_empresa()`
 
+**Actualizado sesión 13 (02/03/2026)** — lógica por rol explícito en lugar de `gestoria_id is None`.
+
 ```python
 def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
     empresa = sesion.get(Empresa, empresa_id)
     if not empresa:
         raise HTTPException(404, "Empresa no encontrada")
 
-    # Superadmin (gestoria_id=None) tiene acceso total
-    if usuario.gestoria_id is None:
+    # Superadmin: acceso total
+    if usuario.rol == "superadmin":
         return empresa
 
-    # Usuarios de gestoría: solo sus empresas
-    if empresa.gestoria_id != usuario.gestoria_id:
+    # Cliente (con o sin gestoría): solo sus empresas_asignadas
+    if usuario.rol == "cliente":
+        asignadas = list(getattr(usuario, "empresas_asignadas", None) or [])
+        if empresa_id not in asignadas:
+            raise HTTPException(403, "No tienes acceso a esta empresa")
+        return empresa
+
+    # Gestor/asesor con gestoría: solo empresas de su gestoría
+    gestoria_id = getattr(usuario, "gestoria_id", None)
+    if gestoria_id is not None:
+        if empresa.gestoria_id != gestoria_id:
+            raise HTTPException(403, "No tienes acceso a esta empresa")
+        return empresa
+
+    # Gestor/asesor sin gestoría: fallback a empresas_asignadas/empresas_ids
+    asignadas = list(getattr(usuario, "empresas_asignadas", None) or [])
+    if not asignadas:
+        asignadas = list(getattr(usuario, "empresas_ids", None) or [])
+    if empresa_id not in asignadas:
         raise HTTPException(403, "No tienes acceso a esta empresa")
     return empresa
 ```
 
-Esta función se llama al inicio de **todos** los endpoints que reciben `empresa_id` como parámetro. Si se omite en un endpoint, cualquier usuario autenticado puede acceder a datos de cualquier empresa (bug de aislamiento multi-tenant).
+**⚠️ CRÍTICO:** Esta función debe llamarse al inicio de TODOS los endpoints con `empresa_id`. Si se omite, cualquier usuario puede acceder a datos de cualquier empresa.
+
+**Endpoints que la usan** (portal.py, gestor.py, empresas.py, rgpd.py):
+- `GET /{id}/resumen` — ✅
+- `GET /{id}/documentos` — ✅
+- `GET /{id}/calendario.ics` — ✅
+- `POST /{id}/documentos/subir` — ✅ (añadido sesión 13; limpia archivo si 403)
+- `POST /{id}/documentos/{doc_id}/aprobar` — ✅ (añadido sesión 13)
+- `POST /{id}/documentos/{doc_id}/rechazar` — ✅ (añadido sesión 13)
+- `GET /{id}/notificaciones` — ✅ (añadido sesión 13)
+- `GET /{id}/proveedores-frecuentes` — ✅ (añadido sesión 13)
+- `POST /gestor/empresas/{id}/notificar-cliente` — ✅ (añadido sesión 13)
+
+**IDOR histórico (resuelto sesión 13):** La versión anterior verificaba `gestoria_id is None` como proxy de superadmin. Esto causaba que:
+- Clientes directos (`gestoria_id=None`) tuvieran acceso total como superadmin
+- Clientes de una gestoría podían ver empresas de otros clientes de la misma gestoría
 
 ### Tabla `Gestoria`
 

@@ -124,9 +124,11 @@ def notificar_cliente(
 @router.get("/documentos/revision")
 def listar_docs_revision(
     request: Request,
+    limit: int = 20,
+    offset: int = 0,
     usuario=Depends(obtener_usuario_actual),
 ):
-    """Lista documentos REVISION_PENDIENTE de las empresas del gestor."""
+    """Lista documentos REVISION_PENDIENTE de las empresas del gestor (paginado)."""
     if usuario.rol not in _ROLES_GESTOR:
         raise HTTPException(status_code=403)
 
@@ -141,21 +143,28 @@ def listar_docs_revision(
             .join(Documento, ColaProcesamiento.documento_id == Documento.id)
             .join(Empresa, ColaProcesamiento.empresa_id == Empresa.id)
             .filter(ColaProcesamiento.estado == "REVISION_PENDIENTE")
+            .order_by(ColaProcesamiento.id.desc())
         )
         if empresas_ids and usuario.rol not in ("superadmin", "admin_gestoria"):
             query = query.filter(ColaProcesamiento.empresa_id.in_(empresas_ids))
 
-        rows = query.all()
-        return [
-            {
-                "id": doc.id,
-                "cola_id": cola.id,
-                "nombre": doc.ruta_pdf,
-                "tipo_doc": doc.tipo_doc,
-                "empresa_id": cola.empresa_id,
-                "empresa_nombre": empresa.nombre,
-                "fecha_subida": doc.fecha_proceso.isoformat() if doc.fecha_proceso else None,
-                "datos_ocr": doc.datos_ocr,
-            }
-            for cola, doc, empresa in rows
-        ]
+        total = query.count()
+        rows = query.offset(offset).limit(limit).all()
+        return {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "items": [
+                {
+                    "id": doc.id,
+                    "cola_id": cola.id,
+                    "nombre": doc.ruta_pdf,
+                    "tipo_doc": doc.tipo_doc,
+                    "empresa_id": cola.empresa_id,
+                    "empresa_nombre": empresa.nombre,
+                    "fecha_subida": doc.fecha_proceso.isoformat() if doc.fecha_proceso else None,
+                    "datos_ocr": doc.datos_ocr,
+                }
+                for cola, doc, empresa in rows
+            ],
+        }

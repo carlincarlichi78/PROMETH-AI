@@ -31,8 +31,15 @@ tmp/
 
 # BD local y cobertura
 sfce.db
+sfce.db-shm
+sfce.db-wal
+sfce.db-journal
+*.db.backup_*
 .coverage
 *.tmp.*
+
+# Uploads portal (documentos de clientes)
+docs/uploads/
 
 # Generador datos prueba (salida)
 tests/datos_prueba/generador/salida/

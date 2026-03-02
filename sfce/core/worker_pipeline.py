@@ -180,12 +180,36 @@ def ejecutar_ciclo_worker(sesion_factory) -> None:
             liberar_lock_empresa(empresa_id)
 
 
+def _resetear_docs_procesando(sesion_factory) -> None:
+    """Devuelve a PENDIENTE los docs que quedaron en PROCESANDO al apagar el worker."""
+    try:
+        with sesion_factory() as s:
+            s.execute(
+                update(ColaProcesamiento)
+                .where(ColaProcesamiento.estado == "PROCESANDO")
+                .values(estado="PENDIENTE", worker_inicio=None)
+            )
+            s.commit()
+            logger.info("Worker pipeline: docs PROCESANDO resetados a PENDIENTE")
+    except Exception as e:
+        logger.error(f"Error reseteando docs PROCESANDO: {e}", exc_info=True)
+
+
 async def loop_worker_pipeline(sesion_factory, intervalo: int = _INTERVALO_CICLO) -> None:
-    """Loop asyncio. Integrar en lifespan de FastAPI."""
+    """Loop asyncio. Integrar en lifespan de FastAPI.
+
+    Al recibir CancelledError (shutdown), resetea los docs que quedaron
+    en estado PROCESANDO para que el próximo arranque los reintente.
+    """
     logger.info(f"Worker pipeline iniciado (ciclo cada {intervalo}s)")
-    while True:
-        try:
-            ejecutar_ciclo_worker(sesion_factory)
-        except Exception as e:
-            logger.error(f"Error en ciclo worker pipeline: {e}", exc_info=True)
-        await asyncio.sleep(intervalo)
+    try:
+        while True:
+            try:
+                ejecutar_ciclo_worker(sesion_factory)
+            except Exception as e:
+                logger.error(f"Error en ciclo worker pipeline: {e}", exc_info=True)
+            await asyncio.sleep(intervalo)
+    except asyncio.CancelledError:
+        logger.info("Worker pipeline: recibida señal de parada, limpiando...")
+        _resetear_docs_procesando(sesion_factory)
+        raise

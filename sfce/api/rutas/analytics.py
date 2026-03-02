@@ -15,7 +15,7 @@ from sfce.analytics.modelos_analiticos import (
     FactPersonal,
     AlertaAnalitica,
 )
-from sfce.analytics.sector_engine import SectorEngine
+from sfce.analytics.sector_engine import obtener_sector_engine
 from sfce.db.modelos import Empresa
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
@@ -42,8 +42,7 @@ def obtener_kpis(
         verificar_acceso_empresa(_user, empresa_id, sesion)
         cnae = _empresa_cnae(sesion, empresa_id)
 
-        engine = SectorEngine()
-        engine.cargar(cnae)
+        engine = obtener_sector_engine(cnae)
 
         hoy = date.today()
         if periodo and len(periodo) == 7:

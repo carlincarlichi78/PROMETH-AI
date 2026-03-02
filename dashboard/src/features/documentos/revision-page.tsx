@@ -8,6 +8,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { PageTitle } from "@/components/ui/page-title"
 
 const BASE = import.meta.env.VITE_API_URL ?? ""
+const ITEMS_POR_PAGINA = 20
+
 async function apiFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem("sfce_token")
   const res = await fetch(`${BASE}${path}`, {
@@ -29,10 +31,17 @@ interface DocRevision {
   datos_ocr?: Record<string, unknown>
 }
 
-function useDocsRevision() {
-  return useQuery<DocRevision[]>({
-    queryKey: ["docs-revision"],
-    queryFn: () => apiFetch("/api/gestor/documentos/revision"),
+interface PaginaRevision {
+  total: number
+  limit: number
+  offset: number
+  items: DocRevision[]
+}
+
+function useDocsRevision(offset: number) {
+  return useQuery<PaginaRevision>({
+    queryKey: ["docs-revision", offset],
+    queryFn: () => apiFetch(`/api/gestor/documentos/revision?limit=${ITEMS_POR_PAGINA}&offset=${offset}`),
   })
 }
 
@@ -158,13 +167,19 @@ function DocCard({ doc }: { doc: DocRevision }) {
 }
 
 export function RevisionPage() {
-  const { data: docs = [], isLoading } = useDocsRevision()
+  const [pagina, setPagina] = useState(0)
+  const offset = pagina * ITEMS_POR_PAGINA
+  const { data, isLoading } = useDocsRevision(offset)
+
+  const docs = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPaginas = Math.ceil(total / ITEMS_POR_PAGINA)
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <PageTitle
         titulo="Documentos pendientes de revisión"
-        subtitulo="Enriquece y aprueba los documentos antes de procesarlos"
+        subtitulo={total > 0 ? `${total} documento${total !== 1 ? "s" : ""} pendiente${total !== 1 ? "s" : ""}` : "Enriquece y aprueba los documentos antes de procesarlos"}
       />
       {isLoading && <p className="text-muted-foreground mt-4">Cargando...</p>}
       {!isLoading && docs.length === 0 && (
@@ -175,6 +190,29 @@ export function RevisionPage() {
       {docs.map((doc) => (
         <DocCard key={doc.id} doc={doc} />
       ))}
+      {totalPaginas > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagina === 0}
+            onClick={() => setPagina((p) => p - 1)}
+          >
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Página {pagina + 1} de {totalPaginas}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagina >= totalPaginas - 1}
+            onClick={() => setPagina((p) => p + 1)}
+          >
+            Siguiente
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
