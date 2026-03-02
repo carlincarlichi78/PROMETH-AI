@@ -191,10 +191,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 14 — diseño + plan deploy prometh-ai.es)
+## Estado actual (02/03/2026, sesión 16 — sprint seguridad+calidad P2-P3)
 
 **Rama activa**: `main`
-**Tests**: 2235 PASS, 0 FAILED. Build: ✓ 131 entries. Commit: `8f0eb16`
+**Tests**: 2248 PASS, 0 FAILED (+14 esta sesión). Build: ✓ 131 entries. Commit: `717aa19`
+
+### Sprint P2-P3 COMPLETADO (sesión 16 — 02/03/2026)
+
+| Item | Fix | Archivos |
+|------|-----|---------|
+| SEC-PDF-RAM | `read(MAX+1)` para detectar exceso sin cargar todo en RAM | `portal.py:245` |
+| SEC-N+1 | Bulk queries (3 IN/GROUP BY) + `MAX_EMPRESAS=50` | `autopilot.py` |
+| QUAL-SECTOR-CACHE | `obtener_sector_engine(cnae)` con `_CACHE` module-level | `sector_engine.py`, `analytics.py` |
+| QUAL-PAGINATION | Backend `limit/offset` + respuesta `{total, items}` + UI paginada | `gestor.py`, `revision-page.tsx` |
+| QUAL-WORKER-SHUTDOWN | `CancelledError` → `_resetear_docs_procesando()` antes de re-raise | `worker_pipeline.py` |
+| Tests Advisor | +6 tests: empresa nueva verde, límite MAX, CNAE vacío, caché | `test_autopilot.py`, `test_benchmark_engine.py`, `test_sector_engine_cache.py` |
+
+### Pendientes P2 (no sprint, próxima sesión)
+- **SEC-TIER**: backend auth para features Advisor (actualmente solo frontend)
+- **SEC-TOKEN**: contraseña "PENDIENTE" → `secrets.token_hex(32)`
+- **SEC-TOKEN-TTL**: 7 días → 48 horas en `admin.py:209`
+- **SEC-RATELIMIT**: `/aceptar-invitacion` con rate limit propio (no compartir con `/login`)
+- **SEC-INFO**: no exponer lista de roles en error `auth_rutas.py:233`
+- **SEC-PLAN**: `plan_tier` con CHECK constraint en BD
 
 ### Fix P1 bugs COMPLETADO (sesión 15 — 02/03/2026)
 
@@ -208,8 +227,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | BUG-MATH | `_percentil()` con interpolación lineal (≡ numpy.percentile) | `benchmark_engine.py` |
 | BUG-AUTOPILOT | `empresa.fecha_alta < 30d` → no alarmar por falta TPV | `autopilot.py` |
 | BUG-NOTIF | `GestorNotificaciones` persiste en BD; inicializado en lifespan | `notificaciones.py`, `app.py` |
-
-**Pendiente siguiente sesión**: P2 bugs (lista pendiente de recibir del usuario)
 
 ### Fix roles auth COMPLETADO (sesión 12)
 - Bug: `crear_admin_por_defecto` creaba `rol='superadmin'` pero endpoints CRUD usaban `requiere_rol("admin")` → 403
