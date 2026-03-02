@@ -6,7 +6,7 @@ import {
   DoorClosed, DoorOpen, Wallet, PiggyBank, Target, GitCompare, CreditCard,
   FileBarChart, ExternalLink, Database, Palette, HardDrive, Key, UserCog,
   Briefcase, Receipt, Activity, Archive, HeartPulse, ChevronRight, ChevronsUpDown,
-  Shield, ClipboardCheck, Zap,
+  Shield, ClipboardCheck, Zap, Mail,
 } from 'lucide-react'
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -302,6 +302,26 @@ export function AppSidebar() {
                   >
                     <Shield className="h-4 w-4" />
                     <span>Gestorias</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Cuentas correo — solo superadmin */}
+        {usuario?.rol === 'superadmin' && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === '/correo/cuentas'}
+                    onClick={() => navigate('/correo/cuentas')}
+                    tooltip="Cuentas correo"
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span>Cuentas correo</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

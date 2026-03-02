@@ -70,6 +70,9 @@ const ConfiguracionPage = lazy(() => import('@/features/configuracion/configurac
 
 // --- Correo ---
 const CorreoPage = lazy(() => import('@/features/correo/index'))
+const CuentasCorreoPage = lazy(() =>
+  import('@/features/correo/cuentas-correo-page').then((m) => ({ default: m.CuentasCorreoPage }))
+)
 
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
@@ -200,6 +203,7 @@ export function App() {
 
           {/* Correo */}
           <Route path="/empresa/:id/correo" element={<CorreoPage />} />
+          <Route path="/correo/cuentas" element={<CuentasCorreoPage />} />
 
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />

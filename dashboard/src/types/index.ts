@@ -3,7 +3,7 @@ export interface Usuario {
   id: number
   email: string
   nombre: string
-  rol: 'admin' | 'gestor' | 'cliente' | 'admin_gestoria'
+  rol: 'superadmin' | 'admin' | 'gestor' | 'cliente' | 'admin_gestoria' | 'asesor' | 'asesor_independiente'
   gestoria_id?: number | null
   plan_tier?: 'basico' | 'pro' | 'premium'
 }
