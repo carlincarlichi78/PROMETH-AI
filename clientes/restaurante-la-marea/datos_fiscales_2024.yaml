@@ -1,0 +1,241 @@
+# datos_fiscales_2024.yaml — Restaurante La Marea S.L.
+entidad: restaurante-la-marea
+ejercicio: "2024"
+empresa:
+  nif: "B29011236"
+  nombre: "RESTAURANTE LA MAREA S.L."
+  domicilio: "Paseo Maritimo 18, Local 2, 29601 Marbella (Malaga)"
+  telefono: "952771234"
+  email: "admin@restaurantelamarea.es"
+  iae: "671"  # Restaurantes
+
+# Distribución trimestral ventas (IVA 10%):
+# Q1: 45.000€  Q2: 75.000€  Q3: 110.000€  Q4: 50.000€ = 280.000€ total
+modelo_303:
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "04": 45000.00   # base repercutida tipo reducido (10%)
+        "05": 10.00      # tipo reducido %
+        "06": 4500.00    # cuota repercutida reducida
+        "30": 32000.00   # base soportada (Makro IVA mixto simplificado a 21%)
+        "31": 4200.00    # cuota soportada (media ponderada ~13%)
+        "46": 300.00     # diferencia
+        "65": 0.00
+        "69": 300.00
+        "70": 300.00
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "04": 75000.00
+        "05": 10.00
+        "06": 7500.00
+        "30": 55000.00
+        "31": 6200.00
+        "46": 1300.00
+        "65": 0.00
+        "69": 1300.00
+        "70": 1300.00
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "04": 110000.00
+        "05": 10.00
+        "06": 11000.00
+        "30": 80000.00
+        "31": 8800.00
+        "46": 2200.00
+        "65": 0.00
+        "69": 2200.00
+        "70": 2200.00
+    4T:
+      fecha_presentacion: "2025-01-20"
+      casillas:
+        "04": 50000.00
+        "05": 10.00
+        "06": 5000.00
+        "30": 38000.00
+        "31": 4100.00
+        "46": 900.00
+        "65": 0.00
+        "69": 900.00
+        "70": 900.00
+
+modelo_390:
+  fecha_presentacion: "2025-01-30"
+  casillas:
+    "04": 280000.00   # base repercutida tipo reducido total
+    "06": 28000.00    # cuota repercutida total
+    "30": 205000.00   # base soportada total
+    "31": 23300.00    # cuota soportada total
+    "46": 4700.00     # resultado
+    "69": 4700.00
+    "95": 280000.00   # volumen operaciones
+
+modelo_111:
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "01": 6          # perceptores (6 empleados)
+        "02": 30000.00   # rendimientos trabajo Q1 (120k/4)
+        "03": 4500.00    # retenciones 15% media
+        "16": 4500.00
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "01": 6
+        "02": 30000.00
+        "03": 4500.00
+        "16": 4500.00
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "01": 6
+        "02": 30000.00
+        "03": 4500.00
+        "16": 4500.00
+    4T:
+      fecha_presentacion: "2025-01-20"
+      casillas:
+        "01": 6
+        "02": 30000.00
+        "03": 4500.00
+        "16": 4500.00
+
+modelo_190:
+  fecha_presentacion: "2025-01-31"
+  casillas:
+    "01": 6
+    "02": 120000.00
+    "03": 18000.00
+
+modelo_115:
+  # Alquiler local: 1.500€/mes + IVA 21% = 1.815€, retención 19% = 285€/mes
+  trimestres:
+    1T:
+      fecha_presentacion: "2024-04-20"
+      casillas:
+        "03": 1          # número de perceptores (arrendador)
+        "04": 4500.00    # base (3 meses × 1.500€)
+        "05": 855.00     # retención 19% (3 × 285€)
+        "06": 855.00     # resultado a ingresar
+    2T:
+      fecha_presentacion: "2024-07-20"
+      casillas:
+        "03": 1
+        "04": 4500.00
+        "05": 855.00
+        "06": 855.00
+    3T:
+      fecha_presentacion: "2024-10-20"
+      casillas:
+        "03": 1
+        "04": 4500.00
+        "05": 855.00
+        "06": 855.00
+    4T:
+      fecha_presentacion: "2025-01-20"
+      casillas:
+        "03": 1
+        "04": 4500.00
+        "05": 855.00
+        "06": 855.00
+
+modelo_180:
+  fecha_presentacion: "2025-01-31"
+  casillas:
+    "03": 1
+    "04": 18000.00   # base anual arrendamiento
+    "05": 3420.00    # retención 19% anual
+    "06": 3420.00
+
+balance:
+  fecha: "2024-12-31"
+  activo:
+    inmovilizado:
+      - cuenta: "214"
+        descripcion: "Maquinaria cocina (leasing)"
+        valor_bruto: 30000.00
+        amortizacion: 6000.00
+        valor_neto: 24000.00
+      - cuenta: "211"
+        descripcion: "Reforma local"
+        valor_bruto: 18000.00
+        amortizacion: 3600.00
+        valor_neto: 14400.00
+    circulante:
+      - cuenta: "300"
+        descripcion: "Existencias alimentación y bebidas"
+        importe: 4500.00
+      - cuenta: "430"
+        descripcion: "Clientes"
+        importe: 0.00
+      - cuenta: "572"
+        descripcion: "Bancos c/c"
+        importe: 8000.00
+  pasivo:
+    largo_plazo:
+      - cuenta: "1740"
+        descripcion: "Leasing cocina industrial (LP)"
+        importe: 24000.00
+    corto_plazo:
+      - cuenta: "4423"
+        descripcion: "Deuda con Gastro Holding S.L."
+        importe: 15000.00
+      - cuenta: "400"
+        descripcion: "Proveedores alimentación"
+        importe: 5200.00
+      - cuenta: "4750"
+        descripcion: "HP acreedora IVA"
+        importe: 900.00
+  patrimonio_neto:
+    - cuenta: "100"
+      descripcion: "Capital social"
+      importe: 3000.00
+    - cuenta: "112"
+      descripcion: "Reserva legal"
+      importe: 600.00
+    - cuenta: "113"
+      descripcion: "Reservas voluntarias"
+      importe: 4400.00
+    - cuenta: "129"
+      descripcion: "Resultado del ejercicio"
+      importe: 12000.00
+
+cuenta_pyg:
+  fecha: "2024-12-31"
+  ingresos:
+    - cuenta: "705"
+      descripcion: "Ventas restaurante (comidas y cenas)"
+      importe: 280000.00
+    - cuenta: "759"
+      descripcion: "Catering y eventos privados"
+      importe: 8500.00
+  gastos:
+    - cuenta: "600"
+      descripcion: "Compras alimentación (Makro, Distribuidora)"
+      importe: 95000.00
+    - cuenta: "621"
+      descripcion: "Alquiler local"
+      importe: 18000.00
+    - cuenta: "628"
+      descripcion: "Suministros (gas, luz, agua, tel)"
+      importe: 22000.00
+    - cuenta: "627"
+      descripcion: "Lavandería industrial"
+      importe: 5400.00
+    - cuenta: "640"
+      descripcion: "Sueldos y salarios (6 empleados)"
+      importe: 98000.00
+    - cuenta: "642"
+      descripcion: "Seguridad Social empresa"
+      importe: 32000.00
+    - cuenta: "623"
+      descripcion: "Management fee Gastro Holding"
+      importe: 6000.00
+    - cuenta: "681"
+      descripcion: "Amortización inmovilizado"
+      importe: 8100.00
+  resultado_ejercicio: 12000.00
