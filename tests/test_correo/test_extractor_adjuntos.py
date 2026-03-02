@@ -13,11 +13,17 @@ PDF_VALIDO = b"%PDF-1.4 contenido de prueba"
 
 def _crear_zip(archivos: dict[str, bytes], password: bytes | None = None) -> bytes:
     buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        if password:
+    if password:
+        import pyzipper
+        with pyzipper.AESZipFile(buf, "w", compression=pyzipper.ZIP_DEFLATED,
+                                  encryption=pyzipper.WZ_AES) as zf:
             zf.setpassword(password)
-        for nombre, contenido in archivos.items():
-            zf.writestr(nombre, contenido)
+            for nombre, contenido in archivos.items():
+                zf.writestr(nombre, contenido)
+    else:
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for nombre, contenido in archivos.items():
+                zf.writestr(nombre, contenido)
     return buf.getvalue()
 
 

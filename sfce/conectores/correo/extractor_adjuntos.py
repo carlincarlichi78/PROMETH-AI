@@ -98,6 +98,37 @@ def _inferir_extension(nombre: str, mime: str) -> str:
     return sufijo if sufijo else ""
 
 
+def _abrir_zip(contenido: bytes):
+    """Intenta abrir un ZIP con zipfile estándar, luego pyzipper (AES)."""
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(contenido))
+        # Verificar que los archivos sean legibles (puede ser AES aunque abra OK)
+        for info in zf.infolist():
+            if info.flag_bits & 0x1:
+                # Intentar leer con zipfile — si usa AES fallará
+                try:
+                    zf.read(info.filename, pwd=b"__probe__")
+                except (RuntimeError, NotImplementedError) as e:
+                    if any(k in str(e) for k in ("WZ_AES", "AES", "not supported", "compression method")):
+                        # Usar pyzipper para este ZIP (encriptación AES)
+                        try:
+                            import pyzipper
+                            return pyzipper.AESZipFile(io.BytesIO(contenido))
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+                break
+        return zf
+    except zipfile.BadZipFile:
+        pass
+    try:
+        import pyzipper
+        return pyzipper.AESZipFile(io.BytesIO(contenido))
+    except Exception:
+        return None
+
+
 def _extraer_zip(
     contenido: bytes,
     contrasenas: list[str],
@@ -110,9 +141,8 @@ def _extraer_zip(
         logger.warning("ZIP ignorado: profundidad %d excede máximo %d", profundidad, MAX_ZIP_DEPTH)
         return []
 
-    try:
-        zf = zipfile.ZipFile(io.BytesIO(contenido))
-    except zipfile.BadZipFile:
+    zf = _abrir_zip(contenido)
+    if zf is None:
         logger.warning("ZIP inválido o corrupto")
         return []
 
