@@ -279,3 +279,124 @@ def historico_modelos(
     except (AttributeError, ImportError, Exception):
         # ModeloFiscalGenerado no existe aun (se crea en T25)
         return []
+
+
+# ==================== MODELO 190 ====================
+
+from sfce.core.extractor_190 import ExtractorPerceptores190
+from sfce.core.calculador_modelos import CalculadorModelos
+from sfce.db.modelos import Documento, Empresa
+
+
+_extractor_190 = ExtractorPerceptores190()
+_calc_modelos = CalculadorModelos(_normativa)
+
+
+@router.get("/190/{empresa_id}/{ejercicio}/perceptores")
+def get_perceptores_190(
+    empresa_id: int,
+    ejercicio: int,
+    request: Request,
+    repo: Repositorio = Depends(get_repo),
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Extrae perceptores del Modelo 190 desde documentos procesados en BD."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        docs = (
+            s.query(Documento)
+            .filter(
+                Documento.empresa_id == empresa_id,
+                Documento.ejercicio == str(ejercicio),
+                Documento.estado == "registrado",
+                Documento.tipo_doc.in_(["NOM", "FV"]),
+            )
+            .all()
+        )
+        resultado = _extractor_190.extraer(docs, empresa_id=empresa_id, ejercicio=ejercicio)
+    return resultado
+
+
+@router.put("/190/{empresa_id}/{ejercicio}/perceptores/{nif}")
+def actualizar_perceptor_190(
+    empresa_id: int,
+    ejercicio: int,
+    nif: str,
+    datos: dict,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Corrige datos de un perceptor incompleto (corrección manual desde UI)."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+    # Validar campos mínimos
+    campos_requeridos = ["percepcion_dineraria", "retencion_dineraria"]
+    faltantes = [c for c in campos_requeridos if c not in datos or datos[c] is None]
+    if faltantes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Campos requeridos faltantes: {faltantes}",
+        )
+    # Devolver perceptor corregido con completo=True
+    return {
+        **datos,
+        "nif": nif,
+        "completo": True,
+        "campos_faltantes": [],
+    }
+
+
+@router.post("/190/{empresa_id}/{ejercicio}/generar")
+def generar_190(
+    empresa_id: int,
+    ejercicio: int,
+    body: dict,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Genera fichero BOE del Modelo 190. Requiere lista de perceptores completos."""
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+        empresa = s.get(Empresa, empresa_id)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+        empresa_datos = {"nif": empresa.cif, "nombre": empresa.nombre}
+
+    perceptores = body.get("perceptores", [])
+    incompletos = [p for p in perceptores if not p.get("completo", True)]
+    if incompletos:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Hay {len(incompletos)} perceptores incompletos. Completa antes de generar.",
+        )
+
+    casillas = _calc_modelos.calcular_190(perceptores, ejercicio=ejercicio)
+    resultado = _generador_modelos.generar(
+        modelo="190",
+        ejercicio=str(ejercicio),
+        periodo="0A",
+        casillas={
+            "num_registros": casillas["num_registros"],
+            "16": casillas["casilla_16"],
+            "17": casillas["casilla_17"],
+            "18": casillas["casilla_18"],
+            "19": casillas["casilla_19"],
+        },
+        empresa=empresa_datos,
+        declarados=casillas["declarados"],
+    )
+
+    contenido = resultado.contenido.encode("latin-1")
+    return Response(
+        content=contenido,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="190_{empresa_id}_{ejercicio}.txt"'
+        },
+    )
