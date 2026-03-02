@@ -194,26 +194,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ## Estado actual (02/03/2026, sesión 14 — diseño + plan deploy prometh-ai.es)
 
 **Rama activa**: `main`
-**Tests**: 2234 PASS, 0 FAILED. Build: ✓ 131 entries.
+**Tests**: 2235 PASS, 0 FAILED. Build: ✓ 131 entries. Commit: `8f0eb16`
 
-### Deploy prometh-ai.es — DISEÑADO (sesión 14)
-- Design doc: `docs/plans/2026-03-02-deploy-prometh-ai-design.md`
-- Plan impl: `docs/plans/2026-03-02-deploy-prometh-ai.md` — 12 tasks listas para ejecutar
-- **Siguiente sesión**: ejecutar plan con `superpowers:executing-plans`
+### Fix P1 bugs COMPLETADO (sesión 15 — 02/03/2026)
 
-**Arquitectura decidida**:
-- `app.prometh-ai.es` → nginx sirve React build + proxea `/api/` → `sfce_api:8000`
-- `api.prometh-ai.es` → nginx proxy directo a `sfce_api:8000`
-- Docker: imagen `ghcr.io/carlincarlichi78/spice:latest` (workers como asyncio tasks, 1 solo contenedor)
-- CI/CD: GitHub Actions 4 jobs (test ‖ build-frontend → build-docker → deploy SSH)
-- BD: SQLite → PostgreSQL 16 (script de migración one-time incluido en plan)
+6 bugs críticos resueltos en paralelo (4 agentes):
 
-**Pendientes P1 de sesión 13** (pospuestos por deploy):
-1. Unificar timestamps UTC en auth_rutas.py (mezcla `utcnow`/`now`)
-2. Race condition worker_pipeline: marcar PROCESANDO atómicamente
-3. Percentiles incorrectos en benchmark_engine.py (sin interpolación)
-4. Autopilot falsa alarma crítica en empresas nuevas (`dias_sin_datos=999`)
-5. Consolidar GestorNotificaciones en-memory → NotificacionUsuario BD
+| Bug | Fix | Archivos |
+|-----|-----|---------|
+| BUG-TZ | `datetime.now(timezone.utc)` + `.replace(tzinfo=utc)` al leer naive de BD | `auth_rutas.py`, `admin.py` |
+| BUG-RACE-1 | Token invitación consumido con UPDATE+RETURNING atómico | `auth_rutas.py` |
+| BUG-RACE-2 | `_clamar_docs_para_empresa()` SELECT+UPDATE con `with_for_update()` | `worker_pipeline.py` |
+| BUG-MATH | `_percentil()` con interpolación lineal (≡ numpy.percentile) | `benchmark_engine.py` |
+| BUG-AUTOPILOT | `empresa.fecha_alta < 30d` → no alarmar por falta TPV | `autopilot.py` |
+| BUG-NOTIF | `GestorNotificaciones` persiste en BD; inicializado en lifespan | `notificaciones.py`, `app.py` |
+
+**Pendiente siguiente sesión**: P2 bugs (lista pendiente de recibir del usuario)
 
 ### Fix roles auth COMPLETADO (sesión 12)
 - Bug: `crear_admin_por_defecto` creaba `rol='superadmin'` pero endpoints CRUD usaban `requiere_rol("admin")` → 403
