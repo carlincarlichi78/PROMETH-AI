@@ -141,10 +141,31 @@ class ProcesadorLote:
             if tipo == TipoDocOnboarding.LIBRO_BIENES_INVERSION:
                 return {"bienes": r.bienes}
         if tipo == TipoDocOnboarding.CENSO_036_037:
-            # Delegamos a ocr_036.py ya implementado
             try:
-                from sfce.core.ocr_036 import parsear_036
-                return parsear_036(ruta)
-            except Exception:
+                import pdfplumber
+                from sfce.core.ocr_036 import parsear_modelo_036
+                with pdfplumber.open(str(ruta)) as pdf:
+                    texto = "\n".join(
+                        p.extract_text() or "" for p in pdf.pages[:3]
+                    )
+                datos = parsear_modelo_036(texto)
+                # Extraer CP del domicilio_fiscal (ej: "CALLE X, 28001 MADRID")
+                cp = ""
+                import re as _re
+                m_cp = _re.search(r"\b(\d{5})\b", datos.domicilio_fiscal)
+                if m_cp:
+                    cp = m_cp.group(1)
+                # Detectar forma jurídica desde tipo_cliente
+                fj = "autonomo" if datos.tipo_cliente == "autonomo" else "sl"
+                return {
+                    "nif": datos.nif,
+                    "nombre": datos.nombre,
+                    "forma_juridica": fj,
+                    "domicilio": {"cp": cp},
+                    "regimen_iva": datos.regimen_iva or "general",
+                    "fecha_alta": datos.fecha_inicio_actividad,
+                }
+            except Exception as exc:
+                logger.warning("Error parseando 036/037: %s", exc)
                 return None
         return None
