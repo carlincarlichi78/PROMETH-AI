@@ -1,5 +1,65 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-02 (sesión 14) — Diseño y plan deploy SFCE → prometh-ai.es
+
+**Objetivo**: Planificar el despliegue del dashboard SFCE en producción bajo prometh-ai.es.
+
+**Resultado**: Design doc + plan de implementación completo (12 tasks). Sin código implementado aún.
+
+**Archivos creados**:
+- `docs/plans/2026-03-02-deploy-prometh-ai-design.md` — Arquitectura completa
+- `docs/plans/2026-03-02-deploy-prometh-ai.md` — Plan 12 tasks con código exacto
+
+**Decisiones arquitectónicas**:
+- `app.prometh-ai.es` + `api.prometh-ai.es` (subdominios separados)
+- nginx en `app.` proxea `/api/` → sfce_api (sin cambios en código frontend)
+- Docker Compose + imagen GHCR (`ghcr.io/carlincarlichi78/spice:latest`)
+- GitHub Actions 4 jobs: test ‖ build-frontend → build-docker → deploy SSH
+- Migración SQLite → PostgreSQL 16 con script one-time idempotente
+- Workers como asyncio tasks en el mismo contenedor uvicorn (no contenedores separados)
+
+**Próxima sesión**: ejecutar plan con `superpowers:executing-plans`
+
+---
+
+## 2026-03-02 (sesión 13) — Auditoría profunda 8 sistemas + fix P0 seguridad IDOR
+
+**Objetivo**: Auditoría sistemática de los planes 10-17 implementados ayer: Tablero Usuarios, Canal Onboarding, Tiers, App Móvil, Notificaciones, Advisor Platform, Flujo docs→pipeline, Fix roles.
+
+### Auditoría (4 agentes en paralelo)
+- **19 bugs críticos** identificados, **16 problemas de seguridad**, **20 de calidad**, **22 ideas**
+- Hallazgo principal: 6 vulnerabilidades IDOR/escalada de privilegios en `verificar_acceso_empresa()` y endpoints asociados
+
+### Fix P0 — IDOR + Escalada (commit `e6361a8`)
+**Causa raíz**: `verificar_acceso_empresa()` usaba `gestoria_id is None` como proxy de superadmin, lo que:
+- Trataba a clientes directos (`gestoria_id=None`) como superadmin → acceso total a todas las empresas
+- No verificaba `empresas_asignadas` para clientes con gestoría → IDOR entre clientes de la misma gestoría
+- 5 endpoints de portal y gestor no llamaban a `verificar_acceso_empresa()` en absoluto
+
+**Fixes aplicados**:
+- `sfce/api/auth.py` — `verificar_acceso_empresa()` reescrita: lógica por rol explícito (superadmin/cliente/gestor)
+- `sfce/api/rutas/portal.py` — añadida verificación en `subir_documento`, `aprobar_documento`, `rechazar_documento`, `notificaciones_portal`, `proveedores_frecuentes`
+- `sfce/api/rutas/gestor.py` — añadida verificación en `notificar_cliente`; import de `verificar_acceso_empresa`
+- `sfce/api/rutas/admin.py` — `actualizar_plan_usuario`: `admin_gestoria` solo modifica usuarios de su gestoria (escalada lateral bloqueada)
+- `tests/test_portal_revision.py` + `tests/test_seguridad/test_rgpd.py` — roles legacy corregidos (`gestor`→`asesor`, `readonly`→`cliente`)
+
+**Resultado**: 2234/2234 PASS
+
+### LIBRO actualizado
+- `docs/LIBRO/_temas/22-seguridad.md` — sección `verificar_acceso_empresa()` completamente reescrita con nueva lógica, lista de endpoints que la usan, e IDOR histórico documentado
+
+### Pendientes P1 (próxima sesión)
+1. Unificar `datetime.now(timezone.utc)` en auth_rutas.py (mezcla utcnow/now)
+2. Race condition worker_pipeline: marcar PROCESANDO atómicamente antes de retornar docs
+3. Percentiles P25/P50/P75 con interpolación lineal (benchmark_engine.py)
+4. Empresas nuevas en Autopilot: `dias_sin_datos=999` → falsa alarma crítica
+5. Consolidar GestorNotificaciones (en-memory) → NotificacionUsuario (BD)
+
+### Commits sesión 13
+- `e6361a8` fix: P0 security — IDOR en verificar_acceso_empresa + escalada plan_tier
+
+---
+
 ## 2026-03-02 (sesión 12) — Auditoría estado proyecto + fix roles auth
 
 **Objetivo**: Inventariar el estado real de todos los planes, verificar suite completa y corregir inconsistencias de roles surgidas al implementar Tablero Usuarios.

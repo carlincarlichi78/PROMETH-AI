@@ -191,11 +191,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 12 — auditoría + fix roles)
+## Estado actual (02/03/2026, sesión 14 — diseño + plan deploy prometh-ai.es)
 
 **Rama activa**: `main`
-**Tests**: 2234 PASS, 0 FAILED. Build: ✓ 131 entries. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
-**LIBRO actualizado**: 22-seguridad.md (roles corregidos: admin→superadmin, gestor→asesor, readonly→cliente)
+**Tests**: 2234 PASS, 0 FAILED. Build: ✓ 131 entries.
+
+### Deploy prometh-ai.es — DISEÑADO (sesión 14)
+- Design doc: `docs/plans/2026-03-02-deploy-prometh-ai-design.md`
+- Plan impl: `docs/plans/2026-03-02-deploy-prometh-ai.md` — 12 tasks listas para ejecutar
+- **Siguiente sesión**: ejecutar plan con `superpowers:executing-plans`
+
+**Arquitectura decidida**:
+- `app.prometh-ai.es` → nginx sirve React build + proxea `/api/` → `sfce_api:8000`
+- `api.prometh-ai.es` → nginx proxy directo a `sfce_api:8000`
+- Docker: imagen `ghcr.io/carlincarlichi78/spice:latest` (workers como asyncio tasks, 1 solo contenedor)
+- CI/CD: GitHub Actions 4 jobs (test ‖ build-frontend → build-docker → deploy SSH)
+- BD: SQLite → PostgreSQL 16 (script de migración one-time incluido en plan)
+
+**Pendientes P1 de sesión 13** (pospuestos por deploy):
+1. Unificar timestamps UTC en auth_rutas.py (mezcla `utcnow`/`now`)
+2. Race condition worker_pipeline: marcar PROCESANDO atómicamente
+3. Percentiles incorrectos en benchmark_engine.py (sin interpolación)
+4. Autopilot falsa alarma crítica en empresas nuevas (`dias_sin_datos=999`)
+5. Consolidar GestorNotificaciones en-memory → NotificacionUsuario BD
 
 ### Fix roles auth COMPLETADO (sesión 12)
 - Bug: `crear_admin_por_defecto` creaba `rol='superadmin'` pero endpoints CRUD usaban `requiere_rol("admin")` → 403
