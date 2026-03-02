@@ -192,18 +192,28 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 26 — Zoho Mail diseñado)
+## Estado actual (02/03/2026, sesión 28 — Email Ingesta Tasks 7-10 + Zoho Mail Tasks 1-5)
 
 **Rama activa**: `main`
-**Tests**: 2418 PASS, 0 FAILED. Commit: `0193e86`
+**Tests**: 2417+ collected, ~2405 PASS, 0 FAILED. Commit: `b8a9a5a`
+**Push pendiente**: 8 commits locales (origin/main en `7ed754e`)
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Zoho Mail — DISEÑADO (sesión 26), pendiente implementar
-- Diseño: `docs/plans/2026-03-02-zoho-email-gestoria-design.md`
+### Zoho Mail por Gestoría — Tasks 1-5 COMPLETADOS (sesión 28), Tasks 6-9 PENDIENTES
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, ~35 tests
-- **Próxima sesión**: ejecutar plan con `superpowers:executing-plans`
-- Arquitectura: catch-all `docs@prometh-ai.es` + un buzón `gestoriaX@prometh-ai.es` por gestoría + `noreply@` para SMTP
+- **COMPLETADOS** (5 commits en main, 19 tests nuevos):
+  - Task 1: `sfce/db/migraciones/migracion_019_cuentas_correo_gestoria.py` — gestoria_id + tipo_cuenta + empresa_id nullable
+  - Task 2: `sfce/db/modelos.py:CuentaCorreo` — nuevos campos ORM
+  - Task 3: `sfce/conectores/correo/ingesta_correo.py` — routing gestoría por reglas, polling omite 'sistema'
+  - Task 4: `sfce/api/rutas/correo.py` — CRUD admin + GET/PUT gestoría
+  - Task 5: `.env.example` + `docs/zoho-setup.md` — variables SMTP, DNS, instrucciones
+- **PENDIENTES** (Tasks 6-9):
+  - Task 6: Dashboard UI (`cuentas-correo-page.tsx`, `cuenta-correo-card.tsx`)
+  - Task 7: Deploy migración 019 en producción (SSH manual)
+  - Task 8: Actualizar `docs/LIBRO/_temas/20-correo.md`
+  - Task 9: Suite regresión final
+- **Próxima sesión**: continuar Tasks 6-9 con `superpowers:executing-plans`
 
 ### Onboarding Masivo — COMPLETADO (sesiones 22+24)
 - `sfce/core/onboarding/` — clasificador + parsers + perfil_empresa + motor_creacion + procesador_lote
@@ -213,21 +223,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **43 tests** en 12 archivos de test. Suite: 2320 PASS.
 - `procesador_lote.py` parsea PDFs reales con pdfplumber → ocr_036 → Acumulador → PerfilEmpresa
 
-### Email Ingesta Mejorada — Tasks 1-6 COMPLETADOS (sesión 25), Tasks 7-10 PENDIENTES
-- Plan: `docs/plans/2026-03-02-email-ingesta-mejorada.md` — 10 tasks, 84 tests
-- **COMPLETADOS** (6 commits en main, 98 tests nuevos):
-  - Task 1: `sfce/db/migraciones/migracion_018_email_mejorado.py` + modelos ORM (RemitenteAutorizado, ContrasenaZip, campos score)
-  - Task 2: `sfce/conectores/correo/extractor_adjuntos.py` — ZIP recursivo depth 2, AES pyzipper, zip-bomb, path traversal
-  - Task 3: `sfce/conectores/correo/parser_facturae.py` — FacturaE 3.2/3.2.1/3.2.2 sin OCR
-  - Task 4: `sfce/conectores/correo/filtro_ack.py` — patrones asunto + cabecera X-SFCE-ACK
-  - Task 5: `sfce/conectores/correo/whitelist_remitentes.py` — exacto/wildcard dominio, inactivos
-  - Task 6: `sfce/conectores/correo/score_email.py` — pesos adaptativos, umbrales 0.85/0.60
-- **PENDIENTES** (Tasks 7-10):
-  - Task 7: `ack_automatico.py` — templates por motivo, sin ACK a no-autorizados
-  - Task 8: Modificar `ingesta_correo.py` + `worker_catchall.py` — conectar pipeline completo
-  - Task 9: `daemon_correo.py` + registrar en lifespan `app.py`
-  - Task 10: `onboarding_email.py` + integrar en `empresas.py`
-- **Próxima sesión**: continuar con Task 7, usar `superpowers:executing-plans`
+### Email Ingesta Mejorada — 10/10 COMPLETADOS (sesiones 25+28)
+- Plan: `docs/plans/2026-03-02-email-ingesta-mejorada.md` — 10 tasks, 118 tests correo
+- Tasks 1-6 (sesión 25): migracion_018, extractor_adjuntos, parser_facturae, filtro_ack, whitelist_remitentes, score_email
+- Tasks 7-10 (sesión 28, 20 tests nuevos):
+  - Task 7: `sfce/conectores/correo/ack_automatico.py` + `email_service.enviar_raw` (9 tests)
+  - Task 8: `ingesta_correo.py` + `worker_catchall._encolar_archivo` — pipeline completo (3 tests)
+  - Task 9: `sfce/conectores/correo/daemon_correo.py` + lifespan `app.py` (2 tests)
+  - Task 10: `sfce/conectores/correo/onboarding_email.py` + `empresas.py` email_empresario (6 tests)
 
 ### App Móvil — COMPLETADA Y OPERATIVA
 - **Acceso**: `cd mobile && npx expo start --web` (apunta a `https://api.prometh-ai.es` por defecto)

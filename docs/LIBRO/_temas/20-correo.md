@@ -69,7 +69,9 @@ __tablename__ = "cuentas_correo"
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `id` | Integer PK | Identificador |
-| `empresa_id` | Integer FK(empresas) | Empresa propietaria del buzón |
+| `empresa_id` | Integer FK(empresas) **nullable** | Empresa propietaria (null para tipos gestoria/dedicada/sistema) |
+| `gestoria_id` | Integer FK(gestorias) nullable | Gestoría propietaria (cuentas tipo 'gestoria') |
+| `tipo_cuenta` | String(20) NOT NULL default 'empresa' | `'empresa'`\|`'dedicada'`\|`'gestoria'`\|`'sistema'` |
 | `nombre` | String(200) | Nombre descriptivo (ej: "Facturas proveedores") |
 | `protocolo` | String(10) | `'imap'` o `'graph'` (Microsoft Graph/O365) |
 | `servidor` | String(200) | Hostname IMAP (solo protocolo imap) |
@@ -84,6 +86,14 @@ __tablename__ = "cuentas_correo"
 | `ultimo_uid` | Integer | Último UID IMAP descargado (tracking incremental) |
 | `activa` | Boolean | Si false, la cuenta no se procesa |
 | `polling_intervalo_segundos` | Integer | Intervalo de polling, default 120s |
+
+**Tipos de cuenta:**
+| tipo_cuenta | empresa_id | gestoria_id | Routing |
+|-------------|-----------|-------------|---------|
+| `empresa` | requerido | null | Por campo To (legacy) |
+| `dedicada` | null | null | Por campo To via worker_catchall (catch-all) |
+| `gestoria` | null | requerido | Por remitente entre empresas de la gestoría |
+| `sistema` | null | null | SMTP saliente, no hace polling IMAP |
 
 Las credenciales (`contrasena_enc`, `oauth_token_enc`, `oauth_refresh_enc`) se almacenan cifradas con cifrado simétrico Fernet. Ver tema 22 para detalles del cifrado.
 
@@ -188,20 +198,22 @@ class IngestaCorreo:
 ### Flujo interno de `procesar_cuenta()`
 
 1. Carga la `CuentaCorreo` y verifica que esté activa
-2. Lee las reglas de clasificación para `empresa_id` de la cuenta
+2. Lee `tipo_cuenta` y bifurca:
+   - `gestoria` → `_cargar_reglas_gestoria(gestoria_id)` → retorna reglas + lista empresas de la gestoría
+   - otros → `_cargar_reglas(empresa_id)` (flow original)
 3. Llama a `_descargar_emails_cuenta()` con `ultimo_uid` actual
 4. Para cada email nuevo:
    - Verifica duplicados por `(cuenta_id, uid_servidor)` — constraint UNIQUE en BD
-   - Extrae hints del asunto vía `extraer_hints_asunto()` (tipo_doc, ejercicio, número)
-   - Llama a `clasificar_email()` — los hints tienen precedencia sobre la IA para `tipo_doc`
-   - Determina `estado_inicial` según la acción:
-     - `CLASIFICAR` → `CLASIFICADO`
-     - `APROBAR_MANUAL` / `CUARENTENA` → `CUARENTENA`
-     - `IGNORAR` → `IGNORADO`
-   - Guarda `EmailProcesado` en BD
+   - **Si `tipo == 'gestoria'`**: clasificación por reglas → `slug_destino` → `_resolver_empresa_por_slug()` → `empresa_destino_id`
+   - **Si `tipo != 'gestoria'`**: filtro ACK → score multi-señal → clasificación por reglas + hints
+   - Guarda `EmailProcesado` con `empresa_destino_id` resuelto (gestoría) o None (empresa)
    - Guarda adjuntos como `AdjuntoEmail` (metadatos, sin los bytes)
    - Extrae enlaces del cuerpo HTML y guarda como `EnlaceEmail`
 5. Actualiza `cuenta.ultimo_uid` al máximo UID procesado
+
+**Routing gestoría:** `_resolver_empresa_por_slug(slug, empresas)` normaliza `empresa.nombre` con `re.sub(r"[^a-z0-9]", "", nombre.lower())[:20]` y lo compara con `slug_destino` de la regla.
+
+**Polling excluye cuentas `sistema`:** `ejecutar_polling_todas_las_cuentas()` filtra `tipo_cuenta != 'sistema'`.
 6. Commit de la sesión
 
 ---
@@ -280,21 +292,73 @@ Solo se guardan enlaces de patrones conocidos o con extensión de documento.
 
 ## 8. Cómo añadir una cuenta nueva
 
-Campos mínimos requeridos para crear una `CuentaCorreo`:
+### Cuentas Zoho bajo prometh-ai.es (migración 019)
+
+| Cuenta | tipo_cuenta | Uso |
+|--------|-------------|-----|
+| `noreply@prometh-ai.es` | `sistema` | SMTP saliente — no hace polling IMAP |
+| `docs@prometh-ai.es` | `dedicada` | Catch-all. Enruta por campo To via `worker_catchall.py` |
+| `gestoriaX@prometh-ai.es` | `gestoria` | Una por gestoría. Enruta por remitente entre empresas de la gestoría |
+
+### Via dashboard (superadmin)
+
+Ir a **Administración → Cuentas correo → Nueva cuenta**.
+Servidor IMAP Zoho: `imap.zoho.eu`, puerto `993`, SSL activado.
+
+### Via API (superadmin)
+
+```
+POST /api/correo/admin/cuentas
+```
+```json
+{
+    "nombre": "Gestoría López",
+    "tipo_cuenta": "gestoria",
+    "gestoria_id": 3,
+    "servidor": "imap.zoho.eu",
+    "puerto": 993,
+    "ssl": true,
+    "usuario": "gestorialopez@prometh-ai.es",
+    "contrasena": "password-zoho"
+}
+```
+
+Otros endpoints admin correo:
+- `GET /api/correo/admin/cuentas` — lista todas (superadmin)
+- `PUT /api/correo/admin/cuentas/{id}` — actualiza servidor/pass/estado
+- `DELETE /api/correo/admin/cuentas/{id}` — desactiva (no borra)
+- `GET /api/correo/gestorias/{id}/cuenta-correo` — consulta cuenta propia (admin_gestoria)
+- `PUT /api/correo/gestorias/{id}/cuenta-correo` — actualiza cuenta propia
+
+### Variables SMTP (servidor /opt/apps/sfce/.env)
+
+```
+SFCE_SMTP_HOST=smtp.zoho.eu
+SFCE_SMTP_PORT=587
+SFCE_SMTP_USER=noreply@prometh-ai.es
+SFCE_SMTP_PASSWORD=<password>
+SFCE_SMTP_FROM=noreply@prometh-ai.es
+```
+
+Ver `docs/zoho-setup.md` para DNS y configuración completa.
+
+### Cuenta empresa legacy
+
+Para protocolo IMAP empresa individual (modo legacy):
 
 ```python
 {
     "empresa_id": 5,
+    "tipo_cuenta": "empresa",
     "nombre": "Facturas proveedores Elena",
     "protocolo": "imap",
     "servidor": "imap.gmail.com",
     "puerto": 993,
     "ssl": True,
     "usuario": "facturas@empresa.es",
-    "contrasena_enc": cifrar("mi_contrasena"),  # usar sfce/core/cifrado.py
+    "contrasena_enc": cifrar("mi_contrasena"),
     "carpeta_entrada": "INBOX",
     "activa": True,
-    "polling_intervalo_segundos": 120,
 }
 ```
 
