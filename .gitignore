@@ -40,6 +40,7 @@ sfce.db-journal
 
 # Uploads portal (documentos de clientes)
 docs/uploads/
+sfce/docs/
 
 # Generador datos prueba (salida)
 tests/datos_prueba/generador/salida/
