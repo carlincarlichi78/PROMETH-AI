@@ -1,5 +1,32 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 16 — 02/03/2026: Evaluación canales de acceso + Brainstorming app móvil
+
+### Evaluado (sin código)
+- Canales de acceso al sistema: dashboard web (localhost), app móvil (prototipo), app escritorio (no existe), producción (no expuesta)
+- App de escritorio descartada por ahora. Cuando se haga: Electron envolviendo el mismo React, capa nativa solo para certificados digitales FNMT/AEAT
+- App móvil = versión de bolsillo del dashboard. Una app, experiencia adaptada por rol al login
+
+### Diseño aprobado — App Móvil Rediseño Home-First
+- `docs/plans/2026-03-02-mobile-app-redesign-design.md` — diseño completo, 5 pilares
+- `docs/plans/2026-03-02-mobile-app-redesign.md` — plan 10 tareas listo para ejecutar
+
+**5 pilares definidos:**
+1. Semáforo fiscal por empresa (verde/amarillo/rojo)
+2. "Ahorra X€ al mes" — previsión IVA+IRPF traducida a consejo mensual
+3. Gestor supervisor — home ordenada por urgencia, aprobación con un toque
+4. Comunicación contextual — mensajes ligados a documentos o períodos fiscales
+5. Foto enriquecida — nota libre para el gestor al subir documento
+
+**Arquitectura:**
+- Backend: 2 endpoints nuevos portal (semáforo + ahorra-mes) + tabla mensajes_empresa + tabla push_tokens + servicio Expo Push API
+- Mobile: home cliente rediseñada, home gestor con semáforo, pantalla mensajes, push notifications
+
+### Tests
+Sin cambios en tests (sesión de diseño/planificación)
+
+---
+
 ## Sesión 15 — 02/03/2026: Deploy prometh-ai.es implementado (Tasks 1-11/12)
 
 ### Implementado

@@ -192,10 +192,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 16 — sprint seguridad+calidad P2-P3)
+## Estado actual (02/03/2026, sesión 17 — brainstorming + plan app móvil)
 
 **Rama activa**: `main`
-**Tests**: 2248 PASS, 0 FAILED (+14 esta sesión). Build: ✓ 131 entries. Commit: `717aa19`
+**Tests**: 2248 PASS, 0 FAILED. Build: ✓ 131 entries. Commit: `717aa19`
+
+### App Móvil — Plan listo para ejecutar (sesión 17)
+- Diseño: `docs/plans/2026-03-02-mobile-app-redesign-design.md`
+- Plan 10 tareas: `docs/plans/2026-03-02-mobile-app-redesign.md`
+- **Orden de ejecución**: Tasks 1→2→3→4→6→7→8→10→5→9
+- **Próxima sesión**: ejecutar Task 1 (endpoint semáforo) con `superpowers:executing-plans`
+
+### App Escritorio (Electron) — Aparcado
+- Misma UI React, solo añade capa nativa para certificados digitales (FNMT/AEAT)
+- Sin AutoFirma: Electron lee certificados del Windows Certificate Store directamente
+- Pendiente para sesión futura
 
 ### Sprint P2-P3 COMPLETADO (sesión 16 — 02/03/2026)
 
