@@ -54,3 +54,25 @@ export const crearRegla = (datos: { empresa_id: number; patron: string; accion: 
 
 export const eliminarRegla = (reglaId: number) =>
   api.delete<void>(`/api/correo/reglas/${reglaId}`)
+
+// Whitelist remitentes — G5
+export interface Remitente {
+  id: number
+  email: string
+  nombre?: string
+}
+
+export interface WhitelistData {
+  remitentes: Remitente[]
+  whitelist_activa: boolean
+  aviso_primer_remitente: boolean
+}
+
+export const listarRemitentes = (empresaId: number) =>
+  api.get<WhitelistData>(`/api/correo/empresas/${empresaId}/remitentes-autorizados`)
+
+export const anadirRemitente = (empresaId: number, data: { email: string; nombre?: string }) =>
+  api.post<{ id: number }>(`/api/correo/empresas/${empresaId}/remitentes-autorizados`, data)
+
+export const eliminarRemitente = (remitenteId: number) =>
+  api.delete<void>(`/api/correo/remitentes/${remitenteId}`)
