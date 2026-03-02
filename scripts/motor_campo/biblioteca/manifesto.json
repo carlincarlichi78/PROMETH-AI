@@ -1,0 +1,187 @@
+{
+  "fc_pyme_iva21.pdf": {
+    "tipo_doc_esperado": "FC",
+    "estado_esperado": "procesado",
+    "asiento_cuadrado": true,
+    "iva_correcto": true,
+    "codimpuesto_esperado": "IVA21",
+    "tiene_asiento": true,
+    "canales": [
+      "email",
+      "portal",
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "fc_intracomunitaria.pdf": {
+    "tipo_doc_esperado": "FC",
+    "estado_esperado": "procesado",
+    "asiento_cuadrado": true,
+    "iva_correcto": true,
+    "codimpuesto_esperado": "IVA0",
+    "tiene_asiento": true,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "fv_espanola.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "procesado",
+    "asiento_cuadrado": true,
+    "iva_correcto": true,
+    "codimpuesto_esperado": "IVA21",
+    "tiene_asiento": true,
+    "canales": [
+      "email",
+      "portal",
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "fv_autonomo.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "procesado",
+    "asiento_cuadrado": true,
+    "tiene_asiento": true,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "nom_a3nom.pdf": {
+    "tipo_doc_esperado": "NOM",
+    "estado_esperado": "procesado",
+    "asiento_cuadrado": true,
+    "tiene_asiento": true,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "ticket_tpv.jpg": {
+    "tipo_doc_esperado": "FC",
+    "estado_esperado": "procesado",
+    "tiene_asiento": true,
+    "canales": [
+      "portal"
+    ],
+    "max_duracion_s": 600
+  },
+  "E01_cif_invalido.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "check_1_cif_invalido",
+    "tiene_asiento": false,
+    "canales": [
+      "email",
+      "portal",
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "E02_iva_mal_calculado.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "check_iva_inconsistente",
+    "tiene_asiento": false,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "E04a_original.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "procesado",
+    "tiene_asiento": true,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "E04b_duplicado.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "duplicado",
+    "http_status_esperado": 409,
+    "tiene_asiento": false,
+    "canales": [
+      "directo"
+    ],
+    "prerequisito": "E04a_original.pdf",
+    "max_duracion_s": 30
+  },
+  "E05_fecha_fuera_rango.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "check_fecha_fuera_ejercicio",
+    "tiene_asiento": false,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "E07_total_desencuadrado.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "check_total_inconsistente",
+    "tiene_asiento": false,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "E08_proveedor_desconocido.pdf": {
+    "tipo_doc_esperado": "FV",
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "check_proveedor_desconocido",
+    "tiene_asiento": false,
+    "canales": [
+      "email",
+      "portal",
+      "directo"
+    ],
+    "max_duracion_s": 600
+  },
+  "blanco.pdf": {
+    "tipo_doc_esperado": null,
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "pdf_sin_contenido",
+    "tiene_asiento": false,
+    "canales": [
+      "email",
+      "portal",
+      "directo"
+    ],
+    "max_duracion_s": 120
+  },
+  "ilegible.jpg": {
+    "tipo_doc_esperado": null,
+    "estado_esperado": "cuarentena",
+    "razon_cuarentena_esperada": "imagen_ilegible",
+    "tiene_asiento": false,
+    "canales": [
+      "portal"
+    ],
+    "max_duracion_s": 120
+  },
+  "c43_normal.txt": {
+    "tipo_doc_esperado": "BAN",
+    "estado_esperado": "procesado",
+    "movimientos_esperados": 2,
+    "tiene_asiento": true,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 30
+  },
+  "c43_vacio.txt": {
+    "tipo_doc_esperado": "BAN",
+    "estado_esperado": "procesado",
+    "movimientos_esperados": 0,
+    "tiene_asiento": false,
+    "canales": [
+      "directo"
+    ],
+    "max_duracion_s": 30
+  }
+}
