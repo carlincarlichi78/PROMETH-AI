@@ -605,11 +605,15 @@ class VistaUsuario(Base):
 # ---------------------------------------------------------------------------
 
 class CuentaCorreo(Base):
-    """Cuenta de correo IMAP o Microsoft Graph configurada por empresa."""
+    """Cuenta de correo IMAP o Microsoft Graph configurada por empresa o gestoría."""
     __tablename__ = "cuentas_correo"
 
     id = Column(Integer, primary_key=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    # empresa_id es nullable: cuentas de tipo 'gestoria'/'sistema'/'dedicada' no tienen empresa
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
+    gestoria_id = Column(Integer, ForeignKey("gestorias.id"), nullable=True)
+    # 'empresa' | 'dedicada' | 'gestoria' | 'sistema'
+    tipo_cuenta = Column(String(20), nullable=False, default="empresa")
     nombre = Column(String(200), nullable=False)
     protocolo = Column(String(10), nullable=False)   # 'imap' | 'graph'
     servidor = Column(String(200))
