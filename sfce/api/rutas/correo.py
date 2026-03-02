@@ -29,6 +29,33 @@ class CrearCuentaRequest(BaseModel):
     carpeta_entrada: str = "INBOX"
 
 
+# ---------------------------------------------------------------------------
+# Schemas admin
+# ---------------------------------------------------------------------------
+
+class CrearCuentaAdminRequest(BaseModel):
+    nombre: str
+    tipo_cuenta: str = "empresa"     # 'empresa'|'dedicada'|'gestoria'|'sistema'
+    empresa_id: int | None = None
+    gestoria_id: int | None = None
+    servidor: str | None = None
+    puerto: int = 993
+    ssl: bool = True
+    usuario: str
+    contrasena: str
+    carpeta_entrada: str = "INBOX"
+    polling_intervalo_segundos: int = 120
+
+
+class ActualizarCuentaAdminRequest(BaseModel):
+    nombre: str | None = None
+    servidor: str | None = None
+    puerto: int | None = None
+    ssl: bool | None = None
+    contrasena: str | None = None
+    activa: bool | None = None
+
+
 class CrearReglaRequest(BaseModel):
     empresa_id: int
     tipo: str
@@ -259,3 +286,181 @@ def eliminar_regla(
             verificar_acceso_empresa(usuario, regla.empresa_id, s)
         s.delete(regla)
         s.commit()
+
+
+# ---------------------------------------------------------------------------
+# Endpoints admin — CRUD cuentas (solo superadmin)
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/cuentas")
+def admin_listar_cuentas(
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as s:
+        cuentas = s.execute(select(CuentaCorreo)).scalars().all()
+        return [
+            {
+                "id": c.id,
+                "nombre": c.nombre,
+                "tipo_cuenta": c.tipo_cuenta,
+                "usuario": c.usuario,
+                "servidor": c.servidor,
+                "activa": c.activa,
+                "ultimo_uid": c.ultimo_uid,
+                "empresa_id": c.empresa_id,
+                "gestoria_id": c.gestoria_id,
+            }
+            for c in cuentas
+        ]
+
+
+@router.post("/admin/cuentas", status_code=201)
+def admin_crear_cuenta(
+    body: CrearCuentaAdminRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as s:
+        cuenta = CuentaCorreo(
+            nombre=body.nombre,
+            tipo_cuenta=body.tipo_cuenta,
+            empresa_id=body.empresa_id,
+            gestoria_id=body.gestoria_id,
+            protocolo="imap",
+            servidor=body.servidor,
+            puerto=body.puerto,
+            ssl=body.ssl,
+            usuario=body.usuario,
+            contrasena_enc=cifrar(body.contrasena),
+            carpeta_entrada=body.carpeta_entrada,
+            polling_intervalo_segundos=body.polling_intervalo_segundos,
+        )
+        s.add(cuenta)
+        s.commit()
+        return {
+            "id": cuenta.id,
+            "nombre": cuenta.nombre,
+            "tipo_cuenta": cuenta.tipo_cuenta,
+            "usuario": cuenta.usuario,
+            "activa": cuenta.activa,
+        }
+
+
+@router.put("/admin/cuentas/{cuenta_id}")
+def admin_actualizar_cuenta(
+    cuenta_id: int,
+    body: ActualizarCuentaAdminRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as s:
+        cuenta = s.get(CuentaCorreo, cuenta_id)
+        if not cuenta:
+            raise HTTPException(status_code=404)
+        if body.nombre is not None:
+            cuenta.nombre = body.nombre
+        if body.servidor is not None:
+            cuenta.servidor = body.servidor
+        if body.puerto is not None:
+            cuenta.puerto = body.puerto
+        if body.ssl is not None:
+            cuenta.ssl = body.ssl
+        if body.contrasena is not None:
+            cuenta.contrasena_enc = cifrar(body.contrasena)
+        if body.activa is not None:
+            cuenta.activa = body.activa
+        s.commit()
+        return {"id": cuenta.id, "activa": cuenta.activa}
+
+
+@router.delete("/admin/cuentas/{cuenta_id}")
+def admin_desactivar_cuenta(
+    cuenta_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as s:
+        cuenta = s.get(CuentaCorreo, cuenta_id)
+        if not cuenta:
+            raise HTTPException(status_code=404)
+        cuenta.activa = False
+        s.commit()
+        return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Endpoints gestoría — ver/actualizar su propia cuenta
+# ---------------------------------------------------------------------------
+
+@router.get("/gestorias/{gestoria_id}/cuenta-correo")
+def gestoria_get_cuenta(
+    gestoria_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403)
+    if usuario.rol == "admin_gestoria" and usuario.gestoria_id != gestoria_id:
+        raise HTTPException(status_code=403)
+    with sesion_factory() as s:
+        cuenta = s.execute(
+            select(CuentaCorreo).where(
+                CuentaCorreo.gestoria_id == gestoria_id,
+                CuentaCorreo.tipo_cuenta == "gestoria",
+            )
+        ).scalar_one_or_none()
+        if not cuenta:
+            raise HTTPException(status_code=404, detail="Sin cuenta de correo configurada")
+        return {
+            "id": cuenta.id,
+            "nombre": cuenta.nombre,
+            "servidor": cuenta.servidor,
+            "usuario": cuenta.usuario,
+            "activa": cuenta.activa,
+            "ultimo_uid": cuenta.ultimo_uid,
+        }
+
+
+@router.put("/gestorias/{gestoria_id}/cuenta-correo")
+def gestoria_actualizar_cuenta(
+    gestoria_id: int,
+    body: ActualizarCuentaAdminRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol not in ("superadmin", "admin_gestoria"):
+        raise HTTPException(status_code=403)
+    if usuario.rol == "admin_gestoria" and usuario.gestoria_id != gestoria_id:
+        raise HTTPException(status_code=403)
+    with sesion_factory() as s:
+        cuenta = s.execute(
+            select(CuentaCorreo).where(
+                CuentaCorreo.gestoria_id == gestoria_id,
+                CuentaCorreo.tipo_cuenta == "gestoria",
+            )
+        ).scalar_one_or_none()
+        if not cuenta:
+            raise HTTPException(status_code=404)
+        if body.servidor is not None:
+            cuenta.servidor = body.servidor
+        if body.contrasena is not None:
+            cuenta.contrasena_enc = cifrar(body.contrasena)
+        if body.activa is not None:
+            cuenta.activa = body.activa
+        s.commit()
+        return {"ok": True, "id": cuenta.id}
