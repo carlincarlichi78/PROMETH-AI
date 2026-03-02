@@ -40,6 +40,7 @@ const CalendarioFiscal = lazy(() => import('@/features/fiscal/calendario-page'))
 const ModelosFiscales = lazy(() => import('@/features/fiscal/modelos-page'))
 const GenerarModelo = lazy(() => import('@/features/fiscal/generar-page'))
 const HistoricoModelos = lazy(() => import('@/features/fiscal/historico-page'))
+const Modelo190 = lazy(() => import('@/features/fiscal/modelo-190-page'))
 
 // --- Documentos ---
 const Inbox = lazy(() => import('@/features/documentos/inbox-page'))
@@ -170,6 +171,7 @@ export function App() {
           <Route path="/empresa/:id/modelos-fiscales" element={<ModelosFiscales />} />
           <Route path="/empresa/:id/modelos-fiscales/generar" element={<GenerarModelo />} />
           <Route path="/empresa/:id/modelos-fiscales/historico" element={<HistoricoModelos />} />
+          <Route path="/empresa/:id/modelo-190" element={<Suspense fallback={<div>Cargando...</div>}><Modelo190 /></Suspense>} />
 
           {/* Documentos */}
           <Route path="/empresa/:id/cola-revision" element={<ColaRevision />} />

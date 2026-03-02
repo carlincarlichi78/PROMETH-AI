@@ -83,6 +83,7 @@ export function AppSidebar() {
         { titulo: 'Modelos Fiscales', ruta: `/empresa/${eId}/modelos-fiscales`, icono: FileText },
         { titulo: 'Generar Modelo', ruta: `/empresa/${eId}/modelos-fiscales/generar`, icono: Calculator },
         { titulo: 'Historico Modelos', ruta: `/empresa/${eId}/modelos-fiscales/historico`, icono: FolderOpen },
+        { titulo: 'Modelo 190', ruta: `/empresa/${eId}/modelo-190`, icono: FileText },
       ],
     },
     {
