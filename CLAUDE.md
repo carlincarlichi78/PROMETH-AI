@@ -192,28 +192,25 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 28 — Email Ingesta Tasks 7-10 + Zoho Mail Tasks 1-5)
+## Estado actual (02/03/2026, sesión 29 — Zoho Mail COMPLETADO 9/9)
 
 **Rama activa**: `main`
-**Tests**: 2417+ collected, ~2405 PASS, 0 FAILED. Commit: `b8a9a5a`
-**Push pendiente**: 8 commits locales (origin/main en `7ed754e`)
+**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `c20063c`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Zoho Mail por Gestoría — Tasks 1-5 COMPLETADOS (sesión 28), Tasks 6-9 PENDIENTES
-- Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, ~35 tests
-- **COMPLETADOS** (5 commits en main, 19 tests nuevos):
-  - Task 1: `sfce/db/migraciones/migracion_019_cuentas_correo_gestoria.py` — gestoria_id + tipo_cuenta + empresa_id nullable
-  - Task 2: `sfce/db/modelos.py:CuentaCorreo` — nuevos campos ORM
-  - Task 3: `sfce/conectores/correo/ingesta_correo.py` — routing gestoría por reglas, polling omite 'sistema'
-  - Task 4: `sfce/api/rutas/correo.py` — CRUD admin + GET/PUT gestoría
-  - Task 5: `.env.example` + `docs/zoho-setup.md` — variables SMTP, DNS, instrucciones
-- **PENDIENTES** (Tasks 6-9):
-  - Task 6: Dashboard UI (`cuentas-correo-page.tsx`, `cuenta-correo-card.tsx`)
-  - Task 7: Deploy migración 019 en producción (SSH manual)
-  - Task 8: Actualizar `docs/LIBRO/_temas/20-correo.md`
-  - Task 9: Suite regresión final
-- **Próxima sesión**: continuar Tasks 6-9 con `superpowers:executing-plans`
+### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
+- Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
+- **Task 6**: `dashboard/src/features/correo/cuentas-correo-page.tsx` + `cuenta-correo-card.tsx` — UI gestión cuentas (CRUD, lista por tipo, botón desactivar)
+  - Ruta `/correo/cuentas` en `App.tsx`, enlace "Cuentas correo" en sidebar (superadmin)
+  - Fix: `Usuario.rol` en `types/index.ts` ahora incluye `superadmin`, `asesor`, `asesor_independiente`
+- **Task 7**: Deploy migración 019 en producción — **PENDIENTE MANUAL** (SSH)
+  - Comando: `ssh carli@65.108.60.69` → `cd /opt/apps/sfce && python sfce/db/migraciones/migracion_019_cuentas_correo_gestoria.py`
+  - Luego añadir variables SMTP Zoho a `/opt/apps/sfce/.env` y `docker compose restart sfce_api`
+- **Task 8**: `docs/LIBRO/_temas/20-correo.md` — ya actualizado (estaba completo desde sesión anterior)
+- **Task 9**: Suite regresión — 2413 PASS ✓
+
+### Pendiente (baja prioridad — Zoho)
 
 ### Onboarding Masivo — COMPLETADO (sesiones 22+24)
 - `sfce/core/onboarding/` — clasificador + parsers + perfil_empresa + motor_creacion + procesador_lote
