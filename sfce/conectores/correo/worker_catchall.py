@@ -19,7 +19,7 @@ from sfce.conectores.correo.canal_email_dedicado import (
 from sfce.conectores.correo.parser_hints import extraer_hints_asunto
 from sfce.core.seguridad_archivos import sanitizar_nombre_archivo
 from sfce.core.validador_pdf import validar_pdf, ErrorValidacionPDF
-from sfce.db.modelos import ColaProcesamiento
+from sfce.db.modelos import ColaProcesamiento, EmailProcesado
 
 if TYPE_CHECKING:
     from sfce.conectores.correo.extractor_adjuntos import ArchivoExtraido
@@ -103,7 +103,20 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
 
     empresa_id = resolver_empresa_por_slug(dest_parsed.slug, sesion)
     if not empresa_id:
-        logger.warning("Catch-all: slug '%s' no resuelve a ninguna empresa", dest_parsed.slug)
+        logger.warning(
+            "Catch-all: slug '%s' no resuelve a ninguna empresa, guardando en cuarentena",
+            dest_parsed.slug,
+        )
+        ep = EmailProcesado(
+            cuenta_id=None,
+            uid_servidor=str(email_data.get("uid", "")),
+            remitente=email_data.get("from", ""),
+            asunto=email_data.get("subject", ""),
+            estado="CUARENTENA",
+            nivel_clasificacion="MANUAL",
+        )
+        sesion.add(ep)
+        sesion.commit()
         return {"encolados": 0, "motivo": "slug_desconocido"}
 
     hints = extraer_hints_asunto(email_data.get("subject", ""))
