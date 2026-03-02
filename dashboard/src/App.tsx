@@ -64,6 +64,7 @@ const ColaRevision = lazy(() => import('@/features/colas/cola-revision-page'))
 // --- Salud del Sistema ---
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
+const TestingPage = lazy(() => import('@/features/testing/testing-page').then(m => ({ default: m.TestingPage })))
 
 // --- Configuración global ---
 const ConfiguracionPage = lazy(() => import('@/features/configuracion/configuracion-page').then(m => ({ default: m.ConfiguracionPage })))
@@ -208,6 +209,7 @@ export function App() {
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
           <Route path="/salud/:id" element={<SesionDetallePage />} />
+          <Route path="/testing" element={<Suspense fallback={<div>Cargando...</div>}><TestingPage /></Suspense>} />
 
           {/* Configuración global */}
           <Route path="/configuracion" element={<ConfiguracionPage />} />

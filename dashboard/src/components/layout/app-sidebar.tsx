@@ -385,6 +385,16 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  isActive={location.pathname === '/testing'}
+                  onClick={() => navigate('/testing')}
+                  tooltip="SFCE Health"
+                >
+                  <Activity className="h-4 w-4" />
+                  <span>SFCE Health</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   isActive={location.pathname.startsWith('/configuracion')}
                   onClick={() => navigate('/configuracion')}
                   tooltip="Configuración"
