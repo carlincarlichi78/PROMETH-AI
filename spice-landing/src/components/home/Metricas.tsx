@@ -1,12 +1,12 @@
 import { useInView } from '../../hooks/useInView'
 
 const metricas = [
-  { valor: '98%',    label: 'Precisión OCR',               color: 'text-prometh-amber' },
-  { valor: '15 min', label: 'de supervisión al mes',       color: 'text-prometh-amber' },
-  { valor: '28',     label: 'Modelos fiscales',            color: 'text-prometh-amber' },
-  { valor: '1.793',  label: 'Tests pasando',               color: 'text-prometh-green' },
-  { valor: '3',      label: 'Motores IA en paralelo',      color: 'text-prometh-amber' },
-  { valor: '100%',   label: 'Balance cuadrado al céntimo', color: 'text-prometh-green' },
+  { valor: '99%',   label: 'Precisión OCR',               color: 'text-prometh-amber' },
+  { valor: '15 min', label: 'de supervisión al mes',      color: 'text-prometh-amber' },
+  { valor: '28',    label: 'Modelos fiscales',             color: 'text-prometh-amber' },
+  { valor: '2.413', label: 'Tests pasando',                color: 'text-prometh-green' },
+  { valor: '3',     label: 'Motores IA en cascada',        color: 'text-prometh-amber' },
+  { valor: '100%',  label: 'Balance cuadrado al céntimo',  color: 'text-prometh-green' },
 ]
 
 export default function Metricas() {

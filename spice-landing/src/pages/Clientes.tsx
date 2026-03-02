@@ -1,17 +1,48 @@
 import PageLayout from '../components/layout/PageLayout'
-import { Eye, Bell, FileText, MessageCircle, ArrowRight, Check } from 'lucide-react'
+import { Eye, Bell, FileText, MessageCircle, ArrowRight, Check, Smartphone } from 'lucide-react'
 
 const features = [
   { icono: Eye,           titulo: 'Visibilidad de tu negocio',   desc: 'Ve cómo va tu empresa: ingresos, gastos, impuestos. Sin necesitar saber contabilidad.' },
   { icono: Bell,          titulo: 'Alertas de vencimientos',     desc: 'Recibe notificaciones antes de cada plazo fiscal. Nunca más una sanción por olvido.' },
   { icono: FileText,      titulo: 'Tus documentos centralizados',desc: 'Facturas, nóminas, modelos presentados. Todo organizado y accesible desde tu portal.' },
   { icono: MessageCircle, titulo: 'Habla con tu asesor',         desc: 'Canal directo con tu gestoría desde la misma plataforma. Sin emails perdidos.' },
+  { icono: Smartphone,    titulo: 'App móvil',                   desc: 'Sube documentos desde tu teléfono en segundos. La IA los procesa automáticamente.' },
 ]
 
 const propuestas = [
-  { nombre: 'Básico',    desc: 'Visibilidad y alertas fiscales',  items: ['Portal cliente', 'Alertas vencimientos', 'Documentos básicos'],                                    destacado: false },
-  { nombre: 'Completo',  desc: 'Análisis + asesoría integrada',   items: ['Todo lo básico', 'Dashboard financiero', 'Chat con asesor', 'Informes mensuales'],                  destacado: true  },
-  { nombre: 'Premium',   desc: 'Solución total a medida',         items: ['Todo lo completo', 'Asesor dedicado', 'Informes a medida', 'Integración ERP'],                      destacado: false },
+  {
+    nombre: 'Básico',
+    desc: 'Visibilidad y alertas fiscales',
+    items: [
+      'Portal cliente web',
+      'Ver facturas y documentos',
+      'Descargar documentos',
+      'Alertas de vencimientos',
+    ],
+    destacado: false,
+  },
+  {
+    nombre: 'Completo',
+    desc: 'Movilidad + asesoría integrada',
+    items: [
+      'Todo lo del plan Básico',
+      'App móvil para subir documentos',
+      'Alertas push en el móvil',
+      'Proveedores frecuentes reconocidos',
+    ],
+    destacado: true,
+  },
+  {
+    nombre: 'Premium',
+    desc: 'Análisis financiero completo',
+    items: [
+      'Todo lo del plan Completo',
+      'Análisis financiero y ratios',
+      'Comparativas interanuales',
+      'Comparativa con sector (benchmarking)',
+    ],
+    destacado: false,
+  },
 ]
 
 export default function Clientes() {

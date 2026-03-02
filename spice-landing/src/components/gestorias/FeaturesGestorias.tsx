@@ -1,4 +1,4 @@
-import { Brain, FileText, Building2, Shield, RefreshCw, Zap } from 'lucide-react'
+import { Brain, FileText, Building2, Shield, RefreshCw, Zap, Smartphone, Mail, Users } from 'lucide-react'
 
 const features = [
   {
@@ -30,6 +30,21 @@ const features = [
     icono: Shield,
     titulo: 'Aislamiento multi-tenant',
     desc: 'Cada gestoría tiene su espacio completamente aislado. Los datos de un cliente nunca son visibles para otro.',
+  },
+  {
+    icono: Smartphone,
+    titulo: 'App móvil para tus clientes',
+    desc: 'Tus clientes envían documentos desde el móvil. Foto de una factura, y PROMETH-AI la contabiliza automáticamente.',
+  },
+  {
+    icono: Mail,
+    titulo: 'Ingesta automática por email',
+    desc: 'Conecta el buzón de la gestoría. Las facturas que llegan por correo se procesan automáticamente.',
+  },
+  {
+    icono: Users,
+    titulo: 'Onboarding masivo',
+    desc: 'Da de alta decenas de empresas a la vez. Carga escrituras y formularios 036/037 y la IA configura cada empresa automáticamente.',
   },
 ]
 

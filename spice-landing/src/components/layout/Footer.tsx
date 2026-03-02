@@ -9,9 +9,9 @@ const cols = [
     { href: '/clientes',  label: 'Clientes' },
   ]},
   { titulo: 'Producto', links: [
-    { href: '/como-funciona', label: 'Cómo funciona' },
-    { href: '/seguridad',     label: 'Seguridad' },
-    { href: '/precios',       label: 'Precios' },
+    { href: '/tecnologia', label: 'Tecnología' },
+    { href: '/seguridad',  label: 'Seguridad' },
+    { href: '/precios',    label: 'Precios' },
   ]},
 ]
 
