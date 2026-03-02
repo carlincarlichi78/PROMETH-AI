@@ -46,6 +46,7 @@ jobs:
       SFCE_DB_PASSWORD: test_password_ci
       SFCE_DB_NAME: sfce_test
       SFCE_JWT_SECRET: ${{ secrets.SFCE_JWT_SECRET }}
+      SFCE_FERNET_KEY: ${{ secrets.SFCE_FERNET_KEY }}
       # API keys: los tests OCR usan mocks, pero las vars deben existir
       MISTRAL_API_KEY: test_key_ci
       OPENAI_API_KEY: test_key_ci

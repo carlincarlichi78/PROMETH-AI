@@ -3,8 +3,10 @@ from scripts.motor_campo.executor_playwright import ExecutorPlaywright
 from scripts.motor_campo.modelos import ResultadoEjecucion
 
 
+@patch("scripts.motor_campo.executor_playwright._obtener_flujo")
 @patch("scripts.motor_campo.executor_playwright.asyncio.run")
-def test_ejecutar_playwright_retorna_resultado(mock_run):
+def test_ejecutar_playwright_retorna_resultado(mock_run, mock_flujo):
+    mock_flujo.return_value = lambda **kwargs: None
     mock_run.return_value = ResultadoEjecucion(
         escenario_id="test_crear_gestoria", variante_id="playwright",
         canal="playwright", resultado="ok", duracion_ms=8000,
