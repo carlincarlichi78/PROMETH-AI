@@ -97,6 +97,9 @@ class IngestaCorreo:
                         reglas=reglas,
                     )
                     accion = clasificacion.get("accion", "CUARENTENA")
+                    # En gestoría, la IA no silencia emails: si IA dice SPAM → cuarentena manual
+                    if accion == "IGNORAR" and clasificacion.get("nivel") == "IA":
+                        accion = "CUARENTENA"
                     _ESTADO_POR_ACCION = {
                         "CLASIFICAR": "CLASIFICADO",
                         "APROBAR_MANUAL": "CUARENTENA",
