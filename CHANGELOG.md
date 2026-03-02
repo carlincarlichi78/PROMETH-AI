@@ -1,5 +1,30 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 20 — 02/03/2026: Onboarding Masivo — diseño y plan
+
+### Solo diseño/planificación (sin código)
+
+**Feature**: alta automatizada masiva de todos los clientes de una gestoría a partir de documentos fiscales (PDFs, CSVs, Excel).
+
+### Documentos creados
+- `docs/plans/2026-03-02-onboarding-masivo-design.md` — diseño completo: 9 tipos entidad, 6 regímenes transversales, PerfilEmpresa, flujo 7 fases, 6 conflictos con código existente
+- `docs/plans/2026-03-02-onboarding-masivo-plan-parte1.md` — Tasks 1-6: Prerequisites, Migración 017, Clasificador, Parsers libros IVA/IRPF/bienes, Parsers modelos fiscales, PerfilEmpresa+Acumulador+Validador
+- `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md` — Tasks 7-12: Motor creación, Procesador lotes, API endpoints, Dashboard, E2E tests, Suite final (~42 tests total)
+
+### Conflictos críticos identificados (ya documentados en el plan)
+1. `pipeline_runner.py` requiere slug no-null → generar automáticamente
+2. `ActivoFijo` no tiene campos IVA → nueva tabla `bienes_inversion_iva`
+3. `EstadoOnboarding` falta `CREADA_MASIVO`
+4. `forma_juridica` falta `arrendador`
+5. `FEATURES_GESTORIA` vacío → añadir `onboarding_masivo: Tier.PRO`
+6. `fs_setup.py` sin parámetro `tipo_pgc` → no soporta ESFL/Cooperativas
+
+### Próximos pasos
+1. Sesión A: ejecutar Parte 1 con `superpowers:executing-plans`
+2. Sesión B: ejecutar Parte 2 (depende de Parte 1)
+
+---
+
 ## Sesión 16 — 02/03/2026: Evaluación canales de acceso + Brainstorming app móvil
 
 ### Evaluado (sin código)

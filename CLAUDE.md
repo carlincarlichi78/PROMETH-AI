@@ -192,10 +192,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 19 — primer deploy a producción completado)
+## Estado actual (02/03/2026, sesión 20 — Onboarding Masivo diseñado y planificado)
 
 **Rama activa**: `main`
-**Tests**: 2270 PASS, 0 FAILED. Build: ✓. Commit: `b5d88f2`
+**Tests**: 2270 PASS, 0 FAILED. Build: ✓. Commit: `961de5b`
+
+### Onboarding Masivo — Plan listo para ejecutar (sesión 20)
+- Diseño: `docs/plans/2026-03-02-onboarding-masivo-design.md`
+- Plan Parte 1 (Tasks 1-6): `docs/plans/2026-03-02-onboarding-masivo-plan-parte1.md`
+- Plan Parte 2 (Tasks 7-12): `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md`
+- **Ejecución**: Parte 1 primero (sesión A), luego Parte 2 (sesión B) — dependencias secuenciales
+- **Próxima sesión**: ejecutar Parte 1 con `superpowers:executing-plans`
+
+### App Móvil — Plan listo para ejecutar (sesión 17)
+- Diseño: `docs/plans/2026-03-02-mobile-app-redesign-design.md`
+- Plan 10 tareas: `docs/plans/2026-03-02-mobile-app-redesign.md`
+- **Orden de ejecución**: Tasks 1→2→3→4→6→7→8→10→5→9
+- **Próxima sesión**: ejecutar Task 1 (endpoint semáforo) con `superpowers:executing-plans`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
@@ -246,12 +259,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | QUAL-ENUM | `EstadoOnboarding(str, enum.Enum)` reemplaza strings libres | `modelos.py`, `empresas.py`, `onboarding.py` |
 | QUAL-INGESTOR | Validación payloads numéricos en `ingestor.py` | `sfce/analytics/ingestor.py` |
 | QUAL-CNAE | `@validates("cnae")` regex 4 dígitos en modelo Empresa | `modelos.py` |
-
-### App Móvil — Plan listo para ejecutar (sesión 17)
-- Diseño: `docs/plans/2026-03-02-mobile-app-redesign-design.md`
-- Plan 10 tareas: `docs/plans/2026-03-02-mobile-app-redesign.md`
-- **Orden de ejecución**: Tasks 1→2→3→4→6→7→8→10→5→9
-- **Próxima sesión**: ejecutar Task 1 (endpoint semáforo) con `superpowers:executing-plans`
 
 ### App Escritorio (Electron) — Aparcado
 - Misma UI React, solo añade capa nativa para certificados digitales (FNMT/AEAT)
