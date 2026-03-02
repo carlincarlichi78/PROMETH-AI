@@ -35,10 +35,15 @@ def _encolar_archivo(
     email_data: dict,
     directorio: Path,
     sesion: Session,
+    hints_extra: dict | None = None,
 ) -> bool:
     """Encola un ArchivoExtraido en ColaProcesamiento.
 
     Valida PDFs, calcula SHA256, guarda en disco y crea la entrada en cola.
+
+    Args:
+        hints_extra: campos de enriquecimiento adicionales (G7/G13).
+                     Si se proporciona, se almacena en hints_json["enriquecimiento"].
 
     Returns:
         True si el archivo fue encolado, False si fue rechazado.
@@ -62,6 +67,17 @@ def _encolar_archivo(
 
     hints = extraer_hints_asunto(email_data.get("asunto", ""))
 
+    hints_dict: dict = {
+        "tipo_doc": hints.tipo_doc,
+        "nota": hints.nota,
+        "from": email_data.get("remitente", email_data.get("from", "")),
+        "origen": "email_ingesta",
+        "email_id": email_id,
+    }
+    # G7/G13: integrar enriquecimiento si se ha extraído
+    if hints_extra:
+        hints_dict["enriquecimiento"] = hints_extra
+
     item = ColaProcesamiento(
         empresa_id=empresa_id,
         nombre_archivo=nombre,
@@ -70,13 +86,7 @@ def _encolar_archivo(
         trust_level="BAJA",
         sha256=sha,
         empresa_origen_correo_id=empresa_id,
-        hints_json=json.dumps({
-            "tipo_doc": hints.tipo_doc,
-            "nota": hints.nota,
-            "from": email_data.get("remitente", email_data.get("from", "")),
-            "origen": "email_ingesta",
-            "email_id": email_id,
-        }),
+        hints_json=json.dumps(hints_dict),
     )
     sesion.add(item)
     sesion.flush()
