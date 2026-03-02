@@ -1,7 +1,7 @@
 # 11 — API: Todos los Endpoints
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01 (sesión 4)
+> **Actualizado:** 2026-03-02 (sesión 10)
 > **Fuentes:** `sfce/api/rutas/*.py`, `sfce/api/auth.py`
 
 ---
@@ -125,6 +125,13 @@ Solo accesible para roles `superadmin` y `admin_gestoria` (este ultimo solo sobr
 |--------|------|------|-------------|
 | POST | `/api/admin/clientes-directos` | superadmin | Crear cliente sin gestoria asociada (gestoria_id=NULL). Body: `{email, nombre}`. Devuelve token de invitacion |
 
+### Config Pipeline por Empresa (sesión 9)
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/admin/empresas/{empresa_id}/config-procesamiento` | Si (gestor+) | Config del pipeline para una empresa. Si no existe, retorna defaults: `{modo:"revision", schedule_minutos:null, ocr_previo:true, notif_calidad_cliente:true, notif_contable_gestor:true, ultimo_pipeline:null}` |
+| PUT | `/api/admin/empresas/{empresa_id}/config-procesamiento` | Si (gestor+) | Crear/actualizar config. Body: `{modo, schedule_minutos?, ocr_previo?, notif_calidad_cliente?, notif_contable_gestor?}`. Valida `modo in ("auto","revision")` → 422 si invalido |
+
 ---
 
 ## Empresas — `/api/empresas`
@@ -171,7 +178,9 @@ Los roles superadmin/admin_gestoria/asesor ven todas sus empresas via este mismo
 | GET | `/api/portal/mis-empresas` | Si | Lista empresas accesibles para el usuario. Clientes: solo sus `empresas_asignadas`. Gestores/asesores/admin: todas las de su gestoria. Superadmin: todas |
 | GET | `/api/portal/{empresa_id}/resumen` | Si | Resumen simplificado: resultado_acumulado, facturas_pendientes_cobro/pago, importes |
 | GET | `/api/portal/{empresa_id}/documentos` | Si | Ultimos 50 documentos del cliente. Respuesta: `{id, nombre (ruta_pdf), tipo, estado, fecha}` |
-| POST | `/api/portal/{empresa_id}/documentos/subir` | Si | Sube documento desde la app movil. Form-multipart. Campos: `archivo`, `tipo` (Factura/Ticket/Nómina/Extracto/Otro), `proveedor_cif`, `proveedor_nombre`, `base_imponible`, `total`, `salario_bruto`, `retencion_irpf`, `cuota_ss`, `entidad`, `iban`, `periodo`, `saldo_final`, `descripcion`, `importe`. Datos extra se guardan en `datos_ocr` del Documento. Tier check: empresarios necesitan plan `pro`. |
+| POST | `/api/portal/{empresa_id}/documentos/subir` | Si | Sube documento desde la app movil. Form-multipart. Campos: `archivo`, `tipo` (Factura/Ticket/Nómina/Extracto/Otro), `proveedor_cif`, `proveedor_nombre`, `base_imponible`, `total`, `salario_bruto`, `retencion_irpf`, `cuota_ss`, `entidad`, `iban`, `periodo`, `saldo_final`, `descripcion`, `importe`. Datos extra se guardan en `datos_ocr` del Documento. Tier check: empresarios necesitan plan `pro`. Guarda PDF en `docs/uploads/{empresa_id}/{ts}_{uuid}.pdf`. Crea `ColaProcesamiento`. Retorna `{cola_id, ruta_disco, estado: "encolado"}` |
+| POST | `/api/portal/{empresa_id}/documentos/{doc_id}/aprobar` | Si (gestor+) | Aprueba documento en revisión. Body JSON: `{tipo_doc?, proveedor_cif?, proveedor_nombre?, total?}`. Guarda hints en `cola.hints_json`, cambia `cola.estado = "APROBADO"`. El worker procesa en el próximo ciclo. |
+| POST | `/api/portal/{empresa_id}/documentos/{doc_id}/rechazar` | Si (gestor+) | Rechaza documento. Body JSON: `{motivo?}`. Cambia `doc.estado = "rechazado"` y `cola.estado = "RECHAZADO"`. |
 | GET | `/api/portal/{empresa_id}/notificaciones` | Si | Notificaciones del cliente. Incluye: onboarding pendiente, notifs BD (gestor+pipeline), docs pendientes. Devuelve `{notificaciones, no_leidas}` |
 | POST | `/api/portal/{empresa_id}/notificaciones/{notif_id}/leer` | Si | Marca una notificacion BD como leida. |
 | GET | `/api/portal/{empresa_id}/proveedores-frecuentes` | Si | Lista de SupplierRules de la empresa ordenadas por `aplicaciones` desc. Para el selector de proveedor en la app movil. |
@@ -203,6 +212,7 @@ Endpoints de la vista ligera del gestor en la app movil. Solo accesible para rol
 | GET | `/api/gestor/resumen` | Si (gestor+) | Lista de empresas activas con `{id, nombre, cif, estado_onboarding}`. Filtrado por `gestoria_id` del usuario |
 | GET | `/api/gestor/alertas` | Si (gestor+) | Alertas: onboardings pendientes_cliente + cliente_completado con lista de empresas afectadas |
 | POST | `/api/gestor/empresas/{empresa_id}/notificar-cliente` | Si (gestor+) | Crea notificacion BD para el empresario. Body JSON: `{titulo, descripcion?, tipo? (default: aviso_gestor), documento_id?}`. Aparece en tab Alertas de la app del empresario |
+| GET | `/api/gestor/documentos/revision` | Si (gestor+) | Lista documentos en estado `REVISION_PENDIENTE` de todas las empresas del gestor. Retorna `[{id, cola_id, nombre, tipo_doc, empresa_id, empresa_nombre, fecha_subida, datos_ocr}]`. Fuente: `sfce/api/rutas/gestor.py` |
 
 ---
 
@@ -572,15 +582,37 @@ curl -H "Authorization: Bearer <token>" \
 
 ---
 
+## Analytics — `/api/analytics` (Advisor Intelligence Platform)
+
+> Requiere tier **premium** (guard en frontend via `AdvisorGate`). Sin guard backend por ahora.
+> Fuente: `sfce/api/rutas/analytics.py`
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/analytics/{empresa_id}/kpis` | Si | KPIs sectoriales calculados por SectorEngine YAML: `ticket_medio`, `RevPASH`, `coste_por_comensal`. Devuelve array `[{kpi, valor, unidad, fuente}]`. Si empresa no existe → 404 |
+| GET | `/api/analytics/{empresa_id}/resumen-hoy` | Si | Snapshot operativo del dia: ventas, covers, ocupacion, gasto_alimentos, gasto_bebidas. Datos demo hasta que fact_caja tenga datos reales |
+| GET | `/api/analytics/{empresa_id}/ventas-detalle` | Si | Evolucion de ventas ultimos 6 meses desde `fact_venta`. Agrupa por mes. Array `[{mes, ventas, covers}]` |
+| GET | `/api/analytics/{empresa_id}/compras-proveedores` | Si | Top proveedores por gasto (ultimos 12 meses) desde `fact_compra`. Array `[{proveedor, total, pct_total}]` |
+| GET | `/api/analytics/{empresa_id}/sector-brain` | Si | Benchmarks sectoriales anonimos para el KPI indicado. Params: `?kpi=ticket_medio`. Retorna `{percentiles: {p25,p50,p75,n_empresas}, empresa: {valor, posicion}}`. Retorna `{disponible: false}` si empresa sin CNAE, KPI no soportado, o < 5 empresas en el sector |
+| GET | `/api/analytics/autopilot/briefing` | Si | Briefing semanal del asesor: lista de empresas de su cartera con urgencia `rojo/amarillo/verde`, titulo y borrador de mensaje. Ordenado rojo-primero. Devuelve `[{empresa_id, empresa_nombre, urgencia, titulo, descripcion, borrador_mensaje}]` |
+
+**Notas importantes:**
+- `GET /api/analytics/autopilot/briefing` debe declararse ANTES de `/{empresa_id}/**` en el router para que FastAPI no lo interprete como un ID.
+- `sector-brain` requiere campo `cnae` en la empresa (migración 014). Si `cnae` es NULL → `{disponible: false, motivo: "empresa_sin_cnae"}`.
+- `KPI_SOPORTADOS` en `benchmark_engine.py`: actualmente solo `{"ticket_medio"}`. Ampliar con nuevos KPIs manteniendo MIN_EMPRESAS=5.
+- Los módulos de star schema (`fact_caja`, `fact_venta`, etc.) se alimentan manualmente vía `eventos_analiticos` o integración futura con el pipeline.
+
+---
+
 ## Resumen de dominios
 
 | Dominio | Prefijo | Endpoints |
 |---------|---------|-----------|
 | Autenticacion | `/api/auth` | 8 |
-| Administracion (gestorias) | `/api/admin` | 7 |
+| Administracion (gestorias) | `/api/admin` | 9 |
 | Empresas | `/api/empresas` | 11 |
-| Portal Cliente | `/api/portal` | 8 |
-| Gestor Movil | `/api/gestor` | 3 |
+| Portal Cliente | `/api/portal` | 10 |
+| Gestor Movil | `/api/gestor` | 4 |
 | Directorio | `/api/directorio` | 7 |
 | Documentos | `/api/documentos` | 4 |
 | Contabilidad | `/api/contabilidad` | 15 |
@@ -597,4 +629,5 @@ curl -H "Authorization: Bearer <token>" \
 | Configuracion | `/api/config` | 7 |
 | Salud | `/api/salud` | 4 |
 | WebSocket | `/api/ws` | 2 |
-| **Total** | | **136** |
+| **Analytics (Advisor)** | `/api/analytics` | **6** |
+| **Total** | | **140** |

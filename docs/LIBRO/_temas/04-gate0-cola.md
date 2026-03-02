@@ -1,7 +1,7 @@
 # 04 — Gate 0: Preflight, Cola y Scoring
 
 > **Estado:** ✅ COMPLETADO
-> **Actualizado:** 2026-03-02
+> **Actualizado:** 2026-03-02 (sesión 9+10)
 > **Fuentes:** `sfce/core/gate0.py`, `sfce/api/rutas/gate0.py`, `sfce/db/modelos.py`
 
 ---
@@ -509,3 +509,68 @@ flowchart TD
 | Umbral COLA_REVISION                | score >= 70 | `sfce/core/gate0.py` |
 | Umbral COLA_ADMIN                   | score >= 50 | `sfce/core/gate0.py` |
 | Umbral CUARENTENA                   | score < 50  | `sfce/core/gate0.py` |
+
+---
+
+## Flujo portal → pipeline (sesión 9, 01/03/2026)
+
+Cuando un cliente sube un documento desde la app móvil o el portal web, el sistema sigue este flujo:
+
+```
+Portal subir_documento
+    ↓  valida MIME (PDF/JPEG/PNG), max 20 MB
+    ↓  guarda en docs/uploads/{empresa_id}/{ts}_{uuid}.pdf
+    ↓  crea Documento(estado="pendiente", hash_sha256)
+    ↓  crea ColaProcesamiento(estado=modo)
+         modo "auto"     → estado=PENDIENTE    (worker procesa automático)
+         modo "revision" → estado=REVISION_PENDIENTE (gestor revisa primero)
+    ↓  retorna {cola_id, ruta_disco, estado: "encolado"}
+
+Worker daemon (loop_worker_pipeline, cada 60s):
+    ↓  obtener_empresas_con_docs_pendientes(): PENDIENTE ∪ APROBADO
+    ↓  schedule_ok(): compara ultimo_pipeline vs config.schedule_minutos
+    ↓  adquirir_lock_empresa(): evita ejecución paralela por empresa
+    ↓  ejecutar_pipeline_empresa(empresa_id, sf) → ResultadoPipeline
+    ↓  actualiza config.ultimo_pipeline = now()
+    ↓  libera lock
+    ↓  notificar_cuarentena() para docs en cuarentena
+
+Flujo revisión (modo="revision"):
+    Doc en REVISION_PENDIENTE
+    ↓  Gestor ve lista en /revision (RevisionPage)
+    ↓  Gestor enriquece (tipo_doc, CIF, nombre, total)
+    ↓  POST /api/portal/{id}/documentos/{doc_id}/aprobar → APROBADO
+    ↓  Worker detecta APROBADO en próximo ciclo → ejecuta pipeline
+
+Flujo rechazo:
+    ↓  POST /api/portal/{id}/documentos/{doc_id}/rechazar → RECHAZADO
+    ↓  Documento.estado = "rechazado"
+```
+
+### Tabla `config_procesamiento_empresa` (migración 013)
+
+| Campo | Tipo | Default | Descripción |
+|-------|------|---------|-------------|
+| `empresa_id` | FK empresas | — | Empresa (unique) |
+| `modo` | VARCHAR(20) | `"revision"` | `"auto"` o `"revision"` |
+| `schedule_minutos` | INTEGER | NULL | NULL = procesar inmediato |
+| `ocr_previo` | BOOLEAN | True | Ejecutar OCR antes de encolar |
+| `notif_calidad_cliente` | BOOLEAN | True | Notificar al cliente por calidad |
+| `notif_contable_gestor` | BOOLEAN | True | Notificar al gestor si hay incidencia contable |
+| `ultimo_pipeline` | DATETIME | NULL | Timestamp último ciclo ejecutado |
+
+### Nuevos archivos (sesión 9)
+
+| Archivo | Descripción |
+|---------|-------------|
+| `sfce/core/pipeline_runner.py` | `ResultadoPipeline` + `adquirir/liberar_lock_empresa` + `ejecutar_pipeline_empresa` |
+| `sfce/core/worker_pipeline.py` | `loop_worker_pipeline` (daemon async 60s) + `schedule_ok` + `ejecutar_ciclo_worker` |
+| `sfce/db/migraciones/migracion_013.py` | `config_procesamiento_empresa` + `slug`/`ruta_disco`/`cola_id` en empresas/documentos |
+
+### Notificaciones post-pipeline
+
+`sfce/core/notificaciones.py` añade:
+- `clasificar_motivo_cuarentena(motivo)` → `"cliente"` o `"gestor"`
+- `notificar_cuarentena(sesion, empresa_id, motivo, nombre_archivo, documento_id)` → enruta automáticamente
+- Motivos cliente: ilegible, foto borrosa, duplicado (→ `evaluar_motivo_auto`)
+- Motivos gestor: cif_incorrecto, importe_incorrecto, tipo_desconocido (→ `crear_notificacion_bd` tipo=aviso_gestor)

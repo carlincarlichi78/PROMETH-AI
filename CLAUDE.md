@@ -19,7 +19,7 @@
 | Gate 0 / cola | `04-gate0-cola.md` |
 | OCR y tiers | `05-ocr-ia-tiers.md` |
 | Motor de reglas / YAMLs | `06-motor-reglas.md`, `07-sistema-reglas-yaml.md` |
-| Base de datos (39 tablas) | `17-base-de-datos.md` |
+| Base de datos (45 tablas) | `17-base-de-datos.md` |
 | API endpoints (106) | `11-api-endpoints.md` |
 | Seguridad / JWT / 2FA | `22-seguridad.md` |
 | FacturaScripts lecciones | `24-facturascripts.md` |
@@ -161,19 +161,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Migración Histórica | `sfce/core/migracion_historica.py`, `sfce/api/rutas/migracion.py` | Parsea libros IVA CSV → extrae proveedores habituales |
 | Email Service | `sfce/core/email_service.py` | SMTP básico: envía invitaciones automáticamente desde admin.py |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`
-**Tests totales**: 2147 PASS (app móvil 9 tasks completados 01/03/2026)
+| Advisor Intelligence Platform | `sfce/analytics/`, `sfce/db/migraciones/012_star_schema.py`, `sfce/db/migraciones/014_cnae_empresa.py` | Star schema OLAP-lite (6 tablas), SectorEngine YAML, BenchmarkEngine P25/P50/P75, Autopilot briefing. 8 tests |
+| Dashboard Advisor | `dashboard/src/features/advisor/` | 6 páginas: CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia. AdvisorGate tier-premium. 6 feature flags en useTiene.ts |
+
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`
+**Tests totales**: 2213 PASS (sesión 10 completada 02/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
 - **Login**: admin@sfce.local / admin
-- **Estado actual**: build ✓ 4.60s, 119 entries precacheadas. Sesión 9: +RevisionPage + ConfigProcesamientoCard.
+- **Estado actual**: build ✓ 4.50s, 131 entries precacheadas. Sesión 10: +6 páginas Advisor Intelligence Platform (CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia) + AdvisorGate.
 - `.claude/launch.json` configurado con env vars inline — `preview_start` funciona directamente
 - `iniciar_dashboard.bat` en raíz para arranque manual alternativo
 - **Stack**: React 18 + TS strict + Vite 6 + Tailwind v4 + shadcn/ui + Recharts + TanStack Query v5 + Zustand + @tanstack/react-virtual + **vite-plugin-pwa** + **dompurify** + **Inter**
-- **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 15 modulos
-- **Backend extendido**: 75+ rutas, 25 tablas BD.
+- **Arquitectura**: feature-based (`src/features/`), lazy loading, path alias `@/`, 21 modulos (incluye 6 Advisor)
+- **Backend extendido**: 81+ rutas, 45 tablas BD.
 - **Tema Claude**: paleta ámbar OKLCh, dark mode, glassmorphism. Tokens en `src/index.css`. CHART_COLORS en `chart-wrapper.tsx`.
 - **Completado**: OmniSearch (cmdk), Home centro ops, AppSidebar rediseñado, KPICard/EmptyState/PageTitle, page transitions, keyboard shortcuts (G+C/F/D/E/R/H), Configuración 18 secciones.
 - **Home Panel Principal**: sidebar cambiada a dark slate/navy (oklch 245°), KPI strip con tarjetas individuales y borde acento, quick-actions redundantes eliminadas de EmpresaCard.
@@ -188,10 +191,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (01/03/2026, sesión 9 — flujo documentos portal→pipeline)
+## Estado actual (02/03/2026, sesión 11 — cierre libro)
 
 **Rama activa**: `main`
-**Tests**: 2205 PASS (+58). Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**Tests**: 2213 PASS. Build: ✓ 131 entries. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**LIBRO actualizado**: 04-gate0-cola.md (flujo portal→pipeline, config_procesamiento_empresa) + 11-api-endpoints.md (+4 endpoints nuevos, total 140)
+
+### Advisor Intelligence Platform COMPLETADO (sesión 10, 17 tasks)
+- `sfce/analytics/` — SectorEngine (YAML CNAE), BenchmarkEngine (P25/P50/P75, MIN_EMPRESAS=5), Autopilot (briefing semanal), star schema OLAP-lite
+- `sfce/db/migraciones/012_star_schema.py` — 6 tablas: eventos_analiticos, fact_caja, fact_venta, fact_compra, fact_personal, alertas_analiticas
+- `sfce/db/migraciones/014_cnae_empresa.py` — campo `cnae VARCHAR(4)` en empresas
+- `sfce/api/rutas/analytics.py` — 6 endpoints bajo `/api/analytics/`
+- `dashboard/src/features/advisor/` — 6 páginas lazy, todos envueltos en AdvisorGate (tier premium)
+- `dashboard/src/hooks/useTiene.ts` — +6 feature flags advisor_*
+- `dashboard/src/features/advisor/advisor-gate.tsx` — overlay con CTA upgrade a Premium
+- `dashboard/src/App.tsx` — 5 rutas /advisor/*, `@/` alias correcto
+- `dashboard/src/components/layout/app-sidebar.tsx` — grupo Advisor con useTiene guard
+- `tests/test_benchmark_engine.py` (4) + `tests/test_autopilot.py` (4) — 8 tests nuevos
 
 ### Flujo documentos portal→pipeline COMPLETADO (sesión 9)
 - `sfce/db/migraciones/migracion_013.py` — config_procesamiento_empresa + slug/ruta_disco/cola_id en documentos
