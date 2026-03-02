@@ -1,0 +1,139 @@
+empresa:
+  nombre: "MARCOS RUIZ DELGADO"
+  nombre_comercial: "Fontaneria Marcos Ruiz"
+  cif: "29457823K"
+  tipo: autonomo
+  idempresa: 1
+  ejercicio_activo: "2025"
+  codejercicio: "0001"
+  regimen_iva: general
+  direccion: "Calle Larios 23, 2º B, 29015 Malaga"
+  email: "marcos.ruiz@fontaneriamalaga.es"
+  banco:
+    - "ES27 2103 0025 4823 4567 8905"
+
+perfil:
+  descripcion: "Autonomo fontanero en Malaga"
+  modelo_negocio: |
+    Fontaneria, calefaccion y aire acondicionado para particulares,
+    comunidades de propietarios y constructoras. Un empleado a jornada completa.
+    Gestoria externa tramita modelos 130/303/100. Cobra con retencion 15%
+    a clientes profesionales (comunidades, constructoras).
+  actividades:
+    - codigo: "4322"
+      descripcion: "Fontaneria, calefaccion y aire acondicionado"
+      iva_venta: 21
+      exenta: false
+  particularidades:
+    - "Retencion 15% IRPF en facturas a comunidades y constructoras"
+    - "Estimacion directa simplificada IRPF (modelo 130 trimestral)"
+    - "1 empleado — modelos 111 trimestral + 190 anual"
+    - "Vehiculo de trabajo (furgoneta) deducible 50% IRPF + IVA"
+  empleados: true
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores:
+  saneamientos-perez:
+    cif: "B29033073"
+    nombre_fs: "SANEAMIENTOS PEREZ S.L."
+    aliases: ["SANEAMIENTOS PEREZ", "SANEAMIENTOS PÉREZ", "PEREZ SANEAMIENTOS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6010000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Materiales fontaneria: tuberias, griferia, accesorios"
+
+  leroy-merlin:
+    cif: "B82084920"
+    nombre_fs: "LEROY MERLIN ESPANA S.L.U."
+    aliases: ["LEROY MERLIN", "LEROY MERLIN ESPANA", "LEROY MERLÍN"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6010000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Materiales bricolaje y herramientas — tickets simplificados"
+
+  repsol:
+    cif: "A28044279"
+    nombre_fs: "REPSOL S.A."
+    aliases: ["REPSOL", "REPSOL COMBUSTIBLES", "ESTACION REPSOL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible furgoneta de trabajo — deducible 50%"
+
+  tgss-reta:
+    cif: "S2800009B"
+    nombre_fs: "TESORERIA GENERAL SEGURIDAD SOCIAL"
+    aliases: ["TGSS", "SEGURIDAD SOCIAL", "RETA", "AUTÓNOMOS SS"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6410000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota RETA mensual — exenta IVA, deducible IRPF 100%"
+
+  gestoria-lopez:
+    cif: "B29011889"
+    nombre_fs: "GESTORIA LOPEZ S.L."
+    aliases: ["GESTORIA LOPEZ", "GESTORÍA LÓPEZ", "LOPEZ GESTORIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    retencion: 15
+    notas: "Asesoria fiscal mensual — retencion 15% IRPF (servicios profesionales)"
+
+clientes:
+  comunidad-propietarios-sol:
+    cif: "H29033222"
+    nombre_fs: "COMUNIDAD PROPIETARIOS EDIFICIO SOL"
+    aliases: ["COMUNIDAD SOL", "COM. PROP. EDIFICIO SOL", "C.P. EDIFICIO SOL"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    retencion: 15
+    notas: "Mantenimiento zonas comunes — retencion 15% IRPF"
+
+  constructora-hernandez:
+    cif: "B29077443"
+    nombre_fs: "CONSTRUCTORA HERNANDEZ S.L."
+    aliases: ["CONSTRUCTORA HERNANDEZ", "HERNANDEZ CONSTRUCCION", "HERNÁNDEZ S.L."]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    retencion: 15
+    notas: "Trabajos fontaneria en obra — retencion 15% IRPF"
+
+  particulares:
+    cif: ""
+    nombre_fs: "CLIENTES PARTICULARES"
+    aliases: ["PARTICULAR", "PARTICULARES", "CLIENTE"]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    fallback_sin_cif: true
+    notas: "Reformas y fontaneria para particulares — facturas simplificadas <400EUR"
+
+trabajadores:
+  - dni: "45891234M"
+    nombre: "Pedro Gomez Sanchez"
+    puesto: "Oficial fontanero"
+    bruto_mensual: 1500.00
+    pagas: 12
+    confirmado: true
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
