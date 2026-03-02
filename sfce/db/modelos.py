@@ -66,7 +66,8 @@ class Empresa(Base):
     fecha_alta = Column(Date, nullable=False, default=date.today)
     config_extra = Column(JSON, default=dict)  # datos adicionales del config.yaml
     estado_onboarding = Column(
-        Enum(EstadoOnboarding, name="estado_onboarding_enum"),
+        Enum(EstadoOnboarding, name="estado_onboarding_enum",
+             values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=EstadoOnboarding.CONFIGURADA,
         server_default=EstadoOnboarding.CONFIGURADA.value,
