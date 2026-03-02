@@ -39,6 +39,7 @@ COPY --from=builder /root/.local /root/.local
 # Application source code
 COPY sfce/ ./sfce/
 COPY reglas/ ./reglas/
+COPY scripts/motor_campo/ ./scripts/motor_campo/
 COPY pyproject.toml .
 
 # Install sfce package (so imports work)
