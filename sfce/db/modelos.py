@@ -914,3 +914,11 @@ class PushToken(Base):
     fecha_registro = Column(DateTime, nullable=False, default=datetime.utcnow)
     fecha_ultimo_uso = Column(DateTime, nullable=True)
 
+
+# Registro automático de modelos auxiliares en Base.metadata
+# para que create_all() los cree junto al resto de tablas.
+try:
+    from sfce.db import modelos_testing as _mt  # noqa: F401
+except ImportError:
+    pass
+

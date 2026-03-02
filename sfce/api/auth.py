@@ -37,6 +37,17 @@ def _validar_config_seguridad() -> None:
         )
     _JWT_SECRET = secret
 
+    # En producción (PostgreSQL) exigir Fernet key configurada.
+    # Sin ella, las credenciales de correo existentes se vuelven indescifrables al reiniciar.
+    if os.environ.get("SFCE_DB_TYPE") == "postgresql":
+        fernet_key = os.environ.get("SFCE_FERNET_KEY", "").strip()
+        if not fernet_key:
+            raise RuntimeError(
+                "SFCE_FERNET_KEY no configurada. "
+                "Genera una con: "
+                "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+
 
 def _get_secret() -> str:
     """Devuelve el JWT secret. Lazy load si _validar_config_seguridad no fue llamada."""
