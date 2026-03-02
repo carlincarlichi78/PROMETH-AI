@@ -192,33 +192,34 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 32 — Motor Testing Caos P2 Task 9 completada)
+## Estado actual (02/03/2026, sesión 33 — Motor Testing Caos P2 COMPLETADO 17/17)
 
 **Rama activa**: `feat/motor-testing-caos-p1`
-**Tests**: 2439 PASS, 4 skipped, 0 FAILED. Commit: `fe07c1d`
+**Tests**: 2463 PASS, 4 skipped, 0 FAILED. Commit: `8bad0ed`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Motor Testing Caos — P2 EN PROGRESO (sesión 32)
+### Motor Testing Caos — P2 COMPLETADO (sesión 33)
 
 **Plan P1** (Tasks 1-8): COMPLETADO
-**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md`
+**Plan P2** (Tasks 9-17): COMPLETADO
 
-| Task | Estado | Commit |
-|------|--------|--------|
-| 9 — `ExecutorPortal` + usuario `ci_cliente@sfce.local` | ✓ DONE | fe07c1d |
-| 10 — `ExecutorEmail` SMTP + poll cola IMAP | pendiente | — |
-| 11 — `ExecutorBancario` Norma 43 | pendiente | — |
-| 12 — Dashboard `/testing` — SFCE Health | pendiente | — |
-| 13 — CI/CD 5º job smoke-test post-deploy | pendiente | — |
-| 14 — Uptime Kuma heartbeats | pendiente | — |
-| 15 — Refactor scripts Playwright → `ejecutar()` | pendiente | — |
-| 16 — `ExecutorPlaywright` wrapper | pendiente | — |
-| 17 — Regression mode completo | pendiente | — |
+| Task | Estado | Archivos |
+|------|--------|---------|
+| 9 — `ExecutorPortal` | ✓ | `executor_portal.py`, `test_executor_portal.py` |
+| 10 — `ExecutorEmail` SMTP + poll IMAP | ✓ | `executor_email.py`, `test_executor_email.py` |
+| 11 — `ExecutorBancario` Norma 43 | ✓ | `executor_bancario.py`, `test_executor_bancario.py` |
+| 12 — Dashboard `/testing` — SFCE Health | ✓ | `features/testing/testing-page.tsx`, `semaforo-card.tsx` |
+| 13 — CI/CD 5º job smoke-test | ✓ | `.github/workflows/deploy.yml` |
+| 14 — Uptime Kuma heartbeats | ✓ | `worker_testing._enviar_heartbeat()`, `.env.example` |
+| 15 — Refactor Playwright → `ejecutar()` | ✓ | 4 scripts `test_nivel*.py` |
+| 16 — `ExecutorPlaywright` wrapper | ✓ | `executor_playwright.py`, `test_executor_playwright.py` |
+| 17 — Regression mode completo | ✓ | `_escenarios_regression()`, `_segundos_hasta_lunes_3am()`, `test_regression_mode.py` |
 
-**NOTA migración**: usar `020_testing.py` (no 015 — ya existe 015_mensajes_empresa.py)
 **Pendiente producción**: `python sfce/db/migraciones/020_testing.py` vía SSH
-**Próxima sesión**: continuar P2 con Tasks 10-12 usando `superpowers:executing-plans`
+**Pendiente manual**: Configurar 3 monitores Push en Uptime Kuma + slugs en .env del servidor
+**Pendiente manual**: Añadir secret `SFCE_CI_TOKEN` en GitHub (JWT de ci@sfce.local)
+**Próxima sesión**: merge PR feat/motor-testing-caos-p1 → main + deploy producción
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
