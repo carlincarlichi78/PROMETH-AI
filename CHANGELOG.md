@@ -1,5 +1,26 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 28 — 02/03/2026: Email Ingesta Tasks 7-10 + Zoho Mail Tasks 1-5
+
+### Email Ingesta Mejorada — Tasks 7-10
+- `ack_automatico.py` — 7 templates, sin ACK a no-autorizados. `enviar_raw()` en EmailService. 9 tests.
+- `ingesta_correo.py` — integra filtro_ack + score + extractor_adjuntos + _encolar_archivo. 3 tests.
+- `daemon_correo.py` — loop async polling. Registrado en lifespan app.py con cancelación limpia. 2 tests.
+- `onboarding_email.py` — generar_slug_unico + configurar_email_empresa + whitelist. `empresas.py`: campo email_empresario. 6 tests.
+- 118 tests totales en `tests/test_correo/`
+
+### Zoho Mail por Gestoría — Tasks 1-5 (via hooks automáticos)
+- Migración 019: gestoria_id + tipo_cuenta + empresa_id nullable en cuentas_correo
+- CuentaCorreo ORM: nuevos campos gestoria_id, tipo_cuenta
+- ingesta_correo.py: rama gestoria — routing por reglas, omite cuentas 'sistema' en polling
+- API correo admin: CRUD cuentas superadmin + GET/PUT por gestoría
+- docs/zoho-setup.md + .env.example: variables SMTP/DNS Zoho. 19 tests.
+
+### Estado cierre sesión 28
+- 8 commits locales pendientes push (origin en `7ed754e`)
+- Tests: ~2417 collected, ~2405 PASS
+- Pendiente: Zoho Mail Tasks 6-9 (Dashboard UI, deploy prod, libro)
+
 ## Sesión 26 — 02/03/2026: Diseño Zoho Mail por Gestoría
 
 ### Solo diseño y planificación (sin código implementado)
