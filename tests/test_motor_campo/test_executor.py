@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from scripts.motor_campo.executor import Executor
-from scripts.motor_campo.modelos import VarianteEjecucion, ResultadoEsperado
+from scripts.motor_campo.modelos import VarianteEjecucion, ResultadoEsperado, ResultadoEjecucion
+
 
 @pytest.fixture
 def executor():
@@ -13,8 +14,10 @@ def executor():
         codejercicio="0003"
     )
 
+
 def test_executor_inicializa(executor):
     assert executor.empresa_id == 3
+
 
 def test_ejecutar_variante_pipeline_llama_ejecutar_pipeline(executor):
     variante = VarianteEjecucion(
@@ -27,7 +30,9 @@ def test_ejecutar_variante_pipeline_llama_ejecutar_pipeline(executor):
     with patch.object(executor, '_ejecutar_pipeline', return_value={"ok": True, "idfactura": 99}) as mock_p:
         resultado = executor.ejecutar(variante)
     mock_p.assert_called_once()
-    assert resultado["escenario_id"] == "fc_basica"
+    assert isinstance(resultado, ResultadoEjecucion)
+    assert resultado.escenario_id == "fc_basica"
+
 
 def test_ejecutar_variante_api_llama_endpoint(executor):
     variante = VarianteEjecucion(
@@ -42,7 +47,9 @@ def test_ejecutar_variante_api_llama_endpoint(executor):
                                            json=lambda: {"access_token": "x"},
                                            headers={"content-type": "application/json"})
         resultado = executor.ejecutar(variante)
-    assert resultado["http_status"] == 200
+    assert isinstance(resultado, ResultadoEjecucion)
+    assert resultado.detalles.get("http_status") == 200
+
 
 def test_ejecutar_excepcion_capturada(executor):
     variante = VarianteEjecucion(
@@ -52,5 +59,6 @@ def test_ejecutar_excepcion_capturada(executor):
     )
     with patch.object(executor, '_ejecutar_pipeline', side_effect=ConnectionError("sin servidor")):
         resultado = executor.ejecutar(variante)
-    assert resultado["ok"] is False
-    assert "error" in resultado
+    assert isinstance(resultado, ResultadoEjecucion)
+    assert resultado.resultado == "error_sistema"
+    assert "error" in resultado.detalles
