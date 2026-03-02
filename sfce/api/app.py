@@ -148,6 +148,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
         crear_usuario_limiter,
         crear_dependencia_login,
         crear_dependencia_usuario,
+        crear_dependencia_invitacion,
     )
 
     kwargs = {} if sesion_factory else {"lifespan": lifespan}
@@ -171,8 +172,10 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     # Crear limitadores y guardar dependencias en app.state
     login_limiter = crear_login_limiter(limite_login)
     usuario_limiter = crear_usuario_limiter(limite_usuario)
+    invitacion_limiter = crear_login_limiter(limite_login)
     app.state.dep_rate_login = crear_dependencia_login(login_limiter)
     app.state.dep_rate_usuario = crear_dependencia_usuario(usuario_limiter)
+    app.state.dep_rate_invitacion = crear_dependencia_invitacion(invitacion_limiter)
 
     # Si se paso sesion_factory externo (tests), inyectarlo en app.state
     if sesion_factory:
@@ -203,6 +206,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.migracion import router as migracion_router
     from sfce.api.rutas.onboarding import router as onboarding_router
     from sfce.api.rutas.gestor import router as gestor_router
+    from sfce.api.rutas.gestor_mensajes import router as gestor_mensajes_router
     from sfce.api.rutas.analytics import router as analytics_router
     from sfce.api.rutas.health import router as health_router
     from sfce.api.websocket import gestor_ws
@@ -230,6 +234,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(migracion_router)
     app.include_router(onboarding_router)
     app.include_router(gestor_router)
+    app.include_router(gestor_mensajes_router)
     app.include_router(analytics_router)
     app.include_router(health_router)
 

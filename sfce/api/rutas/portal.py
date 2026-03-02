@@ -723,3 +723,72 @@ def ahorra_mes(
             "vencimiento_trimestre": fecha_vencimiento.isoformat(),
             "nota": "Estimación basada en documentos registrados hasta hoy",
         }
+
+
+# ─── Mensajes contextuales (portal cliente) ───────────────────────────────────
+
+@router.get("/{empresa_id}/mensajes")
+def listar_mensajes_portal(
+    empresa_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Lista los mensajes del hilo cliente↔gestor para una empresa."""
+    from sfce.db.modelos import MensajeEmpresa
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
+        msgs = list(sesion.execute(
+            select(MensajeEmpresa)
+            .where(MensajeEmpresa.empresa_id == empresa_id)
+            .order_by(MensajeEmpresa.fecha_creacion.asc())
+        ).scalars().all())
+        return {
+            "mensajes": [
+                {
+                    "id": m.id,
+                    "autor_id": m.autor_id,
+                    "contenido": m.contenido,
+                    "contexto_tipo": m.contexto_tipo,
+                    "contexto_desc": m.contexto_desc,
+                    "fecha": m.fecha_creacion.isoformat(),
+                    "leido": m.leido_cliente if _user.rol == "cliente" else m.leido_gestor,
+                }
+                for m in msgs
+            ]
+        }
+
+
+@router.post("/{empresa_id}/mensajes", status_code=201)
+def enviar_mensaje_portal(
+    empresa_id: int,
+    body: dict,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """El cliente envía un mensaje al gestor."""
+    from sfce.db.modelos import MensajeEmpresa
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
+        contenido = (body.get("contenido") or "").strip()
+        if not contenido:
+            raise HTTPException(400, "El contenido no puede estar vacío")
+        msg = MensajeEmpresa(
+            empresa_id=empresa_id,
+            autor_id=_user.id,
+            contenido=contenido,
+            contexto_tipo=body.get("contexto_tipo"),
+            contexto_id=body.get("contexto_id"),
+            contexto_desc=body.get("contexto_desc"),
+            leido_cliente=True,
+            leido_gestor=False,
+        )
+        sesion.add(msg)
+        sesion.commit()
+        sesion.refresh(msg)
+        return {"id": msg.id, "fecha": msg.fecha_creacion.isoformat()}
