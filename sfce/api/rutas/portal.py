@@ -228,6 +228,7 @@ async def subir_documento(
     # Otro
     descripcion: str = Form(None),
     importe: str = Form(None),
+    nota_gestor: str = Form(None),
     request: Request = None,
     usuario=Depends(obtener_usuario_actual),
 ):
@@ -353,6 +354,22 @@ async def subir_documento(
         sesion.flush()
 
         doc.cola_id = cola.id
+
+        # Si el cliente adjuntó una nota, crear mensaje contextual al hilo
+        if nota_gestor and nota_gestor.strip():
+            from sfce.db.modelos import MensajeEmpresa
+            nombre_doc = Path(doc.ruta_pdf).name if doc.ruta_pdf else doc.tipo_doc
+            sesion.add(MensajeEmpresa(
+                empresa_id=empresa_id,
+                autor_id=usuario.id,
+                contenido=nota_gestor.strip(),
+                contexto_tipo="documento",
+                contexto_id=doc.id,
+                contexto_desc=f"{doc.tipo_doc} · {nombre_doc}",
+                leido_cliente=True,
+                leido_gestor=False,
+            ))
+
         sesion.commit()
         sesion.refresh(doc)
 

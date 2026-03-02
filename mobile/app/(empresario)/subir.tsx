@@ -1,6 +1,6 @@
 // mobile/app/(empresario)/subir.tsx
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StyleSheet } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { Image } from 'react-native'
 import { router } from 'expo-router'
@@ -39,6 +39,7 @@ export default function SubirDocumento() {
   const [tipo, setTipo] = useState<string | null>(null)
   const [archivo, setArchivo] = useState<ImagePicker.ImagePickerAsset | null>(null)
   const [proveedor, setProveedor] = useState<Proveedor | null>(null)
+  const [nota, setNota] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   if (!puedeSubir) {
@@ -87,6 +88,7 @@ export default function SubirDocumento() {
       if (proveedor?.saldo_final) form.append('saldo_final', proveedor.saldo_final)
       if (proveedor?.descripcion) form.append('descripcion', proveedor.descripcion)
       if (proveedor?.importe) form.append('importe', proveedor.importe)
+      if (nota.trim()) form.append('nota_gestor', nota.trim())
 
       await apiUpload(`/api/portal/${empresaId}/documentos/subir`, form)
       setPaso(4)
@@ -186,10 +188,27 @@ export default function SubirDocumento() {
             <ProveedorSelector
               empresaId={empresaId}
               seleccionado={proveedor}
-              onSeleccionar={(p) => { setProveedor(p); setPaso(3) }}
+              onSeleccionar={(p) => { setProveedor(p) }}
               obligatorio
               tipoDoc={tipo ?? 'Factura'}
             />
+            <Text style={s.notaLabel}>Nota para tu gestor (opcional)</Text>
+            <TextInput
+              style={s.notaInput}
+              placeholder="Ej: Esta es la factura de la feria de agosto..."
+              placeholderTextColor="#475569"
+              value={nota}
+              onChangeText={setNota}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[s.botonSiguiente, !proveedor && { opacity: 0.4 }]}
+              onPress={() => { if (proveedor) setPaso(3) }}
+              disabled={!proveedor}
+            >
+              <Text style={s.botonSiguienteTexto}>Siguiente →</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -282,4 +301,16 @@ const s = StyleSheet.create({
   exitoIcono: { backgroundColor: '#10b98122', borderRadius: 44, padding: 28, marginBottom: 28 },
   exitoTitulo: { fontSize: 28, fontWeight: '800', color: '#ffffff', marginBottom: 12, textAlign: 'center' },
   exitoDesc: { fontSize: 16, color: '#94a3b8', textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+
+  notaLabel: { fontSize: 14, color: '#94a3b8', marginTop: 16, marginBottom: 6 },
+  notaInput: {
+    backgroundColor: '#1e293b', borderRadius: 12, padding: 14,
+    color: '#f1f5f9', fontSize: 15, height: 80,
+    textAlignVertical: 'top', marginBottom: 16,
+  },
+  botonSiguiente: {
+    backgroundColor: '#f59e0b', borderRadius: 14,
+    paddingVertical: 16, alignItems: 'center',
+  },
+  botonSiguienteTexto: { fontSize: 15, fontWeight: '700', color: '#0f172a' },
 })
