@@ -220,10 +220,10 @@ def me(request: Request):
 @router.post("/usuarios", status_code=status.HTTP_201_CREATED)
 def crear_usuario(body: CrearUsuarioRequest, request: Request):
     """Crea un nuevo usuario. Requiere rol admin."""
-    admin = requiere_rol("admin")(request)
+    admin = requiere_rol("superadmin")(request)
 
     # Validar rol
-    roles_validos = {"admin", "gestor", "readonly"}
+    roles_validos = {"admin_gestoria", "asesor", "asesor_independiente", "cliente"}
     if body.rol not in roles_validos:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -312,8 +312,8 @@ def aceptar_invitacion(body: AceptarInvitacionRequest, request: Request, respons
 
 @router.get("/usuarios")
 def listar_usuarios(request: Request):
-    """Lista todos los usuarios. Requiere rol admin."""
-    admin = requiere_rol("admin")(request)
+    """Lista todos los usuarios. Requiere rol superadmin."""
+    admin = requiere_rol("superadmin")(request)
 
     sf = request.app.state.sesion_factory
     with sf() as sesion:

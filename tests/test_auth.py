@@ -70,12 +70,12 @@ def admin_token(client):
 
 @pytest.fixture
 def gestor_token(client, admin_token):
-    """Crea un usuario gestor y devuelve su token."""
+    """Crea un usuario asesor y devuelve su token."""
     client.post("/api/auth/usuarios", json={
         "email": "gestor@test.com",
         "nombre": "Gestor Test",
         "password": "gestor123",
-        "rol": "gestor",
+        "rol": "asesor",
         "empresas_ids": [1, 2],
     }, headers={"Authorization": f"Bearer {admin_token}"})
 
@@ -88,12 +88,12 @@ def gestor_token(client, admin_token):
 
 @pytest.fixture
 def readonly_token(client, admin_token):
-    """Crea un usuario readonly y devuelve su token."""
+    """Crea un usuario cliente y devuelve su token."""
     client.post("/api/auth/usuarios", json={
         "email": "readonly@test.com",
         "nombre": "Solo Lectura",
         "password": "readonly123",
-        "rol": "readonly",
+        "rol": "cliente",
     }, headers={"Authorization": f"Bearer {admin_token}"})
 
     resp = client.post("/api/auth/login", json={
@@ -170,7 +170,7 @@ class TestLogin:
         assert "access_token" in data
         assert data["token_type"] == "bearer"
         assert data["usuario"]["email"] == "admin@sfce.local"
-        assert data["usuario"]["rol"] == "admin"
+        assert data["usuario"]["rol"] == "superadmin"
 
     def test_login_password_incorrecto(self, client):
         resp = client.post("/api/auth/login", json={
@@ -198,7 +198,7 @@ class TestMe:
         assert resp.status_code == 200
         data = resp.json()
         assert data["email"] == "admin@sfce.local"
-        assert data["rol"] == "admin"
+        assert data["rol"] == "superadmin"
         assert data["activo"] is True
 
     def test_me_sin_token(self, client):
@@ -226,13 +226,13 @@ class TestCrearUsuario:
             "email": "nuevo@test.com",
             "nombre": "Nuevo Usuario",
             "password": "nuevo123",
-            "rol": "gestor",
+            "rol": "asesor",
             "empresas_ids": [1],
         }, headers={"Authorization": f"Bearer {admin_token}"})
         assert resp.status_code == 201
         data = resp.json()
         assert data["email"] == "nuevo@test.com"
-        assert data["rol"] == "gestor"
+        assert data["rol"] == "asesor"
         assert data["empresas_ids"] == [1]
 
     def test_crear_usuario_como_gestor_403(self, client, gestor_token):
@@ -257,7 +257,7 @@ class TestCrearUsuario:
             "email": "admin@sfce.local",
             "nombre": "Duplicado",
             "password": "dup123",
-            "rol": "readonly",
+            "rol": "cliente",
         }, headers={"Authorization": f"Bearer {admin_token}"})
         assert resp.status_code == 409
 
@@ -266,7 +266,7 @@ class TestCrearUsuario:
             "email": "bad@test.com",
             "nombre": "Bad Rol",
             "password": "bad123",
-            "rol": "superadmin",
+            "rol": "readonly",
         }, headers={"Authorization": f"Bearer {admin_token}"})
         assert resp.status_code == 400
 
@@ -310,7 +310,7 @@ class TestTokenExpiracion:
         """Token con 0 segundos de vida debe dar 401 en /me."""
         # Crear token que ya expiro
         token = crear_token(
-            {"sub": "admin@sfce.local", "rol": "admin"},
+            {"sub": "admin@sfce.local", "rol": "superadmin"},
             expires_delta=timedelta(seconds=-1),
         )
         time.sleep(0.1)
@@ -327,7 +327,7 @@ class TestAdminPorDefecto:
         """crear_admin_por_defecto crea admin solo si no existe."""
         crear_admin_por_defecto(sesion_factory)
         with sesion_factory() as s:
-            admins = s.query(Usuario).filter(Usuario.rol == "admin").all()
+            admins = s.query(Usuario).filter(Usuario.rol == "superadmin").all()
             assert len(admins) == 1
             assert admins[0].email == "admin@sfce.local"
 
@@ -336,7 +336,7 @@ class TestAdminPorDefecto:
         crear_admin_por_defecto(sesion_factory)
         crear_admin_por_defecto(sesion_factory)
         with sesion_factory() as s:
-            admins = s.query(Usuario).filter(Usuario.rol == "admin").all()
+            admins = s.query(Usuario).filter(Usuario.rol == "superadmin").all()
             assert len(admins) == 1
 
 
@@ -348,14 +348,14 @@ class TestRoles:
             "Authorization": f"Bearer {gestor_token}",
         })
         assert resp.status_code == 200
-        assert resp.json()["rol"] == "gestor"
+        assert resp.json()["rol"] == "asesor"
 
     def test_readonly_puede_ver_me(self, client, readonly_token):
         resp = client.get("/api/auth/me", headers={
             "Authorization": f"Bearer {readonly_token}",
         })
         assert resp.status_code == 200
-        assert resp.json()["rol"] == "readonly"
+        assert resp.json()["rol"] == "cliente"
 
     def test_gestor_no_puede_crear_usuarios(self, client, gestor_token):
         resp = client.post("/api/auth/usuarios", json={
@@ -390,7 +390,7 @@ class TestRoles:
             "email": "nuevo_admin_test@test.com",
             "nombre": "Admin Test",
             "password": "test123",
-            "rol": "readonly",
+            "rol": "cliente",
         }, headers={"Authorization": f"Bearer {admin_token}"})
         assert resp.status_code == 201
 
