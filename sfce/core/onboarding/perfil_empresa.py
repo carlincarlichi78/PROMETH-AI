@@ -217,6 +217,21 @@ class Acumulador:
     def obtener_perfil(self) -> PerfilEmpresa:
         return self._perfil
 
+    @classmethod
+    def desde_perfil_existente(cls, datos_json: str) -> "Acumulador":
+        """Restaura un Acumulador a partir del JSON guardado en BD."""
+        import json
+        datos = json.loads(datos_json)
+        acum = cls()
+        # Campos con claves de año que JSON serializa como strings
+        _campos_anyo = {"prorrata_historico", "bins_por_anyo", "pagos_fraccionados"}
+        for campo, valor in datos.items():
+            if hasattr(acum._perfil, campo):
+                if campo in _campos_anyo and isinstance(valor, dict):
+                    valor = {int(k): v for k, v in valor.items()}
+                setattr(acum._perfil, campo, valor)
+        return acum
+
 
 class Validador:
     """Valida un PerfilEmpresa y calcula su score de confianza."""
