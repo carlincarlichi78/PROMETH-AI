@@ -205,6 +205,33 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
+## Estado actual (02/03/2026, sesión 37 — Onboarding Histórico planificado)
+
+**FacturaScripts**: LIMPIO TOTAL (0 empresas, 0 datos). Borrado completo vía SSH + MariaDB.
+**Pipeline_state + procesado/**: reseteados en todos los clientes.
+**Próxima sesión**: ejecutar plan `docs/plans/2026-03-02-onboarding-historico.md`
+
+### Onboarding Histórico — PLAN LISTO (sesión 37)
+
+**Plan**: `docs/plans/2026-03-02-onboarding-historico.md` — 8 tasks
+
+| Task | Estado | Descripción |
+|------|--------|-------------|
+| 1 | pendiente | `clientes/marcos-ruiz/datos_fiscales_2024.yaml` |
+| 2 | pendiente | `clientes/restaurante-la-marea/datos_fiscales_2024.yaml` |
+| 3 | pendiente | `clientes/marcos-ruiz/config.yaml` (completo) |
+| 4 | pendiente | `clientes/restaurante-la-marea/config.yaml` (completo) |
+| 5 | pendiente | `scripts/generar_onboarding_historico.py` + tests |
+| 6 | pendiente | Generar ~32 PDFs onboarding 2024 |
+| 7 | pendiente | Crear empresas en FacturaScripts (FS en blanco) |
+| 8 | pendiente | Pipeline sobre PDFs históricos, observar comportamiento |
+
+**Clientes objetivo**:
+- Marcos Ruiz Delgado (autónomo fontanero): 303×4, 390, 130×4, 111×4, 190, balance, P&G
+- Restaurante La Marea S.L. (hostelería): 303×4, 390, 111×4, 190, 115×4, 180, balance, P&G
+
+---
+
 ## Estado actual (02/03/2026, sesión 36 — Email Enriquecimiento COMPLETADO)
 
 **Rama activa**: `feat/motor-testing-caos-p1` (56 commits adelante de main)
