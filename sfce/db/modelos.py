@@ -864,3 +864,18 @@ class MensajeEmpresa(Base):
     fecha_creacion = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     empresa = relationship("Empresa", backref="mensajes")
+
+
+class PushToken(Base):
+    """Token de dispositivo para notificaciones push via Expo."""
+    __tablename__ = "push_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, nullable=False, index=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
+    token = Column(String(200), nullable=False, unique=True)
+    plataforma = Column(String(10), nullable=True)  # ios | android
+    activo = Column(Boolean, nullable=False, default=True)
+    fecha_registro = Column(DateTime, nullable=False, default=datetime.utcnow)
+    fecha_ultimo_uso = Column(DateTime, nullable=True)
+

@@ -792,3 +792,41 @@ def enviar_mensaje_portal(
         sesion.commit()
         sesion.refresh(msg)
         return {"id": msg.id, "fecha": msg.fecha_creacion.isoformat()}
+
+
+# ─── Push token ───────────────────────────────────────────────────────────────
+
+@router.post("/{empresa_id}/push-token", status_code=201)
+def registrar_push_token(
+    empresa_id: int,
+    body: dict,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+    _user=Depends(obtener_usuario_actual),
+):
+    """Registra o actualiza el token push del dispositivo del usuario."""
+    from sfce.db.modelos import PushToken
+
+    token = (body.get("token") or "").strip()
+    if not token or not token.startswith("ExponentPushToken"):
+        raise HTTPException(400, "Token push inválido")
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
+        existente = sesion.execute(
+            select(PushToken).where(PushToken.token == token)
+        ).scalar_one_or_none()
+
+        if existente:
+            existente.activo = True
+            existente.empresa_id = empresa_id
+        else:
+            sesion.add(PushToken(
+                usuario_id=_user.id,
+                empresa_id=empresa_id,
+                token=token,
+                plataforma=body.get("plataforma"),
+            ))
+        sesion.commit()
+    return {"ok": True}
