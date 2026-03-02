@@ -175,6 +175,26 @@ def crear_admin_por_defecto(sesion_factory) -> None:
             sesion.commit()
 
 
+def crear_usuarios_ci(sesion_factory) -> None:
+    """Crea usuarios CI para testing automatizado. Idempotente."""
+    with sesion_factory() as sesion:
+        ci_usuarios = [
+            {"email": "ci_cliente@sfce.local", "nombre": "CI Cliente",
+             "rol": "cliente", "hash_password": hashear_password("ci_cliente_pass")},
+        ]
+        for u_data in ci_usuarios:
+            if not sesion.query(Usuario).filter_by(email=u_data["email"]).first():
+                sesion.add(Usuario(
+                    email=u_data["email"],
+                    nombre=u_data["nombre"],
+                    hash_password=u_data["hash_password"],
+                    rol=u_data["rol"],
+                    activo=True,
+                    empresas_ids=[],
+                ))
+        sesion.commit()
+
+
 from sfce.db.modelos import Empresa
 
 

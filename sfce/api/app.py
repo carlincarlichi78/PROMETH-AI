@@ -28,7 +28,7 @@ class LimiteTamanioMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 from sfce.db.repositorio import Repositorio
 from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en metadata
-from sfce.api.auth import crear_admin_por_defecto
+from sfce.api.auth import crear_admin_por_defecto, crear_usuarios_ci
 
 
 def _leer_config_bd() -> dict:
@@ -105,6 +105,7 @@ async def lifespan(app: FastAPI):
     app.state.sesion_factory = sesion_factory
     app.state.repo = Repositorio(sesion_factory)
     crear_admin_por_defecto(sesion_factory)
+    crear_usuarios_ci(sesion_factory)
 
     # Conectar gestor de notificaciones a la BD persistente
     from sfce.core.notificaciones import inicializar_gestor
