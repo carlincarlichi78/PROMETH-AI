@@ -81,11 +81,11 @@ Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 ## Clientes
 | Cliente | Carpeta | idempresa | Estado |
 |---------|---------|-----------|--------|
-| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Contabilidad completa |
-| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | FS configurado, carpetas creadas |
-| EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 3 | Pipeline 46/46 OK |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 4 | **Datos inyectados**: 1200 FC + 596 FV + 112 asientos (nominas/amort/IVA). Ejercicios C422/C423/C424/0004. |
-| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 5 | Pipeline completado |
+| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Datos limpiados (sesión 30) |
+| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | **ACTIVO** — 106 FV en FS |
+| EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 7 | Recreada sesión 30 (antes id=3) — sin datos |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 8 | Recreada sesión 30 (antes id=4) — sin datos |
+| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 11 | Recreada sesión 30 (antes id=5) — sin datos |
 
 ## Scripts principales
 | Script | Uso |
@@ -192,12 +192,32 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 29 — Zoho Mail COMPLETADO 9/9)
+## Estado actual (02/03/2026, sesión 30 — BD reseteada, Gmail SMTP, FS limpiado)
 
 **Rama activa**: `main`
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `c20063c`
+**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `77a8b81`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Sesión 30 — BD reseteada + Gmail SMTP + FS limpiado
+
+- **requirements.txt**: añadidos `pandas==2.2.3`, `pyzipper==0.3.6`, `fpdf2==2.8.3` (CI/CD estaba fallando)
+- **BD producción reseteada**: DROP SCHEMA + create_all (44 tablas limpias)
+- **Migración 019 aplicada manualmente**: `ALTER TABLE cuentas_correo` (gestoria_id, tipo_cuenta, empresa_id nullable) + `empresa_origen_correo_id` en cola_procesamiento
+- **Seed inicial**: superadmin (admin@sfce.local/admin) + Gestoría Norte (id=1) + Gestoría Sur (id=2) + 5 asesores + 1 financiero
+- **SMTP Gmail configurado**: smtp.gmail.com:587, carlincarlichi@gmail.com, App Password `vztcpyknzpazvgsy`
+- **Cuenta IMAP SFCE**: imap.gmail.com:993 via ImprovMX catch-all (id=1 en cuentas_correo)
+- **FacturaScripts**: datos empresas 1,3,4,5 limpiados. Empresas 3,4,5 recreadas con nuevos IDs (7,8,11). Solo empresa 2 (Gerardo) conserva datos (106 FV)
+- **CLAVES.md**: creado en PROYECTOS/CLAVES.md con todas las credenciales del proyecto
+- **ACCESOS.md**: sección 25 añadida (Gmail SMTP/IMAP SFCE)
+- **Pendiente**: vincular empresas FS al dashboard SFCE (onboarding con nuevos IDs 1,2,7,8,11)
+
+### Correo — Gmail SMTP/IMAP (sesión 30, definitivo)
+- Zoho descartado (no tiene plan gratuito para dominio propio)
+- SMTP: `smtp.gmail.com:587`, usuario `carlincarlichi@gmail.com`, App Password `vztcpyknzpazvgsy`, FROM `noreply@prometh-ai.es`
+- IMAP: `imap.gmail.com:993`, mismas credenciales. Recepción via ImprovMX catch-all → Gmail
+- Cuenta IMAP registrada en SFCE (id=1, tipo=dedicada)
+- Variables en `/opt/apps/sfce/.env`: `SFCE_SMTP_*`
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
