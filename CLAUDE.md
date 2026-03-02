@@ -204,25 +204,36 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 35 — Design + Plan Email Enriquecimiento COMPLETADO)
+## Estado actual (02/03/2026, sesión 36 — Email Enriquecimiento COMPLETADO)
 
-**Rama activa**: `feat/motor-testing-caos-p1`
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `ae5b6b3`
+**Rama activa**: `feat/motor-testing-caos-p1` (56 commits adelante de main)
+**Tests**: 2530 PASS, 4 skipped, 0 FAILED. Commit: `53c65b9`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
-**Landing**: https://prometh-ai.carloscanetegomez.dev — ONLINE ✓ (SSL válido hasta 2026-05-31)
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Email Enriquecimiento + Grietas — DISEÑO COMPLETADO (sesión 35)
+### Email Enriquecimiento + Grietas — IMPLEMENTADO (sesión 36)
 
-- **Design doc**: `docs/plans/2026-03-02-email-enriquecimiento-design.md`
-- **Plan**: `docs/plans/2026-03-02-email-enriquecimiento-plan.md` — 18 tasks, ~65 tests
-- **Arquitectura**: `ExtractorEnriquecimiento` (GPT-4o) lee cuerpo email → instrucciones contables por adjunto con confianza por campo
-- **Flujos soportados**: cliente directo, gestoría reenvía con instrucciones, multi-cliente en un email, adjunto .eml
-- **Campos enriquecimiento**: iva_deducible_pct, categoria_gasto, subcuenta_contable, reparto_empresas, regimen_especial, ejercicio_override, tipo_doc_override, notas, urgente
-- **Prereqs manuales (usuario)**: App Password Google Workspace + alias `documentacion@prometh-ai.es`
-- **13 grietas** documentadas y planificadas (G1 simplificada — slug ya existe en BD)
-- **Ejecución**: plan en otro terminal (usuario lo ejecuta en paralelo)
-- **Libro**: `docs/LIBRO/_temas/20-correo.md` pendiente de actualizar tras implementación
+**Todos los tasks del plan completados** (`docs/plans/2026-03-02-email-enriquecimiento-plan.md`):
+
+| Componente | Archivos | Tests |
+|-----------|----------|-------|
+| `ExtractorEnriquecimiento` | `sfce/conectores/correo/extractor_enriquecimiento.py` | 8 |
+| Pipeline apply | `sfce/phases/registration.py` — `_aplicar_enriquecimiento()` | 5 |
+| API whitelist G5+G8+G12 | `sfce/api/rutas/correo.py` — 3 endpoints + fixes | 13 |
+| API emails gestor G9 | `sfce/api/rutas/gestor.py` — `GET .../emails` paginado | 6 |
+| Integración ingesta G7+G13 | `sfce/conectores/correo/ingesta_correo.py` | 9 |
+| G2 Desambiguación remitente | `ingesta_correo._detectar_ambiguedad_remitente()` | 8 |
+| API confirmar G11 | `sfce/api/rutas/correo.py` — `POST .../confirmar` | 3 |
+| Dashboard whitelist | `dashboard/src/features/correo/whitelist-page.tsx` | build ✓ |
+| Dashboard emails gestor | `dashboard/src/features/correo/gestor-emails-page.tsx` + dialog | build ✓ |
+
+**Pendiente próxima sesión**:
+1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
+2. Ejecutar migración 020 en producción: `ssh carli@65.108.60.69 → cd /opt/apps/sfce && python sfce/db/migraciones/020_testing.py`
+3. Configurar 3 monitores Push en Uptime Kuma + slugs en .env del servidor
+4. Añadir secret `SFCE_CI_TOKEN` en GitHub (JWT de ci@sfce.local)
+5. Prereqs manuales email: App Password Google Workspace + alias `documentacion@prometh-ai.es`
+6. Actualizar `docs/LIBRO/_temas/20-correo.md` (enriquecimiento, whitelist, G2-G13)
 
 ### Landing PROMETH-AI — COMPLETADO (sesión 34)
 - Rediseño completo SPICE → PROMETH-AI en `spice-landing/`
