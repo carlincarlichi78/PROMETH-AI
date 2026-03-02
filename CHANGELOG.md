@@ -1,5 +1,23 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 26 — 02/03/2026: Diseño Zoho Mail por Gestoría
+
+### Solo diseño y planificación (sin código implementado)
+
+- Brainstorming completo: 3 enfoques evaluados, aprobado Enfoque A (catch-all + buzón por gestoría)
+- Diseño guardado: `docs/plans/2026-03-02-zoho-email-gestoria-design.md`
+- Plan de implementación (9 tasks, ~35 tests): `docs/plans/2026-03-02-zoho-email-gestoria.md`
+- Añadido método `enviar_raw()` a `email_service.py` (cabeceras opcionales)
+
+**Arquitectura decidida:**
+- `noreply@prometh-ai.es` → SMTP saliente
+- `docs@prometh-ai.es` → catch-all para `slug+tipo@prometh-ai.es`
+- `gestoriaX@prometh-ai.es` → un buzón por gestoría, routing por remitente
+
+**Próxima sesión:** ejecutar plan `2026-03-02-zoho-email-gestoria.md` con `superpowers:executing-plans`
+
+---
+
 ## Sesión 23 — 02/03/2026: Diseño Email Ingesta Mejorada
 
 ### Diseñado: sistema de ingesta documental por email

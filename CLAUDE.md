@@ -192,12 +192,18 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 25 — Email Ingesta Mejorada Tasks 1-6)
+## Estado actual (02/03/2026, sesión 26 — Zoho Mail diseñado)
 
 **Rama activa**: `main`
-**Tests**: 2418 PASS (2320 anteriores + 98 correo nuevos), 0 FAILED. Commit: `f0c2a64`
+**Tests**: 2418 PASS, 0 FAILED. Commit: `0193e86`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Zoho Mail — DISEÑADO (sesión 26), pendiente implementar
+- Diseño: `docs/plans/2026-03-02-zoho-email-gestoria-design.md`
+- Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, ~35 tests
+- **Próxima sesión**: ejecutar plan con `superpowers:executing-plans`
+- Arquitectura: catch-all `docs@prometh-ai.es` + un buzón `gestoriaX@prometh-ai.es` por gestoría + `noreply@` para SMTP
 
 ### Onboarding Masivo — COMPLETADO (sesiones 22+24)
 - `sfce/core/onboarding/` — clasificador + parsers + perfil_empresa + motor_creacion + procesador_lote
