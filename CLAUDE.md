@@ -192,12 +192,17 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 22 — Onboarding Masivo Parte 1 completada)
+## Estado actual (02/03/2026, sesión 23 — Email Ingesta Mejorada diseñada)
 
 **Rama activa**: `main`
-**Tests**: 2323 PASS, 0 FAILED, 4 skipped. Build: ✓. Commit: `d872f52`
+**Tests**: 2323 PASS, 0 FAILED, 4 skipped. Build: ✓. Commit: `195e570`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Email Ingesta Mejorada — Plan listo para ejecutar (sesión 23)
+- Plan: `docs/plans/2026-03-02-email-ingesta-mejorada.md` — 10 tasks, 84 tests
+- **Próxima sesión A**: ejecutar con `superpowers:executing-plans`
+- **Gaps que cierra**: ZIP+contraseña, loop ACK, whitelist remitentes, score multi-señal, ACK categorizado, IngestaCorreo→ColaProcesamiento, daemon lifespan, onboarding→email
 
 ### App Móvil — COMPLETADA Y OPERATIVA
 - **Acceso**: `cd mobile && npx expo start --web` (apunta a `https://api.prometh-ai.es` por defecto)
@@ -210,7 +215,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - `sfce/core/onboarding/` — clasificador + parsers_libros + parsers_modelos + perfil_empresa
 - Migración 017 ejecutada en BD real (4 tablas: onboarding_lotes/perfiles/documentos, bienes_inversion_iva)
 - Plan Parte 2 (Tasks 7-12): `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md`
-- **Próxima sesión**: ejecutar Parte 2 con `superpowers:executing-plans`
+- **Próxima sesión B**: ejecutar Parte 2 con `superpowers:executing-plans`
 
 ### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
 

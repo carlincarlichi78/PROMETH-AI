@@ -1,5 +1,30 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 23 — 02/03/2026: Diseño Email Ingesta Mejorada
+
+### Diseñado: sistema de ingesta documental por email
+
+**Contexto:** Se identificó que el módulo de correo existente (`sfce/conectores/correo/`) tenía 3 gaps críticos:
+- `IngestaCorreo` no encolaba PDFs en `ColaProcesamiento`
+- No había daemon de polling registrado en el lifespan del API
+- El onboarding no generaba dirección email dedicada por empresa
+
+**Mejoras diseñadas y planificadas:**
+- Extractor de adjuntos multi-formato: ZIP recursivo (depth=2), zip-bomb detection, ZIPs con contraseña, XLS/TXT/XML/IMG
+- Parser FacturaE XML: extracción sin OCR, confianza 1.0
+- Filtro anti-loop ACK: detecta respuestas automáticas por asunto y cabecera `X-SFCE-ACK`
+- Whitelist de remitentes por empresa (dominio wildcard + email exacto)
+- Score multi-señal (whitelist + DKIM + filename + historial), umbrales 0.85/0.60
+- ACK automático categorizado por motivo, nunca ACK a `REMITENTE_NO_AUTORIZADO`
+- Conexión `IngestaCorreo → ColaProcesamiento` (gap crítico cerrado)
+- Daemon de polling registrado en lifespan FastAPI
+- Onboarding genera slug + CuentaCorreo + whitelist inicial + dirección dedicada
+
+**Plan:** `docs/plans/2026-03-02-email-ingesta-mejorada.md` — 10 tasks, 84 tests
+**Commit:** `195e570`
+
+---
+
 ## Sesión 22 — 02/03/2026: Onboarding Masivo Parte 1 (Tasks 1-6)
 
 ### Implementado: pipeline de ingesta documental masiva
