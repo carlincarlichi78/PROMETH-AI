@@ -1,5 +1,52 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 22 — 02/03/2026: Onboarding Masivo Parte 1 (Tasks 1-6)
+
+### Implementado: pipeline de ingesta documental masiva
+
+**Task 1 — Prerequisites** (`sfce/db/modelos.py`, `sfce/core/tiers.py`, `sfce/core/fs_setup.py`, `sfce/core/config_desde_bd.py`)
+- `EstadoOnboarding.CREADA_MASIVO = "creada_masivo"` añadido al enum
+- `FEATURES_GESTORIA["onboarding_masivo"] = Tier.PRO`
+- `importar_pgc(tipo_pgc="general")` — soporte PGC general/pymes/esfl/cooperativas
+- `_FORMA_A_TIPO` movida a nivel de módulo + `"arrendador"` añadido
+- `datos["empresa"]` expone: `recc`, `prorrata_historico`, `bins_por_anyo`, `tipo_is`, `es_erd`, `retencion_facturas_pct`, `obligaciones_adicionales`
+
+**Task 2 — Migración 017** (`sfce/db/migraciones/migracion_017_onboarding_masivo.py`)
+- 4 tablas nuevas: `onboarding_lotes`, `onboarding_perfiles`, `onboarding_documentos`, `bienes_inversion_iva`
+- Ejecutada en BD real (sfce.db)
+
+**Task 3 — Clasificador** (`sfce/core/onboarding/clasificador.py`)
+- 19 tipos detectados: modelos fiscales (036/037, 200, 202, 303, 390, 130, 131, 100, 111, 190, 347, 184), escrituras, libros CSV/Excel
+- PDF: patrones regex por cabecera AEAT. CSV/Excel: columnas clave
+- Fix: threshold texto vacío 50→20 chars
+
+**Task 4 — Parsers libros AEAT** (`sfce/core/onboarding/parsers_libros.py`)
+- `parsear_libro_facturas_emitidas` — agrega clientes + importe habitual
+- `parsear_libro_facturas_recibidas` — agrega proveedores + importe habitual
+- `parsear_sumas_y_saldos` — saldos por subcuenta + check cuadre (tolerancia 1€)
+- `parsear_libro_bienes_inversion` — bienes con años regularización IVA
+
+**Task 5 — Parsers modelos fiscales** (`sfce/core/onboarding/parsers_modelos.py`)
+- `parsear_modelo_200`: tipo_is, es_erd, bins_total
+- `parsear_modelo_303`: recc, trimestre, prorrata_pct
+- `parsear_modelo_390`: prorrata_definitiva
+- `parsear_modelo_130`: trimestre, pago_fraccionado
+- `parsear_modelo_100`: retencion_pct, pagos_fraccionados_total
+- `parsear_modelo_111`: trimestre, tiene_trabajadores
+
+**Task 6 — PerfilEmpresa** (`sfce/core/onboarding/perfil_empresa.py`)
+- `PerfilEmpresa`: dataclass con 25+ campos fiscales/contables
+- `Acumulador`: incorpora datos de 10+ tipos de documento
+- `Validador`: checks duros (NIF, 036, P.Vasco/Navarra) + blandos + score 0-100
+- Score ≥85 → apto creación automática. <85 → revisión manual
+- Detección territorio por CP (prefijo 01/20/48→PV, 31→NAV, 35/38→CAN, 51→CEU, 52→MEL)
+
+**Tests**: 27 nuevos (6 archivos) + 1 regresión arreglada en test_fs_setup. Suite total: 2296/2296 PASS → 2323/2323 PASS
+
+**Commits**: fcedd67 → d872f52 (7 commits en main)
+
+---
+
 ## Sesión 21 — 02/03/2026: App móvil operativa + recuperar contraseña
 
 ### Problema resuelto: app móvil no funcionaba en dispositivo real

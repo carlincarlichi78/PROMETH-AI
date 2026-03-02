@@ -192,16 +192,12 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 21 — App móvil operativa + recuperar contraseña)
+## Estado actual (02/03/2026, sesión 22 — Onboarding Masivo Parte 1 completada)
 
 **Rama activa**: `main`
-**Tests**: 2285 PASS, 2 FAILED (pre-existentes onboarding masivo), 4 skipped. Build: ✓. Commit: `3bcd756`
+**Tests**: 2323 PASS, 0 FAILED, 4 skipped. Build: ✓. Commit: `d872f52`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
-
-### Tests fallando (2, pre-existentes — no son de esta sesión)
-- `tests/test_fs_setup.py::TestFsSetup::test_setup_completo`
-- `tests/test_onboarding_parsers_libros.py::test_parsea_sumas_y_saldos`
 
 ### App Móvil — COMPLETADA Y OPERATIVA
 - **Acceso**: `cd mobile && npx expo start --web` (apunta a `https://api.prometh-ai.es` por defecto)
@@ -210,12 +206,11 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
   - Sin SMTP: token aparece en logs del servidor (`docker compose logs sfce_api | grep RESET`)
 - **Migraciones en producción**: 015 (mensajes_empresa) + 016 (push_tokens) + 017 (reset_token) ✓
 
-### Onboarding Masivo — Implementación iniciada (sesión 20+)
-- Diseño: `docs/plans/2026-03-02-onboarding-masivo-design.md`
-- Plan Parte 1 (Tasks 1-6): `docs/plans/2026-03-02-onboarding-masivo-plan-parte1.md`
+### Onboarding Masivo — Parte 1 COMPLETADA (sesión 22), Parte 2 pendiente
+- `sfce/core/onboarding/` — clasificador + parsers_libros + parsers_modelos + perfil_empresa
+- Migración 017 ejecutada en BD real (4 tablas: onboarding_lotes/perfiles/documentos, bienes_inversion_iva)
 - Plan Parte 2 (Tasks 7-12): `docs/plans/2026-03-02-onboarding-masivo-plan-parte2.md`
-- **Implementado**: prerequisites (`CREADA_MASIVO`, arrendador, tipo_pgc, recc), migración 017 onboarding, clasificador 19 tipos
-- **Próxima sesión**: continuar Parte 1 con `superpowers:executing-plans`
+- **Próxima sesión**: ejecutar Parte 2 con `superpowers:executing-plans`
 
 ### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
 
