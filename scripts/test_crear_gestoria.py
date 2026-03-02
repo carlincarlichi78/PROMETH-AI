@@ -4,8 +4,6 @@ Flujo: login como superadmin -> /admin/gestorias -> crear nueva gestoria -> veri
 """
 import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:3001"
@@ -217,7 +215,7 @@ async def ejecutar(base_url: str = "https://app.prometh-ai.es",
 
 
 if __name__ == "__main__":
-    import sys
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     resultado = asyncio.run(ejecutar(headless="--headed" not in sys.argv))
     print(f"{'OK' if resultado.resultado == 'ok' else 'FAIL'}: {resultado.escenario_id} — {resultado.duracion_ms}ms")
     sys.exit(0 if resultado.resultado == "ok" else 1)
