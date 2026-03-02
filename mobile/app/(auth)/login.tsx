@@ -96,6 +96,14 @@ export default function LoginScreen() {
             : <Text style={s.botonTexto}>Entrar</Text>
           }
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={s.linkOlvide}
+          onPress={() => router.push('/(auth)/recuperar-password')}
+          activeOpacity={0.7}
+        >
+          <Text style={s.linkOlvideTexto}>¿Olvidaste tu contraseña?</Text>
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -187,5 +195,13 @@ const s = StyleSheet.create({
     fontWeight: '800',
     color: '#0f172a',
     letterSpacing: 0.5,
+  },
+  linkOlvide: {
+    marginTop: 18,
+    alignItems: 'center',
+  },
+  linkOlvideTexto: {
+    color: '#94a3b8',
+    fontSize: 14,
   },
 })

@@ -69,6 +69,10 @@ class Usuario(Base):
     invitacion_token = Column(String(128), nullable=True, unique=True, index=True)
     invitacion_expira = Column(DateTime, nullable=True)
     forzar_cambio_password = Column(Boolean, nullable=False, default=False)
+
+    # Reset de contraseña
+    reset_token = Column(String(128), nullable=True, unique=True, index=True)
+    reset_token_expira = Column(DateTime, nullable=True)
     plan_tier = Column(String(10), nullable=False, default=TIER_BASICO, server_default=TIER_BASICO)
 
     gestoria = relationship("Gestoria", back_populates="usuarios")

@@ -483,3 +483,88 @@ def confirm_2fa(body: Confirm2FARequest, request: Request):
             "rol": u_rol,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Reset de contraseña
+# ---------------------------------------------------------------------------
+
+import logging as _logging
+import secrets as _secrets
+
+_logger_reset = _logging.getLogger(__name__)
+
+
+class _RecuperarBody(BaseModel):
+    email: EmailStr
+
+
+class _ResetBody(BaseModel):
+    token: str
+    nueva_password: str
+
+
+@router.post("/recuperar-password", status_code=status.HTTP_200_OK)
+def recuperar_password(body: _RecuperarBody, request: Request):
+    """Genera un token de reset. Si hay SMTP configurado, envía email.
+    Siempre responde 200 (no revela si el email existe)."""
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        u = sesion.query(Usuario).filter(
+            Usuario.email == body.email,
+            Usuario.activo == True,  # noqa: E712
+        ).first()
+
+        if u:
+            token = _secrets.token_urlsafe(32)
+            u.reset_token = token
+            u.reset_token_expira = datetime.now(timezone.utc) + timedelta(hours=2)
+            sesion.commit()
+
+            try:
+                from sfce.core.email_service import EmailService
+                svc = EmailService()
+                svc.enviar_reset_password(body.email, u.nombre, token)
+            except Exception:
+                # Sin SMTP: loguear token para que el admin lo recupere
+                _logger_reset.warning(
+                    "RESET PASSWORD sin SMTP — email=%s token=%s (valido 2h)",
+                    body.email, token,
+                )
+
+    return {"mensaje": "Si el email esta registrado recibiras instrucciones para restablecer tu contrasena."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password_endpoint(body: _ResetBody, request: Request):
+    """Valida el token y establece la nueva contrasena."""
+    if len(body.nueva_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La contrasena debe tener al menos 8 caracteres.",
+        )
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        u = sesion.query(Usuario).filter(
+            Usuario.reset_token == body.token,
+            Usuario.activo == True,  # noqa: E712
+        ).first()
+
+        ahora = datetime.now(timezone.utc)
+        expira = u.reset_token_expira.replace(tzinfo=timezone.utc) if u and u.reset_token_expira else None
+
+        if not u or not expira or ahora > expira:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token invalido o expirado.",
+            )
+
+        u.hash_password = hashear_password(body.nueva_password)
+        u.reset_token = None
+        u.reset_token_expira = None
+        u.failed_attempts = 0
+        u.locked_until = None
+        sesion.commit()
+
+    return {"mensaje": "Contrasena actualizada correctamente. Ya puedes iniciar sesion."}

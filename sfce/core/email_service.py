@@ -72,6 +72,38 @@ class EmailService:
             server.sendmail(self._config.from_address, destinatario, msg.as_string())
         logger.info("Invitacion enviada a %s", destinatario)
 
+    def enviar_reset_password(self, destinatario: str, nombre: str, token: str) -> None:
+        if not self._config:
+            raise RuntimeError("SMTP no configurado")
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Restablecer contrasena SFCE"
+        msg["From"] = self._config.from_address
+        msg["To"] = destinatario
+
+        texto_plano = (
+            f"Hola {nombre},\n\n"
+            f"Tu codigo de recuperacion es:\n\n{token}\n\n"
+            f"Introdu­celo en la app para establecer una nueva contrasena.\n"
+            f"Caduca en 2 horas.\n"
+        )
+        texto_html = f"""<html><body>
+        <h2>Restablecer contrasena</h2>
+        <p>Hola <strong>{nombre}</strong>,</p>
+        <p>Tu codigo de recuperacion es:</p>
+        <p style="font-size:24px;font-weight:bold;letter-spacing:4px;color:#0f172a;">{token}</p>
+        <p style="color:#64748b;font-size:12px;">Caduca en 2 horas.</p>
+        </body></html>"""
+
+        msg.attach(MIMEText(texto_plano, "plain"))
+        msg.attach(MIMEText(texto_html, "html"))
+
+        with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+            server.starttls()
+            server.login(self._config.smtp_user, self._config.smtp_password)
+            server.sendmail(self._config.from_address, destinatario, msg.as_string())
+        logger.info("Reset password enviado a %s", destinatario)
+
 
 _servicio_global: Optional[EmailService] = None
 
