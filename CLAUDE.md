@@ -192,10 +192,35 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 18 — sprint P2-P3 seguridad+calidad completado)
+## Estado actual (02/03/2026, sesión 19 — primer deploy a producción completado)
 
 **Rama activa**: `main`
-**Tests**: 2270 PASS, 0 FAILED (+22 esta sesión). Build: ✓ 131 entries. Commit: `8f510cb`
+**Tests**: 2270 PASS, 0 FAILED. Build: ✓. Commit: `b5d88f2`
+**Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
+
+### Deploy producción COMPLETADO (sesión 19 — 02/03/2026)
+
+| Item | Estado | Notas |
+|------|--------|-------|
+| GitHub Secrets (8) | ✓ | SFCE_JWT_SECRET, SFCE_DB_PASSWORD, SSH_*, API keys |
+| .env en servidor | ✓ | `/opt/apps/sfce/.env` |
+| Migración SQLite→PostgreSQL | ✓ | 547 filas, 0 errores |
+| nginx configs copiados | ✓ | app-prometh-ai.conf, api-prometh-ai.conf |
+| DNS app/api.prometh-ai.es | ✓ | Añadidos en DonDominio → 65.108.60.69 |
+| SSL certificados | ✓ | Let's Encrypt via certbot webroot |
+| CI/CD pipeline | ✓ | Tests ✓ → Docker build ✓ → Deploy SSH ✓ |
+| Secuencias PG reseteadas | ✓ | Post-migración: todas las secuencias al MAX(id) |
+
+### Fixes aplicados en sesión 19
+
+| Fix | Descripción |
+|-----|-------------|
+| `email-validator` en requirements | Faltaba en CI |
+| `libglib2.0-0t64` en Dockerfile | Debian Trixie t64 transition (antes: `libglib2.0-0`) |
+| `libgdk-pixbuf-2.0-0` en Dockerfile | Nombre corregido para Debian Bookworm |
+| Permisos `/opt/apps/sfce/` | `chown carli:carli` para que CI pueda escribir |
+| Login GHCR en deploy | `docker login ghcr.io` antes de `docker compose pull` |
+| Secuencias PG | Reset post-migración SQLite→PG (UniqueViolation en audit_log) |
 
 ### Sprint P2-P3 COMPLETADO (sesión 18 — 02/03/2026)
 
