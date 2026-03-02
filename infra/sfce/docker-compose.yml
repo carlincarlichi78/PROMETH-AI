@@ -43,6 +43,35 @@ services:
       sfce_db:
         condition: service_healthy
 
+  sfce_api:
+    image: ghcr.io/carlincarlichi78/spice:latest
+    container_name: sfce_api
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # PDFs subidos por clientes — persisten fuera del contenedor
+      - ./docs/uploads:/app/docs/uploads
+      # YAMLs del motor de reglas — editables en caliente sin rebuild
+      - ./reglas:/app/reglas
+    networks:
+      - sfce_internal   # Para acceder a sfce_db por nombre de contenedor
+      - nginx_default   # Para que nginx proxie por nombre de contenedor
+    depends_on:
+      sfce_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
 networks:
   sfce_internal:
     driver: bridge
