@@ -192,12 +192,24 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 33 — Motor Testing Caos P2 COMPLETADO 17/17)
+## Estado actual (02/03/2026, sesión 34 — Landing PROMETH-AI + subdominio .dev COMPLETADO)
 
-**Rama activa**: `feat/motor-testing-caos-p1`
-**Tests**: 2463 PASS, 4 skipped, 0 FAILED. Commit: `8bad0ed`
+**Rama activa**: `main`
+**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `61d25c0`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
+**Landing**: https://prometh-ai.carloscanetegomez.dev — ONLINE ✓ (SSL válido hasta 2026-05-31)
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Landing PROMETH-AI — COMPLETADO (sesión 34)
+- Rediseño completo SPICE → PROMETH-AI en `spice-landing/`
+- Métricas actualizadas: 99% OCR, 2.413 tests, 28 modelos, 3 motores, 50 categorías MCF
+- Nueva página `/tecnologia` (reemplaza `/como-funciona`)
+- Nueva sección "Nueva Generación": App móvil, Advisor Intelligence, Email ingestion, Onboarding masivo
+- Tiers actualizados: Básico / Pro / Premium con features reales
+- Desplegado en producción: `/opt/apps/spice-landing/` en servidor Hetzner
+- DNS `prometh-ai A 65.108.60.69` creado en Porkbun
+- SSL Let's Encrypt + nginx config `/opt/infra/nginx/conf.d/prometh-ai-landing.conf`
+- Ficha PROMETH-AI añadida al hub `carloscanetegomez.dev` (`web-personal/src/data/proyectos.js`)
 
 ### Motor Testing Caos — P2 COMPLETADO (sesión 33)
 
