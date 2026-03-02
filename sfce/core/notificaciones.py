@@ -31,6 +31,7 @@ class TipoNotificacion(Enum):
     FACTURA_RECURRENTE_FALTANTE = "factura_recurrente_faltante"
     ERROR_REGISTRO = "error_registro"
     CUARENTENA = "cuarentena"
+    INSTRUCCION_AMBIGUA = "instruccion_ambigua"
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +66,11 @@ PLANTILLAS: dict = {
     TipoNotificacion.CUARENTENA: {
         "titulo": "Documento en cuarentena: '{nombre}'",
         "mensaje": "El documento '{nombre}' ha ido a cuarentena y requiere revision manual.",
+    },
+    TipoNotificacion.INSTRUCCION_AMBIGUA: {
+        "titulo": "Instrucciones de email pendientes de confirmación",
+        "mensaje": "El email de '{remitente}' contiene instrucciones con baja confianza. "
+                   "Revisa y confirma los campos: {campos}.",
     },
 }
 
