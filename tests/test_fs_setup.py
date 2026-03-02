@@ -54,4 +54,4 @@ class TestFsSetup:
         assert r.pgc_importado is True
         m_emp.assert_called_once_with("Test S.L.", "B88888888")
         m_ej.assert_called_once_with(8, 2025)
-        m_pgc.assert_called_once_with("0008")
+        m_pgc.assert_called_once_with("0008", tipo_pgc="general")
