@@ -192,12 +192,32 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 29 — Zoho Mail COMPLETADO 9/9)
+## Estado actual (02/03/2026, sesión 30 — Motor Testing Caos: diseño + plan + Tasks 1-2)
 
 **Rama activa**: `main`
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `c20063c`
+**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `96fe4ff`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Motor Testing Caos — sesión 30 (iniciado)
+
+**Design doc**: `docs/plans/2026-03-02-motor-testing-chaos-design.md` (commit 61d25c0)
+**Plan P1** (Tasks 1-8): `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md`
+**Plan P2** (Tasks 9-17): `docs/plans/2026-03-02-motor-testing-chaos-plan-p2.md`
+
+**Progreso plan P1:**
+| Task | Estado | Commit |
+|------|--------|--------|
+| 1 — `ResultadoEjecucion` dataclass en `modelos.py` | ✓ DONE | 25a8503 |
+| 2 — `executor.py` retorna `ResultadoEjecucion` con IDs | ✓ DONE | 96fe4ff |
+| 3 — `CleanupCompleto` 3 capas (FS+BD+disco) | pendiente | — |
+| 4 — `ValidatorV2` IVA+razon_cuarentena+duracion | pendiente | — |
+| 5 — Migración 015 + `modelos_testing.py` | pendiente | — |
+| 6 — `biblioteca/` + `manifesto.json` | pendiente | — |
+| 7 — `WorkerTesting` SMOKE+VIGILANCIA + lifespan | pendiente | — |
+| 8 — API `/testing` (4 endpoints) + health extendido | pendiente | — |
+
+**Próxima sesión**: continuar con Task 3 usando `superpowers:executing-plans` + `docs/plans/2026-03-02-motor-testing-chaos-plan-p1.md`
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados
