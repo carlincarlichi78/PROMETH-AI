@@ -194,7 +194,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## Estado actual (02/03/2026, sesión 30 — Motor Testing Caos: diseño + plan + Tasks 1-2)
 
-**Rama activa**: `main`
+**Rama activa**: `feat/motor-testing-caos-p1` (merge a main al completar P1)
 **Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `96fe4ff`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
@@ -210,7 +210,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 |------|--------|--------|
 | 1 — `ResultadoEjecucion` dataclass en `modelos.py` | ✓ DONE | 25a8503 |
 | 2 — `executor.py` retorna `ResultadoEjecucion` con IDs | ✓ DONE | 96fe4ff |
-| 3 — `CleanupCompleto` 3 capas (FS+BD+disco) | pendiente | — |
+| 3 — `CleanupCompleto` 3 capas (FS+BD+disco) | ✓ DONE | c4f19c5 |
 | 4 — `ValidatorV2` IVA+razon_cuarentena+duracion | pendiente | — |
 | 5 — Migración 015 + `modelos_testing.py` | pendiente | — |
 | 6 — `biblioteca/` + `manifesto.json` | pendiente | — |
