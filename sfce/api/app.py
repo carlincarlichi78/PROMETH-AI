@@ -205,6 +205,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.colas import router as colas_router
     from sfce.api.rutas.migracion import router as migracion_router
     from sfce.api.rutas.onboarding import router as onboarding_router
+    from sfce.api.rutas.onboarding_masivo import router as onboarding_masivo_router
     from sfce.api.rutas.gestor import router as gestor_router
     from sfce.api.rutas.gestor_mensajes import router as gestor_mensajes_router
     from sfce.api.rutas.analytics import router as analytics_router
@@ -233,6 +234,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(colas_router)
     app.include_router(migracion_router)
     app.include_router(onboarding_router)
+    app.include_router(onboarding_masivo_router)
     app.include_router(gestor_router)
     app.include_router(gestor_mensajes_router)
     app.include_router(analytics_router)
