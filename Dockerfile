@@ -20,10 +20,17 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Runtime libraries only (libpq for psycopg2, libgomp for PyMuPDF)
+# Runtime libraries (libpq para psycopg2, libgomp para PyMuPDF, pango/cairo para WeasyPrint)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libgomp1 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libglib2.0-0 \
+    libffi8 \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder
