@@ -1,5 +1,27 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-02 (sesión 12) — Auditoría estado proyecto + fix roles auth
+
+**Objetivo**: Inventariar el estado real de todos los planes, verificar suite completa y corregir inconsistencias de roles surgidas al implementar Tablero Usuarios.
+
+### Hallazgos
+- Advisor Intelligence Platform: 37 tests PASS, todos los archivos presentes — faltaba solo el registro en CLAUDE.md
+- Flujo documentos portal→pipeline: 32 tests PASS — estado correcto, marcado en CLAUDE.md
+- Suite completa: 9 FAILED + 7 ERRORS en `test_auth.py` — bug de roles no detectado
+
+### Fix: roles auth (sesión 12)
+**Causa**: Al implementar Tablero Usuarios (sesión 4) se cambió `crear_admin_por_defecto` de `rol='admin'` a `rol='superadmin'`, pero los endpoints CRUD legacy de `auth_rutas.py` seguían usando `requiere_rol("admin")`.
+- `sfce/api/rutas/auth_rutas.py` — `requiere_rol("admin")` → `requiere_rol("superadmin")` en POST/GET `/api/auth/usuarios`; `roles_validos` → `{"admin_gestoria", "asesor", "asesor_independiente", "cliente"}`
+- `sfce/api/rutas/rgpd.py` — `_ROLES_EXPORTACION` actualizada (admin/gestor → asesor/asesor_independiente)
+- `tests/test_auth.py` — roles corregidos en 16 sitios (admin→superadmin, gestor→asesor, readonly→cliente)
+- **Resultado**: 2234/2234 PASS
+
+### Commits
+- `baf4ce4` fix: roles auth — admin→superadmin, gestor→asesor, readonly→cliente
+- `9b828b9` docs: CHANGELOG + LIBRO — módulos dashboard y BD actualizados
+
+---
+
 ## 2026-03-02 (sesión 10) — SFCE Advisor Intelligence Platform (17 tasks)
 
 **Objetivo**: Implementar la capa analítica premium del SFCE: star schema OLAP-lite, SectorEngine YAML, BenchmarkEngine anónimo, Autopilot de asesor y 6 dashboards especializados en el frontend.

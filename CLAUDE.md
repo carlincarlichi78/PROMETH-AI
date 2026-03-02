@@ -165,7 +165,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dashboard Advisor | `dashboard/src/features/advisor/` | 6 páginas: CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia. AdvisorGate tier-premium. 6 feature flags en useTiene.ts |
 
 **Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`
-**Tests totales**: 2213 PASS (sesión 10 completada 02/03/2026)
+**Tests totales**: 2234 PASS (sesión 12 completada 02/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -191,11 +191,18 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 11 — cierre libro)
+## Estado actual (02/03/2026, sesión 12 — auditoría + fix roles)
 
 **Rama activa**: `main`
-**Tests**: 2213 PASS. Build: ✓ 131 entries. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
-**LIBRO actualizado**: 04-gate0-cola.md (flujo portal→pipeline, config_procesamiento_empresa) + 11-api-endpoints.md (+4 endpoints nuevos, total 140)
+**Tests**: 2234 PASS, 0 FAILED. Build: ✓ 131 entries. Tags: `fase6-ingesta-360`, `c1-c4-pipeline-completion`
+**LIBRO actualizado**: 22-seguridad.md (roles corregidos: admin→superadmin, gestor→asesor, readonly→cliente)
+
+### Fix roles auth COMPLETADO (sesión 12)
+- Bug: `crear_admin_por_defecto` creaba `rol='superadmin'` pero endpoints CRUD usaban `requiere_rol("admin")` → 403
+- `sfce/api/rutas/auth_rutas.py` — `requiere_rol("admin")` → `requiere_rol("superadmin")` en crear/listar usuarios; `roles_validos` → `{"admin_gestoria", "asesor", "asesor_independiente", "cliente"}`
+- `sfce/api/rutas/rgpd.py` — `_ROLES_EXPORTACION` corregida (admin→asesor, gestor→asesor_independiente)
+- `tests/test_auth.py` — 9 fallos + 7 errores resueltos. Suite: 2234/2234 PASS
+- Roles válidos actuales: `superadmin | admin_gestoria | asesor | asesor_independiente | cliente`
 
 ### Advisor Intelligence Platform COMPLETADO (sesión 10, 17 tasks)
 - `sfce/analytics/` — SectorEngine (YAML CNAE), BenchmarkEngine (P25/P50/P75, MIN_EMPRESAS=5), Autopilot (briefing semanal), star schema OLAP-lite

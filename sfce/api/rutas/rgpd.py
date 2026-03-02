@@ -21,7 +21,7 @@ from sfce.db.modelos import Asiento, Documento, Partida
 router = APIRouter(tags=["rgpd"])
 
 # Roles que pueden generar exportaciones RGPD
-_ROLES_EXPORTACION = {"superadmin", "admin_gestoria", "admin", "gestor"}
+_ROLES_EXPORTACION = {"superadmin", "admin_gestoria", "asesor", "asesor_independiente"}
 
 
 # ---------------------------------------------------------------------------

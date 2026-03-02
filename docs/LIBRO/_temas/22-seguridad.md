@@ -1,7 +1,7 @@
 # 22 - Seguridad: Auth, Rate Limiting, RGPD y Cifrado
 
 > **Estado:** ✅ COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-02
 > **Fuentes principales:** `sfce/api/auth.py`, `sfce/api/rutas/auth_rutas.py`, `sfce/api/rate_limiter.py`, `sfce/api/rutas/rgpd.py`, `sfce/db/modelos_auth.py`, `sfce/core/cifrado.py`, `sfce/api/app.py`
 
 ---
@@ -298,7 +298,7 @@ class Gestoria(Base):
 ### Roles autorizados
 
 ```python
-_ROLES_EXPORTACION = {"superadmin", "admin_gestoria", "admin", "gestor"}
+_ROLES_EXPORTACION = {"superadmin", "admin_gestoria", "asesor", "asesor_independiente"}
 ```
 
 ### Flujo de exportación
