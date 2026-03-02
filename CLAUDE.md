@@ -279,13 +279,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dashboard whitelist | `dashboard/src/features/correo/whitelist-page.tsx` | build ✓ |
 | Dashboard emails gestor | `dashboard/src/features/correo/gestor-emails-page.tsx` + dialog | build ✓ |
 
+### Auditoría Total + Fixes Producción — COMPLETADO (sesión 37)
+
+**Auditoría**: 5 agentes paralelos → `docs/auditoria/` (00-resumen + 01-05 por eje)
+**Tests**: 2530 PASS (sin cambios). Commits: `bfda40f`, `96b5e25`, `083bd23`
+
+| Fix | Commit | Detalle |
+|-----|--------|---------|
+| `SFCE_FERNET_KEY` validación startup | `96b5e25` | `auth.py`: falla hard en PostgreSQL si key vacía |
+| `modelos_testing` en `Base.metadata` | `96b5e25` | `modelos.py`: import automático, tablas testing se crean con `create_all()` |
+| Migración 021 duplicada eliminada | `96b5e25` | `migracion_021_empresa_slug_backfill.py` borrado |
+| Migración 019 compatible PostgreSQL | `083bd23` | `PRAGMA` → `information_schema.columns` |
+| Migraciones 019+020+021 en producción | SSH | Ejecutadas vía `docker exec sfce_api` |
+| `SFCE_FERNET_KEY` en servidor | SSH | Añadida a `/opt/apps/sfce/.env` + `docker compose up -d` |
+| `CuentaCorreo` con Gmail credentials | SSH | App Password `rfgq bxxt iprx abry`, IMAP verificado |
+| `SFCE_CI_TOKEN` en GitHub | GitHub UI | Secret creado, JWT de ci@sfce.local |
+
 **Pendiente próxima sesión**:
 1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
-2. Ejecutar migración 020 en producción: `ssh carli@65.108.60.69 → cd /opt/apps/sfce && python sfce/db/migraciones/020_testing.py`
+2. Crear alias `documentacion@prometh-ai.es` en Google Admin
 3. Configurar 3 monitores Push en Uptime Kuma + slugs en .env del servidor
-4. Añadir secret `SFCE_CI_TOKEN` en GitHub (JWT de ci@sfce.local)
-5. Prereqs manuales email: App Password Google Workspace + alias `documentacion@prometh-ai.es`
-6. Actualizar `docs/LIBRO/_temas/20-correo.md` (enriquecimiento, whitelist, G2-G13)
+4. Actualizar `docs/LIBRO/_temas/20-correo.md` (enriquecimiento, whitelist, G2-G13)
+5. Actualizar `docs/LIBRO/_temas/11-api-endpoints.md` (+24 endpoints sin documentar)
+6. Actualizar `docs/LIBRO/_temas/17-base-de-datos.md` (migraciones 013-022)
 
 ### Landing PROMETH-AI — COMPLETADO (sesión 34)
 - Rediseño completo SPICE → PROMETH-AI en `spice-landing/`

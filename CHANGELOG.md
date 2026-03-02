@@ -1,5 +1,42 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 37 — 02/03/2026: Auditoría Total + Fixes Producción
+
+### Resumen
+Auditoría completa del proyecto con 5 agentes paralelos. Todos los hallazgos corregibles resueltos en código y producción.
+
+### Auditoría
+- 5 agentes Explore en paralelo → `docs/auditoria/` (00-resumen + 01-BD + 02-API + 03-seguridad + 04-correo + 05-git)
+- Semáforo final: BD 🟡, API 🟢, Seguridad 🟢, Correo 🟢, Git/Tests/Frontend 🟡
+
+### Fixes código (commit `96b5e25`)
+- `sfce/api/auth.py`: `_validar_config_seguridad()` falla hard si PostgreSQL y `SFCE_FERNET_KEY` vacía
+- `sfce/db/modelos.py`: import automático de `modelos_testing` al final — tablas testing se crean con `create_all()`
+- Eliminado `sfce/db/migraciones/migracion_021_empresa_slug_backfill.py` (duplicado)
+
+### Fix migración 019 PostgreSQL (commit `083bd23`)
+- `migracion_019_cuentas_correo_gestoria.py` reescrita con soporte dual SQLite/PostgreSQL
+- `PRAGMA table_info()` → `information_schema.columns` para PostgreSQL
+- `ALTER COLUMN empresa_id DROP NOT NULL` directo en PG (sin recrear tabla)
+
+### Producción (SSH `carli@65.108.60.69`)
+- Migraciones 019, 020, 021 ejecutadas vía `docker exec sfce_api`
+- `SFCE_FERNET_KEY=tR9_p7xHy6n-DGwY_Coy42rrA1zdye7NY32VEkKojAU=` añadida a `/opt/apps/sfce/.env`
+- `docker compose up -d sfce_api` (NO restart — reload env_file requiere recrear container)
+- `CuentaCorreo` actualizada: Gmail `admin@prometh-ai.es`, App Password `rfgq bxxt iprx abry`
+- IMAP verificado: `admin@prometh-ai.es authenticated (Success)`
+
+### GitHub
+- Secret `SFCE_CI_TOKEN` creado (JWT de ci@sfce.local, generado con server's `SFCE_JWT_SECRET`)
+
+### Lecciones aprendidas
+- `docker compose restart` NO recarga `env_file`. Usar `docker compose up -d` para recargar `.env`
+- Migraciones con `PRAGMA` son SQLite-only. Usar `information_schema.columns` para compatibilidad PG
+- Módulos Python que empiezan con dígito (`021_*.py`): importar con `importlib.util.spec_from_file_location()`
+- `crear_motor()` sin args → SQLite. En producción siempre `crear_motor(_leer_config_bd())`
+
+---
+
 ## Sesión 38 — 02/03/2026: Alta gestoría López de Uralde + limpieza BD
 
 ### Resumen
