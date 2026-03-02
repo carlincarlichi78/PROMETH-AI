@@ -256,32 +256,27 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 40 — Onboarding Masivo Mejoras UX — Tasks 1-3)
+## Estado actual (02/03/2026, sesión 41 — Onboarding Masivo Mejoras UX — COMPLETADO)
 
 **Rama activa**: `feat/motor-testing-caos-p1`
-**Último commit**: `48a966f`
+**Último commit**: `60639da`
+**Tests**: 2552 PASS, 4 skipped, 0 FAILED
 
-### Onboarding Masivo Mejoras — progreso plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md`
+### Onboarding Masivo Mejoras — plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` — COMPLETADO
 
 | Task | Estado | Commit |
 |------|--------|--------|
 | 1 — Migración 023 (`modo` en `onboarding_lotes`) | ✅ | b0c7253 |
 | 2 — `Acumulador.desde_perfil_existente()` + 5 tests | ✅ | 0a76fba |
 | 3 — Endpoint `POST /perfiles/{id}/completar` + 5 tests | ✅ | 48a966f |
-| 4 — Endpoints wizard backend (iniciar/subir-036/procesar) | ⏳ pendiente | — |
-| 5 — UI acordeón + botón modo guiado | ⏳ pendiente | — |
-| 6 — UI uploader inline bloqueados | ⏳ pendiente | — |
-| 7 — Wizard 4 pasos + ruta App.tsx | ⏳ pendiente | — |
-| 8 — Suite regresión | ⏳ pendiente | — |
-
-### Lecciones de esta sesión
-- `ResultadoClasificacion` solo tiene `tipo`, `confianza`, `texto_extraido`, `error` (NO `paginas_analizadas`/`texto_muestra`)
-- `clasificar_documento` debe importarse a nivel de módulo en `onboarding_masivo.py` para poder mockearlo en tests
-- Fixture tests onboarding: usar `crear_app(sesion_factory=Session)` + login real vía `/api/auth/login` → yield `(c, token)`
+| 4 — Endpoints wizard backend (iniciar/subir-036/procesar) | ✅ | 4e6b69d |
+| 5 — UI acordeón + botón modo guiado | ✅ | 8059801 |
+| 6 — UI uploader inline bloqueados | ✅ | a41a245 |
+| 7 — Wizard 4 pasos + ruta App.tsx | ✅ | 79d94cd |
+| 8 — Suite regresión | ✅ | 60639da |
 
 **Pendiente próxima sesión**:
-1. Continuar plan Tasks 4-8 (wizard backend + UI + regresión)
-2. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
+1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
 
 ---
 
