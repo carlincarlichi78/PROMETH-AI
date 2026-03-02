@@ -1,5 +1,21 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 35 — 02/03/2026: Design + Plan Email Enriquecimiento
+
+### Solo diseño y planificación (sin código implementado)
+
+- **Brainstorming completo**: flujos reales gestoría→prometh-ai, cliente directo, multi-cliente
+- **Cambio arquitectónico clave**: migración de Zoho a Google Workspace
+- **Nuevo componente diseñado**: `ExtractorEnriquecimiento` — GPT-4o extrae instrucciones contables del cuerpo del email con confianza por campo
+- **Flujos documentados**: A (cliente directo), B (gestoría con instrucciones globales), C (multi-cliente un email), D (cliente con instrucciones), E (.eml como adjunto), F (catch-all con slug)
+- **Schema `EnriquecimientoDocumento`**: 10 campos (iva_deducible_pct, categoria_gasto, subcuenta_contable, reparto_empresas, regimen_especial, ejercicio_override, tipo_doc_override, notas, urgente) + confianza por campo
+- **Integración pipeline**: `registration.py` aplica enriquecimiento con prioridad nivel 6 (>aprendizaje yaml nivel 5 >OCR nivel 3)
+- **10 mejoras identificadas** sobre diseño inicial: slug ya existe, DKIM nunca se extrae, parser reenvíos, confianza por campo, pipeline debe leer enriquecimiento, schema formal hints_json, aprendizaje desde confirmaciones, .eml support, notificación inmediata, trazabilidad dashboard
+- **13 grietas revisadas**: G1 simplificada (slug ya en BD, solo backfill), G6 integrada en UI de G5
+- **Design doc**: `docs/plans/2026-03-02-email-enriquecimiento-design.md`
+- **Plan**: `docs/plans/2026-03-02-email-enriquecimiento-plan.md` — 18 tasks, 5 lotes paralelos, ~65 tests
+- **Commit**: `ae5b6b3`
+
 ## Sesión 28 — 02/03/2026: Email Ingesta Tasks 7-10 + Zoho Mail Tasks 1-5
 
 ### Email Ingesta Mejorada — Tasks 7-10

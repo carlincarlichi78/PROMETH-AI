@@ -192,13 +192,37 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 34 — Landing PROMETH-AI + subdominio .dev COMPLETADO)
+## Estado actual (02/03/2026, sesión 35 — Google Workspace configurado)
 
-**Rama activa**: `main`
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `61d25c0`
+**Google Workspace** `admin@prometh-ai.es` — cuenta activa, Gmail ✓, DKIM ✓, MX migrado de ImprovMX a Google.
+**Pendiente próxima sesión**:
+1. Crear App Password (admin@prometh-ai.es → myaccount.google.com → Seguridad → Contraseñas de aplicaciones → nombre: SFCE-IMAP)
+2. Crear alias `documentacion@prometh-ai.es` en admin.google.com → Usuarios → admin → Añadir alias
+3. Implementar fixes grietas sistema email: G1 (slug en BD), G5 (endpoints whitelist UI), G9 (vista emails gestor)
+4. Actualizar `.env.example` SFCE_SMTP_HOST=smtp.gmail.com + onboarding_email.py servidor catch-all
+5. Configurar CuentaCorreo en BD producción con credenciales Google Workspace
+
+---
+
+## Estado actual (02/03/2026, sesión 35 — Design + Plan Email Enriquecimiento COMPLETADO)
+
+**Rama activa**: `feat/motor-testing-caos-p1`
+**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `ae5b6b3`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Landing**: https://prometh-ai.carloscanetegomez.dev — ONLINE ✓ (SSL válido hasta 2026-05-31)
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
+
+### Email Enriquecimiento + Grietas — DISEÑO COMPLETADO (sesión 35)
+
+- **Design doc**: `docs/plans/2026-03-02-email-enriquecimiento-design.md`
+- **Plan**: `docs/plans/2026-03-02-email-enriquecimiento-plan.md` — 18 tasks, ~65 tests
+- **Arquitectura**: `ExtractorEnriquecimiento` (GPT-4o) lee cuerpo email → instrucciones contables por adjunto con confianza por campo
+- **Flujos soportados**: cliente directo, gestoría reenvía con instrucciones, multi-cliente en un email, adjunto .eml
+- **Campos enriquecimiento**: iva_deducible_pct, categoria_gasto, subcuenta_contable, reparto_empresas, regimen_especial, ejercicio_override, tipo_doc_override, notas, urgente
+- **Prereqs manuales (usuario)**: App Password Google Workspace + alias `documentacion@prometh-ai.es`
+- **13 grietas** documentadas y planificadas (G1 simplificada — slug ya existe en BD)
+- **Ejecución**: plan en otro terminal (usuario lo ejecuta en paralelo)
+- **Libro**: `docs/LIBRO/_temas/20-correo.md` pendiente de actualizar tras implementación
 
 ### Landing PROMETH-AI — COMPLETADO (sesión 34)
 - Rediseño completo SPICE → PROMETH-AI en `spice-landing/`
