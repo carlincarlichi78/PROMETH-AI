@@ -649,6 +649,9 @@ class EmailProcesado(Base):
     confianza_ia = Column(Float)
     procesado_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
+    es_respuesta_ack = Column(Boolean, default=False)
+    score_confianza = Column(Float)
+    motivo_cuarentena = Column(String(50))
 
     __table_args__ = (UniqueConstraint("cuenta_id", "uid_servidor"),)
 
@@ -697,6 +700,30 @@ class EnlaceEmail(Base):
     created_at = Column(DateTime, default=datetime.now)
 
     email = relationship("EmailProcesado", back_populates="enlaces")
+
+
+class RemitenteAutorizado(Base):
+    """Whitelist de remitentes de email por empresa."""
+    __tablename__ = "remitentes_autorizados"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    email = Column(String(200), nullable=False)
+    nombre = Column(String(200))
+    activo = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class ContrasenaZip(Base):
+    """Contraseñas para descomprimir ZIPs protegidos por empresa/remitente."""
+    __tablename__ = "contrasenas_zip"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    remitente_patron = Column(String(200))   # None = aplica a todos
+    contrasenas_json = Column(Text, default="[]")  # lista JSON de strings
+    activo = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class ReglaClasificacionCorreo(Base):
@@ -772,6 +799,7 @@ class ColaProcesamiento(Base):
     coherencia_score = Column(Float, nullable=True)        # Score coherencia fiscal [0-100]
     worker_inicio = Column(DateTime, nullable=True)        # Timestamp inicio procesamiento (para recovery)
     reintentos = Column(Integer, default=0)                # Contador de reintentos por recovery
+    empresa_origen_correo_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
