@@ -14,7 +14,10 @@ from sfce.api.schemas import (
     CalendarioFiscalOut, CasillaOut, GenerarModeloIn,
     HistoricoModeloOut, ModeloFiscalCalcOut, ResultadoValidacionOut,
 )
+from sfce.core.calculador_modelos import CalculadorModelos
+from sfce.core.extractor_190 import ExtractorPerceptores190
 from sfce.core.servicio_fiscal import ServicioFiscal
+from sfce.db.modelos import Documento, Empresa
 from sfce.db.repositorio import Repositorio
 from sfce.modelos_fiscales.cargador import CargadorDisenos
 from sfce.modelos_fiscales.generador import GeneradorModelos
@@ -281,12 +284,8 @@ def historico_modelos(
         return []
 
 
+
 # ==================== MODELO 190 ====================
-
-from sfce.core.extractor_190 import ExtractorPerceptores190
-from sfce.core.calculador_modelos import CalculadorModelos
-from sfce.db.modelos import Documento, Empresa
-
 
 _extractor_190 = ExtractorPerceptores190()
 _calc_modelos = CalculadorModelos(_normativa)
@@ -297,7 +296,6 @@ def get_perceptores_190(
     empresa_id: int,
     ejercicio: int,
     request: Request,
-    repo: Repositorio = Depends(get_repo),
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Extrae perceptores del Modelo 190 desde documentos procesados en BD."""
