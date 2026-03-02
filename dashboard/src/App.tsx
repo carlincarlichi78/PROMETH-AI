@@ -91,6 +91,7 @@ const GuiaCorreoPage = lazy(() =>
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 const WizardOnboardingClienteWrapper = lazy(() => import('@/features/onboarding/WizardOnboardingCliente').then((m) => ({ default: m.WizardOnboardingClienteWrapper })))
 const OnboardingMasivoPage = lazy(() => import('@/features/onboarding/onboarding-masivo-page').then((m) => ({ default: m.OnboardingMasivoPage })))
+const WizardOnboardingPage = lazy(() => import('@/features/onboarding/wizard-onboarding-page').then((m) => ({ default: m.WizardOnboardingPage })))
 
 // --- Advisor ---
 const CommandCenter = lazy(() => import('@/features/advisor/command-center-page'))
@@ -214,6 +215,7 @@ export function App() {
           <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />
           <Route path="/onboarding/cliente/:id" element={<WizardOnboardingClienteWrapper />} />
           <Route path="/onboarding/masivo" element={<OnboardingMasivoPage />} />
+          <Route path="/onboarding/wizard" element={<WizardOnboardingPage />} />
 
           {/* Correo */}
           <Route path="/empresa/:id/correo" element={<CorreoPage />} />
