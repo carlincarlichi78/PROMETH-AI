@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 
 
@@ -29,7 +30,7 @@ class Escenario:
     resultado_esperado: ResultadoEsperado
     etiquetas: list = field(default_factory=list)
 
-    def crear_variante(self, overrides: dict, variante_id: str, descripcion: str = "") -> VarianteEjecucion:
+    def crear_variante(self, overrides: dict, variante_id: str, descripcion: str = "") -> "VarianteEjecucion":
         datos = {**self.datos_extraidos_base, **overrides}
         return VarianteEjecucion(
             escenario_id=self.id,
@@ -38,3 +39,17 @@ class Escenario:
             resultado_esperado=self.resultado_esperado,
             descripcion_variante=descripcion,
         )
+
+
+@dataclass
+class ResultadoEjecucion:
+    escenario_id: str
+    variante_id: str
+    canal: str           # "email" | "portal" | "bancario" | "http" | "playwright"
+    resultado: str       # "ok" | "bug_pendiente" | "timeout" | "error_sistema"
+    duracion_ms: int
+    estado_doc_final: str | None = None      # "procesado" | "cuarentena" | "duplicado"
+    tipo_doc_detectado: str | None = None
+    idasiento: int | None = None
+    asiento_cuadrado: bool | None = None
+    detalles: dict = field(default_factory=dict)  # idfactura, partidas, etc.
