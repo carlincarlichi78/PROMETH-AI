@@ -134,7 +134,7 @@ export default function Modelo190Page() {
 
   const corregirMutation = useMutation({
     mutationFn: ({ nif, datos }: { nif: string; datos: Record<string, unknown> }) =>
-      api.post(`/api/modelos/190/${empresaId}/${ejercicio}/perceptores/${nif}`, datos) as Promise<Perceptor>,
+      api.put(`/api/modelos/190/${empresaId}/${ejercicio}/perceptores/${nif}`, datos) as Promise<Perceptor>,
     onSuccess: (corregido) => {
       const base = perceptoresLocales ?? [...(data?.completos ?? []), ...(data?.incompletos ?? [])]
       setPerceptoresLocales(
