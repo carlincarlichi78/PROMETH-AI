@@ -48,29 +48,64 @@ class ArchivoExtraido:
 
 
 def extraer_adjuntos(
-    adjuntos: list[dict],
+    adjuntos,
     contrasenas_zip: list[str] | None = None,
     max_archivos_zip: int = MAX_ZIP_FILES,
     max_size_mb: float = MAX_ZIP_SIZE_MB,
     max_ratio_zip: float = MAX_ZIP_RATIO_DEFAULT,
+    _profundidad: int = 0,
 ) -> list[ArchivoExtraido]:
     """Extrae y normaliza todos los archivos procesables de una lista de adjuntos.
 
     Args:
-        adjuntos: lista de dicts con claves 'nombre', 'contenido', 'mime_type'
+        adjuntos: lista de dicts con claves 'nombre', 'contenido', 'mime_type',
+                  o un objeto email.message.Message del que se extraen las partes.
         contrasenas_zip: contraseñas a intentar en ZIPs protegidos
         max_archivos_zip: máximo de archivos dentro de un ZIP
         max_size_mb: tamaño máximo total expandido en MB
         max_ratio_zip: ratio máximo expandido/comprimido (zip bomb detection)
+        _profundidad: profundidad de recursión interna (para adjuntos .eml)
 
     Returns:
         Lista de ArchivoExtraido con todos los archivos procesables.
     """
+    if _profundidad > 2:
+        return []
+
+    # Soporte para email.message.Message como argumento directo
+    import email as email_lib
+    if hasattr(adjuntos, "walk"):
+        adjuntos = _adjuntos_desde_mensaje(adjuntos)
+
     resultado = []
     for adj in adjuntos:
         mime = adj.get("mime_type", "")
         nombre = adj.get("nombre", "")
         contenido = adj.get("contenido", b"")
+
+        # Soporte para adjuntos .eml (email reenviado como adjunto)
+        if mime == "message/rfc822" or nombre.lower().endswith(".eml"):
+            try:
+                if isinstance(contenido, list):
+                    inner_bytes = contenido[0].as_bytes() if contenido else b""
+                elif isinstance(contenido, bytes):
+                    inner_bytes = contenido
+                else:
+                    inner_bytes = str(contenido).encode("utf-8", errors="replace")
+                inner_msg = email_lib.message_from_bytes(inner_bytes)
+                adjuntos_internos = extraer_adjuntos(
+                    inner_msg,
+                    contrasenas_zip=contrasenas_zip,
+                    max_archivos_zip=max_archivos_zip,
+                    max_size_mb=max_size_mb,
+                    max_ratio_zip=max_ratio_zip,
+                    _profundidad=_profundidad + 1,
+                )
+                resultado.extend(adjuntos_internos)
+            except Exception:
+                logger.warning("No se pudo parsear adjunto .eml")
+            continue
+
         ext = _inferir_extension(nombre, mime)
         if ext == "zip":
             archivos = _extraer_zip(
@@ -88,6 +123,28 @@ def extraer_adjuntos(
         else:
             logger.debug("Adjunto ignorado (formato no soportado): %s", nombre)
     return resultado
+
+
+def _adjuntos_desde_mensaje(msg) -> list[dict]:
+    """Extrae adjuntos de un email.message.Message como lista de dicts."""
+    adjuntos = []
+    for parte in msg.walk():
+        ct = parte.get_content_type()
+        cd = str(parte.get("Content-Disposition", ""))
+        nombre = parte.get_filename()
+
+        if ct == "message/rfc822":
+            payload = parte.get_payload(decode=False)
+            if isinstance(payload, list):
+                contenido = payload[0].as_bytes() if payload else b""
+            else:
+                contenido = str(payload).encode("utf-8", errors="replace")
+            adjuntos.append({"nombre": nombre or "adjunto.eml", "contenido": contenido, "mime_type": ct})
+        elif "attachment" in cd or nombre:
+            datos = parte.get_payload(decode=True)
+            if datos:
+                adjuntos.append({"nombre": nombre or "adjunto", "contenido": datos, "mime_type": ct})
+    return adjuntos
 
 
 def _inferir_extension(nombre: str, mime: str) -> str:

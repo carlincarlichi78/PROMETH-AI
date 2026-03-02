@@ -113,12 +113,24 @@ class ImapServicio:
                     continue
                 raw = entrada.get(b"RFC822")
                 if raw:
-                    resultados.append(self._parsear_email(uid.decode(), raw))
+                    resultados.append(self._parsear_email(uid, fetch_result))
             return resultados
         finally:
             self._desconectar()
 
-    def _parsear_email(self, uid: str, raw: bytes) -> dict[str, Any]:
+    def _parsear_email(self, uid: bytes | str, fetch_result: dict) -> dict[str, Any]:
+        """Parsea un email crudo extraído de fetch_result.
+
+        Args:
+            uid: UID del mensaje (bytes o str).
+            fetch_result: dict {uid_bytes: {b"RFC822": raw_bytes}} tal como
+                          devuelve _conn.fetch().
+        """
+        uid_bytes = uid if isinstance(uid, bytes) else uid.encode()
+        uid_str = uid.decode() if isinstance(uid, bytes) else uid
+        entrada = fetch_result.get(uid_bytes, {})
+        raw: bytes = entrada.get(b"RFC822", b"")
+
         msg = email.message_from_bytes(raw)
         remitente = self._decodificar_header(msg.get("From", ""))
         asunto = self._decodificar_header(msg.get("Subject", ""))
@@ -127,6 +139,10 @@ class ImapServicio:
         cuerpo_texto = ""
         cuerpo_html = ""
         adjuntos: list[dict] = []
+
+        # Extracción DKIM desde Authentication-Results
+        auth_results = msg.get("Authentication-Results", "")
+        dkim_verificado = "dkim=pass" in auth_results.lower()
 
         for parte in msg.walk():
             ct = parte.get_content_type()
@@ -146,7 +162,7 @@ class ImapServicio:
                     adjuntos.append({"nombre": nombre, "datos_bytes": datos, "mime_type": ct})
 
         return {
-            "uid": uid,
+            "uid": uid_str,
             "message_id": message_id,
             "remitente": remitente,
             "asunto": asunto,
@@ -154,6 +170,7 @@ class ImapServicio:
             "cuerpo_texto": cuerpo_texto,
             "cuerpo_html": cuerpo_html,
             "adjuntos": adjuntos,
+            "dkim_verificado": dkim_verificado,
         }
 
     @staticmethod
