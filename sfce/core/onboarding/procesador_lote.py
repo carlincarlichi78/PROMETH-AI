@@ -1,0 +1,150 @@
+"""Procesador de lotes de onboarding masivo."""
+from __future__ import annotations
+import zipfile
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+
+from sfce.core.onboarding.clasificador import clasificar_documento, TipoDocOnboarding
+from sfce.core.onboarding.parsers_libros import (
+    parsear_libro_facturas_emitidas, parsear_libro_facturas_recibidas,
+    parsear_sumas_y_saldos, parsear_libro_bienes_inversion,
+)
+from sfce.core.onboarding.parsers_modelos import (
+    parsear_modelo_200, parsear_modelo_303,
+    parsear_modelo_390, parsear_modelo_130,
+    parsear_modelo_100, parsear_modelo_111,
+)
+from sfce.core.onboarding.perfil_empresa import Acumulador, Validador
+
+logger = logging.getLogger(__name__)
+
+_PARSERS = {
+    TipoDocOnboarding.IS_ANUAL_200:         parsear_modelo_200,
+    TipoDocOnboarding.IVA_TRIMESTRAL_303:   parsear_modelo_303,
+    TipoDocOnboarding.IVA_ANUAL_390:        parsear_modelo_390,
+    TipoDocOnboarding.IRPF_FRACCIONADO_130: parsear_modelo_130,
+    TipoDocOnboarding.IRPF_ANUAL_100:       parsear_modelo_100,
+    TipoDocOnboarding.RETENCIONES_111:      parsear_modelo_111,
+}
+
+_PARSERS_LIBROS = {
+    TipoDocOnboarding.LIBRO_FACTURAS_EMITIDAS:  parsear_libro_facturas_emitidas,
+    TipoDocOnboarding.LIBRO_FACTURAS_RECIBIDAS: parsear_libro_facturas_recibidas,
+    TipoDocOnboarding.SUMAS_Y_SALDOS:           parsear_sumas_y_saldos,
+    TipoDocOnboarding.LIBRO_BIENES_INVERSION:   parsear_libro_bienes_inversion,
+}
+
+
+@dataclass
+class ResultadoLote:
+    lote_id: int
+    total_clientes: int = 0
+    aptos_automatico: int = 0
+    en_revision: int = 0
+    bloqueados: int = 0
+    perfiles: list = field(default_factory=list)
+    errores: list = field(default_factory=list)
+
+
+class ProcesadorLote:
+    def __init__(self, directorio_trabajo: Path):
+        self.dir_trabajo = Path(directorio_trabajo)
+        self.dir_trabajo.mkdir(parents=True, exist_ok=True)
+
+    def extraer_zip(self, ruta_zip: Path) -> list:
+        """Extrae ZIP y devuelve lista de rutas de archivos."""
+        destino = self.dir_trabajo / ruta_zip.stem
+        destino.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(str(ruta_zip)) as zf:
+            zf.extractall(str(destino))
+        return list(destino.rglob("*"))
+
+    def agrupar_por_cliente(self, archivos: list) -> dict:
+        """Agrupa archivos por cliente según su directorio padre."""
+        grupos: dict = {}
+        for archivo in archivos:
+            if not archivo.is_file():
+                continue
+            # Directorio inmediatamente bajo dir_trabajo
+            try:
+                rel = archivo.relative_to(self.dir_trabajo)
+                grupo = rel.parts[1] if len(rel.parts) > 2 else rel.parts[0]
+            except ValueError:
+                grupo = archivo.parent.name
+            grupos.setdefault(grupo, []).append(archivo)
+        return grupos
+
+    def procesar_zip(self, ruta_zip: Path, lote_id: int) -> ResultadoLote:
+        resultado = ResultadoLote(lote_id=lote_id)
+        archivos = self.extraer_zip(ruta_zip)
+        grupos = self.agrupar_por_cliente(archivos)
+        resultado.total_clientes = len(grupos)
+
+        for nombre_grupo, archivos_grupo in grupos.items():
+            perfil = self._procesar_grupo(nombre_grupo, archivos_grupo)
+            validacion = Validador().validar(perfil)
+            perfil_data = {
+                "nif": perfil.nif,
+                "nombre": perfil.nombre,
+                "forma_juridica": perfil.forma_juridica,
+                "territorio": perfil.territorio,
+                "score": validacion.score,
+                "bloqueos": validacion.bloqueos,
+                "advertencias": validacion.advertencias,
+                "estado": (
+                    "bloqueado" if validacion.bloqueado
+                    else "apto" if validacion.apto_creacion_automatica
+                    else "revision"
+                ),
+                "_perfil": perfil,
+            }
+            resultado.perfiles.append(perfil_data)
+            if validacion.bloqueado:
+                resultado.bloqueados += 1
+            elif validacion.apto_creacion_automatica:
+                resultado.aptos_automatico += 1
+            else:
+                resultado.en_revision += 1
+
+        return resultado
+
+    def _procesar_grupo(self, nombre: str, archivos: list):
+        acum = Acumulador()
+        for archivo in archivos:
+            if not archivo.is_file():
+                continue
+            try:
+                clf = clasificar_documento(archivo)
+                if clf.tipo == TipoDocOnboarding.DESCONOCIDO:
+                    continue
+                datos = self._extraer_datos(clf.tipo, archivo)
+                if datos is not None:
+                    acum.incorporar(clf.tipo.value, datos)
+            except Exception as exc:
+                logger.warning("Error procesando %s: %s", archivo.name, exc)
+        return acum.obtener_perfil()
+
+    def _extraer_datos(self, tipo: TipoDocOnboarding, ruta: Path):
+        if tipo in _PARSERS:
+            return _PARSERS[tipo](ruta)
+        if tipo in _PARSERS_LIBROS:
+            r = _PARSERS_LIBROS[tipo](ruta)
+            if tipo == TipoDocOnboarding.LIBRO_FACTURAS_EMITIDAS:
+                return {"clientes": r.clientes}
+            if tipo == TipoDocOnboarding.LIBRO_FACTURAS_RECIBIDAS:
+                return {"proveedores": r.proveedores}
+            if tipo == TipoDocOnboarding.SUMAS_Y_SALDOS:
+                return {"saldos": r.saldos, "_cuadra": r.cuadra,
+                        "cuentas_alertas": r.cuentas_alertas}
+            if tipo == TipoDocOnboarding.LIBRO_BIENES_INVERSION:
+                return {"bienes": r.bienes}
+        if tipo == TipoDocOnboarding.CENSO_036_037:
+            # Delegamos a ocr_036.py ya implementado
+            try:
+                from sfce.core.ocr_036 import parsear_036
+                return parsear_036(ruta)
+            except Exception:
+                return None
+        return None
