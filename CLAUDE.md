@@ -192,10 +192,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 17 — brainstorming + plan app móvil)
+## Estado actual (02/03/2026, sesión 18 — sprint P2-P3 seguridad+calidad completado)
 
 **Rama activa**: `main`
-**Tests**: 2248 PASS, 0 FAILED. Build: ✓ 131 entries. Commit: `717aa19`
+**Tests**: 2270 PASS, 0 FAILED (+22 esta sesión). Build: ✓ 131 entries. Commit: `8f510cb`
+
+### Sprint P2-P3 COMPLETADO (sesión 18 — 02/03/2026)
+
+| Item | Fix | Archivos |
+|------|-----|---------|
+| SEC-TIER | Auth backend en 6 endpoints analytics; superadmin bypass | `analytics.py` |
+| SEC-TOKEN | `secrets.token_hex(32)` reemplaza "PENDIENTE" hardcodeado | `admin.py` |
+| SEC-TOKEN-TTL | Token invitación 7d → 48h | `admin.py` |
+| SEC-RATELIMIT | `invitacion_limiter` separado de `login_limiter` | `rate_limiter.py`, `app.py`, `auth_rutas.py` |
+| SEC-INFO | Error rol → "Rol no permitido" (sin listar roles válidos) | `auth_rutas.py:239` |
+| SEC-PLAN | CHECK constraint `plan_tier` (triggers SQLite + CheckConstraint ORM) | `010_plan_tiers.py`, `modelos_auth.py` |
+| QUAL-DUP | `_crear_usuario_invitado()` helper unifica 3 duplicados | `admin.py` |
+| QUAL-EMAIL | Errores email → `logger.error()` (ya no silenciados) | `admin.py` |
+| QUAL-TIER-STRINGS | `TIER_BASICO/PRO/PREMIUM` constantes en `tiers.py` + `useTiene.ts` | 6 archivos |
+| QUAL-NOTIF-2SYS | `crear_notificacion_usuario()` unifica GestorNotificaciones + BD | `notificaciones.py`, `gestor.py` |
+| QUAL-TOKEN-NULL | `CheckConstraint` coherencia token/expira | `modelos_auth.py` |
+| QUAL-ENUM | `EstadoOnboarding(str, enum.Enum)` reemplaza strings libres | `modelos.py`, `empresas.py`, `onboarding.py` |
+| QUAL-INGESTOR | Validación payloads numéricos en `ingestor.py` | `sfce/analytics/ingestor.py` |
+| QUAL-CNAE | `@validates("cnae")` regex 4 dígitos en modelo Empresa | `modelos.py` |
 
 ### App Móvil — Plan listo para ejecutar (sesión 17)
 - Diseño: `docs/plans/2026-03-02-mobile-app-redesign-design.md`
@@ -208,7 +227,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - Sin AutoFirma: Electron lee certificados del Windows Certificate Store directamente
 - Pendiente para sesión futura
 
-### Sprint P2-P3 COMPLETADO (sesión 16 — 02/03/2026)
+### Sprint P2-P3 sesión 16 COMPLETADO (02/03/2026)
 
 | Item | Fix | Archivos |
 |------|-----|---------|
@@ -217,15 +236,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | QUAL-SECTOR-CACHE | `obtener_sector_engine(cnae)` con `_CACHE` module-level | `sector_engine.py`, `analytics.py` |
 | QUAL-PAGINATION | Backend `limit/offset` + respuesta `{total, items}` + UI paginada | `gestor.py`, `revision-page.tsx` |
 | QUAL-WORKER-SHUTDOWN | `CancelledError` → `_resetear_docs_procesando()` antes de re-raise | `worker_pipeline.py` |
-| Tests Advisor | +6 tests: empresa nueva verde, límite MAX, CNAE vacío, caché | `test_autopilot.py`, `test_benchmark_engine.py`, `test_sector_engine_cache.py` |
-
-### Pendientes P2 (no sprint, próxima sesión)
-- **SEC-TIER**: backend auth para features Advisor (actualmente solo frontend)
-- **SEC-TOKEN**: contraseña "PENDIENTE" → `secrets.token_hex(32)`
-- **SEC-TOKEN-TTL**: 7 días → 48 horas en `admin.py:209`
-- **SEC-RATELIMIT**: `/aceptar-invitacion` con rate limit propio (no compartir con `/login`)
-- **SEC-INFO**: no exponer lista de roles en error `auth_rutas.py:233`
-- **SEC-PLAN**: `plan_tier` con CHECK constraint en BD
 
 ### Fix P1 bugs COMPLETADO (sesión 15 — 02/03/2026)
 
