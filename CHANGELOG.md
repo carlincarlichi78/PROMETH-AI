@@ -1,5 +1,27 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 15 — 02/03/2026: Deploy prometh-ai.es implementado (Tasks 1-11/12)
+
+### Implementado
+- `requirements.txt`: 88 dependencias pinned para imagen Docker Python 3.12
+- `GET /api/health`: endpoint sin auth para monitorización (TDD, 4 tests)
+- `Dockerfile` multi-stage python:3.12-slim con HEALTHCHECK integrado
+- `docker-compose.yml`: servicio sfce_api con healthcheck + log rotation
+- nginx `app-prometh-ai.conf`: React SPA + proxy /api/ + WebSocket + cache assets
+- nginx `api-prometh-ai.conf`: API directa + CORS restringido a app.prometh-ai.es
+- `.github/workflows/deploy.yml`: CI/CD 4 jobs (test ‖ build-frontend → build-docker → deploy SSH)
+- `scripts/migrar_sqlite_a_postgres.py`: one-time migration SQLite→PG, dry-run OK (547 filas)
+- `scripts/infra/setup-prometh-ai.sh`: guía setup + creación dirs en servidor
+- `.env.example`: variables dev/prod documentadas
+
+### Tests
+2239 passed (era 2234 + 4 health nuevos)
+
+### Pendiente (Task 12 — pasos manuales servidor)
+DNS (en proceso), SSL certbot, nginx configs, .env producción, migración BD, GitHub Secrets (8), deploy trigger, Uptime Kuma monitores
+
+---
+
 ## 2026-03-02 (sesión 14) — Diseño y plan deploy SFCE → prometh-ai.es
 
 **Objetivo**: Planificar el despliegue del dashboard SFCE en producción bajo prometh-ai.es.

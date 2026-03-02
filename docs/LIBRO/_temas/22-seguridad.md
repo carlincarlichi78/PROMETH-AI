@@ -606,3 +606,58 @@ python -c "import secrets; print(secrets.token_hex(32))"
 # SFCE_FERNET_KEY
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
+
+---
+
+## 14. Endpoint de salud (`GET /api/health`)
+
+### Propósito
+
+Endpoint de monitorización sin autenticación. Usado por:
+- **Uptime Kuma** — monitor de disponibilidad
+- **GitHub Actions** — healthcheck post-deploy en el job `deploy`
+- **Docker HEALTHCHECK** — `curl -f http://localhost:8000/api/health || exit 1`
+
+### Implementación
+
+```python
+# sfce/api/rutas/health.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/api/health")
+async def health():
+    return {"status": "ok"}
+```
+
+El router se registra en `crear_app()` **sin** `Depends(obtener_usuario_actual)`. No requiere JWT ni ningún header de autenticación.
+
+### Registro en app.py
+
+```python
+from sfce.api.rutas.health import router as health_router
+app.include_router(health_router)  # sin prefijo, sin auth
+```
+
+### Respuesta
+
+```json
+{"status": "ok"}
+```
+
+HTTP 200 siempre que la aplicación esté en funcionamiento. No consulta BD ni servicios externos — su único propósito es confirmar que el proceso uvicorn responde.
+
+### Tests
+
+```python
+# tests/test_health.py — 4 tests
+def test_health_ok()             # 200 + {"status": "ok"}
+def test_health_sin_token()      # 200 sin Authorization header
+def test_health_token_invalido() # 200 aunque token sea inválido
+def test_health_metodo_post()    # 405 Method Not Allowed
+```
+
+### Seguridad
+
+El endpoint es intencionalmente público. No expone información sensible (no devuelve versión, estado de BD ni config). Si en el futuro se añade información de estado, proteger con IP whitelist en nginx o añadir auth básica.
