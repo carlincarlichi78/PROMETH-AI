@@ -97,12 +97,19 @@ def migrar(dry_run: bool = False) -> None:
     else:
         pg_engine = None
 
+    # Orden topológico de SQLAlchemy (padres antes que hijos por FKs)
+    tablas_orm_orden = [t.name for t in Base.metadata.sorted_tables]
+
     # Tablas SQLite (excluyendo internas)
     cursor = sqlite_conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
     )
-    tablas = [row[0] for row in cursor.fetchall()]
-    print(f"\nTablas encontradas en SQLite: {tablas}\n")
+    tablas_sqlite = {row[0] for row in cursor.fetchall()}
+
+    # Priorizar orden topológico; las tablas no en el ORM van al final
+    tablas = [t for t in tablas_orm_orden if t in tablas_sqlite]
+    tablas += [t for t in tablas_sqlite if t not in tablas_orm_orden]
+    print(f"\nTablas a migrar ({len(tablas)}): {tablas}\n")
 
     resumen = {}
 
@@ -128,6 +135,27 @@ def migrar(dry_run: bool = False) -> None:
         col_list = ", ".join(f'"{c}"' for c in cols)
         placeholders = ", ".join(f":{c}" for c in cols)
 
+        # Detectar columnas boolean en el modelo SQLAlchemy para castear 0/1 → bool
+        from sqlalchemy import Boolean as SABoolean, inspect as sa_inspect
+        bool_cols: set[str] = set()
+        try:
+            orm_table = Base.metadata.tables.get(tabla)
+            if orm_table is not None:
+                for col in orm_table.columns:
+                    if isinstance(col.type, SABoolean):
+                        bool_cols.add(col.name)
+        except Exception:
+            pass
+
+        def _preparar_fila(row_dict: dict) -> dict:
+            """Castea 0/1 → bool para columnas boolean (SQLite → PostgreSQL)."""
+            if not bool_cols:
+                return row_dict
+            return {
+                k: bool(v) if k in bool_cols and v is not None else v
+                for k, v in row_dict.items()
+            }
+
         # Insert con ON CONFLICT DO NOTHING (idempotente — seguro re-ejecutar)
         sql = text(
             f'INSERT INTO "{tabla}" ({col_list}) VALUES ({placeholders}) '  # noqa: S608
@@ -138,10 +166,13 @@ def migrar(dry_run: bool = False) -> None:
         errores = 0
         with pg_engine.connect() as pg_conn:
             for fila in filas:
+                sp = pg_conn.begin_nested()  # savepoint por fila
                 try:
-                    pg_conn.execute(sql, dict(zip(cols, fila)))
+                    pg_conn.execute(sql, _preparar_fila(dict(zip(cols, fila))))
+                    sp.commit()
                     insertados += 1
                 except Exception as e:
+                    sp.rollback()
                     errores += 1
                     if errores <= 3:  # mostrar solo los primeros errores
                         print(f"    WARN fila {tabla}: {e}")
