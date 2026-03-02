@@ -17,7 +17,10 @@ def resumen_gestor(
     sesion_factory=Depends(get_sesion_factory),
     usuario=Depends(obtener_usuario_actual),
 ):
-    """Lista de empresas con estado para la vista ligera del gestor en movil."""
+    """Lista de empresas con estado + semáforo para la vista del gestor en móvil."""
+    from datetime import date
+    from sfce.db.modelos import Documento, Asiento, Partida, NotificacionUsuario
+
     if usuario.rol not in _ROLES_GESTOR:
         raise HTTPException(status_code=403, detail="Solo gestores")
 
@@ -26,20 +29,60 @@ def resumen_gestor(
         q = select(Empresa).where(Empresa.activa == True)  # noqa: E712
         if usuario.rol != "superadmin" and getattr(usuario, "gestoria_id", None):
             q = q.where(Empresa.gestoria_id == usuario.gestoria_id)
-        empresas = sesion.execute(q).scalars().all()
+        empresas = list(sesion.execute(q).scalars().all())
 
-        return {
-            "empresas": [
-                {
-                    "id": e.id,
-                    "nombre": e.nombre,
-                    "cif": e.cif,
-                    "estado_onboarding": e.estado_onboarding,
-                }
-                for e in empresas
-            ],
-            "total": len(empresas),
-        }
+        # Carga en bulk: documentos problema y notificaciones error por empresa
+        ids_empresa = [e.id for e in empresas]
+        docs_problema_raw = list(sesion.execute(
+            select(Documento.empresa_id)
+            .where(Documento.empresa_id.in_(ids_empresa))
+            .where(Documento.estado.in_(["cuarentena", "REVISION_PENDIENTE"]))
+        ).all())
+        docs_por_empresa: dict[int, int] = {}
+        for row in docs_problema_raw:
+            docs_por_empresa[row[0]] = docs_por_empresa.get(row[0], 0) + 1
+
+        notifs_error_raw = list(sesion.execute(
+            select(NotificacionUsuario.empresa_id)
+            .where(NotificacionUsuario.empresa_id.in_(ids_empresa))
+            .where(NotificacionUsuario.tipo == "error_doc")
+            .where(NotificacionUsuario.leida == False)  # noqa: E712
+        ).all())
+        notifs_por_empresa: dict[int, int] = {}
+        for row in notifs_error_raw:
+            notifs_por_empresa[row[0]] = notifs_por_empresa.get(row[0], 0) + 1
+
+        def _semaforo(empresa: Empresa) -> tuple[str, int, str | None]:
+            alertas = []
+            n_docs = docs_por_empresa.get(empresa.id, 0)
+            if n_docs:
+                alertas.append((True, f"{n_docs} doc(s) requieren atención"))
+            n_notifs = notifs_por_empresa.get(empresa.id, 0)
+            if n_notifs:
+                alertas.append((True, f"{n_notifs} doc(s) rechazado(s)"))
+            hay_urgente = any(u for u, _ in alertas)
+            color = "rojo" if hay_urgente else ("amarillo" if alertas else "verde")
+            primera = alertas[0][1] if alertas else None
+            return color, len(alertas), primera
+
+        filas = []
+        for e in empresas:
+            color, count, texto = _semaforo(e)
+            filas.append({
+                "id": e.id,
+                "nombre": e.nombre,
+                "cif": e.cif,
+                "estado_onboarding": e.estado_onboarding,
+                "semaforo": color,
+                "alertas_count": count,
+                "alerta_texto": texto,
+            })
+
+        # Ordenar: rojo primero, luego amarillo, luego verde
+        _orden = {"rojo": 0, "amarillo": 1, "verde": 2}
+        filas.sort(key=lambda x: _orden.get(x["semaforo"], 3))
+
+        return {"empresas": filas, "total": len(filas)}
 
 
 @router.get("/alertas")

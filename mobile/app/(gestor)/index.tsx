@@ -1,67 +1,107 @@
 // mobile/app/(gestor)/index.tsx
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native'
-import { useQuery } from '@tanstack/react-query'
-import { apiFetch } from '@/hooks/useApi'
+import {
+  ScrollView, View, Text, TouchableOpacity,
+  StyleSheet, ActivityIndicator, RefreshControl,
+} from 'react-native'
+import { router } from 'expo-router'
+import { useResumenGestor, type EmpresaResumen } from '@/hooks/useResumenGestor'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-interface Empresa { id: number; nombre: string; cif: string; estado_onboarding: string }
-
-const ESTADO_CONFIG: Record<string, { color: string; etiqueta: string }> = {
-  configurada:        { color: '#10b981', etiqueta: 'Activa' },
-  pendiente_cliente:  { color: '#f59e0b', etiqueta: 'Pendiente cliente' },
-  cliente_completado: { color: '#3b82f6', etiqueta: 'Lista para configurar' },
-  esqueleto:          { color: '#64748b', etiqueta: 'Esqueleto' },
+const SEM_CONFIG = {
+  rojo:     { color: '#f87171', bg: '#7f1d1d33', etiqueta: 'URGENTE' },
+  amarillo: { color: '#fbbf24', bg: '#78350f33', etiqueta: 'ATENCIÓN' },
+  verde:    { color: '#4ade80', bg: '#14532d33', etiqueta: 'EN ORDEN' },
 }
 
-export default function EmpresasGestor() {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['gestor-resumen'],
-    queryFn: () => apiFetch<{ empresas: Empresa[] }>('/api/gestor/resumen'),
-  })
-
-  if (isLoading) return (
-    <View style={s.centered}>
-      <ActivityIndicator color="#f59e0b" size="large" />
-      <Text style={s.cargandoTexto}>Cargando empresas...</Text>
-    </View>
+function EmpresaCard({ e }: { e: EmpresaResumen }) {
+  const cfg = SEM_CONFIG[e.semaforo] ?? SEM_CONFIG.verde
+  return (
+    <TouchableOpacity
+      style={[s.card, { borderLeftColor: cfg.color }]}
+      activeOpacity={0.75}
+      onPress={() => router.push(`/(gestor)/empresa/${e.id}` as never)}
+    >
+      <View style={s.cardFila}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.cardNombre} numberOfLines={1}>{e.nombre}</Text>
+          <Text style={s.cardCif}>{e.cif}</Text>
+        </View>
+        <View style={[s.chip, { backgroundColor: cfg.bg }]}>
+          <Text style={[s.chipTexto, { color: cfg.color }]}>{cfg.etiqueta}</Text>
+        </View>
+      </View>
+      {e.alerta_texto && (
+        <Text style={s.cardAlerta}>· {e.alerta_texto}</Text>
+      )}
+    </TouchableOpacity>
   )
+}
+
+export default function HomeGestor() {
+  const insets = useSafeAreaInsets()
+  const { data, isLoading, refetch, isRefetching } = useResumenGestor()
+
+  if (isLoading) {
+    return (
+      <View style={s.centered}>
+        <ActivityIndicator color="#f59e0b" size="large" />
+      </View>
+    )
+  }
 
   const empresas = data?.empresas ?? []
+  const rojas     = empresas.filter(e => e.semaforo === 'rojo')
+  const amarillas = empresas.filter(e => e.semaforo === 'amarillo')
+  const verdes    = empresas.filter(e => e.semaforo === 'verde')
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.contenido}>
+    <ScrollView
+      style={s.scroll}
+      contentContainerStyle={[s.contenido, { paddingTop: insets.top + 16 }]}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#f59e0b" />
+      }
+    >
       {/* Cabecera */}
       <View style={s.cabecera}>
-        <Text style={s.titulo}>Mis empresas</Text>
-        <View style={s.badgeTotal}>
+        <Text style={s.titulo}>Mis clientes</Text>
+        <View style={s.badge}>
           <Text style={s.badgeTexto}>{empresas.length}</Text>
         </View>
       </View>
 
-      {empresas.length === 0 ? (
-        <View style={s.vacio}>
-          <Text style={s.vacioTexto}>No hay empresas asignadas</Text>
-        </View>
-      ) : (
-        empresas.map((e) => {
-          const cfg = ESTADO_CONFIG[e.estado_onboarding] ?? { color: '#64748b', etiqueta: e.estado_onboarding }
-          return (
-            <TouchableOpacity key={e.id} style={s.card} activeOpacity={0.7}>
-              {/* Barra de estado lateral */}
-              <View style={[s.barraEstado, { backgroundColor: cfg.color }]} />
+      {/* Urgentes */}
+      {rojas.length > 0 && (
+        <>
+          <Text style={[s.grupo, { color: '#f87171' }]}>
+            🔴 URGENTE ({rojas.length})
+          </Text>
+          {rojas.map(e => <EmpresaCard key={e.id} e={e} />)}
+        </>
+      )}
 
-              <View style={s.cardContenido}>
-                <View style={s.cardFila}>
-                  <Text style={s.cardNombre} numberOfLines={1}>{e.nombre}</Text>
-                </View>
-                <Text style={s.cardCif}>{e.cif}</Text>
-                <View style={[s.chip, { backgroundColor: cfg.color + '22' }]}>
-                  <View style={[s.chipDot, { backgroundColor: cfg.color }]} />
-                  <Text style={[s.chipTexto, { color: cfg.color }]}>{cfg.etiqueta}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )
-        })
+      {/* Atención */}
+      {amarillas.length > 0 && (
+        <>
+          <Text style={[s.grupo, { color: '#fbbf24' }]}>
+            🟡 REQUIEREN ATENCIÓN ({amarillas.length})
+          </Text>
+          {amarillas.map(e => <EmpresaCard key={e.id} e={e} />)}
+        </>
+      )}
+
+      {/* En orden */}
+      {verdes.length > 0 && (
+        <>
+          <Text style={[s.grupo, { color: '#4ade80' }]}>
+            🟢 EN ORDEN ({verdes.length})
+          </Text>
+          {verdes.map(e => <EmpresaCard key={e.id} e={e} />)}
+        </>
+      )}
+
+      {empresas.length === 0 && (
+        <Text style={s.vacio}>Sin empresas asignadas</Text>
       )}
     </ScrollView>
   )
@@ -69,58 +109,33 @@ export default function EmpresasGestor() {
 
 const s = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: '#0f172a' },
-  contenido: { paddingHorizontal: 20, paddingBottom: 32 },
-  centered: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  cargandoTexto: { color: '#94a3b8', fontSize: 16, marginTop: 8 },
-
-  cabecera: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 60,
-    marginBottom: 24,
+  contenido: { paddingHorizontal: 20, paddingBottom: 40 },
+  centered: {
+    flex: 1, backgroundColor: '#0f172a',
+    alignItems: 'center', justifyContent: 'center',
   },
-  titulo: { fontSize: 32, fontWeight: '800', color: '#ffffff', flex: 1 },
-  badgeTotal: {
-    backgroundColor: '#f59e0b',
-    borderRadius: 20,
-    minWidth: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  cabecera: {
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: 24, gap: 12,
+  },
+  titulo: { fontSize: 32, fontWeight: '800', color: '#fff', flex: 1 },
+  badge: {
+    backgroundColor: '#f59e0b', borderRadius: 20,
+    minWidth: 36, height: 36,
+    alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 10,
   },
   badgeTexto: { color: '#0f172a', fontWeight: '800', fontSize: 16 },
-
-  vacio: { alignItems: 'center', paddingVertical: 60 },
-  vacioTexto: { color: '#475569', fontSize: 17 },
-
+  grupo: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginTop: 20, marginBottom: 10 },
   card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 20,
-    marginBottom: 14,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: '#1e293b', borderRadius: 16,
+    padding: 16, marginBottom: 10, borderLeftWidth: 4,
   },
-  barraEstado: { width: 6 },
-  cardContenido: { flex: 1, padding: 18 },
-  cardFila: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  cardNombre: { fontSize: 18, fontWeight: '700', color: '#f1f5f9', flex: 1 },
-  cardCif: { fontSize: 14, color: '#64748b', marginBottom: 12 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    gap: 6,
-  },
-  chipDot: { width: 7, height: 7, borderRadius: 4 },
-  chipTexto: { fontSize: 13, fontWeight: '600' },
+  cardFila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardNombre: { fontSize: 16, fontWeight: '700', color: '#f1f5f9' },
+  cardCif: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  chip: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  chipTexto: { fontSize: 11, fontWeight: '700' },
+  cardAlerta: { fontSize: 13, color: '#94a3b8', marginTop: 8 },
+  vacio: { color: '#475569', textAlign: 'center', marginTop: 60, fontSize: 16 },
 })
