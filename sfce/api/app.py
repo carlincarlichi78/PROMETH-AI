@@ -122,15 +122,25 @@ async def lifespan(app: FastAPI):
     pipeline_task = asyncio.create_task(loop_worker_pipeline(sesion_factory))
     app.state.worker_pipeline_task = pipeline_task
 
+    # Iniciar worker polling de correo en background
+    from sfce.conectores.correo.daemon_correo import loop_polling_correo
+    correo_task = asyncio.create_task(
+        loop_polling_correo(sesion_factory=sesion_factory)
+    )
+    app.state.worker_correo_task = correo_task
+
     yield
 
     # Apagar workers limpiamente
     worker_task.cancel()
     pipeline_task.cancel()
+    correo_task.cancel()
     with suppress(asyncio.CancelledError):
         await worker_task
     with suppress(asyncio.CancelledError):
         await pipeline_task
+    with suppress(asyncio.CancelledError):
+        await correo_task
     engine.dispose()
 
 
