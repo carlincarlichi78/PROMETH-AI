@@ -1,15 +1,23 @@
 """SFCE DB — Modelos SQLAlchemy (24 tablas)."""
 
+import enum
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, Float, ForeignKey, Integer,
+    Boolean, Column, Date, DateTime, Enum, Float, ForeignKey, Integer,
     Numeric, String, Text, JSON, UniqueConstraint, Index, func
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
 from sfce.db.base import Base
+
+
+class EstadoOnboarding(str, enum.Enum):
+    """Estados posibles del onboarding de una empresa en el sistema."""
+    CONFIGURADA = "configurada"           # Alta por el gestor, sin invitacion enviada aun
+    PENDIENTE_CLIENTE = "pendiente_cliente"  # Invitacion enviada, empresario no ha completado
+    CLIENTE_COMPLETADO = "cliente_completado"  # Empresario completo el wizard de onboarding
 
 
 class DirectorioEntidad(Base):
@@ -58,10 +66,10 @@ class Empresa(Base):
     fecha_alta = Column(Date, nullable=False, default=date.today)
     config_extra = Column(JSON, default=dict)  # datos adicionales del config.yaml
     estado_onboarding = Column(
-        String(30),
+        Enum(EstadoOnboarding, name="estado_onboarding_enum"),
         nullable=False,
-        default="configurada",
-        server_default="configurada",
+        default=EstadoOnboarding.CONFIGURADA,
+        server_default=EstadoOnboarding.CONFIGURADA.value,
     )
 
     # Relaciones
@@ -71,6 +79,16 @@ class Empresa(Base):
     asientos = relationship("Asiento", back_populates="empresa")
     activos = relationship("ActivoFijo", back_populates="empresa")
     gestoria = relationship("Gestoria", foreign_keys=[gestoria_id])
+
+    @validates("cnae")
+    def validar_cnae(self, clave: str, valor) -> str | None:
+        """Valida que el CNAE sea exactamente 4 dígitos numéricos o None."""
+        import re
+        if valor is None:
+            return valor
+        if not re.match(r"^\d{4}$", str(valor)):
+            raise ValueError(f"CNAE invalido '{valor}': debe ser un codigo de exactamente 4 digitos numericos (ej: '1081')")
+        return str(valor)
 
 
 class OnboardingCliente(Base):
@@ -827,3 +845,21 @@ class ConfigProcesamientoEmpresa(Base):
     updated_at            = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     empresa = relationship("Empresa", backref="config_procesamiento", uselist=False)
+
+
+class MensajeEmpresa(Base):
+    """Mensajes contextuales entre cliente y gestor por empresa."""
+    __tablename__ = "mensajes_empresa"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False, index=True)
+    autor_id = Column(Integer, nullable=False)
+    contenido = Column(Text, nullable=False)
+    contexto_tipo = Column(String(20), nullable=True)   # documento | fiscal | libre
+    contexto_id = Column(Integer, nullable=True)
+    contexto_desc = Column(String(200), nullable=True)
+    leido_cliente = Column(Boolean, nullable=False, default=False)
+    leido_gestor = Column(Boolean, nullable=False, default=False)
+    fecha_creacion = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    empresa = relationship("Empresa", backref="mensajes")
