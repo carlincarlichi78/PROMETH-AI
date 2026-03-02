@@ -415,6 +415,41 @@ class CalculadorModelos:
             "tipo": "semi_automatico",
         }
 
+    def calcular_190(self, perceptores: list[dict], ejercicio: int) -> dict:
+        """Modelo 190: resumen anual retenciones e ingresos a cuenta.
+
+        Args:
+            perceptores: lista de dicts con campos del perceptor (ver ExtractorPerceptores190)
+            ejercicio: ano fiscal
+
+        Returns:
+            dict con casillas del declarante (16, 17, 18, 19) y lista de perceptores
+        """
+        total_percepciones_dinerarias = round(
+            sum(float(p.get("percepcion_dineraria", 0)) for p in perceptores), 2
+        )
+        total_percepciones_especie = round(
+            sum(float(p.get("percepcion_especie_valor", 0)) for p in perceptores), 2
+        )
+        total_retenciones = round(
+            sum(float(p.get("retencion_dineraria", 0)) for p in perceptores), 2
+        )
+        total_ingresos_cuenta_especie = round(
+            sum(float(p.get("ingreso_cuenta_especie", 0)) for p in perceptores), 2
+        )
+
+        return {
+            "modelo": "190",
+            "ejercicio": ejercicio,
+            "num_registros": len(perceptores),
+            "casilla_16": total_percepciones_dinerarias,
+            "casilla_17": total_percepciones_especie,
+            "casilla_18": total_retenciones,
+            "casilla_19": total_ingresos_cuenta_especie,
+            "declarados": perceptores,
+            "tipo": "automatico",
+        }
+
     # ==================== ASISTIDOS ====================
 
     def informe_rendimientos_actividad(self, ingresos: float,

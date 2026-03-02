@@ -200,3 +200,61 @@ jobs:
 
             echo "✓ Deploy completado: $(date)"
             echo "  Imagen: $(docker inspect sfce_api --format '{{.Config.Image}}')"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke test post-deploy
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Esperar API lista
+        run: |
+          echo "Esperando que la API responda..."
+          STATUS=""
+          for i in $(seq 1 12); do
+            STATUS=$(curl -sf https://api.prometh-ai.es/api/health 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status',''))" 2>/dev/null || echo "")
+            if [ "$STATUS" = "ok" ]; then
+              echo "API lista en intento $i"
+              break
+            fi
+            echo "Intento $i/12 — esperando 5s..."
+            sleep 5
+          done
+          [ "$STATUS" = "ok" ] || (echo "API no respondio en 60s" && exit 1)
+
+      - name: Lanzar smoke
+        id: smoke
+        run: |
+          SESSION_ID=$(curl -sf -X POST \
+            "https://api.prometh-ai.es/api/testing/ejecutar" \
+            -H "Authorization: Bearer ${{ secrets.SFCE_CI_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"modo":"smoke"}' \
+            | python3 -c "import sys,json; print(json.load(sys.stdin).get('sesion_id',''))")
+          echo "SESSION_ID=$SESSION_ID"
+          echo "sesion_id=$SESSION_ID" >> $GITHUB_OUTPUT
+          [ -n "$SESSION_ID" ] || (echo "No se obtuvo sesion_id" && exit 1)
+
+      - name: Esperar resultado smoke (max 3 min)
+        run: |
+          for i in $(seq 1 36); do
+            RESULT=$(curl -sf \
+              "https://api.prometh-ai.es/api/testing/sesiones/${{ steps.smoke.outputs.sesion_id }}" \
+              -H "Authorization: Bearer ${{ secrets.SFCE_CI_TOKEN }}" 2>/dev/null || echo "{}")
+            ESTADO=$(echo $RESULT | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sesion',{}).get('estado',''))" 2>/dev/null || echo "")
+            BUGS=$(echo $RESULT | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sesion',{}).get('total_bugs',0))" 2>/dev/null || echo "0")
+            echo "[$i/36] estado=$ESTADO bugs=$BUGS"
+            if [ "$ESTADO" = "completado" ]; then
+              if [ "$BUGS" = "0" ]; then
+                echo "SMOKE OK: 0 bugs"
+                exit 0
+              else
+                echo "SMOKE FAILED: $BUGS bugs detectados"
+                exit 1
+              fi
+            fi
+            sleep 5
+          done
+          echo "SMOKE TIMEOUT: sesion no completo en 3 minutos"
+          exit 1

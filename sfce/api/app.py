@@ -28,7 +28,7 @@ class LimiteTamanioMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 from sfce.db.repositorio import Repositorio
 from sfce.db.modelos_auth import Usuario  # noqa: F401 — registra tabla en metadata
-from sfce.api.auth import crear_admin_por_defecto
+from sfce.api.auth import crear_admin_por_defecto, crear_usuarios_ci
 
 
 def _leer_config_bd() -> dict:
@@ -105,6 +105,7 @@ async def lifespan(app: FastAPI):
     app.state.sesion_factory = sesion_factory
     app.state.repo = Repositorio(sesion_factory)
     crear_admin_por_defecto(sesion_factory)
+    crear_usuarios_ci(sesion_factory)
 
     # Conectar gestor de notificaciones a la BD persistente
     from sfce.core.notificaciones import inicializar_gestor
@@ -129,18 +130,28 @@ async def lifespan(app: FastAPI):
     )
     app.state.worker_correo_task = correo_task
 
+    # Iniciar worker testing en background
+    from sfce.core.worker_testing import loop_worker_testing
+    testing_task = asyncio.create_task(loop_worker_testing(sesion_factory=sesion_factory))
+    app.state.worker_testing_task = testing_task
+    app.state.worker_testing_activo = True
+
     yield
 
     # Apagar workers limpiamente
     worker_task.cancel()
     pipeline_task.cancel()
     correo_task.cancel()
+    testing_task.cancel()
     with suppress(asyncio.CancelledError):
         await worker_task
     with suppress(asyncio.CancelledError):
         await pipeline_task
     with suppress(asyncio.CancelledError):
         await correo_task
+    with suppress(asyncio.CancelledError):
+        await testing_task
+    app.state.worker_testing_activo = False
     engine.dispose()
 
 
@@ -220,6 +231,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     from sfce.api.rutas.gestor_mensajes import router as gestor_mensajes_router
     from sfce.api.rutas.analytics import router as analytics_router
     from sfce.api.rutas.health import router as health_router
+    from sfce.api.rutas.testing import router as testing_router
     from sfce.api.websocket import gestor_ws
 
     app.include_router(empresas_router)
@@ -249,6 +261,7 @@ def crear_app(sesion_factory=None, limite_login: int = 5, limite_usuario: int = 
     app.include_router(gestor_mensajes_router)
     app.include_router(analytics_router)
     app.include_router(health_router)
+    app.include_router(testing_router)
 
     # Nonces RGPD usados (token de un solo uso)
     if not hasattr(app.state, "rgpd_nonces_usados"):

@@ -1,4 +1,5 @@
 """Configura la dirección de email dedicada al crear una empresa nueva."""
+import os
 import re
 import logging
 from sqlalchemy import select
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 _DOMINIO_DEDICADO = "prometh-ai.es"
 # Cuenta catch-all de la gestoría (routing por slug en el mismo buzón)
-_CUENTA_CATCHALL_SERVIDOR = "imap.prometh-ai.es"
-_CUENTA_CATCHALL_USUARIO = "catchall@prometh-ai.es"
+_CUENTA_CATCHALL_SERVIDOR = os.environ.get("SFCE_IMAP_CATCHALL_SERVIDOR", "imap.gmail.com")
+_CUENTA_CATCHALL_USUARIO = os.environ.get("SFCE_IMAP_CATCHALL_USUARIO", "docs@prometh-ai.es")
 
 
 def generar_slug_unico(nombre_empresa: str, sesion: Session) -> str:
@@ -35,6 +36,7 @@ def configurar_email_empresa(
     empresa_id: int,
     email_empresario: str,
     sesion: Session,
+    remitentes_iniciales: list[dict] | None = None,  # [{email, nombre}]
 ) -> dict:
     """Configura la dirección email dedicada para una empresa.
 
@@ -80,6 +82,11 @@ def configurar_email_empresa(
 
     # Añadir email del empresario a whitelist
     agregar_remitente(email_empresario, empresa_id, sesion, nombre="Empresario")
+
+    # Añadir remitentes iniciales si se proporcionan
+    for rem in (remitentes_iniciales or []):
+        agregar_remitente(rem["email"], empresa_id, sesion, nombre=rem.get("nombre"))
+
     sesion.commit()
 
     return {"slug": empresa.slug, "direccion_email": direccion}

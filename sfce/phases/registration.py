@@ -15,7 +15,7 @@ Salida: registered.json (IDs facturas en FS)
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from ..core.aprendizaje import Resolutor
 from ..core.asientos_directos import (
@@ -32,6 +32,30 @@ from ..core.fs_api import (api_delete, api_get, api_get_one, api_post,
 from ..core.logger import crear_logger
 
 logger = crear_logger("registration")
+
+
+def _aplicar_enriquecimiento(datos_extraidos: Any, hints: dict) -> None:
+    """Aplica instrucciones de enriquecimiento del email al documento.
+
+    Prioridad máxima: override sobre OCR y aprendizaje automático.
+    Se llama antes del registro para que los valores del email tengan precedencia.
+    """
+    enr = hints.get("enriquecimiento")
+    if not enr:
+        return
+
+    if (pct := enr.get("iva_deducible_pct")) is not None:
+        for linea in getattr(datos_extraidos, "lineas", []):
+            linea.iva_deducible_pct = pct
+
+    if tipo := enr.get("tipo_doc_override"):
+        datos_extraidos.tipo_doc = tipo
+
+    if ejercicio := enr.get("ejercicio_override"):
+        datos_extraidos.ejercicio = ejercicio
+
+    if categoria := enr.get("categoria_gasto"):
+        datos_extraidos.categoria_gasto = categoria
 
 
 def _asegurar_entidades_fs(config: ConfigCliente) -> dict:

@@ -54,3 +54,60 @@ export const crearRegla = (datos: { empresa_id: number; patron: string; accion: 
 
 export const eliminarRegla = (reglaId: number) =>
   api.delete<void>(`/api/correo/reglas/${reglaId}`)
+
+// Whitelist remitentes — G5
+export interface Remitente {
+  id: number
+  email: string
+  nombre?: string
+}
+
+export interface WhitelistData {
+  remitentes: Remitente[]
+  whitelist_activa: boolean
+  aviso_primer_remitente: boolean
+}
+
+export const listarRemitentes = (empresaId: number) =>
+  api.get<WhitelistData>(`/api/correo/empresas/${empresaId}/remitentes-autorizados`)
+
+export const anadirRemitente = (empresaId: number, data: { email: string; nombre?: string }) =>
+  api.post<{ id: number }>(`/api/correo/empresas/${empresaId}/remitentes-autorizados`, data)
+
+export const eliminarRemitente = (remitenteId: number) =>
+  api.delete<void>(`/api/correo/remitentes/${remitenteId}`)
+
+// Emails gestor — G9
+export interface EmailGestor {
+  id: number
+  remitente: string
+  asunto: string
+  fecha: string | null
+  estado: string
+  enriquecimiento_pendiente: boolean
+  enriquecimiento_aplicado: Record<string, unknown>
+}
+
+export interface EmailsGestorData {
+  emails: EmailGestor[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export const listarEmailsGestor = (
+  empresaId: number,
+  params: { estado?: string; limit?: number; offset?: number }
+): Promise<EmailsGestorData> => {
+  const qs = new URLSearchParams()
+  if (params.estado) qs.set('estado', params.estado)
+  if (params.limit !== undefined) qs.set('limit', String(params.limit))
+  if (params.offset !== undefined) qs.set('offset', String(params.offset))
+  return api.get<EmailsGestorData>(`/api/gestor/empresas/${empresaId}/emails?${qs.toString()}`)
+}
+
+export const confirmarEnriquecimiento = (
+  emailId: number,
+  campos: Record<string, unknown>
+): Promise<{ confirmado: boolean; campos_aplicados: Record<string, unknown> }> =>
+  api.post(`/api/correo/emails/${emailId}/confirmar`, { campos })

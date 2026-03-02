@@ -83,6 +83,7 @@ export function AppSidebar() {
         { titulo: 'Modelos Fiscales', ruta: `/empresa/${eId}/modelos-fiscales`, icono: FileText },
         { titulo: 'Generar Modelo', ruta: `/empresa/${eId}/modelos-fiscales/generar`, icono: Calculator },
         { titulo: 'Historico Modelos', ruta: `/empresa/${eId}/modelos-fiscales/historico`, icono: FolderOpen },
+        { titulo: 'Modelo 190', ruta: `/empresa/${eId}/modelo-190`, icono: FileText },
       ],
     },
     {
@@ -375,12 +376,32 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  isActive={location.pathname === '/ayuda/correo'}
+                  onClick={() => navigate('/ayuda/correo')}
+                  tooltip="Guía de envío por email"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span>Guía de envío por email</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   isActive={location.pathname === '/salud'}
                   onClick={() => navigate('/salud')}
                   tooltip="Salud del Sistema"
                 >
                   <HeartPulse className="h-4 w-4" />
                   <span>Salud del Sistema</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={location.pathname === '/testing'}
+                  onClick={() => navigate('/testing')}
+                  tooltip="SFCE Health"
+                >
+                  <Activity className="h-4 w-4" />
+                  <span>SFCE Health</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

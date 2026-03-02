@@ -631,7 +631,9 @@ class CuentaCorreo(Base):
     created_at = Column(DateTime, default=datetime.now)
 
     emails = relationship("EmailProcesado", back_populates="cuenta",
-                          cascade="all, delete-orphan")
+                          cascade="all, delete-orphan",
+                          primaryjoin="CuentaCorreo.id == EmailProcesado.cuenta_id",
+                          foreign_keys="[EmailProcesado.cuenta_id]")
 
 
 class EmailProcesado(Base):
@@ -639,7 +641,7 @@ class EmailProcesado(Base):
     __tablename__ = "emails_procesados"
 
     id = Column(Integer, primary_key=True)
-    cuenta_id = Column(Integer, ForeignKey("cuentas_correo.id"), nullable=False)
+    cuenta_id = Column(Integer, ForeignKey("cuentas_correo.id"), nullable=True)
     uid_servidor = Column(String(100), nullable=False)
     message_id = Column(String(200))
     remitente = Column(String(200), nullable=False)
@@ -911,4 +913,12 @@ class PushToken(Base):
     activo = Column(Boolean, nullable=False, default=True)
     fecha_registro = Column(DateTime, nullable=False, default=datetime.utcnow)
     fecha_ultimo_uso = Column(DateTime, nullable=True)
+
+
+# Registro automático de modelos auxiliares en Base.metadata
+# para que create_all() los cree junto al resto de tablas.
+try:
+    from sfce.db import modelos_testing as _mt  # noqa: F401
+except ImportError:
+    pass
 

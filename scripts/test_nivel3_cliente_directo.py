@@ -7,7 +7,6 @@ Flujo:
   4. Cliente ve portal /portal
 """
 import sys, io, json, os
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 import urllib.request
 from playwright.sync_api import sync_playwright
 
@@ -130,5 +129,38 @@ def main():
     print("\nScreenshots en /tmp/t3_*.png")
 
 
+import asyncio
+import time
+from scripts.motor_campo.modelos import ResultadoEjecucion
+
+
+async def ejecutar(base_url: str = "https://app.prometh-ai.es",
+                   headless: bool = True) -> ResultadoEjecucion:
+    """Retorna ResultadoEjecucion. Llama al flujo Playwright existente."""
+    inicio = time.monotonic()
+    try:
+        main()
+        return ResultadoEjecucion(
+            escenario_id="test_nivel3_cliente_directo",
+            variante_id="playwright",
+            canal="playwright",
+            resultado="ok",
+            duracion_ms=int((time.monotonic() - inicio) * 1000),
+            detalles={"capturas": []},
+        )
+    except Exception as e:
+        return ResultadoEjecucion(
+            escenario_id="test_nivel3_cliente_directo",
+            variante_id="playwright",
+            canal="playwright",
+            resultado="bug_pendiente",
+            duracion_ms=int((time.monotonic() - inicio) * 1000),
+            detalles={"error": str(e)},
+        )
+
+
 if __name__ == "__main__":
-    main()
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    resultado = asyncio.run(ejecutar(headless="--headed" not in sys.argv))
+    print(f"{'OK' if resultado.resultado == 'ok' else 'FAIL'}: {resultado.escenario_id} — {resultado.duracion_ms}ms")
+    sys.exit(0 if resultado.resultado == "ok" else 1)

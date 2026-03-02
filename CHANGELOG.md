@@ -1,5 +1,187 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 39 — 02/03/2026: Onboarding Histórico + Mejoras Onboarding Masivo
+
+### Resumen
+Ejecución del plan `docs/plans/2026-03-02-onboarding-historico.md`. Se generaron datos fiscales ficticios para dos clientes de prueba, se integró FsSetup en `onboarding.py`, y se corrigieron dos bloqueantes del onboarding masivo (soporte modelos 115/180 + fallback NIF desde cabecera PDF).
+
+### Clientes ficticios creados
+- **Marcos Ruiz Delgado** (`clientes/marcos-ruiz/`) — autónomo fontanero, ejercicio 2024
+  - `datos_fiscales_2024.yaml`: modelos 303×4T, 390, 130×4T, 111×4T, 190, balance, cuenta_pyg
+  - `config.yaml`: 5 proveedores, 3 clientes, 1 trabajador
+- **Restaurante La Marea S.L.** (`clientes/restaurante-la-marea/`) — SL hostelería, ejercicio 2024
+  - `datos_fiscales_2024.yaml`: modelos 303×4T, 390, 111×4T, 190, 115×4T, 180, balance, cuenta_pyg
+  - `config.yaml`: 8 proveedores, 3 clientes, 6 trabajadores
+
+### Generador PDFs histórico
+- `scripts/generar_onboarding_historico.py` — genera PDFs por cliente/ejercicio desde YAML
+- `tests/test_generar_onboarding_historico.py` — 6 tests (existencia, modelos requeridos, balance cuadra)
+- Fix: `abs()` eliminado en suma patrimonio_neto para balances con remanente negativo
+
+### FsSetup integrado en onboarding.py
+- `scripts/onboarding.py` — nuevo flujo automático FS: pregunta si crear empresa → `FsSetup.setup_completo()` → guarda `idempresa` + `codejercicio`
+- Fallback manual conservado para casos sin acceso a FS
+
+### Corrección onboarding masivo (modelos 115/180 + NIF fallback)
+Dos clientes pasaron de `BLOQUEADO` a `REVISION` con scores 65/100 y 55/100:
+- `sfce/core/onboarding/clasificador.py` — enum `RETENCIONES_115` + `ARRENDAMIENTO_180` + patterns
+- `sfce/core/onboarding/parsers_modelos.py` — `parsear_modelo_115()` + `parsear_modelo_180()`
+- `sfce/core/onboarding/perfil_empresa.py` — campo `tiene_arrendamientos` + handlers `_incorporar_115/180()`
+- `sfce/core/onboarding/procesador_lote.py` — `_PARSERS` actualizado + `_extraer_identidad_de_pdf()` como fallback NIF cuando no hay 036/037
+
+### Tests
+39 tests onboarding PASS. Cambios son aditivos (sin tocar lógica de validación que cubre plan de mejoras).
+
+### Próxima sesión
+Ejecutar `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` (8 tasks):
+- Task 1: Migración 023 — columna `modo` en `onboarding_lotes`
+- Task 2: `Acumulador.desde_perfil_existente()`
+- Tasks 3-4: Endpoints wizard backend
+- Tasks 5-7: UI acordeón + uploader inline + wizard 4 pasos
+- Task 8: Suite regresión
+
+---
+
+## Sesión 38 — 02/03/2026: Diseño + Plan Onboarding Masivo Mejoras UX + Wizard
+
+### Resumen
+Sesión de diseño y planificación. No se escribió código de implementación.
+
+### Problema detectado
+El formulario de Onboarding Masivo decía "ZIP, PDFs, CSVs, Excel — todo vale" pero internamente el 036/037 es obligatorio. Sin él el perfil queda bloqueado sin forma de recuperarlo.
+
+### Solución diseñada (3 capas + 2 modos)
+- **Capa A**: acordeón informativo + texto claro sobre requisitos
+- **Capa B**: uploader inline en perfiles bloqueados para añadir documentos sin repetir lote
+- **Capa C**: fusión automática con notificación cuando llega un 036 que desbloquea un perfil
+- **Modo guiado**: wizard 4 pasos como alternativa al flujo ZIP
+
+### Artefactos creados
+- `docs/plans/2026-03-02-onboarding-masivo-mejoras-design.md` — documento de diseño aprobado
+- `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` — plan de implementación (8 tasks, ~20 tests)
+
+### Plan de implementación (para próxima sesión)
+8 tasks TDD listas para ejecutar con `superpowers:executing-plans`:
+1. Migración 023 — columna `modo` en `onboarding_lotes`
+2. `Acumulador.desde_perfil_existente()` — 5 tests
+3. Endpoint `POST /perfiles/{id}/completar` — 5 tests
+4. Endpoints wizard backend — 6 tests
+5. UI acordeón + botón modo guiado + bloqueados visibles
+6. UI uploader inline perfiles bloqueados
+7. UI wizard 4 pasos + ruta App.tsx
+8. Suite de regresión final
+
+---
+
+## Sesión 37 — 02/03/2026: Auditoría Total + Fixes Producción
+
+### Resumen
+Auditoría completa del proyecto con 5 agentes paralelos. Todos los hallazgos corregibles resueltos en código y producción.
+
+### Auditoría
+- 5 agentes Explore en paralelo → `docs/auditoria/` (00-resumen + 01-BD + 02-API + 03-seguridad + 04-correo + 05-git)
+- Semáforo final: BD 🟡, API 🟢, Seguridad 🟢, Correo 🟢, Git/Tests/Frontend 🟡
+
+### Fixes código (commit `96b5e25`)
+- `sfce/api/auth.py`: `_validar_config_seguridad()` falla hard si PostgreSQL y `SFCE_FERNET_KEY` vacía
+- `sfce/db/modelos.py`: import automático de `modelos_testing` al final — tablas testing se crean con `create_all()`
+- Eliminado `sfce/db/migraciones/migracion_021_empresa_slug_backfill.py` (duplicado)
+
+### Fix migración 019 PostgreSQL (commit `083bd23`)
+- `migracion_019_cuentas_correo_gestoria.py` reescrita con soporte dual SQLite/PostgreSQL
+- `PRAGMA table_info()` → `information_schema.columns` para PostgreSQL
+- `ALTER COLUMN empresa_id DROP NOT NULL` directo en PG (sin recrear tabla)
+
+### Producción (SSH `carli@65.108.60.69`)
+- Migraciones 019, 020, 021 ejecutadas vía `docker exec sfce_api`
+- `SFCE_FERNET_KEY=tR9_p7xHy6n-DGwY_Coy42rrA1zdye7NY32VEkKojAU=` añadida a `/opt/apps/sfce/.env`
+- `docker compose up -d sfce_api` (NO restart — reload env_file requiere recrear container)
+- `CuentaCorreo` actualizada: Gmail `admin@prometh-ai.es`, App Password `rfgq bxxt iprx abry`
+- IMAP verificado: `admin@prometh-ai.es authenticated (Success)`
+
+### GitHub
+- Secret `SFCE_CI_TOKEN` creado (JWT de ci@sfce.local, generado con server's `SFCE_JWT_SECRET`)
+
+### Lecciones aprendidas
+- `docker compose restart` NO recarga `env_file`. Usar `docker compose up -d` para recargar `.env`
+- Migraciones con `PRAGMA` son SQLite-only. Usar `information_schema.columns` para compatibilidad PG
+- Módulos Python que empiezan con dígito (`021_*.py`): importar con `importlib.util.spec_from_file_location()`
+- `crear_motor()` sin args → SQLite. En producción siempre `crear_motor(_leer_config_bd())`
+
+---
+
+## Sesión 38 — 02/03/2026: Alta gestoría López de Uralde + limpieza BD
+
+### Resumen
+Primera sesión de onboarding con cliente real. BD SFCE local limpiada y reconfigurada.
+
+### Cambios BD SFCE local (sfce.db)
+- Todos los datos de prueba borrados (asientos, facturas, documentos, empresas, gestorias, usuarios)
+- Conservado: `admin@sfce.local` (superadmin)
+- Columnas `reset_token` + `reset_token_expira` añadidas a `usuarios` (faltaban tras limpieza manual sin migraciones)
+
+### Gestoría creada
+- **ASESORIA LOPEZ DE URALDE SL** (gestoria_id=1, CIF pendiente confirmar: B92010768)
+- 4 usuarios: Sergio (admin_gestoria), Francisco/María/Luis (asesor) — todos con `@prometh-ai.es`
+- 4 clientes vinculados con `idempresa_fs` correcto (chiringuito=8, elena=11)
+- Asignación: Francisco→Pastorino+Elena, María→Gerardo, Luis→Chiringuito
+
+### FS
+- Limpieza empresa 2: 106 FV + 24 asientos eliminados
+- Empresas de prueba restantes (1,6,7,8,11) siguen en FS — requieren borrado manual desde panel web
+
+### Carpetas
+- Creadas `inbox/` en `clientes/pastorino-costa-del-sol/` y `clientes/elena-navarro/`
+- Borrada carpeta `clientes/EMPRESA PRUEBA/` (datos de prueba)
+
+### Credenciales
+- `PROYECTOS/ACCESOS.md` sección 27 — gestoría + 4 usuarios + clientes asignados
+
+### Lección aprendida
+- Contraseñas con `!` deben crearse con script en fichero (`python archivo.py`), NO con `python -c "..."` en bash — el `!` corrompe el hash bcrypt
+
+---
+
+## Sesión 36 (parte 1) — 02/03/2026: Modelo 190 COMPLETADO
+
+### Implementación completa Modelo 190 — resumen anual retenciones IRPF
+
+**Archivos nuevos:**
+- `sfce/core/extractor_190.py` — `ExtractorPerceptores190`: lee NOM+FV de BD, multi-candidate OCR lookup, agrupa por NIF. 5 tests.
+- `tests/test_extractor_190.py` — 5 tests extractor
+- `tests/test_api_modelos_190.py` — 4 tests API endpoints (perceptores, corregir, generar)
+- `dashboard/src/features/fiscal/modelo-190-page.tsx` — página revisión perceptores + inline editing + generación BOE
+
+**Archivos modificados:**
+- `sfce/core/calculador_modelos.py` — `calcular_190()`: casillas 16-19 (percepciones+retenciones dinerarias+especie), retorna `declarados`. 5 tests.
+- `sfce/api/rutas/modelos.py` — 3 endpoints: `GET /190/{id}/{ej}/perceptores`, `PUT /190/{id}/{ej}/perceptores/{nif}`, `POST /190/{id}/{ej}/generar`
+- `dashboard/src/App.tsx` + `app-sidebar.tsx` — ruta `/empresa/:id/modelo-190` + enlace Fiscal sidebar
+- `tests/test_calculador_modelos.py` — clase `TestModelo190` (5 tests)
+- `docs/LIBRO/_temas/15-modelos-fiscales.md` — secciones CalculadorModelos, calcular_190(), ExtractorPerceptores190, API endpoints, dashboard
+
+**Patrones clave:**
+- Descarga BOE: `fetch()` nativo (no `api.post()` que hace `.json()`)
+- `declarados` en lugar de `perceptores` (consistencia con calcular_180, calcular_193)
+- Perceptor incompleto si NIF=None o percepcion_dineraria<=0; FV excluida si retencion=0
+
+**Tests**: +14 (2413→2527). Commit checkpoint: `9ede1ca`
+
+## Sesión 35 — 02/03/2026: Design + Plan Email Enriquecimiento
+
+### Solo diseño y planificación (sin código implementado)
+
+- **Brainstorming completo**: flujos reales gestoría→prometh-ai, cliente directo, multi-cliente
+- **Cambio arquitectónico clave**: migración de Zoho a Google Workspace
+- **Nuevo componente diseñado**: `ExtractorEnriquecimiento` — GPT-4o extrae instrucciones contables del cuerpo del email con confianza por campo
+- **Flujos documentados**: A (cliente directo), B (gestoría con instrucciones globales), C (multi-cliente un email), D (cliente con instrucciones), E (.eml como adjunto), F (catch-all con slug)
+- **Schema `EnriquecimientoDocumento`**: 10 campos (iva_deducible_pct, categoria_gasto, subcuenta_contable, reparto_empresas, regimen_especial, ejercicio_override, tipo_doc_override, notas, urgente) + confianza por campo
+- **Integración pipeline**: `registration.py` aplica enriquecimiento con prioridad nivel 6 (>aprendizaje yaml nivel 5 >OCR nivel 3)
+- **10 mejoras identificadas** sobre diseño inicial: slug ya existe, DKIM nunca se extrae, parser reenvíos, confianza por campo, pipeline debe leer enriquecimiento, schema formal hints_json, aprendizaje desde confirmaciones, .eml support, notificación inmediata, trazabilidad dashboard
+- **13 grietas revisadas**: G1 simplificada (slug ya en BD, solo backfill), G6 integrada en UI de G5
+- **Design doc**: `docs/plans/2026-03-02-email-enriquecimiento-design.md`
+- **Plan**: `docs/plans/2026-03-02-email-enriquecimiento-plan.md` — 18 tasks, 5 lotes paralelos, ~65 tests
+- **Commit**: `ae5b6b3`
+
 ## Sesión 28 — 02/03/2026: Email Ingesta Tasks 7-10 + Zoho Mail Tasks 1-5
 
 ### Email Ingesta Mejorada — Tasks 7-10

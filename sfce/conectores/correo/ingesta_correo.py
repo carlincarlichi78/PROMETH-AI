@@ -97,6 +97,9 @@ class IngestaCorreo:
                         reglas=reglas,
                     )
                     accion = clasificacion.get("accion", "CUARENTENA")
+                    # En gestoría, la IA no silencia emails: si IA dice SPAM → cuarentena manual
+                    if accion == "IGNORAR" and clasificacion.get("nivel") == "IA":
+                        accion = "CUARENTENA"
                     _ESTADO_POR_ACCION = {
                         "CLASIFICAR": "CLASIFICADO",
                         "APROBAR_MANUAL": "CUARENTENA",
@@ -111,6 +114,30 @@ class IngestaCorreo:
                             empresa_destino_id = self._resolver_empresa_por_slug(
                                 slug, empresas_gestoria
                             )
+
+                    # G2: detectar ambigüedad — remitente en whitelist de múltiples empresas
+                    motivo_cuarentena_gestoria = "SIN_REGLA" if estado_inicial == "CUARENTENA" else None
+                    remitente_email = email_data["remitente"]
+                    if empresas_gestoria:
+                        candidatos_g2 = _detectar_ambiguedad_remitente(
+                            remitente_email, empresas_gestoria, sesion
+                        )
+                        if len(candidatos_g2) > 1:
+                            logger.warning(
+                                "G2: remitente '%s' en %d empresas — cuarentena por ambiguedad",
+                                remitente_email,
+                                len(candidatos_g2),
+                            )
+                            accion = "CUARENTENA"
+                            estado_inicial = "CUARENTENA"
+                            empresa_destino_id = None
+                            motivo_cuarentena_gestoria = "AMBIGUEDAD_REMITENTE"
+
+                    # G13: extraer tipo_doc del asunto también en cuentas gestoría
+                    hints_gestoria = extraer_hints_asunto(asunto)
+                    if hints_gestoria.tipo_doc and clasificacion.get("tipo_doc") is None:
+                        clasificacion["tipo_doc"] = hints_gestoria.tipo_doc
+
                     email_bd = EmailProcesado(
                         cuenta_id=cuenta_id,
                         uid_servidor=email_data["uid"],
@@ -124,7 +151,7 @@ class IngestaCorreo:
                         confianza_ia=clasificacion.get("confianza"),
                         es_respuesta_ack=False,
                         score_confianza=None,
-                        motivo_cuarentena=None if estado_inicial != "CUARENTENA" else "SIN_REGLA",
+                        motivo_cuarentena=motivo_cuarentena_gestoria,
                     )
                 else:
                     # 1. Filtro anti-loop ACK
@@ -206,11 +233,53 @@ class IngestaCorreo:
                             email_data.get("adjuntos", []),
                             contrasenas_zip=contrasenas,
                         )
+
+                        # G7: ejecutar ExtractorEnriquecimiento sobre el cuerpo del email
+                        try:
+                            from sfce.conectores.correo.extractor_enriquecimiento import (
+                                ExtractorEnriquecimiento,
+                                _CAMPOS_MAPEABLES,
+                                UMBRAL_AUTO,
+                                UMBRAL_REVISION,
+                            )
+                            extractor_enr = ExtractorEnriquecimiento()
+                            instrucciones_enr = extractor_enr.extraer(
+                                cuerpo_texto=email_data.get("cuerpo_texto", "") or "",
+                                nombres_adjuntos=[a.nombre for a in archivos],
+                                empresas_gestoria=[],
+                                fuente="email_ingesta",
+                            )
+                            instrucciones_map = {i.adjunto: i for i in instrucciones_enr}
+                        except Exception as e_enr:
+                            instrucciones_map = {}
+                            logger.debug("Enriquecimiento no disponible: %s", e_enr)
+
                         for archivo in archivos:
+                            # Construir hints_extra desde instrucción de enriquecimiento
+                            instruccion = instrucciones_map.get(archivo.nombre)
+                            enr_aplicado: dict = {}
+                            campos_pendientes: list = []
+                            if instruccion:
+                                for campo in _CAMPOS_MAPEABLES:
+                                    c = getattr(instruccion, campo, None)
+                                    if c is None:
+                                        continue
+                                    if c.confianza >= UMBRAL_AUTO:
+                                        enr_aplicado[campo] = c.valor
+                                    elif c.confianza >= UMBRAL_REVISION:
+                                        campos_pendientes.append(campo)
+                                if instruccion.urgente:
+                                    enr_aplicado["urgente"] = True
+                                if instruccion.fuente:
+                                    enr_aplicado["fuente"] = instruccion.fuente
+                                if campos_pendientes:
+                                    enr_aplicado["campos_pendientes"] = campos_pendientes
+
                             _encolar_archivo(
                                 archivo, empresa_id, email_bd.id,
                                 email_data, directorio=self._dir_adjuntos,
                                 sesion=sesion,
+                                hints_extra=enr_aplicado or None,
                             )
                     except (ErrorZipBomb, ErrorZipDemasiado) as exc:
                         email_bd.motivo_cuarentena = type(exc).__name__
@@ -322,6 +391,27 @@ class IngestaCorreo:
             }
             for r in reglas
         ]
+
+
+def _detectar_ambiguedad_remitente(
+    remitente: str, empresas_gestoria: list, sesion: Session
+) -> list:
+    """Retorna lista de empresa_ids donde el remitente está en whitelist.
+
+    - Lista vacía → sin restricción (ninguna empresa lo tiene configurado).
+    - 1 elemento → destino único, sin ambigüedad.
+    - >1 elemento → ambigüedad: remitente autorizado en múltiples empresas.
+    """
+    try:
+        from sfce.conectores.correo.whitelist_remitentes import verificar_whitelist
+        coincidencias = []
+        for empresa in empresas_gestoria:
+            eid = empresa.id if hasattr(empresa, "id") else empresa.get("id")
+            if eid and verificar_whitelist(remitente, eid, sesion):
+                coincidencias.append(eid)
+        return coincidencias
+    except Exception:
+        return []
 
 
 def ejecutar_polling_todas_las_cuentas(engine: Engine) -> None:

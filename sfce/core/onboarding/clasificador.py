@@ -20,7 +20,9 @@ class TipoDocOnboarding(str, Enum):
     IRPF_MODULOS_131          = "irpf_modulos_131"
     IRPF_ANUAL_100            = "irpf_anual_100"
     RETENCIONES_111           = "retenciones_111"
+    RETENCIONES_115           = "retenciones_115"
     RETENCIONES_190           = "retenciones_190"
+    ARRENDAMIENTO_180         = "arrendamiento_180"
     OPERACIONES_347           = "operaciones_347"
     ATRIBUCION_RENTAS_184     = "atribucion_rentas_184"
     LIBRO_FACTURAS_EMITIDAS   = "libro_facturas_emitidas"
@@ -50,7 +52,9 @@ _PATRONES_PDF = [
     (TipoDocOnboarding.IRPF_MODULOS_131,       r"MODELO\s+131"),
     (TipoDocOnboarding.IRPF_ANUAL_100,         r"MODELO\s+100\b"),
     (TipoDocOnboarding.RETENCIONES_111,        r"MODELO\s+111"),
+    (TipoDocOnboarding.RETENCIONES_115,        r"MODELO\s+115"),
     (TipoDocOnboarding.RETENCIONES_190,        r"MODELO\s+190"),
+    (TipoDocOnboarding.ARRENDAMIENTO_180,      r"MODELO\s+180"),
     (TipoDocOnboarding.OPERACIONES_347,        r"MODELO\s+347"),
     (TipoDocOnboarding.ATRIBUCION_RENTAS_184,  r"MODELO\s+184"),
     (TipoDocOnboarding.ESCRITURA_CONSTITUCION, r"ESCRITURA\s+(DE\s+)?CONSTITU"),

@@ -87,6 +87,7 @@ class PerfilEmpresa:
     pagos_fraccionados: dict = field(default_factory=dict)
 
     tiene_trabajadores: bool = False
+    tiene_arrendamientos: bool = False
     socios: list = field(default_factory=list)
     operaciones_vinculadas: bool = False
     obligaciones_adicionales: list = field(default_factory=list)
@@ -132,6 +133,10 @@ class Acumulador:
             self._incorporar_100(datos)
         elif tipo_doc == "retenciones_111":
             self._incorporar_111(datos)
+        elif tipo_doc == "retenciones_115":
+            self._incorporar_115(datos)
+        elif tipo_doc == "arrendamiento_180":
+            self._incorporar_180(datos)
         elif tipo_doc == "libro_facturas_emitidas":
             self._perfil.clientes_habituales = datos.get("clientes", [])
         elif tipo_doc == "libro_facturas_recibidas":
@@ -192,6 +197,14 @@ class Acumulador:
         if datos.get("tiene_trabajadores"):
             self._perfil.tiene_trabajadores = True
 
+    def _incorporar_115(self, datos: dict) -> None:
+        if datos.get("tiene_arrendamientos"):
+            self._perfil.tiene_arrendamientos = True
+
+    def _incorporar_180(self, datos: dict) -> None:
+        if datos.get("tiene_arrendamientos"):
+            self._perfil.tiene_arrendamientos = True
+
     def _verificar_cuentas_alerta(self, cuentas: list) -> None:
         for cuenta in cuentas:
             if cuenta.startswith("55"):
@@ -203,6 +216,21 @@ class Acumulador:
 
     def obtener_perfil(self) -> PerfilEmpresa:
         return self._perfil
+
+    @classmethod
+    def desde_perfil_existente(cls, datos_json: str) -> "Acumulador":
+        """Restaura un Acumulador a partir del JSON guardado en BD."""
+        import json
+        datos = json.loads(datos_json)
+        acum = cls()
+        # Campos con claves de año que JSON serializa como strings
+        _campos_anyo = {"prorrata_historico", "bins_por_anyo", "pagos_fraccionados"}
+        for campo, valor in datos.items():
+            if hasattr(acum._perfil, campo):
+                if campo in _campos_anyo and isinstance(valor, dict):
+                    valor = {int(k): v for k, v in valor.items()}
+                setattr(acum._perfil, campo, valor)
+        return acum
 
 
 class Validador:

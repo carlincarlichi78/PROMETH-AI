@@ -37,6 +37,17 @@ def _validar_config_seguridad() -> None:
         )
     _JWT_SECRET = secret
 
+    # En producción (PostgreSQL) exigir Fernet key configurada.
+    # Sin ella, las credenciales de correo existentes se vuelven indescifrables al reiniciar.
+    if os.environ.get("SFCE_DB_TYPE") == "postgresql":
+        fernet_key = os.environ.get("SFCE_FERNET_KEY", "").strip()
+        if not fernet_key:
+            raise RuntimeError(
+                "SFCE_FERNET_KEY no configurada. "
+                "Genera una con: "
+                "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+
 
 def _get_secret() -> str:
     """Devuelve el JWT secret. Lazy load si _validar_config_seguridad no fue llamada."""
@@ -173,6 +184,26 @@ def crear_admin_por_defecto(sesion_factory) -> None:
             )
             sesion.add(admin)
             sesion.commit()
+
+
+def crear_usuarios_ci(sesion_factory) -> None:
+    """Crea usuarios CI para testing automatizado. Idempotente."""
+    with sesion_factory() as sesion:
+        ci_usuarios = [
+            {"email": "ci_cliente@sfce.local", "nombre": "CI Cliente",
+             "rol": "cliente", "hash_password": hashear_password("ci_cliente_pass")},
+        ]
+        for u_data in ci_usuarios:
+            if not sesion.query(Usuario).filter_by(email=u_data["email"]).first():
+                sesion.add(Usuario(
+                    email=u_data["email"],
+                    nombre=u_data["nombre"],
+                    hash_password=u_data["hash_password"],
+                    rol=u_data["rol"],
+                    activo=True,
+                    empresas_ids=[],
+                ))
+        sesion.commit()
 
 
 from sfce.db.modelos import Empresa

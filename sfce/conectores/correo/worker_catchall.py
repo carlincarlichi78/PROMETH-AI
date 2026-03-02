@@ -19,7 +19,7 @@ from sfce.conectores.correo.canal_email_dedicado import (
 from sfce.conectores.correo.parser_hints import extraer_hints_asunto
 from sfce.core.seguridad_archivos import sanitizar_nombre_archivo
 from sfce.core.validador_pdf import validar_pdf, ErrorValidacionPDF
-from sfce.db.modelos import ColaProcesamiento
+from sfce.db.modelos import ColaProcesamiento, EmailProcesado
 
 if TYPE_CHECKING:
     from sfce.conectores.correo.extractor_adjuntos import ArchivoExtraido
@@ -35,10 +35,15 @@ def _encolar_archivo(
     email_data: dict,
     directorio: Path,
     sesion: Session,
+    hints_extra: dict | None = None,
 ) -> bool:
     """Encola un ArchivoExtraido en ColaProcesamiento.
 
     Valida PDFs, calcula SHA256, guarda en disco y crea la entrada en cola.
+
+    Args:
+        hints_extra: campos de enriquecimiento adicionales (G7/G13).
+                     Si se proporciona, se almacena en hints_json["enriquecimiento"].
 
     Returns:
         True si el archivo fue encolado, False si fue rechazado.
@@ -62,6 +67,17 @@ def _encolar_archivo(
 
     hints = extraer_hints_asunto(email_data.get("asunto", ""))
 
+    hints_dict: dict = {
+        "tipo_doc": hints.tipo_doc,
+        "nota": hints.nota,
+        "from": email_data.get("remitente", email_data.get("from", "")),
+        "origen": "email_ingesta",
+        "email_id": email_id,
+    }
+    # G7/G13: integrar enriquecimiento si se ha extraído
+    if hints_extra:
+        hints_dict["enriquecimiento"] = hints_extra
+
     item = ColaProcesamiento(
         empresa_id=empresa_id,
         nombre_archivo=nombre,
@@ -70,13 +86,7 @@ def _encolar_archivo(
         trust_level="BAJA",
         sha256=sha,
         empresa_origen_correo_id=empresa_id,
-        hints_json=json.dumps({
-            "tipo_doc": hints.tipo_doc,
-            "nota": hints.nota,
-            "from": email_data.get("remitente", email_data.get("from", "")),
-            "origen": "email_ingesta",
-            "email_id": email_id,
-        }),
+        hints_json=json.dumps(hints_dict),
     )
     sesion.add(item)
     sesion.flush()
@@ -103,7 +113,20 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
 
     empresa_id = resolver_empresa_por_slug(dest_parsed.slug, sesion)
     if not empresa_id:
-        logger.warning("Catch-all: slug '%s' no resuelve a ninguna empresa", dest_parsed.slug)
+        logger.warning(
+            "Catch-all: slug '%s' no resuelve a ninguna empresa, guardando en cuarentena",
+            dest_parsed.slug,
+        )
+        ep = EmailProcesado(
+            cuenta_id=None,
+            uid_servidor=str(email_data.get("uid", "")),
+            remitente=email_data.get("from", ""),
+            asunto=email_data.get("subject", ""),
+            estado="CUARENTENA",
+            nivel_clasificacion="MANUAL",
+        )
+        sesion.add(ep)
+        sesion.commit()
         return {"encolados": 0, "motivo": "slug_desconocido"}
 
     hints = extraer_hints_asunto(email_data.get("subject", ""))

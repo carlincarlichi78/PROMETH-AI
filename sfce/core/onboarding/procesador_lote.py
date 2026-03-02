@@ -1,10 +1,13 @@
 """Procesador de lotes de onboarding masivo."""
 from __future__ import annotations
+import re
 import zipfile
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+import pdfplumber
 
 from sfce.core.onboarding.clasificador import clasificar_documento, TipoDocOnboarding
 from sfce.core.onboarding.parsers_libros import (
@@ -15,6 +18,7 @@ from sfce.core.onboarding.parsers_modelos import (
     parsear_modelo_200, parsear_modelo_303,
     parsear_modelo_390, parsear_modelo_130,
     parsear_modelo_100, parsear_modelo_111,
+    parsear_modelo_115, parsear_modelo_180,
 )
 from sfce.core.onboarding.perfil_empresa import Acumulador, Validador
 
@@ -27,6 +31,8 @@ _PARSERS = {
     TipoDocOnboarding.IRPF_FRACCIONADO_130: parsear_modelo_130,
     TipoDocOnboarding.IRPF_ANUAL_100:       parsear_modelo_100,
     TipoDocOnboarding.RETENCIONES_111:      parsear_modelo_111,
+    TipoDocOnboarding.RETENCIONES_115:      parsear_modelo_115,
+    TipoDocOnboarding.ARRENDAMIENTO_180:    parsear_modelo_180,
 }
 
 _PARSERS_LIBROS = {
@@ -112,6 +118,7 @@ class ProcesadorLote:
 
     def _procesar_grupo(self, nombre: str, archivos: list):
         acum = Acumulador()
+        pdfs_clasificados: list[Path] = []
         for archivo in archivos:
             if not archivo.is_file():
                 continue
@@ -119,12 +126,52 @@ class ProcesadorLote:
                 clf = clasificar_documento(archivo)
                 if clf.tipo == TipoDocOnboarding.DESCONOCIDO:
                     continue
+                if archivo.suffix.lower() == ".pdf":
+                    pdfs_clasificados.append(archivo)
                 datos = self._extraer_datos(clf.tipo, archivo)
                 if datos is not None:
                     acum.incorporar(clf.tipo.value, datos)
             except Exception as exc:
                 logger.warning("Error procesando %s: %s", archivo.name, exc)
+
+        # Fallback: si no hay 036/037, extraer NIF/nombre de la cabecera de cualquier PDF
+        perfil = acum.obtener_perfil()
+        if "censo_036_037" not in perfil.documentos_procesados and pdfs_clasificados:
+            datos_id = self._extraer_identidad_de_pdf(pdfs_clasificados[0])
+            if datos_id:
+                acum.incorporar("censo_036_037", datos_id)
+
         return acum.obtener_perfil()
+
+    def _extraer_identidad_de_pdf(self, ruta: Path) -> Optional[dict]:
+        """Extrae NIF y nombre desde la cabecera del PDF como sustituto del 036."""
+        try:
+            with pdfplumber.open(str(ruta)) as pdf:
+                texto = pdf.pages[0].extract_text() or ""
+            # Buscar línea con patrón: NOMBRE ... NIF PERIODO EJERCICIO
+            patron = (
+                r"^([\w\s,\.ÁÉÍÓÚáéíóúÑñ]+?)\s+"
+                r"([A-Z]\d{7}[0-9A-Z]|\d{8}[A-Z])"
+                r"\s+[0-9A-Z]+\s+\d{4}"
+            )
+            for linea in texto.splitlines():
+                m = re.match(patron, linea.strip())
+                if m:
+                    nombre = m.group(1).strip()
+                    nif = m.group(2).strip()
+                    if len(nombre) > 2:
+                        forma = "autonomo" if re.match(r"\d{8}[A-Z]", nif) else "sl"
+                        return {
+                            "nif": nif,
+                            "nombre": nombre,
+                            "forma_juridica": forma,
+                            "domicilio": {},
+                            "regimen_iva": "general",
+                            "fecha_alta": None,
+                        }
+        except Exception as exc:
+            logger.debug("No se pudo extraer identidad de %s: %s", ruta.name, exc)
+        return None
 
     def _extraer_datos(self, tipo: TipoDocOnboarding, ruta: Path):
         if tipo in _PARSERS:

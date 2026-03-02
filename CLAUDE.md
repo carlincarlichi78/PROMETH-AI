@@ -79,13 +79,23 @@ Cargar: `export $(grep -v '^#' .env | xargs)` (`.env` en raiz, NO en git)
 Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
 
 ## Clientes
-| Cliente | Carpeta | idempresa | Estado |
-|---------|---------|-----------|--------|
-| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | Datos limpiados (sesión 30) |
-| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | **ACTIVO** — 106 FV en FS |
-| EMPRESA PRUEBA S.L. (testing) | clientes/EMPRESA PRUEBA/ | 7 | Recreada sesión 30 (antes id=3) — sin datos |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 8 | Recreada sesión 30 (antes id=4) — sin datos |
-| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 11 | Recreada sesión 30 (antes id=5) — sin datos |
+| Cliente | Carpeta | SFCE id | FS idempresa | Gestor SFCE | Estado |
+|---------|---------|---------|--------------|-------------|--------|
+| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | 1 | Francisco Rodríguez | activa=False en SFCE (oculta del dashboard) |
+| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | 2 | María García | En SFCE BD |
+| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 3 | 8 | Luis Lupiañez | En SFCE BD |
+| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 4 | 11 | Francisco Rodríguez | En SFCE BD |
+
+## Gestoría activa (primer cliente real)
+| Dato | Valor |
+|------|-------|
+| Nombre | ASESORIA LOPEZ DE URALDE SL |
+| CIF | B92010768 (confirmar con Sergio) |
+| Email | comunicaciones@lopezdeuralde.es |
+| SFCE id | gestoria_id=1 |
+| Admin | sergio@prometh-ai.es / Uralde2025! |
+| Asesores | francisco@, maria@, luis@ @prometh-ai.es / Uralde2025! |
+| Credenciales completas | PROYECTOS/ACCESOS.md sección 27 |
 
 ## Scripts principales
 | Script | Uso |
@@ -137,6 +147,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | OCR por Tiers | `sfce/phases/intake.py` | T0 Mistral → T1 +GPT → T2 +Gemini, 5 workers |
 | SFCE v2 (5 fases) | `sfce/` | Normativa, perfil fiscal, clasificador, BD, API, dashboard. 954 tests |
 | Modelos Fiscales | `sfce/modelos_fiscales/` | 28 modelos, MotorBOE, GeneradorPDF, API+dashboard. 544 tests |
+| Modelo 190 | `sfce/core/extractor_190.py`, `calculador_modelos.py`, `dashboard/.../modelo-190-page.tsx` | ExtractorPerceptores190 (NOM+FV→BD), calcular_190(), 3 endpoints API, página revisión+generación. 14 tests |
 | Directorio Empresas | `sfce/db/modelos.py`, `sfce/api/rutas/directorio.py` | CIF unico global, verificacion AEAT/VIES. 65 tests |
 | Dual Backend | `sfce/core/backend.py` | FS+BD local, sync automatico asientos |
 | Generador v2 | `tests/datos_prueba/generador/` | 43 familias, 2343 docs, 189 tests |
@@ -165,8 +176,8 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Dashboard Advisor | `dashboard/src/features/advisor/` | 6 páginas: CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia. AdvisorGate tier-premium. 6 feature flags en useTiene.ts |
 | CI/CD Deploy | `.github/workflows/deploy.yml`, `Dockerfile`, `requirements.txt` | 4 jobs GitHub Actions: test ‖ build-frontend → build-docker → deploy SSH. Imagen GHCR. health endpoint, docker-compose, nginx configs prometh-ai.es. Migración SQLite→PG one-time. 4 tests health |
 
-**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`
-**Tests totales**: 2234 PASS (sesión 12 completada 02/03/2026)
+**Plans/designs**: `docs/plans/2026-02-2*.md`, `docs/plans/2026-03-01-prometh-ai-*.md`, `docs/plans/2026-03-01-c1-c4-*.md`, `docs/plans/2026-03-01-tablero-usuarios-*.md`, `docs/plans/2026-03-01-app-movil-*.md`, `docs/plans/2026-03-01-sfce-advisor-*.md`, `docs/plans/2026-03-02-modelo-190*.md`, `docs/plans/2026-03-02-email-enriquecimiento*.md`
+**Tests totales**: 2530 PASS (sesión 36 completada 02/03/2026)
 
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
@@ -192,32 +203,162 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (02/03/2026, sesión 30 — BD reseteada, Gmail SMTP, FS limpiado)
+## Estado actual (02/03/2026, sesión 38 — Gestoría López de Uralde dada de alta)
 
-**Rama activa**: `main`
-**Tests**: 2413 PASS, 4 skipped, 0 FAILED. Commit: `77a8b81`
+**BD SFCE local**: limpiada completamente (datos de prueba borrados). Solo quedan datos reales.
+**Gestoría**: López de Uralde creada (gestoria_id=1) con 4 usuarios y 4 clientes asignados.
+**FS**: empresas de prueba siguen en FS (no borrables por API — requiere panel web FacturaScripts).
+**BD local dev**: SQLite `sfce.db`. Columnas `reset_token` + `reset_token_expira` añadidas manualmente (faltaban tras limpieza manual).
+
+**Pendiente próxima sesión**:
+1. Confirmar CIF B92010768 con Sergio López de Uralde
+2. Borrar empresas de prueba de FS desde panel web: https://contabilidad.lemonfresh-tuc.com
+3. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción (pendiente sesión 36)
+
+---
+
+## Estado actual (02/03/2026, sesión 35 — Google Workspace configurado)
+
+**Google Workspace** `admin@prometh-ai.es` — cuenta activa, Gmail ✓, DKIM ✓, MX migrado de ImprovMX a Google.
+**Pendiente próxima sesión**:
+1. Crear App Password (admin@prometh-ai.es → myaccount.google.com → Seguridad → Contraseñas de aplicaciones → nombre: SFCE-IMAP)
+2. Crear alias `documentacion@prometh-ai.es` en admin.google.com → Usuarios → admin → Añadir alias
+3. Implementar fixes grietas sistema email: G1 (slug en BD), G5 (endpoints whitelist UI), G9 (vista emails gestor)
+4. Actualizar `.env.example` SFCE_SMTP_HOST=smtp.gmail.com + onboarding_email.py servidor catch-all
+5. Configurar CuentaCorreo en BD producción con credenciales Google Workspace
+
+---
+
+## Estado actual (02/03/2026, sesión 37 — Onboarding Histórico planificado)
+
+**FacturaScripts**: LIMPIO TOTAL (0 empresas, 0 datos). Borrado completo vía SSH + MariaDB.
+**Pipeline_state + procesado/**: reseteados en todos los clientes.
+**Próxima sesión**: ejecutar plan `docs/plans/2026-03-02-onboarding-historico.md`
+
+### Onboarding Histórico — PLAN LISTO (sesión 37)
+
+**Plan**: `docs/plans/2026-03-02-onboarding-historico.md` — 8 tasks
+
+| Task | Estado | Descripción |
+|------|--------|-------------|
+| 1 | pendiente | `clientes/marcos-ruiz/datos_fiscales_2024.yaml` |
+| 2 | pendiente | `clientes/restaurante-la-marea/datos_fiscales_2024.yaml` |
+| 3 | pendiente | `clientes/marcos-ruiz/config.yaml` (completo) |
+| 4 | pendiente | `clientes/restaurante-la-marea/config.yaml` (completo) |
+| 5 | pendiente | `scripts/generar_onboarding_historico.py` + tests |
+| 6 | pendiente | Generar ~32 PDFs onboarding 2024 |
+| 7 | pendiente | Crear empresas en FacturaScripts (FS en blanco) |
+| 8 | pendiente | Pipeline sobre PDFs históricos, observar comportamiento |
+
+**Clientes objetivo**:
+- Marcos Ruiz Delgado (autónomo fontanero): 303×4, 390, 130×4, 111×4, 190, balance, P&G
+- Restaurante La Marea S.L. (hostelería): 303×4, 390, 111×4, 190, 115×4, 180, balance, P&G
+
+---
+
+## Estado actual (02/03/2026, sesión 41 — Onboarding Masivo Mejoras UX — COMPLETADO)
+
+**Rama activa**: `feat/motor-testing-caos-p1`
+**Último commit**: `60639da`
+**Tests**: 2552 PASS, 4 skipped, 0 FAILED
+
+### Onboarding Masivo Mejoras — plan `docs/plans/2026-03-02-onboarding-masivo-mejoras.md` — COMPLETADO
+
+| Task | Estado | Commit |
+|------|--------|--------|
+| 1 — Migración 023 (`modo` en `onboarding_lotes`) | ✅ | b0c7253 |
+| 2 — `Acumulador.desde_perfil_existente()` + 5 tests | ✅ | 0a76fba |
+| 3 — Endpoint `POST /perfiles/{id}/completar` + 5 tests | ✅ | 48a966f |
+| 4 — Endpoints wizard backend (iniciar/subir-036/procesar) | ✅ | 4e6b69d |
+| 5 — UI acordeón + botón modo guiado | ✅ | 8059801 |
+| 6 — UI uploader inline bloqueados | ✅ | a41a245 |
+| 7 — Wizard 4 pasos + ruta App.tsx | ✅ | 79d94cd |
+| 8 — Suite regresión | ✅ | 60639da |
+
+**Pendiente próxima sesión**:
+1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
+
+---
+
+## Estado actual (02/03/2026, sesión 36 — Email Enriquecimiento COMPLETADO)
+
+**Rama activa**: `feat/motor-testing-caos-p1` (56 commits adelante de main)
+**Tests**: 2530 PASS, 4 skipped, 0 FAILED. Commit: `53c65b9`
 **Producción**: https://app.prometh-ai.es (frontend) + https://api.prometh-ai.es (API) — ONLINE ✓
 **Uptime Kuma**: 2 monitores activos — SFCE App (HTTP 200) + SFCE API Health (keyword "ok")
 
-### Sesión 30 — BD reseteada + Gmail SMTP + FS limpiado
+### Email Enriquecimiento + Grietas — IMPLEMENTADO (sesión 36)
 
-- **requirements.txt**: añadidos `pandas==2.2.3`, `pyzipper==0.3.6`, `fpdf2==2.8.3` (CI/CD estaba fallando)
-- **BD producción reseteada**: DROP SCHEMA + create_all (44 tablas limpias)
-- **Migración 019 aplicada manualmente**: `ALTER TABLE cuentas_correo` (gestoria_id, tipo_cuenta, empresa_id nullable) + `empresa_origen_correo_id` en cola_procesamiento
-- **Seed inicial**: superadmin (admin@sfce.local/admin) + Gestoría Norte (id=1) + Gestoría Sur (id=2) + 5 asesores + 1 financiero
-- **SMTP Gmail configurado**: smtp.gmail.com:587, carlincarlichi@gmail.com, App Password `vztcpyknzpazvgsy`
-- **Cuenta IMAP SFCE**: imap.gmail.com:993 via ImprovMX catch-all (id=1 en cuentas_correo)
-- **FacturaScripts**: datos empresas 1,3,4,5 limpiados. Empresas 3,4,5 recreadas con nuevos IDs (7,8,11). Solo empresa 2 (Gerardo) conserva datos (106 FV)
-- **CLAVES.md**: creado en PROYECTOS/CLAVES.md con todas las credenciales del proyecto
-- **ACCESOS.md**: sección 25 añadida (Gmail SMTP/IMAP SFCE)
-- **Pendiente**: vincular empresas FS al dashboard SFCE (onboarding con nuevos IDs 1,2,7,8,11)
+**Todos los tasks del plan completados** (`docs/plans/2026-03-02-email-enriquecimiento-plan.md`):
 
-### Correo — Gmail SMTP/IMAP (sesión 30, definitivo)
-- Zoho descartado (no tiene plan gratuito para dominio propio)
-- SMTP: `smtp.gmail.com:587`, usuario `carlincarlichi@gmail.com`, App Password `vztcpyknzpazvgsy`, FROM `noreply@prometh-ai.es`
-- IMAP: `imap.gmail.com:993`, mismas credenciales. Recepción via ImprovMX catch-all → Gmail
-- Cuenta IMAP registrada en SFCE (id=1, tipo=dedicada)
-- Variables en `/opt/apps/sfce/.env`: `SFCE_SMTP_*`
+| Componente | Archivos | Tests |
+|-----------|----------|-------|
+| `ExtractorEnriquecimiento` | `sfce/conectores/correo/extractor_enriquecimiento.py` | 8 |
+| Pipeline apply | `sfce/phases/registration.py` — `_aplicar_enriquecimiento()` | 5 |
+| API whitelist G5+G8+G12 | `sfce/api/rutas/correo.py` — 3 endpoints + fixes | 13 |
+| API emails gestor G9 | `sfce/api/rutas/gestor.py` — `GET .../emails` paginado | 6 |
+| Integración ingesta G7+G13 | `sfce/conectores/correo/ingesta_correo.py` | 9 |
+| G2 Desambiguación remitente | `ingesta_correo._detectar_ambiguedad_remitente()` | 8 |
+| API confirmar G11 | `sfce/api/rutas/correo.py` — `POST .../confirmar` | 3 |
+| Dashboard whitelist | `dashboard/src/features/correo/whitelist-page.tsx` | build ✓ |
+| Dashboard emails gestor | `dashboard/src/features/correo/gestor-emails-page.tsx` + dialog | build ✓ |
+
+### Auditoría Total + Fixes Producción — COMPLETADO (sesión 37)
+
+**Auditoría**: 5 agentes paralelos → `docs/auditoria/` (00-resumen + 01-05 por eje)
+**Tests**: 2530 PASS (sin cambios). Commits: `bfda40f`, `96b5e25`, `083bd23`
+
+| Fix | Commit | Detalle |
+|-----|--------|---------|
+| `SFCE_FERNET_KEY` validación startup | `96b5e25` | `auth.py`: falla hard en PostgreSQL si key vacía |
+| `modelos_testing` en `Base.metadata` | `96b5e25` | `modelos.py`: import automático, tablas testing se crean con `create_all()` |
+| Migración 021 duplicada eliminada | `96b5e25` | `migracion_021_empresa_slug_backfill.py` borrado |
+| Migración 019 compatible PostgreSQL | `083bd23` | `PRAGMA` → `information_schema.columns` |
+| Migraciones 019+020+021 en producción | SSH | Ejecutadas vía `docker exec sfce_api` |
+| `SFCE_FERNET_KEY` en servidor | SSH | Añadida a `/opt/apps/sfce/.env` + `docker compose up -d` |
+| `CuentaCorreo` con Gmail credentials | SSH | App Password `rfgq bxxt iprx abry`, IMAP verificado |
+| `SFCE_CI_TOKEN` en GitHub | GitHub UI | Secret creado, JWT de ci@sfce.local |
+
+**Pendiente próxima sesión**:
+1. Merge `feat/motor-testing-caos-p1` → `main` + deploy producción
+2. Crear alias `documentacion@prometh-ai.es` en Google Admin
+3. Configurar 3 monitores Push en Uptime Kuma + slugs en .env del servidor
+4. Actualizar `docs/LIBRO/_temas/20-correo.md` (enriquecimiento, whitelist, G2-G13)
+5. Actualizar `docs/LIBRO/_temas/11-api-endpoints.md` (+24 endpoints sin documentar)
+6. Actualizar `docs/LIBRO/_temas/17-base-de-datos.md` (migraciones 013-022)
+
+### Landing PROMETH-AI — COMPLETADO (sesión 34)
+- Rediseño completo SPICE → PROMETH-AI en `spice-landing/`
+- Métricas actualizadas: 99% OCR, 2.413 tests, 28 modelos, 3 motores, 50 categorías MCF
+- Nueva página `/tecnologia` (reemplaza `/como-funciona`)
+- Nueva sección "Nueva Generación": App móvil, Advisor Intelligence, Email ingestion, Onboarding masivo
+- Tiers actualizados: Básico / Pro / Premium con features reales
+- Desplegado en producción: `/opt/apps/spice-landing/` en servidor Hetzner
+- DNS `prometh-ai A 65.108.60.69` creado en Porkbun
+- SSL Let's Encrypt + nginx config `/opt/infra/nginx/conf.d/prometh-ai-landing.conf`
+- Ficha PROMETH-AI añadida al hub `carloscanetegomez.dev` (`web-personal/src/data/proyectos.js`)
+
+### Motor Testing Caos — P2 COMPLETADO (sesión 33)
+
+**Plan P1** (Tasks 1-8): COMPLETADO
+**Plan P2** (Tasks 9-17): COMPLETADO
+
+| Task | Estado | Archivos |
+|------|--------|---------|
+| 9 — `ExecutorPortal` | ✓ | `executor_portal.py`, `test_executor_portal.py` |
+| 10 — `ExecutorEmail` SMTP + poll IMAP | ✓ | `executor_email.py`, `test_executor_email.py` |
+| 11 — `ExecutorBancario` Norma 43 | ✓ | `executor_bancario.py`, `test_executor_bancario.py` |
+| 12 — Dashboard `/testing` — SFCE Health | ✓ | `features/testing/testing-page.tsx`, `semaforo-card.tsx` |
+| 13 — CI/CD 5º job smoke-test | ✓ | `.github/workflows/deploy.yml` |
+| 14 — Uptime Kuma heartbeats | ✓ | `worker_testing._enviar_heartbeat()`, `.env.example` |
+| 15 — Refactor Playwright → `ejecutar()` | ✓ | 4 scripts `test_nivel*.py` |
+| 16 — `ExecutorPlaywright` wrapper | ✓ | `executor_playwright.py`, `test_executor_playwright.py` |
+| 17 — Regression mode completo | ✓ | `_escenarios_regression()`, `_segundos_hasta_lunes_3am()`, `test_regression_mode.py` |
+
+**Pendiente producción**: `python sfce/db/migraciones/020_testing.py` vía SSH
+**Pendiente manual**: Configurar 3 monitores Push en Uptime Kuma + slugs en .env del servidor
+**Pendiente manual**: Añadir secret `SFCE_CI_TOKEN` en GitHub (JWT de ci@sfce.local)
+**Próxima sesión**: merge PR feat/motor-testing-caos-p1 → main + deploy producción
 
 ### Zoho Mail por Gestoría — COMPLETADO 9/9 (sesión 29)
 - Plan: `docs/plans/2026-03-02-zoho-email-gestoria.md` — 9 tasks, todos completados

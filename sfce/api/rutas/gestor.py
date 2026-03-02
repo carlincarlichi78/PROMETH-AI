@@ -211,3 +211,58 @@ def listar_docs_revision(
                 for cola, doc, empresa in rows
             ],
         }
+
+
+@router.get("/empresas/{empresa_id}/emails")
+def listar_emails_empresa(
+    empresa_id: int,
+    request: Request,
+    estado: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista emails procesados de una empresa con filtro de estado y paginacion."""
+    from sqlalchemy import func
+    from sfce.db.modelos import EmailProcesado
+
+    if usuario.rol not in _ROLES_GESTOR:
+        raise HTTPException(status_code=403, detail="Solo gestores")
+
+    sf = request.app.state.sesion_factory
+    with sf() as sesion:
+        empresa = verificar_acceso_empresa(usuario, empresa_id, sesion)
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+        q = select(EmailProcesado).where(EmailProcesado.empresa_destino_id == empresa_id)
+        if estado:
+            q = q.where(EmailProcesado.estado == estado)
+
+        total = sesion.execute(
+            select(func.count()).select_from(q.subquery())
+        ).scalar() or 0
+
+        emails = sesion.execute(
+            q.order_by(EmailProcesado.id.desc()).offset(offset).limit(limit)
+        ).scalars().all()
+
+        return {
+            "emails": [
+                {
+                    "id": e.id,
+                    "remitente": e.remitente,
+                    "asunto": e.asunto,
+                    "fecha": e.fecha_email,
+                    "estado": e.estado,
+                    "nivel_clasificacion": e.nivel_clasificacion,
+                    "confianza_ia": e.confianza_ia,
+                    "motivo_cuarentena": e.motivo_cuarentena,
+                    "procesado_at": e.procesado_at.isoformat() if e.procesado_at else None,
+                }
+                for e in emails
+            ],
+            "total": total,
+            "offset": offset,
+            "limit": limit,
+        }

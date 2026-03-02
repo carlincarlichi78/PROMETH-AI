@@ -40,6 +40,7 @@ const CalendarioFiscal = lazy(() => import('@/features/fiscal/calendario-page'))
 const ModelosFiscales = lazy(() => import('@/features/fiscal/modelos-page'))
 const GenerarModelo = lazy(() => import('@/features/fiscal/generar-page'))
 const HistoricoModelos = lazy(() => import('@/features/fiscal/historico-page'))
+const Modelo190 = lazy(() => import('@/features/fiscal/modelo-190-page'))
 
 // --- Documentos ---
 const Inbox = lazy(() => import('@/features/documentos/inbox-page'))
@@ -64,6 +65,7 @@ const ColaRevision = lazy(() => import('@/features/colas/cola-revision-page'))
 // --- Salud del Sistema ---
 const SaludPage = lazy(() => import('@/features/salud/salud-page'))
 const SesionDetallePage = lazy(() => import('@/features/salud/sesion-detalle-page'))
+const TestingPage = lazy(() => import('@/features/testing/testing-page').then(m => ({ default: m.TestingPage })))
 
 // --- Configuración global ---
 const ConfiguracionPage = lazy(() => import('@/features/configuracion/configuracion-page').then(m => ({ default: m.ConfiguracionPage })))
@@ -73,11 +75,23 @@ const CorreoPage = lazy(() => import('@/features/correo/index'))
 const CuentasCorreoPage = lazy(() =>
   import('@/features/correo/cuentas-correo-page').then((m) => ({ default: m.CuentasCorreoPage }))
 )
+const WhitelistPage = lazy(() =>
+  import('@/features/correo/whitelist-page').then((m) => ({ default: m.WhitelistPage }))
+)
+const GestorEmailsPage = lazy(() =>
+  import('@/features/correo/gestor-emails-page').then((m) => ({ default: m.GestorEmailsPage }))
+)
+
+// --- Ayuda ---
+const GuiaCorreoPage = lazy(() =>
+  import('@/features/ayuda/guia-correo-page').then((m) => ({ default: m.GuiaCorreoPage }))
+)
 
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 const WizardOnboardingClienteWrapper = lazy(() => import('@/features/onboarding/WizardOnboardingCliente').then((m) => ({ default: m.WizardOnboardingClienteWrapper })))
 const OnboardingMasivoPage = lazy(() => import('@/features/onboarding/onboarding-masivo-page').then((m) => ({ default: m.OnboardingMasivoPage })))
+const WizardOnboardingPage = lazy(() => import('@/features/onboarding/wizard-onboarding-page').then((m) => ({ default: m.WizardOnboardingPage })))
 
 // --- Advisor ---
 const CommandCenter = lazy(() => import('@/features/advisor/command-center-page'))
@@ -164,6 +178,7 @@ export function App() {
           <Route path="/empresa/:id/modelos-fiscales" element={<ModelosFiscales />} />
           <Route path="/empresa/:id/modelos-fiscales/generar" element={<GenerarModelo />} />
           <Route path="/empresa/:id/modelos-fiscales/historico" element={<HistoricoModelos />} />
+          <Route path="/empresa/:id/modelo-190" element={<Suspense fallback={<div>Cargando...</div>}><Modelo190 /></Suspense>} />
 
           {/* Documentos */}
           <Route path="/empresa/:id/cola-revision" element={<ColaRevision />} />
@@ -200,14 +215,21 @@ export function App() {
           <Route path="/onboarding/nueva-empresa" element={<WizardEmpresa />} />
           <Route path="/onboarding/cliente/:id" element={<WizardOnboardingClienteWrapper />} />
           <Route path="/onboarding/masivo" element={<OnboardingMasivoPage />} />
+          <Route path="/onboarding/wizard" element={<WizardOnboardingPage />} />
 
           {/* Correo */}
           <Route path="/empresa/:id/correo" element={<CorreoPage />} />
+          <Route path="/empresa/:id/correo/whitelist" element={<WhitelistPage />} />
+          <Route path="/empresa/:id/correo/emails" element={<GestorEmailsPage />} />
           <Route path="/correo/cuentas" element={<CuentasCorreoPage />} />
+
+          {/* Ayuda */}
+          <Route path="/ayuda/correo" element={<GuiaCorreoPage />} />
 
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
           <Route path="/salud/:id" element={<SesionDetallePage />} />
+          <Route path="/testing" element={<Suspense fallback={<div>Cargando...</div>}><TestingPage /></Suspense>} />
 
           {/* Configuración global */}
           <Route path="/configuracion" element={<ConfiguracionPage />} />

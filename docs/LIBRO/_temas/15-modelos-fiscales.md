@@ -1,7 +1,7 @@
 # 15 — Modelos Fiscales
 
 > **Estado:** ✅ COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-02
 > **Fuentes:** `sfce/modelos_fiscales/`, `sfce/core/servicio_fiscal.py`
 
 ---
@@ -164,6 +164,85 @@ Los importes se formatean al estilo europeo con `_formatear_importe()`:
 ```
 1234567.89 → "1.234.567,89"
 ```
+
+---
+
+## `CalculadorModelos` — Cálculo automático de casillas
+
+**Archivo:** `sfce/core/calculador_modelos.py`
+
+Calcula los valores de las casillas de cada modelo a partir de datos contables. Tres categorías:
+
+| Categoría | Modelos | Descripción |
+|-----------|---------|-------------|
+| **Automático** | 303, 390, 111, 130, 347, 115, 180, 123, 193, 131, 202, 349, 420, 210, 216, **190** | Se calculan directamente desde los datos de entrada |
+| **Semi-automático** | 200 | Borrador con campos editables (ajustes IS) |
+| **Asistido** | 100 | Devuelve informe de rendimientos; el contribuyente completa en RentaWEB |
+
+### Modelo 190 — `calcular_190()`
+
+```python
+calc = CalculadorModelos(Normativa())
+resultado = calc.calcular_190(perceptores, ejercicio=2025)
+# resultado: {modelo, ejercicio, num_registros, casilla_16, casilla_17, casilla_18, casilla_19, declarados, tipo}
+```
+
+| Casilla | Campo | Descripción |
+|---------|-------|-------------|
+| 16 | `percepcion_dineraria` | Total percepciones dinerarias (nóminas + honorarios) |
+| 17 | `percepcion_especie_valor` | Total percepciones en especie (retribución en especie) |
+| 18 | `retencion_dineraria` | Total retenciones e ingresos a cuenta |
+| 19 | `ingreso_cuenta_especie` | Total ingresos a cuenta sobre percepciones en especie |
+
+Cada perceptor en la lista `declarados` lleva: `nif`, `nombre`, `clave_percepcion` (A=trabajo, E=profesional), `subclave`, `percepcion_dineraria`, `retencion_dineraria`, `porcentaje_retencion`, `ejercicio_devengo`, `naturaleza` (F=persona física).
+
+---
+
+## `ExtractorPerceptores190` — Extracción desde BD
+
+**Archivo:** `sfce/core/extractor_190.py`
+
+Lee documentos procesados de la BD y construye la lista de perceptores para el Modelo 190.
+
+### Fuentes de datos
+
+| Tipo doc | Clave percepción | Campos OCR buscados |
+|----------|-----------------|---------------------|
+| `NOM` | A (trabajo) | `nif_trabajador`/`nif`/`dni`, `bruto`/`salario_bruto`, `retencion_irpf`/`retencion` |
+| `FV` con `retencion_pct > 0` | E (profesional) | `nif_emisor`/`cif_emisor`, `base_imponible`/`base`, `retencion_importe`/`retencion` |
+
+### Método `extraer(documentos, empresa_id, ejercicio)`
+
+```python
+extractor = ExtractorPerceptores190()
+resultado = extractor.extraer(docs, empresa_id=1, ejercicio=2025)
+# resultado: {empresa_id, ejercicio, completos, incompletos, puede_generar, total_percepciones, total_retenciones}
+```
+
+- Agrupa por NIF (suma percepción y retención del ejercicio)
+- Perceptor **incompleto** si falta NIF o `percepcion_dineraria <= 0`
+- `puede_generar = len(incompletos) == 0`
+- FV sin retención (`retencion_pct=0` y `retencion_importe=0`) se excluyen
+
+---
+
+## Endpoints API — Modelo 190
+
+Añadidos a `sfce/api/rutas/modelos.py` con prefix `/api/modelos`:
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/190/{empresa_id}/{ejercicio}/perceptores` | Extrae perceptores desde BD |
+| `PUT` | `/190/{empresa_id}/{ejercicio}/perceptores/{nif}` | Corrige perceptor incompleto (client-side, no persiste en BD) |
+| `POST` | `/190/{empresa_id}/{ejercicio}/generar` | Genera fichero BOE `.txt`. Requiere todos completos (400 si hay incompletos) |
+
+### Dashboard `/empresa/:id/modelo-190`
+
+**Archivo:** `dashboard/src/features/fiscal/modelo-190-page.tsx`
+
+Flujo en dos fases:
+1. **Revisión**: tabla con perceptores, filas incompletas resaltadas en rojo, edición inline NIF/percepción/retención
+2. **Generación**: botón "Generar fichero 190" activo solo cuando todos completos, descarga `.txt` BOE
 
 ---
 

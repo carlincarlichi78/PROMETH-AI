@@ -107,3 +107,29 @@ def test_genera_direccion_email_dedicada(sesion_bd):
     )
     assert "prometh-ai.es" in result["direccion_email"]
     assert "@" in result["direccion_email"]
+
+
+def test_configura_remitentes_iniciales(sesion_bd):
+    """G3: onboarding acepta remitentes_iniciales y los añade a la whitelist."""
+    sesion_bd.add(Empresa(id=1, nombre="Fulano SL", cif="A12345678",
+                          forma_juridica="sl"))
+    sesion_bd.commit()
+
+    configurar_email_empresa(
+        empresa_id=1,
+        email_empresario="gerente@fulanosl.es",
+        sesion=sesion_bd,
+        remitentes_iniciales=[
+            {"email": "facturas@endesa.es", "nombre": "Endesa"},
+            {"email": "@telefonica.es", "nombre": "Telefónica (wildcard)"},
+        ],
+    )
+
+    from sqlalchemy import select
+    remitentes = sesion_bd.execute(
+        select(RemitenteAutorizado).where(RemitenteAutorizado.empresa_id == 1)
+    ).scalars().all()
+    emails = {r.email for r in remitentes}
+    assert "gerente@fulanosl.es" in emails
+    assert "facturas@endesa.es" in emails
+    assert "@telefonica.es" in emails
