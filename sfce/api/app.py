@@ -129,18 +129,28 @@ async def lifespan(app: FastAPI):
     )
     app.state.worker_correo_task = correo_task
 
+    # Iniciar worker testing en background
+    from sfce.core.worker_testing import loop_worker_testing
+    testing_task = asyncio.create_task(loop_worker_testing(sesion_factory=sesion_factory))
+    app.state.worker_testing_task = testing_task
+    app.state.worker_testing_activo = True
+
     yield
 
     # Apagar workers limpiamente
     worker_task.cancel()
     pipeline_task.cancel()
     correo_task.cancel()
+    testing_task.cancel()
     with suppress(asyncio.CancelledError):
         await worker_task
     with suppress(asyncio.CancelledError):
         await pipeline_task
     with suppress(asyncio.CancelledError):
         await correo_task
+    with suppress(asyncio.CancelledError):
+        await testing_task
+    app.state.worker_testing_activo = False
     engine.dispose()
 
 
