@@ -375,6 +375,16 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  isActive={location.pathname === '/ayuda/correo'}
+                  onClick={() => navigate('/ayuda/correo')}
+                  tooltip="Guía de envío por email"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span>Guía de envío por email</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   isActive={location.pathname === '/salud'}
                   onClick={() => navigate('/salud')}
                   tooltip="Salud del Sistema"

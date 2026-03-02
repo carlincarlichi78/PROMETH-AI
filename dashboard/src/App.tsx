@@ -75,6 +75,11 @@ const CuentasCorreoPage = lazy(() =>
   import('@/features/correo/cuentas-correo-page').then((m) => ({ default: m.CuentasCorreoPage }))
 )
 
+// --- Ayuda ---
+const GuiaCorreoPage = lazy(() =>
+  import('@/features/ayuda/guia-correo-page').then((m) => ({ default: m.GuiaCorreoPage }))
+)
+
 // --- Onboarding ---
 const WizardEmpresa = lazy(() => import('@/features/onboarding/WizardEmpresa').then((m) => ({ default: m.WizardEmpresa })))
 const WizardOnboardingClienteWrapper = lazy(() => import('@/features/onboarding/WizardOnboardingCliente').then((m) => ({ default: m.WizardOnboardingClienteWrapper })))
@@ -205,6 +210,9 @@ export function App() {
           {/* Correo */}
           <Route path="/empresa/:id/correo" element={<CorreoPage />} />
           <Route path="/correo/cuentas" element={<CuentasCorreoPage />} />
+
+          {/* Ayuda */}
+          <Route path="/ayuda/correo" element={<GuiaCorreoPage />} />
 
           {/* Salud del Sistema */}
           <Route path="/salud" element={<SaludPage />} />
