@@ -1,7 +1,7 @@
-# 17 — Base de Datos: Las 39 Tablas
+# 17 — Base de Datos: Las 45 Tablas
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-02 (sesión 10)
 > **Fuentes:** `sfce/db/modelos.py`, `sfce/db/modelos_auth.py`, `sfce/db/base.py`, `sfce/db/migraciones/`
 
 ---
@@ -50,6 +50,12 @@
 | `copilot_feedback` | Dashboard | Feedback sobre respuestas del copiloto | `copilot_conversaciones` |
 | `informes_programados` | Dashboard | Informes con generacion automatica | `empresas` |
 | `vistas_usuario` | Dashboard | Filtros personalizados guardados por usuario | — |
+| `eventos_analiticos` | Analytics | Eventos del negocio (apertura, cierre, incidencia, revision) para alimentar star schema | `empresas` |
+| `fact_caja` | Analytics | Snapshot diario: covers, ventas, ticket_medio, RevPASH, ocupacion. Granularidad 1 fila/dia/empresa | `empresas` |
+| `fact_venta` | Analytics | Ventas agrupadas por familia y mes | `empresas` |
+| `fact_compra` | Analytics | Compras agrupadas por proveedor y mes | `empresas` |
+| `fact_personal` | Analytics | Productividad laboral: horas_trabajadas, ventas_por_hora, eficiencia | `empresas` |
+| `alertas_analiticas` | Analytics | Alertas IA generadas por SectorEngine (KPI bajo umbral, anomalia detectada) | `empresas` |
 
 ---
 
@@ -208,6 +214,14 @@ Diferencia con `audit_log` (tabla contable): `audit_log` registra operaciones de
 | `gestoria_id` | FK nullable | Gestoria propietaria (columna anadida en migracion 004) |
 | `fecha_alta` | Date | Fecha de alta |
 | `config_extra` | JSON | Contenido del `config.yaml` del cliente serializado como JSON |
+| `cnae` | String(4) nullable | Código CNAE-2009 (4 dígitos). Requerido para sector-brain. Añadido en migración 014 |
+| `slug` | String(100) nullable | Slug URL-friendly del nombre de la empresa |
+| `ruta_disco` | String(300) nullable | Ruta local donde se guardan los uploads de esta empresa |
+| `cola_id` | Integer nullable | Referencia a la última entrada en `cola_procesamiento` |
+| `modo_procesamiento` | String(20) | Modo del pipeline: `manual` (default), `automatico`, `revision` |
+| `schedule_procesamiento` | String(50) nullable | Cron del procesamiento automático (ej: `"0 8 * * *"`) |
+| `ocr_tier_maximo` | Integer | Tier máximo de OCR a usar (0=solo Mistral, 1=+GPT, 2=+Gemini). Default 2 |
+| `notificar_cuarentena` | Boolean | Enviar notificación al empresario si doc va a cuarentena. Default True |
 
 **`directorio_entidades`** — Directorio maestro global. Un CIF aparece una sola vez aunque opere con varias empresas.
 
@@ -631,3 +645,93 @@ repo.eliminar(Documento, id_=42)
 ```
 
 Los endpoints FastAPI reciben `sesion_factory` via inyeccion de dependencias (DI) desde `app.state.sesion_factory`, construyen un `Repositorio` por request y lo descartan al terminar. Este patron evita conexiones persistentes y facilita el testing con mocks.
+
+---
+
+### Analytics — Star Schema OLAP-lite (`sfce/db/migraciones/012_star_schema.py`)
+
+Tablas para el **SFCE Advisor Intelligence Platform**. Creadas en migración 012. Alimentación manual via `eventos_analiticos` o integración futura con el pipeline.
+
+**`eventos_analiticos`** — Registro de eventos del negocio. Tabla fuente para el star schema.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa a la que pertenece el evento |
+| `tipo_evento` | String(50) | Tipo: `apertura`, `cierre`, `incidencia`, `revision_gestor` |
+| `fecha` | Date | Fecha del evento |
+| `datos` | JSON | Payload libre del evento (depende del tipo) |
+| `creado_en` | DateTime | Timestamp de registro |
+
+**`fact_caja`** — Snapshot diario de rendimiento operativo.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa |
+| `fecha` | Date | Dia del snapshot. Unique con empresa_id |
+| `ventas` | Numeric(12,2) | Ventas totales del dia |
+| `covers` | Integer | Cubiertos servidos (hosteleria) |
+| `ticket_medio` | Numeric(10,2) | ventas / covers |
+| `revpash` | Numeric(10,4) | ventas / (covers × HORAS_APERTURA) |
+| `ocupacion_pct` | Numeric(5,2) | % de ocupación respecto al aforo |
+| `gasto_alimentos` | Numeric(12,2) | Coste de materias primas alimentos |
+| `gasto_bebidas` | Numeric(12,2) | Coste de materias primas bebidas |
+
+**`fact_venta`** — Ventas agregadas por familia de producto y mes.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa |
+| `anyo` | Integer | Año |
+| `mes` | Integer | Mes (1-12) |
+| `familia` | String(100) | Familia de producto (ej: "Bebidas", "Cocina", "Postres") |
+| `ventas` | Numeric(12,2) | Ventas totales de la familia en el mes |
+| `unidades` | Integer | Unidades vendidas |
+| `ticket_medio` | Numeric(10,2) | ventas / covers del mes |
+
+**`fact_compra`** — Compras agregadas por proveedor y mes.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa |
+| `anyo` | Integer | Año |
+| `mes` | Integer | Mes (1-12) |
+| `proveedor` | String(200) | Nombre o CIF del proveedor |
+| `importe` | Numeric(12,2) | Importe total de compras al proveedor en el mes |
+| `num_facturas` | Integer | Numero de facturas recibidas |
+
+**`fact_personal`** — Productividad laboral mensual.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa |
+| `anyo` | Integer | Año |
+| `mes` | Integer | Mes (1-12) |
+| `horas_trabajadas` | Numeric(10,2) | Total horas del mes (sum nóminas) |
+| `ventas_por_hora` | Numeric(10,2) | ventas_mes / horas_trabajadas |
+| `coste_laboral` | Numeric(12,2) | Coste total de nóminas + SS |
+| `eficiencia_pct` | Numeric(5,2) | ventas_por_hora vs benchmark sectorial |
+
+**`alertas_analiticas`** — Alertas generadas por SectorEngine.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | PK | Autoincremental |
+| `empresa_id` | FK | Empresa afectada |
+| `kpi` | String(50) | KPI que disparó la alerta (ej: `ticket_medio`) |
+| `tipo_alerta` | String(20) | `bajo_umbral`, `alto_umbral`, `tendencia_negativa` |
+| `valor_actual` | Numeric(12,4) | Valor actual del KPI |
+| `umbral` | Numeric(12,4) | Umbral que se ha cruzado |
+| `descripcion` | Text | Descripción legible de la alerta |
+| `resuelta` | Boolean | Si el gestor ha marcado la alerta como resuelta |
+| `fecha_alerta` | DateTime | Cuando se generó la alerta |
+
+**Notas operativas:**
+- `MIN_EMPRESAS = 5` en `benchmark_engine.py`: mínimo de empresas con el mismo CNAE para calcular percentiles. Si hay menos, `sector-brain` devuelve `{disponible: false}`.
+- `KPI_SOPORTADOS = {"ticket_medio"}` — ampliar en `benchmark_engine.py` con nuevos KPIs conforme se añadan fuentes de datos.
+- El campo `cnae` de la tabla `empresas` (migración 014) es el que conecta cada empresa con su sector para los benchmarks.
+- SectorEngine lee reglas desde `sfce/analytics/reglas_sectoriales/hosteleria.yaml`. Añadir nuevos sectores creando YAMLs nuevos en ese directorio.

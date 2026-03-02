@@ -1,7 +1,7 @@
 # 13 — Dashboard: Módulos y Arquitectura
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01 (sesión 4)
+> **Actualizado:** 2026-03-02 (sesión 10)
 > **Fuentes:** `dashboard/src/features/`, `dashboard/package.json`, `dashboard/src/index.css`
 
 ---
@@ -166,6 +166,12 @@ Directorios en `dashboard/src/features/` (25 entradas incluye `not-found.tsx`):
 | Salud | `/salud` | `salud/` | Completado | Health check API, BD, workers |
 | Offline | SW navigateFallback | `offline/` | Completado | Página sin conexión |
 | 404 | `*` | `not-found.tsx` | Completado | Página no encontrada |
+| Advisor — Command Center | `/empresa/:id/advisor/command-center` | `advisor/` | Completado | Resumen cartera asesor: salud, alertas, KPIs por empresa. `refetchInterval: 60_000`. Grid `.advisor-dark` |
+| Advisor — Restaurant 360 | `/empresa/:id/advisor/restaurant-360` | `advisor/` | Completado | PulsoHoy (Canvas/useAnimatedCounter), HeatmapSemanal (Canvas), TopVentas, WaterfallP&L (Recharts ComposedChart), ComparativaHistorica (LineChart) |
+| Advisor — Product Intelligence | `/empresa/:id/advisor/product-intelligence` | `advisor/` | Completado | MatrizBCG (Canvas DPR), FoodCostEvolucion (Recharts + ReferenceLine 30%), HistorialCompras (tabla + MiniSparkline SVG), CostesFamilia (PieChart donut) |
+| Advisor — Sector Brain | `/empresa/:id/advisor/sector-brain` | `advisor/` | Completado | Gauge P25/P50/P75 con posición empresa. Muestra `{disponible: false}` si CNAE ausente o < 5 empresas en sector |
+| Advisor — Autopilot | `/empresa/:id/advisor/autopilot` | `advisor/` | Completado | Briefing semanal: lista priorizada rojo→amarillo→verde, BriefingCard expandible con borrador de mensaje editable |
+| Advisor — Sala Estrategia | `/empresa/:id/advisor/sala-estrategia` | `advisor/` | Completado | Simulador what-if EBITDA: 6 sliders params + 2 escenarios, función `simular()` pura, `useMemo` recalculado, Recharts BarChart |
 
 ---
 
@@ -300,3 +306,115 @@ cd dashboard && npm run test:e2e:debug # modo debug
 ```
 
 Runner: Playwright (`@playwright/test` 1.58). Tests E2E del dashboard pendientes de implementar.
+
+---
+
+## Advisor Intelligence Platform
+
+> **Tier requerido:** `premium`. Todas las rutas Advisor están envueltas en `<AdvisorGate>`.
+> **Fuente frontend:** `dashboard/src/features/advisor/`
+> **Fuente backend:** `sfce/api/rutas/analytics.py`, `sfce/analytics/`
+
+### Estructura del módulo
+
+```
+features/advisor/
+  api.ts                      # advisorApi: portfolio, kpis, resumenHoy, ventasDetalle,
+                              #             comprasProveedores, sectorBrain, autopilotBriefing
+  types.ts                    # tipos: PortfolioEmpresa, KpiSectorial, BriefingItem, etc.
+  advisor-gate.tsx            # AdvisorGate: overlay Lock + CTA upgrade si tier < premium
+  command-center-page.tsx     # Grid de tarjetas por empresa con salud/alertas/KPIs
+  restaurant-360-page.tsx     # Dashboard hostelería: PulsoHoy, HeatmapSemanal, WaterfallP&L
+  product-intelligence-page.tsx # MatrizBCG, FoodCost, HistorialCompras, CostesFamilia
+  sector-brain.tsx            # Gauge P25/P50/P75 con posición empresa
+  autopilot-page.tsx          # Briefing semanal priorizado con borradores de mensaje
+  sala-estrategia-page.tsx    # Simulador EBITDA what-if con 8 sliders y función simular()
+```
+
+### AdvisorGate (`advisor-gate.tsx`)
+
+```tsx
+// Wrapper que protege todas las rutas Advisor
+<AdvisorGate>
+  <Suspense fallback={<Spinner />}>
+    <LazyPage />
+  </Suspense>
+</AdvisorGate>
+```
+
+- Usa `useTiene('advisor_premium')` para verificar el tier.
+- Si tier insuficiente: muestra overlay con icono Lock + "Actualizar a Premium" → `/configuracion/plan`.
+- Si tier OK: renderiza `{children}` directamente.
+
+### Feature flags en `useTiene.ts`
+
+| Flag | Tier mínimo | Uso |
+|------|------------|-----|
+| `advisor_premium` | `premium` | Guard general para todo el módulo Advisor |
+| `advisor_sector_brain` | `premium` | SectorBrain específicamente |
+| `advisor_temporal_machine` | `premium` | Temporal Machine (futuro) |
+| `advisor_autopilot` | `premium` | Autopilot briefing |
+| `advisor_simulador` | `premium` | Sala Estrategia / simulador |
+| `advisor_informes` | `pro` | Informes avanzados (futuro, tier pro) |
+
+### Rutas en `App.tsx`
+
+```tsx
+// Todos los imports con alias @/
+const CommandCenterPage = lazy(() => import('@/features/advisor/command-center-page'))
+// ... etc
+
+// Rutas envueltas en AdvisorGate
+<Route path="advisor/command-center" element={
+  <AdvisorGate><Suspense fallback={<Spinner />}><CommandCenterPage /></Suspense></AdvisorGate>
+} />
+```
+
+### Sidebar — grupo Advisor
+
+En `app-sidebar.tsx`, el grupo Advisor se muestra solo si `useTiene('advisor_premium')`:
+
+```tsx
+{tieneAdvisor && (
+  <SidebarGroup>
+    <SidebarGroupLabel>Advisor</SidebarGroupLabel>
+    <SidebarGroupContent>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <Link to={`/empresa/${id}/advisor/autopilot`}>
+            <Zap className="h-4 w-4" />
+            <span>Autopilot</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      {/* ... más items */}
+    </SidebarGroupContent>
+  </SidebarGroup>
+)}
+```
+
+### Tema visual `.advisor-dark`
+
+Token CSS específico para el Command Center:
+
+```css
+.advisor-dark {
+  background: oklch(0.18 0.01 245);  /* dark slate navy */
+  color: oklch(0.92 0.01 245);
+}
+```
+
+### Hooks y utilidades clave
+
+| Utilidad | Archivo | Descripcion |
+|----------|---------|-------------|
+| `useAnimatedCounter(target, duration, decimals)` | `restaurant-360-page.tsx` | Counter animado con easing cúbico. `factor = 10^decimals` para precisión decimal |
+| `MiniSparkline` | `product-intelligence-page.tsx` | SVG 60×20px desde `meses: Record<string, number>` |
+| `simular(params)` | `sala-estrategia-page.tsx` | Función pura EBITDA what-if. Guard división por cero: `margen_dia > 0 ? gastos_fijos / margen_dia : 999` |
+| `sparklineDesdeMeses(meses)` | `product-intelligence-page.tsx` | Convierte dict mes→valor en array de puntos SVG ordenados |
+
+### Build actual (sesión 10)
+
+```
+npm run build → 4.50s, 131 entries precacheadas (antes 119 + 12 chunks advisor)
+```

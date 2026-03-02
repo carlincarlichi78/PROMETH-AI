@@ -1,5 +1,57 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## 2026-03-02 (sesión 10) — SFCE Advisor Intelligence Platform (17 tasks)
+
+**Objetivo**: Implementar la capa analítica premium del SFCE: star schema OLAP-lite, SectorEngine YAML, BenchmarkEngine anónimo, Autopilot de asesor y 6 dashboards especializados en el frontend.
+
+**Ejecución**: Subagent-Driven Development — 17 tasks con ciclo implementer → spec review → quality review por task.
+
+### Backend analytics (`sfce/analytics/`)
+- `sfce/analytics/sector_engine.py` — SectorEngine: carga reglas YAML por CNAE (`hosteleria.yaml`), calcula KPIs (ticket_medio, RevPASH, coste_por_comensal), genera alertas por umbral
+- `sfce/analytics/benchmark_engine.py` — BenchmarkEngine: percentiles P25/P50/P75 anónimos por CNAE. `MIN_EMPRESAS=5`, `KPI_SOPORTADOS={"ticket_medio"}`. Función pública `calcular_kpi_empresa` + privada `_calcular_kpi_empresa`. `posicion_en_sector()` retorna rojo/amarillo/verde
+- `sfce/analytics/autopilot.py` — Briefing semanal del asesor: `ItemBriefing` dataclass, `generar_briefing()` que prioriza rojo→amarillo→verde, títulos y borradores de mensaje automáticos
+- `sfce/analytics/reglas_sectoriales/hosteleria.yaml` — KPIs (7) y alertas (4) para sector hostelería CNAE 561x
+
+### Base de datos
+- `sfce/db/migraciones/012_star_schema.py` — 6 tablas: `eventos_analiticos`, `fact_caja`, `fact_venta`, `fact_compra`, `fact_personal`, `alertas_analiticas`. Migración ejecutada en BD real
+- `sfce/db/migraciones/014_cnae_empresa.py` — campo `cnae VARCHAR(4)` en tabla `empresas`. Idempotente
+
+### API analytics (`sfce/api/rutas/analytics.py`)
+- `GET /api/analytics/{empresa_id}/kpis` — KPIs calculados por SectorEngine
+- `GET /api/analytics/{empresa_id}/resumen-hoy` — Snapshot diario (demo/fact_caja)
+- `GET /api/analytics/{empresa_id}/ventas-detalle` — Evolución ventas 6 meses
+- `GET /api/analytics/{empresa_id}/compras-proveedores` — Top proveedores por gasto
+- `GET /api/analytics/{empresa_id}/sector-brain` — Benchmarks anónimos por KPI (requiere cnae + ≥5 empresas)
+- `GET /api/analytics/autopilot/briefing` — Briefing semanal del asesor (declarado antes de `/{empresa_id}` para evitar conflicto de rutas)
+
+### Frontend Advisor (`dashboard/src/features/advisor/`)
+- `api.ts` — `advisorApi`: portfolio, kpis, resumenHoy, ventasDetalle, comprasProveedores, sectorBrain, autopilotBriefing
+- `types.ts` — tipos TypeScript del módulo Advisor
+- `advisor-gate.tsx` — Guard tier-premium: overlay Lock + CTA → /configuracion/plan
+- `command-center-page.tsx` — Grid por empresa con salud/alertas/KPIs. `refetchInterval: 60_000`. Sub-components: HealthBar, VariacionBadge, EmpresaCard
+- `restaurant-360-page.tsx` — Dashboard hostelería: PulsoHoy (Canvas + `useAnimatedCounter(val, dur, decimals)`), HeatmapSemanal (Canvas DPR), TopVentas, WaterfallP&L (ComposedChart stacked), ComparativaHistorica (LineChart + selector periodo). `HORAS_APERTURA=8` constante nombrada
+- `product-intelligence-page.tsx` — MatrizBCG (Canvas DPR), FoodCostEvolucion (Recharts + ReferenceLine 30%), HistorialCompras (tabla + `MiniSparkline` SVG 60×20px), CostesFamilia (PieChart donut)
+- `sector-brain.tsx` — Gauge con marcadores P25/P50/P75 y punto empresa. Estado `disponible/no-disponible`
+- `autopilot-page.tsx` — `BriefingCard` por empresa, urgencia coloreada, textarea `borrador_mensaje` expandible
+- `sala-estrategia-page.tsx` — Simulador what-if EBITDA: `simular()` función pura, 8 sliders, `useMemo`, guard división por cero, Recharts BarChart
+
+### Routing y navegación
+- `dashboard/src/App.tsx` — 5 rutas `/advisor/*` lazy con alias `@/`, todas en `<AdvisorGate>`
+- `dashboard/src/components/layout/app-sidebar.tsx` — grupo "Advisor" con `useTiene('advisor_premium')` guard, Zap icon para Autopilot
+- `dashboard/src/hooks/useTiene.ts` — +6 feature flags: `advisor_premium/sector_brain/temporal_machine/autopilot/simulador` → premium; `advisor_informes` → pro
+
+### Tests
+- `tests/test_benchmark_engine.py` — 4 tests (sector sin datos, empresa sin CNAE, empresa en sector, cálculo percentiles)
+- `tests/test_autopilot.py` — 4 tests (usuario no encontrado, empresa rojo, empresa verde, ordenación rojo-primero)
+- **Total**: 2213 PASS (+8 vs sesión 9)
+
+### Build
+- `npm run build` — 4.50s, 131 entries (antes 119, +12 chunks advisor), 0 errores TypeScript
+
+**Commits**: sesión 10 (48 commits pusheados a origin/main)
+
+---
+
 ## 2026-03-01 (sesión 8) — Notificaciones cliente + historial docs + campos adaptativos
 
 **Objetivo**: Completar la experiencia del empresario en la app móvil: recibe notificaciones del gestor, ve su historial de documentos, el formulario de subida se adapta al tipo de documento.
