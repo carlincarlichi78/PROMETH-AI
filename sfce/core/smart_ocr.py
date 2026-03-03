@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Optional
 
 from .pdf_analyzer import PDFAnalyzer, PDFProfile
+from .cache_ocr import obtener_cache_ocr, guardar_cache_ocr
+from .smart_parser import SmartParser
 
 logger = logging.getLogger("sfce.smart_ocr")
 
@@ -129,3 +131,38 @@ class SmartOCR:
         # Nivel 3: Mistral OCR (pago, último recurso)
         logger.warning("%s → OCR local insuficiente, usando Mistral OCR (PAGO)", ruta_pdf.name)
         return _mistral_extraer_texto(ruta_pdf)
+
+    @staticmethod
+    def extraer(
+        ruta_pdf: Path,
+        tipo_doc: Optional[str] = None,
+        cif_hint: Optional[str] = None,
+    ) -> Optional[dict]:
+        """Punto de entrada único: PDF → campos JSON.
+
+        Usa caché si disponible. Si no, extrae texto y parsea campos.
+        Reemplaza extraer_factura_mistral(), extraer_factura_gpt(), extraer_factura_gemini().
+        """
+        # 1. Consultar caché
+        cached = obtener_cache_ocr(str(ruta_pdf))
+        if cached:
+            logger.debug("%s → cache hit", ruta_pdf.name)
+            return cached
+
+        # 2. Extraer texto (OCR layer)
+        texto = SmartOCR.extraer_texto(ruta_pdf, tipo_doc=tipo_doc)
+        if not texto:
+            logger.error("%s → sin texto tras todos los motores OCR", ruta_pdf.name)
+            return None
+
+        # 3. Parsear campos (Parser layer)
+        perfil = PDFAnalyzer().analizar(ruta_pdf, tipo_doc=tipo_doc)
+        cif = cif_hint or perfil.cif_detectado
+        datos = SmartParser.parsear(texto, tipo_doc=tipo_doc, cif=cif)
+        if not datos:
+            logger.error("%s → parseo falló en todos los motores", ruta_pdf.name)
+            return None
+
+        # 4. Guardar en caché
+        guardar_cache_ocr(str(ruta_pdf), datos)
+        return datos
