@@ -27,3 +27,24 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("watcher")
+
+
+def _esperar_estabilidad(
+    ruta: Path, segundos: float = DEBOUNCE, intentos: int = 5
+) -> bool:
+    """Espera hasta que el tamaño del archivo no cambie entre dos lecturas.
+
+    Retorna False si el archivo no existe o si agota los intentos sin estabilizarse.
+    Un archivo de tamaño 0 nunca se considera estable (puede estar en creación).
+    """
+    tamanyo_anterior = -1
+    for _ in range(intentos):
+        try:
+            tamanyo_actual = ruta.stat().st_size
+        except FileNotFoundError:
+            return False
+        if tamanyo_actual == tamanyo_anterior and tamanyo_actual > 0:
+            return True
+        tamanyo_anterior = tamanyo_actual
+        time.sleep(segundos)
+    return False
