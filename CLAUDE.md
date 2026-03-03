@@ -248,6 +248,30 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 62 — Inbox Watcher completo)
+
+**Rama activa**: `main`
+**Último commit**: `0818479`
+**Tests**: 2661 PASS (+23 watcher), 0 FAILED
+
+### ✅ COMPLETADO en sesión 62
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| `_procesar_archivo` + `startup_scan` | `c48632b` | TDD: estabilidad → subida → mover a subido/ o error/. 6 tests |
+| `InboxEventHandler` + `main()` | `5c09140` | watchdog Observer recursivo sobre `clientes/`, ThreadPoolExecutor 3 workers |
+| `iniciar_dashboard.bat` | `0818479` | 3ª ventana "SFCE Watcher" arranca automáticamente con el dashboard |
+
+**Watcher operativo**: `python scripts/watcher.py` — detecta PDFs en `clientes/*/inbox/`, sube a `POST /api/pipeline/documentos/subir` con `X-Pipeline-Token`, mueve a `inbox/subido/YYYY-MM-DD/` o `inbox/error/`.
+
+### ⚡ PRÓXIMA SESIÓN
+
+1. **Test E2E manual watcher** (Task 9): copiar PDF a `clientes/gerardo-gonzalez-callejon/inbox/` y verificar flujo completo
+2. **IMAP asesores**: plan `docs/plans/2026-03-03-imap-asesores.md` — Tasks 4-6 pendientes (API `usuario_id`, dashboard sección asesores, seed)
+3. **Pipeline Gerardo**: lanzar los 9 PDFs del inbox
+
+---
+
 ## Estado actual (03/03/2026, sesión 60 — Dashboard documentos pipeline operativo)
 
 **Rama activa**: `main`
@@ -262,11 +286,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 | Página Documentos | `4048132` | `dashboard/src/features/documentos/documentos-empresa-page.tsx` — tabla con filtros, badgeEstado, confianza coloreada |
 | Ruta + sidebar | (bundled) | `/empresa/:id/documentos` en App.tsx + enlace "Documentos" en sidebar de empresa |
 | **Resultado** | — | **1 doc Gerardo visible en app.prometh-ai.es/empresa/2/documentos** (FC, registrado, 100%, ID FS 9) |
-
-### ⚡ PRÓXIMA SESIÓN
-
-- **Pipeline Gerardo**: lanzar los 9 PDFs del inbox (la página Documentos mostrará el resultado)
-- **IMAP asesores**: plan `docs/plans/2026-03-03-imap-asesores.md` (Tasks 1-6)
 
 ---
 
