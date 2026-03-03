@@ -1,8 +1,8 @@
 # 26 — Infraestructura Docker y Backups
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-02
-> **Fuentes:** /opt/apps/sfce/, scripts/infra/, infra/nginx/, Dockerfile
+> **Actualizado:** 2026-03-03
+> **Fuentes:** /opt/apps/sfce/, /opt/apps/fs-uralde/, /opt/apps/fs-gestoriaa/, /opt/apps/fs-javier/, scripts/infra/, infra/nginx/, Dockerfile
 
 ---
 
@@ -28,6 +28,43 @@ Compose file: `/opt/apps/sfce/docker-compose.yml` (también en repo: `infra/sfce
 - Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N` → http://localhost:3001
 - Monitores activos: SFCE App (HTTP 200 app.prometh-ai.es) + SFCE API Health (keyword "ok")
 
+## Contenedores Docker activos (instancias FS independientes)
+
+Tres instancias FacturaScripts independientes, operativas desde sesion 48. Cada una tiene su propio par de contenedores (app PHP + MariaDB).
+
+| Directorio | Contenedor app | Contenedor BD | Puerto app | Gestoría |
+|------------|---------------|---------------|------------|----------|
+| `/opt/apps/fs-uralde/` | `fs-uralde` | `fs-uralde-db` | 8010 | Uralde (gestoria_id=1) |
+| `/opt/apps/fs-gestoriaa/` | `fs-gestoriaa` | `fs-gestoriaa-db` | 8011 | Gestoría A (gestoria_id=2) |
+| `/opt/apps/fs-javier/` | `fs-javier` | `fs-javier-db` | 8012 | Javier (gestoria_id=3) |
+
+Credenciales BD en `.env` de cada directorio:
+- `FS_DB_USER=facturascripts` / `FS_DB_PASS=fs_uralde_2026` (o `fs_gestoriaa_2026` / `fs_javier_2026`)
+
+Nginx vhosts locales (repo): `infra/nginx/fs-uralde.conf`, `infra/nginx/fs-gestoriaa.conf`, `infra/nginx/fs-javier.conf`
+Nginx en servidor: `/opt/infra/nginx/conf.d/fs-uralde.conf` (y gestoriaa, javier)
+
+SSL: certificados Let's Encrypt validos hasta junio 2026 para los 3 dominios.
+
+**Comandos utiles instancias FS:**
+```bash
+# Ver estado de los 6 contenedores FS
+docker ps --filter "name=fs-"
+
+# Logs de una instancia
+docker logs -f fs-uralde --tail 50
+
+# Conectar a MariaDB de una instancia
+docker exec -it fs-uralde-db mysql -u facturascripts -pfs_uralde_2026 facturascripts
+
+# Regenerar Dinamic tras cambios en plugins
+docker exec fs-uralde curl -s http://localhost/deploy
+
+# Ajustar permisos plugins tras copia manual
+docker exec fs-uralde chown -R www-data:www-data /var/www/html/Plugins/
+docker exec fs-uralde chown -R www-data:www-data /var/www/html/MyFiles/
+```
+
 ## Diagrama de topologia
 
 ```mermaid
@@ -36,7 +73,10 @@ graph TD
 
     NGINX -->|"app.prometh-ai.es\n+ /api/ proxy"| API["sfce_api\nFastAPI :8000"]
     NGINX -->|"api.prometh-ai.es\nproxy directo"| API
-    NGINX --> FS["facturascripts\nPHP/Apache\nMariaDB 10.11"]
+    NGINX -->|"contabilidad.prometh-ai.es"| FS0["facturascripts\n(superadmin)\nPHP/Apache + MariaDB"]
+    NGINX -->|"fs-uralde.prometh-ai.es\n:8010"| FSU["fs-uralde\nPHP/Apache + MariaDB"]
+    NGINX -->|"fs-gestoriaa.prometh-ai.es\n:8011"| FSG["fs-gestoriaa\nPHP/Apache + MariaDB"]
+    NGINX -->|"fs-javier.prometh-ai.es\n:8012"| FSJ["fs-javier\nPHP/Apache + MariaDB"]
     NGINX --> UK["uptime_kuma\n:3001 (interno)"]
 
     API --> PGDB["sfce_db\nPostgreSQL 16\n127.0.0.1:5433"]
@@ -58,6 +98,9 @@ graph TD
     style SSH_TUNNEL2 fill:#cce0ff
     style GHA fill:#ffe4cc
     style GHCR fill:#ffe4cc
+    style FSU fill:#fff0cc
+    style FSG fill:#fff0cc
+    style FSJ fill:#fff0cc
 ```
 
 ## Firewall
@@ -87,6 +130,9 @@ Ademas, ufw esta activo en el host con reglas basicas:
 | `/opt/infra/nginx/conf.d/app-prometh-ai.conf` | `infra/nginx/app-prometh-ai.conf` | React estático + proxy `/api/` → sfce_api:8000 |
 | `/opt/infra/nginx/conf.d/api-prometh-ai.conf` | `infra/nginx/api-prometh-ai.conf` | Proxy directo sfce_api:8000, CORS = solo app.prometh-ai.es |
 | `/opt/infra/nginx/conf.d/prometh-ai.conf` | — | Landing prometh-ai.es → /opt/apps/spice-landing/ |
+| `/opt/infra/nginx/conf.d/fs-uralde.conf` | `infra/nginx/fs-uralde.conf` | Proxy → localhost:8010 (fs-uralde), SSL Let's Encrypt |
+| `/opt/infra/nginx/conf.d/fs-gestoriaa.conf` | `infra/nginx/fs-gestoriaa.conf` | Proxy → localhost:8011 (fs-gestoriaa), SSL Let's Encrypt |
+| `/opt/infra/nginx/conf.d/fs-javier.conf` | `infra/nginx/fs-javier.conf` | Proxy → localhost:8012 (fs-javier), SSL Let's Encrypt |
 
 **CRITICO al copiar configs con scp**: verificar que el nombre de destino NO tenga `.tmp`. nginx ignora archivos `.tmp`.
 
@@ -127,10 +173,17 @@ Configuracion TLS en nginx (del template `uptime-kuma.conf`):
 | Que | Herramienta | Destino |
 |-----|-------------|---------|
 | 6 bases de datos PostgreSQL | `pg_dump` + `docker exec` | Restic → Hetzner S3 |
-| 2 bases de datos MariaDB (FacturaScripts + otras) | `mysqldump` + `docker exec` | Restic → Hetzner S3 |
+| 5 bases de datos MariaDB | `mysqldump` + `docker exec` | Restic → Hetzner S3 |
 | Configs del sistema (`/opt/apps/`, `/opt/infra/`) | `tar` | Restic → Hetzner S3 |
 | Certificados SSL (`/etc/letsencrypt/`) | `tar` | Restic → Hetzner S3 |
 | Vaultwarden (gestor de contrasenas) | `sqlite3` o volumen | Restic → Hetzner S3 |
+
+**Las 5 bases de datos MariaDB cubiertas** (actualizado sesion 48):
+1. `facturascripts` — FS superadmin (contabilidad.prometh-ai.es)
+2. `fs_uralde` — FS Uralde (fs-uralde.prometh-ai.es)
+3. `fs_gestoriaa` — FS Gestoría A (fs-gestoriaa.prometh-ai.es)
+4. `fs_javier` — FS Javier (fs-javier.prometh-ai.es)
+5. `clinica_gerardo` — BD clínica Gerardo
 
 ### Como funciona el script local (`scripts/infra/backup.sh`)
 

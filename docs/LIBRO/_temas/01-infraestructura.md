@@ -1,7 +1,7 @@
 # 01 — Infraestructura
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-02
+> **Actualizado:** 2026-03-03
 > **Fuentes:** CLAUDE.md, /opt/infra/nginx/conf.d/, scripts/infra/, .github/workflows/deploy.yml
 
 ---
@@ -65,6 +65,9 @@ npm run dev
 | 5173 | Vite dev server | localhost (dev) | Con proxy integrado a 8000 |
 | 5433 | PostgreSQL 16 | 127.0.0.1 solo (servidor) | NO expuesto al exterior, firewall |
 | 3001 | Uptime Kuma | SSH tunnel | `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N` |
+| 8010 | FS uralde (interno) | via nginx | fs-uralde.prometh-ai.es → contenedor puerto 8010 |
+| 8011 | FS gestoriaa (interno) | via nginx | fs-gestoriaa.prometh-ai.es → contenedor puerto 8011 |
+| 8012 | FS javier (interno) | via nginx | fs-javier.prometh-ai.es → contenedor puerto 8012 |
 | 80 | Nginx HTTP | publico | Redirige a HTTPS |
 | 443 | Nginx HTTPS | publico | Let's Encrypt. Expira 2026-05-30 |
 
@@ -92,13 +95,19 @@ Templates disponibles localmente:
 
 | Servicio | URL |
 |----------|-----|
-| FacturaScripts | https://contabilidad.lemonfresh-tuc.com |
+| FacturaScripts superadmin | https://contabilidad.prometh-ai.es |
+| FS Gestoría Uralde | https://fs-uralde.prometh-ai.es |
+| FS Gestoría A | https://fs-gestoriaa.prometh-ai.es |
+| FS Javier | https://fs-javier.prometh-ai.es |
 | SFCE Dashboard (producción) | https://app.prometh-ai.es |
 | SFCE API (producción) | https://api.prometh-ai.es |
 | SFCE API health | https://api.prometh-ai.es/api/health |
 | PROMETH-AI web | https://prometh-ai.es |
 | SPICE Landing | https://spice.carloscanetegomez.dev |
-| API FacturaScripts (prod) | https://contabilidad.lemonfresh-tuc.com/api/3/ |
+| API FS superadmin | https://contabilidad.prometh-ai.es/api/3/ |
+| API FS uralde | https://fs-uralde.prometh-ai.es/api/3/ |
+| API FS gestoriaa | https://fs-gestoriaa.prometh-ai.es/api/3/ |
+| API FS javier | https://fs-javier.prometh-ai.es/api/3/ |
 
 ## CI/CD — GitHub Actions
 
@@ -143,14 +152,22 @@ Ver `PROYECTOS/ACCESOS.md`:
 
 ## FacturaScripts — API REST
 
-Base URL: `https://contabilidad.lemonfresh-tuc.com/api/3/`
-Header de auth: `Token: iOXmrA1Bbn8RDWXLv91L`
+**Instancia superadmin:**
+```
+Base URL: https://contabilidad.prometh-ai.es/api/3/
+Header:   Token: iOXmrA1Bbn8RDWXLv91L
+```
 
-Plugins activos:
-- Modelo303 v2.7
-- Modelo111 v2.2
-- Modelo347 v3.51
-- Modelo130 v3.71
+**Instancias por gestoría:**
+
+| Gestoría | Base URL | Token |
+|----------|----------|-------|
+| Uralde | https://fs-uralde.prometh-ai.es/api/3/ | `d0ed76fcc22785424b6c` |
+| Gestoría A | https://fs-gestoriaa.prometh-ai.es/api/3/ | `deaff29f162b66b7bbd2` |
+| Javier | https://fs-javier.prometh-ai.es/api/3/ | `6f8307e8330dcb78022c` |
+
+Plugins activos en todas las instancias:
+- Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71, Modelo115 v1.6, Verifactu v0.84
 
 **Lecciones criticas de la API:**
 
@@ -159,6 +176,7 @@ Plugins activos:
 - Los filtros de la API NO funcionan (`idempresa`, `idasiento`, etc.): siempre post-filtrar en Python
 - SIEMPRE pasar `codejercicio` y `idempresa` explicitamente en cada llamada
 - Los endpoints `crear*` responden con `{"doc": {...}, "lines": [...]}`
+- Nick usuario truncado a 10 chars: `carloscanetegomez` → `carloscanete` en instancias nuevas
 
 ## PostgreSQL 16 (SFCE)
 

@@ -1,17 +1,26 @@
 # FacturaScripts — API REST e Integracion
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-03
 > **Fuentes principales:** `sfce/core/fs_api.py`, `CLAUDE.md` secciones API, `MEMORY.md`
 
 ---
 
 ## Conexion
 
+**Instancia superadmin (compartida):**
 ```
-Base URL: https://contabilidad.lemonfresh-tuc.com/api/3/
+Base URL: https://contabilidad.prometh-ai.es/api/3/
 Header:   Token: iOXmrA1Bbn8RDWXLv91L
 ```
+
+**Instancias independientes por gestoría (operativas desde sesión 48):**
+
+| Instancia | URL | Token API | Gestoría | Empresas |
+|-----------|-----|-----------|----------|----------|
+| fs-uralde | https://fs-uralde.prometh-ai.es | `d0ed76fcc22785424b6c` | Uralde (id=1) | PASTORINO, GERARDO, CHIRINGUITO, ELENA |
+| fs-gestoriaa | https://fs-gestoriaa.prometh-ai.es | `deaff29f162b66b7bbd2` | Gestoría A (id=2) | MARCOS, LAMAREA, AURORA, CATERING, DISTRIB |
+| fs-javier | https://fs-javier.prometh-ai.es | `6f8307e8330dcb78022c` | Javier (id=3) | COMUNIDAD, FRANMORA, GASTRO, BERMUDEZ |
 
 El token se lee de la variable de entorno `FS_API_TOKEN`. Si no existe, usa el valor de fallback en `sfce/core/fs_api.py`. Cargar con:
 
@@ -277,14 +286,110 @@ idfactura = resultado["doc"]["idfactura"]
 
 ## Plugins activos
 
+Los 6 plugins estan activos en **todas las instancias** (incluidas fs-uralde, fs-gestoriaa, fs-javier). Se copiaron desde la instancia principal copiando `plugins.json` dentro del contenedor, seguido de `/deploy` para regenerar Dinamic.
+
 | Plugin | Version | Funcionalidad |
 |--------|---------|---------------|
 | Modelo303 | 2.7 | Declaracion trimestral/anual IVA |
 | Modelo111 | 2.2 | Retenciones IRPF rendimientos del trabajo y actividades |
 | Modelo347 | 3.51 | Declaracion anual operaciones con terceros |
 | Modelo130 | 3.71 | Pago fraccionado IRPF autonomos (estimacion directa) |
+| Modelo115 | 1.6 | Retenciones arrendamientos de inmuebles |
+| Verifactu | 0.84 | Facturacion electronica verificable AEAT |
+
+**Metodo para copiar plugins a instancia nueva:**
+```bash
+# 1. Copiar plugins.json del contenedor principal
+docker cp facturascripts_main:/var/www/html/MyFiles/plugins.json /tmp/plugins.json
+docker cp /tmp/plugins.json fs-uralde:/var/www/html/MyFiles/plugins.json
+
+# 2. Ajustar permisos
+docker exec fs-uralde chown -R www-data:www-data /var/www/html/Plugins/
+
+# 3. Regenerar Dinamic (core + plugins)
+curl -s https://fs-uralde.prometh-ai.es/deploy
+```
 
 Estos modelos NO son accesibles via API REST. Se generan desde la interfaz web de FacturaScripts o con los scripts Python del SFCE (`scripts/generar_modelos_fiscales.py`).
+
+---
+
+## Instancias FS independientes — arquitectura completa
+
+### Mapa de instancias (operativas desde sesion 48)
+
+```
+contabilidad.prometh-ai.es     → superadmin (carloscanetegomez, nivel 99, ve todo via SFCE)
+fs-uralde.prometh-ai.es        → Uralde: PASTORINO(2), GERARDO(3), CHIRINGUITO(4), ELENA(5)
+fs-gestoriaa.prometh-ai.es     → GestoriaA: MARCOS(2), LAMAREA(3), AURORA(4), CATERING(5), DISTRIB(6)
+fs-javier.prometh-ai.es        → Javier: COMUNIDAD(2), FRANMORA(3), GASTRO(4), BERMUDEZ(5)
+```
+
+Los numeros entre parentesis son los `idempresa` dentro de cada instancia. La empresa `idempresa=1` en cada instancia es la empresa por defecto creada por el wizard (no usar).
+
+### Docker — contenedores por instancia
+
+| Instancia | Directorio servidor | Puerto app | Puerto BD |
+|-----------|---------------------|------------|-----------|
+| fs-uralde | `/opt/apps/fs-uralde/` | 8010 | interno MariaDB |
+| fs-gestoriaa | `/opt/apps/fs-gestoriaa/` | 8011 | interno MariaDB |
+| fs-javier | `/opt/apps/fs-javier/` | 8012 | interno MariaDB |
+
+Credenciales BD (en `.env` de cada directorio):
+- uralde: `FS_DB_PASS=fs_uralde_2026`
+- gestoriaa: `FS_DB_PASS=fs_gestoriaa_2026`
+- javier: `FS_DB_PASS=fs_javier_2026`
+
+### Usuarios por instancia (password universal: `Uralde2026!`)
+
+| Instancia | Usuario | Nivel | Rol |
+|-----------|---------|-------|-----|
+| uralde | carloscanete | 99 | superadmin |
+| uralde | sergio | 10 | admin_gestoria |
+| uralde | francisco, mgarcia, llupianez | 5 | asesor |
+| gestoriaa | carloscanete | 99 | superadmin |
+| gestoriaa | gestor1, gestor2 | 10 | admin_gestoria |
+| javier | carloscanete | 99 | superadmin |
+| javier | javier | 10 | admin_gestoria |
+
+**CRITICO:** el nick `carloscanetegomez` se trunca a `carloscanete` (10 chars max) en las instancias FS. Usar `carloscanete` para login en fs-uralde/gestoriaa/javier.
+
+### PGC importado — estado (sesion 49)
+
+721 subcuentas del Plan General Contable espanol importadas en todos los ejercicios de las 3 instancias:
+
+| Instancia | Ejercicios con PGC |
+|-----------|-------------------|
+| fs-uralde | 0002, 0003, 0004, 0005 (4 empresas) |
+| fs-gestoriaa | 0002, 0003, 0004, 0005, 0006 (5 empresas) |
+| fs-javier | 0002, 0003, 0004, 0005 (4 empresas) |
+
+Metodo via HTTP (sin interfaz web, automatizable):
+```python
+# Login: obtener cookies fsNick + fsLogkey
+resp = requests.post(
+    "https://fs-uralde.prometh-ai.es/LoginController",
+    data={"nick": "carloscanete", "password": "Uralde2026!"},
+    allow_redirects=False
+)
+cookies = {"fsNick": resp.cookies["fsNick"], "fsLogkey": resp.cookies["fsLogkey"]}
+
+# Importar PGC para un ejercicio
+requests.post(
+    "https://fs-uralde.prometh-ai.es/EditEjercicio",
+    params={"code": "0002"},
+    data={"action": "import-accounting", "multireqtoken": token_csrf},
+    cookies=cookies
+)
+```
+
+### Credenciales FS en SFCE PostgreSQL
+
+Las URLs y tokens de cada instancia estan cifrados con Fernet en la tabla `gestorias`:
+- `gestorias.fs_url` — URL base de la instancia
+- `gestorias.fs_token_enc` — Token API cifrado Fernet
+
+El helper `obtener_credenciales_gestoria(gestoria)` en `sfce/core/fs_api.py` descifra y devuelve `(url, token)`. Si la gestoria no tiene credenciales propias, usa el FS global del sistema.
 
 ---
 
@@ -293,7 +398,7 @@ Estos modelos NO son accesibles via API REST. Se generan desde la interfaz web d
 ### 1. Crear la empresa
 
 ```bash
-curl -X POST https://contabilidad.lemonfresh-tuc.com/api/3/empresas \
+curl -X POST https://contabilidad.prometh-ai.es/api/3/empresas \
   -H "Token: iOXmrA1Bbn8RDWXLv91L" \
   -d "nombre=NUEVA EMPRESA S.L.&cifnif=B12345678&personafisica=0"
 ```
@@ -304,15 +409,18 @@ Guardar el `idempresa` devuelto.
 
 ```bash
 # codejercicio: "000N" donde N es el idempresa (ej: "0006" para empresa 6)
-curl -X POST https://contabilidad.lemonfresh-tuc.com/api/3/ejercicios \
+curl -X POST https://contabilidad.prometh-ai.es/api/3/ejercicios \
   -H "Token: iOXmrA1Bbn8RDWXLv91L" \
   -d "idempresa=6&codejercicio=0006&nombre=2025&fechainicio=2025-01-01&fechafin=2025-12-31"
 ```
 
 ### 3. Importar el Plan General Contable
 
+**Opcion A — Panel web:**
 Navegar en FacturaScripts a:
 `Contabilidad > Ejercicios > Editar ejercicio 0006 > Importar plan contable > Aceptar`
+
+**Opcion B — HTTP automatizado** (ver seccion "PGC importado" mas arriba para el codigo Python completo).
 
 Sin subir archivo — el boton importa el PGC general espanol por defecto:
 - 802 cuentas (grupos 1-9)
@@ -331,6 +439,84 @@ empresa:
   ejercicio_activo: "2025"
   codejercicio: "0006"  # <-- valor real asignado
 ```
+
+---
+
+## Lecciones — Login FS via HTTP/PHP (sin interfaz web)
+
+Descubiertas en sesion 49 al automatizar la importacion del PGC.
+
+### 1. FS no usa PHP sessions — usa cookies propias
+
+FacturaScripts autentica con dos cookies propias (no sesion PHP):
+- `fsNick` — nombre de usuario
+- `fsLogkey` — hash de autenticacion generado en login
+
+```python
+resp = requests.post(
+    "https://fs-uralde.prometh-ai.es/LoginController",
+    data={"nick": "carloscanete", "password": "Uralde2026!"},
+    allow_redirects=False
+)
+cookies = {
+    "fsNick": resp.cookies.get("fsNick"),
+    "fsLogkey": resp.cookies.get("fsLogkey"),
+}
+```
+
+Usar estas cookies en todas las peticiones web posteriores.
+
+### 2. Nick de usuario truncado a 10 caracteres
+
+El campo `nick` en FS tiene un maximo de 10 caracteres. El usuario `carloscanetegomez` se registra como `carloscanete` en las instancias nuevas. Siempre verificar el nick real en la BD si el login falla:
+
+```bash
+docker exec fs-uralde-db mysql -u root -p fs_uralde \
+  -e "SELECT nick FROM fs_users LIMIT 10;"
+```
+
+### 3. Token CSRF `multireqtoken` — formula de generacion
+
+Algunas acciones del panel web (como importar PGC) requieren el token CSRF `multireqtoken`. Se genera en PHP como:
+
+```
+sha1(PHP_VERSION + __FILE__ + db_name + db_pass + date('YmdH'))
+```
+
+Para obtenerlo sin parsearlo del HTML, ejecutar PHP dentro del contenedor:
+
+```bash
+docker exec fs-uralde php -r "
+require_once '/var/www/html/vendor/autoload.php';
+// leer configuracion de BD y calcular el token
+"
+```
+
+O alternativamente, parsear el campo `multireqtoken` del HTML de la pagina de edicion del ejercicio.
+
+### 4. Tablas FS — creacion bajo demanda (lazy)
+
+FS crea las tablas de la BD solo cuando se accede a cada modelo por primera vez. Una instancia recien instalada puede tener tablas de configuracion pero no las contables.
+
+Para forzar la creacion de todas las tablas contables relevantes, acceder a estas URLs (con cookies de sesion activas):
+- `/ListCuenta` — tablas del plan de cuentas
+- `/ListSubcuenta` — subcuentas
+- `/ListFacturaProveedor` — facturas proveedor
+- `/ListFacturaCliente` — facturas cliente
+
+El endpoint `/Updater` es para actualizar la version de FS/plugins, NO para crear tablas.
+El endpoint `/deploy` regenera el directorio `Dinamic/` desde Core + Plugins instalados.
+
+### 5. Permisos tras copiar plugins manualmente
+
+Si se copian archivos de plugins directamente al sistema de ficheros del contenedor, restaurar los permisos:
+
+```bash
+docker exec fs-uralde chown -R www-data:www-data /var/www/html/Plugins/
+docker exec fs-uralde chown -R www-data:www-data /var/www/html/MyFiles/
+```
+
+Luego ejecutar `/deploy` para que FS registre los plugins y regenere el codigo dinamico.
 
 ---
 
