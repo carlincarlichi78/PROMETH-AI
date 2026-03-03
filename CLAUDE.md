@@ -302,6 +302,43 @@ python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 
 
 ---
 
+## Estado actual (03/03/2026, sesión 61 — Inbox Watcher Tasks 1-5)
+
+**Rama activa**: `main`
+**Último commit**: `7ca9273`
+**Tests**: 2661 PASS + 17 nuevos (test_watcher.py) = **2678 aprox** (sin contar correo pendiente)
+
+### ✅ COMPLETADO en sesión 61 — Plan `docs/plans/2026-03-03-inbox-watcher.md`
+
+| Task | Commit | Detalle |
+|------|--------|---------|
+| 1 — `sfce.empresa_id` en 6 config.yaml | `4274635` | IDs 1-6 mapeados correctamente |
+| 2 — Variables de entorno | `4d1d3b7` | `.env.example` + `.env` con SFCE_WATCHER_* |
+| 3 — TDD `_esperar_estabilidad` | `0efe6bb` | 4 tests PASS |
+| 4 — TDD `_cargar_empresa_id` + `_slug_desde_ruta` | `ab51aec` | 7 tests PASS |
+| 5 — TDD `_subir_pdf` + `_subir_con_reintentos` | `7ca9273` | 6 tests PASS |
+
+**Suite test_watcher.py**: 17 passed
+
+### ⚡ PRÓXIMA SESIÓN — Inbox Watcher Tasks 6-8
+
+Plan: `docs/plans/2026-03-03-inbox-watcher.md`
+
+| Task | Qué hace |
+|------|----------|
+| 6 | TDD `_procesar_archivo` + `startup_scan` — mueve a subido/ o error/ |
+| 7 | Watcher principal: `InboxEventHandler` + `main()` con watchdog Observer |
+| 8 | Integrar en `iniciar_dashboard.bat` (3er proceso) |
+| 9 | Test E2E manual — soltar PDF en inbox Gerardo y verificar subida |
+
+**Al retomar**: `python -m pytest tests/test_watcher.py -v` debe dar 17 PASS.
+
+**Cambios pendientes sin commit** (trabajo paralelo, NO tocar):
+- `sfce/api/rutas/correo.py` (modificado)
+- `tests/test_correo/test_api_cuentas_asesor.py` (sin trackear)
+
+---
+
 ## Estado actual (03/03/2026, sesión 60 — Mejoras sistema ingesta email)
 
 **Rama activa**: `main`
