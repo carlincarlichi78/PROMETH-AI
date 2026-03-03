@@ -81,9 +81,29 @@ class IngestaCorreo:
                 reglas, empresas_gestoria = self._cargar_reglas_gestoria(
                     sesion, gestoria_id
                 )
+                empresas_asesor: list[dict] = []
+            elif tipo == "asesor":
+                reglas = []
+                empresas_gestoria = []
+                # Cargar empresas asignadas al asesor para routing por CIF
+                usuario_id = cuenta.usuario_id
+                empresas_asesor = []
+                if usuario_id:
+                    from sfce.db.modelos_auth import Usuario as _Usuario
+                    u = sesion.get(_Usuario, usuario_id)
+                    if u and u.empresas_asignadas:
+                        ids_asignadas = u.empresas_asignadas
+                        empresas_objs = sesion.query(Empresa).filter(
+                            Empresa.id.in_(ids_asignadas)
+                        ).all()
+                        empresas_asesor = [
+                            {"id": e.id, "cif": e.cif, "nombre": e.nombre}
+                            for e in empresas_objs
+                        ]
             else:
                 reglas = self._cargar_reglas(sesion, empresa_id)
                 empresas_gestoria = []
+                empresas_asesor = []
                 # Para forwarding en cuentas dedicadas: cargar empresas de la gestoría
                 if tipo == "dedicada" and gestoria_id:
                     _reglas_extra, empresas_gestoria = self._cargar_reglas_gestoria(
@@ -108,6 +128,7 @@ class IngestaCorreo:
                     tipo=tipo,
                     reglas=reglas,
                     empresas_gestoria=empresas_gestoria,
+                    empresas_asesor=empresas_asesor,
                 )
                 if procesado:
                     procesados += 1
@@ -141,6 +162,7 @@ class IngestaCorreo:
         tipo: str,
         reglas: list[dict],
         empresas_gestoria: list[dict],
+        empresas_asesor: list[dict] | None = None,
     ) -> bool:
         """Procesa un único email. Retorna True si fue procesado (no duplicado).
 
@@ -170,6 +192,14 @@ class IngestaCorreo:
                     reglas=reglas,
                     empresas_gestoria=empresas_gestoria,
                     sesion=sesion,
+                )
+            elif tipo == "asesor":
+                email_bd = self._construir_email_asesor(
+                    email_data=email_data,
+                    cuenta_id=cuenta_id,
+                    asunto=asunto,
+                    remitente=remitente,
+                    empresas_asesor=empresas_asesor or [],
                 )
             else:
                 email_bd = self._construir_email_dedicada(
@@ -299,6 +329,43 @@ class IngestaCorreo:
             nivel_clasificacion=clasificacion["nivel"],
             empresa_destino_id=empresa_destino_id,
             confianza_ia=clasificacion.get("confianza"),
+            es_respuesta_ack=False,
+            score_confianza=None,
+            motivo_cuarentena=motivo_cuarentena,
+        )
+
+    def _construir_email_asesor(
+        self, email_data, cuenta_id, asunto, remitente, empresas_asesor
+    ) -> "EmailProcesado":
+        """Routing por CIF: extrae CIF del primer adjunto PDF y lo cruza con
+        las empresas asignadas al asesor. Fallback: cuarentena SIN_CIF_IDENTIFICABLE."""
+        empresa_destino_id = None
+        motivo_cuarentena = None
+        estado = "CLASIFICADO"
+
+        for adj in email_data.get("adjuntos", []):
+            b = adj.get("bytes") or adj.get("datos_bytes", b"")
+            if b:
+                cif = _extraer_cif_pdf(b)
+                if cif:
+                    empresa_destino_id = _resolver_empresa_por_cif(cif, empresas_asesor)
+                    break
+
+        if empresa_destino_id is None:
+            estado = "CUARENTENA"
+            motivo_cuarentena = "SIN_CIF_IDENTIFICABLE"
+
+        return EmailProcesado(
+            cuenta_id=cuenta_id,
+            uid_servidor=email_data["uid"],
+            message_id=email_data.get("message_id"),
+            remitente=remitente,
+            asunto=asunto,
+            fecha_email=email_data.get("fecha"),
+            estado=estado,
+            nivel_clasificacion="REGLA",
+            empresa_destino_id=empresa_destino_id,
+            confianza_ia=None,
             es_respuesta_ack=False,
             score_confianza=None,
             motivo_cuarentena=motivo_cuarentena,
