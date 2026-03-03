@@ -153,8 +153,8 @@ def canal_email(notif: Notificacion, config: dict) -> bool:
 
 
 def _obtener_gestor_ws():
-    from sfce.api import websocket_manager  # importacion diferida
-    return websocket_manager.gestor
+    from sfce.api.websocket import gestor_ws  # CORRECTO
+    return gestor_ws
 
 
 def canal_websocket(notif: Notificacion) -> bool:
