@@ -272,6 +272,32 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
+## Estado actual (03/03/2026, sesión 63 — IMAP asesores operativo)
+
+**Rama activa**: `main`
+**Último commit**: `8637ffb`
+
+### ✅ COMPLETADO en sesión 63
+
+| Tarea | Detalle |
+|-------|---------|
+| Migración 028 aplicada en BD local | `gestoria_id`, `tipo_cuenta` en `cuentas_correo` |
+| Columnas BD local al día | `cola_procesamiento`: `worker_inicio`, `reintentos`, `datos_ocr_json`, `coherencia_score`, `empresa_origen_correo_id`; `empresas`: `cnae`; `emails_procesados`: `es_respuesta_ack`, `score_confianza`, `motivo_cuarentena` |
+| Cuenta IMAP maria creada | `maria@prometh-ai.es` en BD, App Password `qoehlmkzmvljjohm` (2FA activada) |
+| Fix `imap_servicio.fetch` | Gmail devuelve nº secuencia como clave, no UID — mapeado por posición |
+| Fix `_extraer_cif_pdf` | Devuelve todos los CIFs encontrados (no solo el primero); el de la trabajadora salía antes que el de Gerardo |
+| API arranca con `arrancar_api.py` | Carga `.env` correctamente sin `export` (caracteres especiales en Fernet key) |
+| Test E2E correo completo | Email con nómina → clasificado correctamente → `empresa_destino_id=2` (GERARDO) |
+
+### ⚡ PRÓXIMA SESIÓN
+
+1. **Verificar encolar PDF en pipeline** tras clasificación IMAP (cola_procesamiento vacía — falta el paso de encolar)
+2. **Tests para los fixes** de `imap_servicio` y `_extraer_cif_pdf`
+3. **Aplicar columnas faltantes en producción** (vía SSH psql)
+4. **App Password SFCE_FERNET_KEY local**: ya añadida en `.env` local (`2wFJ9kgyt_h_PeTexfZupekTIIyA0aHruaoLhDgTDm4=`)
+
+---
+
 ## Estado actual (03/03/2026, sesión 60 — Dashboard documentos pipeline operativo)
 
 **Rama activa**: `main`
@@ -358,6 +384,51 @@ Plan: `docs/plans/2026-03-03-inbox-watcher.md`
 
 ---
 
+## Estado actual (03/03/2026, sesión 64 — Fix pipeline email asesor completo)
+
+**Rama activa**: `main`
+**Último commit**: `df5580c`
+**Tests**: 2665 PASS, 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 64
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Fix _decision_encola en asesor | `df5580c` | `_construir_email_asesor` no asignaba `_decision_encola` → PDF nunca se encolaba. Fix: asignar `"AUTO"` si CIF identificado |
+| Fix extractor_adjuntos clave | `df5580c` | `extraer_adjuntos` buscaba clave `contenido` pero ImapServicio usa `datos_bytes`. Fix: `adj.get("contenido") or adj.get("datos_bytes", b"")` |
+
+**Verificación E2E completa**:
+- Email enviado a maria@prometh-ai.es con nómina ROS-08060005_1_.pdf
+- EmailProcesado: `estado=CLASIFICADO`, `empresa_destino_id=2` (Gerardo)
+- `cola_procesamiento`: `id=1`, `nombre_archivo=ROS-08060005_1_.pdf`, `estado=PENDIENTE`, `empresa_id=2` ✓
+
+### ⚡ PRÓXIMA SESIÓN — Pendientes
+
+**1. Migración 028 en producción**
+```bash
+ssh carli@65.108.60.69
+docker exec sfce_api python -c "
+import sys, importlib.util
+spec = importlib.util.spec_from_file_location('m028', 'sfce/db/migraciones/028_cuenta_correo_asesor.py')
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+from sqlalchemy import create_engine; import os
+mod.aplicar(create_engine(os.environ['DATABASE_URL']))
+"
+```
+También faltan columnas en local (se añadieron con ALTER TABLE manual): `gestoria_id`, `tipo_cuenta` en `cuentas_correo`.
+
+**2. App Passwords Google Workspace** (manual, otros asesores):
+- francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → Contraseñas de aplicaciones → SFCE-IMAP`
+
+**3. Script seed producción** (con App Passwords reales):
+```bash
+docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py
+```
+
+**4. Inbox Watcher Tasks 6-9** (plan: `docs/plans/2026-03-03-inbox-watcher.md`)
+
+---
+
 ## Estado actual (03/03/2026, sesión 63 — Cuentas IMAP por Asesor)
 
 **Rama activa**: `main`
@@ -399,6 +470,32 @@ docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py
 ```
 
 **4. Pendientes email anteriores** (ver sesión 60 más abajo): francisco/maria/luis cuentas dedicadas
+
+---
+
+## Estado actual (03/03/2026, sesión 63 — Cuentas IMAP por asesor)
+
+**Rama activa**: `main`
+**Último commit**: `f5fa24b`
+**Tests**: 2665 PASS, 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 63
+
+| Tarea | Detalle |
+|-------|---------|
+| Migración 028 | `usuario_id INTEGER` en `cuentas_correo` — en dev + producción ✓ |
+| CIF extraction | `_extraer_cif_pdf()` + `_resolver_empresa_por_cif()` en `ingesta_correo.py` |
+| Rama tipo='asesor' | `IngestaCorreo` enruta por CIF contra empresas asignadas al asesor |
+| API: `usuario_id` + `/test` | `CrearCuentaAdminRequest` acepta `usuario_id`; `POST /admin/cuentas/{id}/test` |
+| Dashboard sección asesores | Lista IMAP asesores con badge activa/inactiva + botones Probar/Desactivar |
+| Seed script | `scripts/crear_cuentas_imap_asesores.py` (6 asesores, App Passwords pendiente) |
+| 18 tests nuevos | `test_028_cuenta_correo_asesor.py` + `test_cif_pdf.py` + `test_ingesta_asesor.py` + `test_api_cuentas_asesor.py` |
+
+### ⚡ PRÓXIMA SESIÓN — Pasos manuales pendientes email asesores
+
+1. **App Passwords Google Workspace** — para cada asesor en `myaccount.google.com → Seguridad → Contraseñas de aplicaciones → "SFCE-IMAP"`
+2. **Rellenar passwords** en `scripts/crear_cuentas_imap_asesores.py` y ejecutar en producción
+3. **Cuentas `tipo='dedicada'`** francisco/maria/luis (pendiente sesión 60)
 
 ---
 
