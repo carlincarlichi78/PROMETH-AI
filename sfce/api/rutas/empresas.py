@@ -391,6 +391,52 @@ class InvitarClienteRequest(BaseModel):
     nombre: str
 
 
+@router.get("/{empresa_id}/documentos")
+def listar_documentos_empresa(
+    empresa_id: int,
+    request: Request,
+    ejercicio: str | None = None,
+    estado: str | None = None,
+    tipo_doc: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    sesion_factory=Depends(get_sesion_factory),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista documentos procesados por el pipeline para una empresa."""
+    verificar_acceso_empresa(usuario, empresa_id, sesion_factory)
+    with sesion_factory() as s:
+        q = s.query(Documento).filter(Documento.empresa_id == empresa_id)
+        if ejercicio:
+            q = q.filter(Documento.ejercicio == ejercicio)
+        if estado:
+            q = q.filter(Documento.estado == estado)
+        if tipo_doc:
+            q = q.filter(Documento.tipo_doc == tipo_doc)
+        total = q.count()
+        docs = q.order_by(Documento.fecha_proceso.desc()).offset(offset).limit(limit).all()
+        return {
+            "total": total,
+            "items": [
+                {
+                    "id": d.id,
+                    "tipo_doc": d.tipo_doc,
+                    "estado": d.estado,
+                    "confianza": d.confianza,
+                    "factura_id_fs": d.factura_id_fs,
+                    "ejercicio": d.ejercicio,
+                    "fecha_proceso": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
+                    "motivo_cuarentena": d.motivo_cuarentena,
+                    "emisor": (d.datos_ocr or {}).get("emisor_nombre"),
+                    "total": (d.datos_ocr or {}).get("total"),
+                    "numero_factura": (d.datos_ocr or {}).get("numero_factura"),
+                    "fecha_factura": (d.datos_ocr or {}).get("fecha"),
+                }
+                for d in docs
+            ],
+        }
+
+
 @router.post("/{empresa_id}/invitar-cliente", status_code=201)
 def invitar_cliente_a_empresa(
     empresa_id: int,

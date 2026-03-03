@@ -48,6 +48,7 @@ const PipelinePage = lazy(() => import('@/features/documentos/pipeline-page'))
 const CuarentenaPage = lazy(() => import('@/features/documentos/cuarentena-page'))
 const Archivo = lazy(() => import('@/features/documentos/archivo-page'))
 const RevisionPage = lazy(() => import('@/features/documentos/revision-page').then(m => ({ default: m.RevisionPage })))
+const DocumentosEmpresa = lazy(() => import('@/features/documentos/documentos-empresa-page'))
 
 // --- Economico-Financiero (Stream B) ---
 const Ratios = lazy(() => import('@/features/economico/ratios-page'))
@@ -154,6 +155,9 @@ export function App() {
         >
           <Route path="/" element={<Home />} />
           <Route path="/directorio" element={<Directorio />} />
+
+          {/* Documentos pipeline */}
+          <Route path="/empresa/:id/documentos" element={<DocumentosEmpresa />} />
 
           {/* Contabilidad */}
           <Route path="/empresa/:id/pyg" element={<PyG />} />

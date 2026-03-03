@@ -89,6 +89,7 @@ export function AppSidebar() {
     {
       label: 'Documentos',
       items: [
+        { titulo: 'Documentos', ruta: `/empresa/${eId}/documentos`, icono: FileText },
         { titulo: 'Bandeja Entrada', ruta: `/empresa/${eId}/inbox`, icono: Upload },
         { titulo: 'Pipeline', ruta: `/empresa/${eId}/pipeline`, icono: Activity },
         { titulo: 'Revisión Docs', ruta: `/revision`, icono: ClipboardCheck },
