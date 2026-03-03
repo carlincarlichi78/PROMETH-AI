@@ -1,6 +1,7 @@
 """Orquestador de ingesta de emails: descarga → clasifica → guarda → encola OCR."""
 import json
 import logging
+import re as _re
 from datetime import datetime
 from pathlib import Path
 from sqlalchemy import Engine, select
@@ -606,8 +607,51 @@ def _detectar_ambiguedad_remitente_bulk(
     return list(dict.fromkeys(coincidencias))
 
 
+# ---------------------------------------------------------------------------
+# Utilidades routing tipo='asesor'
+# ---------------------------------------------------------------------------
+
+_CIF_PATRON = _re.compile(
+    r"\b([A-Z]\d{7}[A-Z0-9]|\d{8}[A-Z])\b"
+)
+
+
+def _extraer_cif_pdf(bytes_pdf: bytes) -> str | None:
+    """Extrae el primer CIF/NIF encontrado en el texto del PDF (pdfplumber)."""
+    try:
+        import io
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(bytes_pdf)) as pdf:
+            for pagina in pdf.pages:
+                texto = pagina.extract_text() or ""
+                m = _CIF_PATRON.search(texto)
+                if m:
+                    return m.group(1)
+    except Exception:
+        logger.debug("_extraer_cif_pdf: no se pudo leer el PDF", exc_info=True)
+    return None
+
+
+def _resolver_empresa_por_cif(
+    cif: str, empresas: list[dict]
+) -> int | None:
+    """Devuelve el id de la empresa cuyo CIF coincide (soporta prefijo ES)."""
+    cif_norm = cif.upper().strip()
+    # Eliminar prefijo de país si viene como intracomunitario (ej: ES76638663H)
+    if len(cif_norm) > 9 and cif_norm[:2].isalpha():
+        cif_sin_prefijo = cif_norm[2:]
+    else:
+        cif_sin_prefijo = cif_norm
+    for e in empresas:
+        cif_empresa = (e.get("cif") or "").upper().strip()
+        if cif_empresa and (cif_empresa == cif_norm or cif_empresa == cif_sin_prefijo):
+            return e["id"]
+    return None
+
+
 def ejecutar_polling_todas_las_cuentas(engine: Engine) -> None:
     """Entry point para scheduler: procesa todas las cuentas activas excepto 'sistema'."""
+
     with Session(engine) as sesion:
         cuentas = sesion.execute(
             select(CuentaCorreo.id).where(
