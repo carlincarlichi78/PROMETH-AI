@@ -404,8 +404,8 @@ def listar_documentos_empresa(
     usuario=Depends(obtener_usuario_actual),
 ):
     """Lista documentos procesados por el pipeline para una empresa."""
-    verificar_acceso_empresa(usuario, empresa_id, sesion_factory)
     with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
         q = s.query(Documento).filter(Documento.empresa_id == empresa_id)
         if ejercicio:
             q = q.filter(Documento.ejercicio == ejercicio)
