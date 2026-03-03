@@ -174,6 +174,7 @@ export function AppSidebar() {
               {[
                 { titulo: 'Panel Principal', ruta: '/', icono: Home },
                 { titulo: 'Directorio', ruta: '/directorio', icono: Database },
+                { titulo: 'Pipeline en Vivo', ruta: '/pipeline/live', icono: Zap },
               ].map((item) => (
                 <SidebarMenuItem key={item.ruta}>
                   <SidebarMenuButton

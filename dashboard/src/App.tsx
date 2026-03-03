@@ -119,6 +119,9 @@ const ConfigLicencia = lazy(() => import('@/features/configuracion/licencia-page
 const ConfigApariencia = lazy(() => import('@/features/configuracion/apariencia-page'))
 const ConfigProcesamientoPage = lazy(() => import('@/features/configuracion/config-procesamiento-page'))
 
+// --- Pipeline en Vivo ---
+const PipelineLivePage = lazy(() => import('@/features/pipeline/pipeline-live-page'))
+
 function SuspenseFallback() {
   return (
     <div className="space-y-4 p-6">
@@ -187,6 +190,7 @@ export function App() {
           <Route path="/empresa/:id/cuarentena" element={<CuarentenaPage />} />
           <Route path="/empresa/:id/archivo" element={<Archivo />} />
           <Route path="/revision" element={<RevisionPage />} />
+          <Route path="/pipeline/live" element={<PipelineLivePage />} />
 
           {/* Economico-Financiero */}
           <Route path="/empresa/:id/ratios" element={<Ratios />} />
