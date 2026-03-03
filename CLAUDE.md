@@ -358,6 +358,50 @@ Plan: `docs/plans/2026-03-03-inbox-watcher.md`
 
 ---
 
+## Estado actual (03/03/2026, sesión 63 — Cuentas IMAP por Asesor)
+
+**Rama activa**: `main`
+**Último commit**: `4261e04`
+**Tests**: 2665 PASS (+4), 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 63
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Migración 028 | `907c349` | `usuario_id INTEGER` en `cuentas_correo` + 2 tests |
+| Extracción CIF PDF | `5214452` | `_extraer_cif_pdf()` + `_resolver_empresa_por_cif()` + 8 tests |
+| Rama tipo=asesor IngestaCorreo | `6ace62e` | `_construir_email_asesor()`: routing CIF → empresa asignada, fallback cuarentena. 3 tests |
+| API `usuario_id` + /test | `4e14f26` | `CrearCuentaAdminRequest.usuario_id` + `POST /admin/cuentas/{id}/test` + 3 tests |
+| Dashboard asesores | `b8b7531` | Sección "Cuentas IMAP Asesores" con badge activa + botón Probar |
+| Script seed | `e8efd3f` | `scripts/crear_cuentas_imap_asesores.py` (passwords en blanco, completar manualmente) |
+| Documentos empresa mejorado | `4261e04` | Panel detalle asiento + detección origen canal (email/portal/watcher/pipeline) |
+
+### ⚡ PRÓXIMA SESIÓN — Pendientes operativos
+
+**1. Migración 028 en producción**
+```bash
+ssh carli@65.108.60.69
+docker exec sfce_api python -c "
+import sys, importlib.util
+spec = importlib.util.spec_from_file_location('m028', 'sfce/db/migraciones/028_cuenta_correo_asesor.py')
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+from sqlalchemy import create_engine; import os
+mod.aplicar(create_engine(os.environ['DATABASE_URL']))
+"
+```
+
+**2. Configurar App Passwords Google Workspace** (manual por asesor):
+- Cada asesor: `myaccount.google.com → Seguridad → Contraseñas de aplicaciones → SFCE-IMAP`
+
+**3. Ejecutar script seed en producción** (después de rellenar passwords en el script):
+```bash
+docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py
+```
+
+**4. Pendientes email anteriores** (ver sesión 60 más abajo): francisco/maria/luis cuentas dedicadas
+
+---
+
 ## Estado actual (03/03/2026, sesión 60 — Mejoras sistema ingesta email)
 
 **Rama activa**: `main`
