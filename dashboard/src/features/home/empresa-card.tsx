@@ -1,8 +1,20 @@
 // src/features/home/empresa-card.tsx
 import { useNavigate } from 'react-router-dom'
 import { useResumenEmpresa } from './api'
+import { useEmpresaWebSocket } from './use-empresa-websocket'
 import { Inbox, Calendar, TrendingUp, CreditCard, AlertCircle, ChevronRight } from 'lucide-react'
 import type { Empresa } from '@/types'
+
+function tiempoRelativo(isoStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000)
+  if (diff < 60) return 'ahora'
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
+  return `hace ${Math.floor(diff / 3600)} h`
+}
+
+function nombreCorto(ruta: string): string {
+  return ruta.split('/').pop() ?? ruta
+}
 
 // Anillo de salud — muestra el scoring como círculo SVG
 function HealthRing({ score }: { score: number | null }) {
@@ -69,6 +81,8 @@ interface EmpresaCardProps {
 export function EmpresaCard({ empresa }: EmpresaCardProps) {
   const navigate = useNavigate()
   const { data: resumen, isLoading } = useResumenEmpresa(empresa.id)
+  const { procesandoAhora, ultimaActividad, alertaCuarentena, clearAlertaCuarentena } =
+    useEmpresaWebSocket(empresa.id)
 
   const ir = (ruta: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -143,10 +157,24 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
             <div className="h-5 w-16 bg-[var(--surface-2)] rounded animate-pulse" />
           ) : (
             <>
-              <p className="text-[15px] font-bold tabular-nums">
-                {resumen?.bandeja.pendientes.toLocaleString('es') ?? 0}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[15px] font-bold tabular-nums">
+                  {resumen?.bandeja.pendientes.toLocaleString('es') ?? 0}
+                </p>
+                {procesandoAhora && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-400 font-medium">
+                    <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                    Procesando
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-muted-foreground">pendientes</p>
+              {ultimaActividad && (
+                <p className="text-[10px] text-muted-foreground/70 mt-0.5 truncate max-w-[120px]"
+                   title={nombreCorto(ultimaActividad.nombreArchivo)}>
+                  {tiempoRelativo(ultimaActividad.timestamp)} · {nombreCorto(ultimaActividad.nombreArchivo)}
+                </p>
+              )}
               {(resumen?.bandeja.errores_ocr ?? 0) > 0 && (
                 <p className="text-[11px] text-[var(--state-danger)] mt-0.5">
                   ⚠ {resumen!.bandeja.errores_ocr} errores OCR
@@ -251,13 +279,26 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
         </div>
       )}
 
-      {/* Alerta IA */}
-      {resumen?.alertas_ia && resumen.alertas_ia.length > 0 && (
-        <div className="border-t border-[var(--state-warning)]/20 bg-[var(--state-warning)]/5 px-4 py-2.5">
-          <p className="text-[11px] text-[var(--state-warning)] flex items-start gap-1.5">
-            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-            <span>{resumen.alertas_ia[0]}</span>
-          </p>
+      {/* Alerta IA / Cuarentena */}
+      {((resumen?.alertas_ia && resumen.alertas_ia.length > 0) || alertaCuarentena) && (
+        <div className="border-t border-amber-500/20 bg-amber-500/10 px-3 py-1.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <p className="text-[11px] text-amber-300 truncate">
+              {alertaCuarentena
+                ? `Cuarentena: ${nombreCorto(alertaCuarentena.nombreArchivo)}`
+                : resumen!.alertas_ia[0]}
+            </p>
+          </div>
+          {alertaCuarentena && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); clearAlertaCuarentena() }}
+              className="text-amber-400/60 hover:text-amber-300 text-[11px] shrink-0"
+            >
+              ✕
+            </button>
+          )}
         </div>
       )}
 
