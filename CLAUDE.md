@@ -313,36 +313,41 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (03/03/2026, sesión 59 — Verificación configs + commits pendientes)
+## Estado actual (03/03/2026, sesión 60 — IMAP asesores diseñado + portal fixes)
 
 **Rama activa**: `main`
-**Último commit**: `496110f`
+**Último commit**: `af87978`
 **Tests**: 2595 PASS, 0 FAILED
 
-### ✅ COMPLETADO en sesión 59
+### ✅ COMPLETADO en sesión 60
 
 | Tarea | Commit | Detalle |
 |-------|--------|---------|
-| Verificar fs_url/fs_token PASTORINO/CHIRINGUITO/ELENA | — | Ya estaban correctos (sesión anterior sin commit) |
-| Email reenvío entre asesores | `ffd4ec8` | `reenvio.py` (128 líneas) + refactor `ingesta_correo.py` + 386 tests. Detecta Forward/FWD, extrae remitente original, enruta a empresa correcta |
-| Documentos pipeline por empresa | `496110f` | `GET /api/empresas/{id}/documentos` + ruta `/empresa/:id/documentos` + sidebar link |
+| Diseño IMAP asesores | `8df8bf8` | `docs/plans/2026-03-03-imap-asesores-design.md` |
+| Plan implementación IMAP | `c21ac8e` | `docs/plans/2026-03-03-imap-asesores.md` — 6 tasks TDD |
+| Fix documentos empresa 500 | `5ea5b29` | `GET /api/empresas/{id}/documentos` corregido |
+| Portal UX + rename PWA | `af87978` | portal-page.tsx + SPICE→PROMETH-AI en manifest |
 
-### ⚡ PRÓXIMA SESIÓN — Tareas pendientes
+### ⚡ PRÓXIMA SESIÓN — Implementar IMAP asesores
 
-**1. Pipeline Gerardo**: lanzar los 9 PDFs del inbox con endpoint 2 pasos
-```bash
-export $(grep -v '^#' .env | xargs)
-python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo
-```
+**Plan**: `docs/plans/2026-03-03-imap-asesores.md` → ejecutar con `superpowers:executing-plans`
 
-**2. Segunda ronda fixes auditoría** (baja prioridad):
-- `IMP-6/BUG-1` — `datetime` naive/aware en workers
-- `IMP-8` — NC penalizadas incorrectamente en `coherencia_fiscal.py`
-- `MIGR-2` — `023_onboarding_modo.py` idempotente
-- `VULN-2` — reset password con UPDATE atómico
-- `DB-1/DB-2` — FK en ColaProcesamiento y SupplierRule
+| Task | Qué hace |
+|------|----------|
+| 1 | Migración 028 — `usuario_id` en `cuentas_correo` |
+| 2 | `_extraer_cif_pdf()` + `_resolver_empresa_por_cif()` + tests |
+| 3 | Rama `tipo='asesor'` en `IngestaCorreo` + tests routing |
+| 4 | API: `usuario_id` en POST crear + `POST /admin/cuentas/{id}/test` |
+| 5 | Dashboard: sección asesores en `cuentas-correo-page.tsx` |
+| 6 | Script seed + migración producción (requiere App Passwords manuales) |
 
-**3. Actualizar `docs/LIBRO/_temas/20-correo.md`** — documentar `reenvio.py` y flujo de enrutamiento
+**Setup previo Task 6** (manual, Google Admin):
+1. Habilitar IMAP por usuario: `Admin → Usuarios → Gmail → Habilitar IMAP`
+2. App Password: `myaccount.google.com → Seguridad → Contraseñas de aplicaciones → SFCE-IMAP`
+
+**Otras pendientes:**
+- Pipeline Gerardo (9 PDFs inbox)
+- Actualizar `docs/LIBRO/_temas/20-correo.md` (reenvio.py + tipo=asesor)
 
 ---
 
