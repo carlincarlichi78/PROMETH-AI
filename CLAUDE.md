@@ -203,6 +203,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 46 — Planificación test real con gestoría)
+
+**Sesión**: planificación únicamente — sin cambios de código.
+**Objetivo definido**: test real de contabilidad 2025 completa con una S.L. y un autónomo reales de gestoría amiga.
+
+### Decisiones de la sesión
+
+| Decisión | Detalle |
+|----------|---------|
+| Documentación mínima para test | Balance 31/12/2024 · facturas emitidas/recibidas PDF · extractos bancarios · nóminas · modelos presentados 2025 |
+| Software cliente | **Cegid** — puede exportar libro diario, libros IVA y balance directamente en Excel/CSV |
+| Estrategia test | **Opción A**: PDFs originales → pipeline OCR → comparar vs Cegid como ground truth. Más completo. |
+| Herramienta entregada | `docs/checklist_onboarding_2025.pdf` + `.png` — checklist visual A4 para enviar por WhatsApp |
+
+### Próxima sesión
+
+1. Recibir documentación de la gestoría (S.L. + autónomo, Cegid exports + PDFs)
+2. Crear clientes en SFCE: nueva S.L. y nuevo autónomo real
+3. Ejecutar pipeline completo sobre facturas reales 2025
+4. Comparar modelos calculados vs presentados en AEAT
+
+---
+
 ## Estado actual (02/03/2026, sesión 38 — Gestoría López de Uralde dada de alta)
 
 **BD SFCE local**: limpiada completamente (datos de prueba borrados). Solo quedan datos reales.
@@ -253,6 +276,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 **Clientes objetivo**:
 - Marcos Ruiz Delgado (autónomo fontanero): 303×4, 390, 130×4, 111×4, 190, balance, P&G
 - Restaurante La Marea S.L. (hostelería): 303×4, 390, 111×4, 190, 115×4, 180, balance, P&G
+
+---
+
+## Estado actual (03/03/2026, sesión 44 — Quipu Gerardo 2025 — OCR pipeline completo)
+
+**Rama activa**: `main`
+**Scripts**: `scripts/generar_quipu_facturas2025.py`, `scripts/comparar_ocr_engines.py`
+**Output**: `c:/Users/carli/Downloads/gastos_gerardo_2025.xlsx` (219 filas, 0 rojas, 59.417,01 EUR)
+
+### Pipeline OCR implementado (sesión 44)
+- pdfplumber → Mistral OCR (scans) → GPT-4o (parsing fallback)
+- Cache en disco `scripts/ocr_cache_gerardo.json` — re-ejecuciones a coste $0
+- Coste real Mistral: $0.002/pág (no $0.001 como estimé inicialmente)
+
+### Pendiente próxima sesión (Quipu Gerardo)
+- Verificar IRPF en Asesoría Laboral (aparece como carácter raro en todos los motores — posiblemente campo vacío en PDF)
+- Considerar sustituir GPT-4o por GPT-4o-mini en el script (mismo resultado, 10x más barato)
 
 ---
 
