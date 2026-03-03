@@ -48,7 +48,7 @@ Claude me asiste controlando FacturaScripts via navegador para registrar factura
 - **Uptime Kuma**: Docker `127.0.0.1:3001`. Acceso: `ssh -L 3001:127.0.0.1:3001 carli@65.108.60.69 -N`
 - **Firewall**: ufw activo + DOCKER-USER chain bloquea 5432/6379/8000/8080 del exterior
 - **Seguridad nginx**: `server_tokens off` + HSTS/X-Frame/X-Content-Type/Referrer/Permissions en todos los vhosts
-- **Backups TOTAL**: `/opt/apps/sfce/backup_total.sh` cron 02:00 diario. Cubre 6 PG + 2 MariaDB + configs + SSL + Vaultwarden → Hetzner Helsinki (`hel1.your-objectstorage.com/sfce-backups`). Retención 7d/4w/12m. Credenciales en ACCESOS.md sec.22.
+- **Backups TOTAL**: `/opt/apps/sfce/backup_total.sh` cron 02:00 diario. Cubre 6 PG + **5 MariaDB** (facturascripts compartido + 3 FS instancias + clinica_gerardo) + configs + SSL + Vaultwarden → Hetzner Helsinki (`hel1.your-objectstorage.com/sfce-backups`). Retención 7d/4w/12m. Credenciales en ACCESOS.md sec.22.
 - **Scripts infra**: `scripts/infra/backup.sh`, `scripts/infra/docker-user-firewall.sh`
 - **Templates nginx**: `infra/nginx/00-security.conf`, `infra/nginx/uptime-kuma.conf` (activar con dominio)
 
@@ -78,19 +78,37 @@ Cargar: `export $(grep -v '^#' .env | xargs)` (`.env` en raiz, NO en git)
 ## Plugins activos en FS
 Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71, **Modelo115 v1.6**, **Verifactu v0.84**
 
-## FacturaScripts — usuarios
-URL: https://contabilidad.prometh-ai.es | Password universal: `Uralde2026!`
-Nicks: `carloscanetegomez` (nivel 99), `sergio` (10), `francisco/mgarcia/llupianez/gestor1/gestor2/javier` (5)
-**LIMITACION**: FS no tiene aislamiento nativo por empresa. Ver próxima sesión.
+## FacturaScripts — instancias independientes (OPERATIVAS desde sesión 48)
 
-## Terreno de juego completo (sesión 46)
+**Arquitectura actual (4 instancias FS):**
+
+| URL | Puerto | Gestoría | Empresas | Token API |
+|-----|--------|----------|----------|-----------|
+| https://contabilidad.prometh-ai.es | — | superadmin (carloscanetegomez) | — | `iOXmrA1Bbn8RDWXLv91L` |
+| https://fs-uralde.prometh-ai.es | 8010 | Uralde (gestoria_id=1) | PASTORINO, GERARDO, CHIRINGUITO, ELENA | `d0ed76fcc22785424b6c` |
+| https://fs-gestoriaa.prometh-ai.es | 8011 | Gestoría A (gestoria_id=2) | MARCOS, LAMAREA, AURORA, CATERING, DISTRIB | `deaff29f162b66b7bbd2` |
+| https://fs-javier.prometh-ai.es | 8012 | Javier (gestoria_id=3 en prod) | COMUNIDAD, FRANMORA, GASTRO, BERMUDEZ | `6f8307e8330dcb78022c` |
+
+**Usuarios por instancia** (password universal: `Uralde2026!`):
+- uralde: `carloscanetegomez` (99), `sergio` (10), `francisco/mgarcia/llupianez` (5)
+- gestoriaa: `carloscanetegomez` (99), `gestor1/gestor2` (10)
+- javier: `carloscanetegomez` (99), `javier` (10)
+
+**Docker** — contenedores en `/opt/apps/fs-uralde/`, `/opt/apps/fs-gestoriaa/`, `/opt/apps/fs-javier/`
+**Credenciales BD** (en `.env` de cada directorio): `FS_DB_PASS=fs_uralde_2026` / `fs_gestoriaa_2026` / `fs_javier_2026`
+**Credenciales FS cifradas en SFCE PostgreSQL**: `gestorias.fs_url` + `gestorias.fs_token_enc` (Fernet)
+
+## Terreno de juego completo
 **Contraseña universal SFCE + FS + Google Workspace**: `Uralde2026!`
 
-### Gestorías SFCE
-| gestoria_id | Nombre | Admin |
-|-------------|--------|-------|
-| 1 | ASESORIA LOPEZ DE URALDE SL | sergio@prometh-ai.es |
-| 2 | Gestoría A | gestor1@prometh-ai.es |
+### Gestorías SFCE (producción PostgreSQL)
+| gestoria_id | Nombre en BD | Nombre real | Admin | FS instancia |
+|-------------|-------------|-------------|-------|--------------|
+| 1 | Gestoría Norte | ASESORIA LOPEZ DE URALDE SL | sergio@prometh-ai.es | fs-uralde |
+| 2 | Gestoría Sur | Gestoría A | gestor1@prometh-ai.es | fs-gestoriaa |
+| 3 | Javier Independiente | Javier Independiente | javier@prometh-ai.es | fs-javier |
+
+> NOTA: Los nombres en BD prod son "Gestoría Norte/Sur" (datos de prueba). Se pueden actualizar con `UPDATE gestorias SET nombre='...' WHERE id=N` via psql.
 
 ### Usuarios SFCE (todos Uralde2026!)
 | Email | Rol | Gestoría |
@@ -98,20 +116,28 @@ Nicks: `carloscanetegomez` (nivel 99), `sergio` (10), `francisco/mgarcia/llupian
 | admin@prometh-ai.es | superadmin | — |
 | sergio@prometh-ai.es | admin_gestoria | Uralde |
 | francisco@, maria@, luis@ @prometh-ai.es | asesor | Uralde |
-| gestor1@, gestor2@ @prometh-ai.es | asesor | Gestoría A |
-| javier@prometh-ai.es | asesor_independiente | — |
+| gestor1@, gestor2@ @prometh-ai.es | admin_gestoria | Gestoría A |
+| javier@prometh-ai.es | admin_gestoria | Javier |
 
-### Empresas (13 total)
-| SFCE id | FS idempresa | Empresa | Gestoría |
-|---------|-------------|---------|---------|
-| 1 | 10 | PASTORINO COSTA DEL SOL S.L. | Uralde |
-| 2 | 11 | GERARDO GONZALEZ CALLEJON | Uralde |
-| 3 | 12 | CHIRINGUITO SOL Y ARENA S.L. | Uralde |
-| 4 | 13 | ELENA NAVARRO PRECIADOS | Uralde |
-| 5 | 1 | MARCOS RUIZ DELGADO | Gestoría A |
-| 6 | 2 | RESTAURANTE LA MAREA S.L. | Gestoría A |
-| 7-9 | 3-5 | Aurora Digital, Catering Costa, Distrib. Levante | Gestoría A |
-| 10-13 | 6-9 | Comunidad Mirador, F.Mora, Gastro Holding, Bermúdez | Javier |
+### Empresas (13 total) — idempresa_fs en NUEVAS instancias independientes
+| SFCE id | FS idempresa | Empresa | Gestoría | FS instancia |
+|---------|-------------|---------|---------|--------------|
+| 1 | 2 | PASTORINO COSTA DEL SOL S.L. | Uralde | fs-uralde |
+| 2 | 3 | GERARDO GONZALEZ CALLEJON | Uralde | fs-uralde |
+| 3 | 4 | CHIRINGUITO SOL Y ARENA S.L. | Uralde | fs-uralde |
+| 4 | 5 | ELENA NAVARRO PRECIADOS | Uralde | fs-uralde |
+| 5 | 2 | MARCOS RUIZ DELGADO | Gestoría A | fs-gestoriaa |
+| 6 | 3 | RESTAURANTE LA MAREA S.L. | Gestoría A | fs-gestoriaa |
+| 7 | 4 | AURORA DIGITAL S.L. | Gestoría A | fs-gestoriaa |
+| 8 | 5 | CATERING COSTA S.L. | Gestoría A | fs-gestoriaa |
+| 9 | 6 | DISTRIBUCIONES LEVANTE S.L. | Gestoría A | fs-gestoriaa |
+| 10 | 2 | COMUNIDAD MIRADOR DEL MAR | Javier | fs-javier |
+| 11 | 3 | FRANCISCO MORA | Javier | fs-javier |
+| 12 | 4 | GASTRO HOLDING S.L. | Javier | fs-javier |
+| 13 | 5 | JOSE ANTONIO BERMUDEZ | Javier | fs-javier |
+
+> NOTA: idempresa 1 en cada instancia es la empresa por defecto creada por el wizard (E-XXXX). No usarla.
+> NOTA: idempresa_fs en SQLite local está en NULL (se limpió para recrear en nuevas instancias). Solo el de producción PostgreSQL es el real. **Pendiente**: sincronizar SQLite local con los nuevos ids.
 
 Credenciales completas clientes: PROYECTOS/ACCESOS.md sección 27
 Scripts seed: `scripts/seed_usuarios.py`, `scripts/setup_fs_todas_empresas.py`
@@ -225,50 +251,119 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ## Estado actual (03/03/2026, sesión 48 — Instancias FS independientes COMPLETADAS)
 
 **Rama activa**: `main`
-**Tests**: 2573 PASS (sin cambios de código)
+**Último commit**: `1d48a8c`
+**Tests**: 2573 PASS
 
-### Lo realizado en sesión 48 — Plan 18 tasks COMPLETADO
+### ✅ COMPLETADO en sesiones 47+48
 
-| Task | Estado | Detalle |
-|------|--------|---------|
-| 1 | ✅ | DNS propagado: fs-uralde/gestoriaa/javier.prometh-ai.es → 65.108.60.69 |
-| 2 | ✅ | Migración 025 — gestoría Javier, javier→admin_gestoria, empresas 10-13 asignadas |
-| 3 | ✅ | nginx vhosts locales: `infra/nginx/fs-uralde/gestoriaa/javier.conf` |
-| 4 | ✅ | `scripts/setup_fs_instancia.py` — crea empresas por gestoría en su FS |
-| 5 | ✅ | git push + CI fixed (.dockerignore `!scripts/motor_campo/`) |
-| 6-9 | ✅ | 3 contenedores Docker FS+MariaDB levantados (puertos 8010/8011/8012) |
-| 10 | ✅ | Wizard FS completado en los 3 via POST (admin=carloscanete) |
-| 11 | ✅ | Usuarios FS creados via MariaDB por instancia |
-| 12 | ✅ | Tokens API: uralde=`d0ed76...`, gestoriaa=`deaff2...`, javier=`6f8307...` |
-| 13 | ✅ | nginx SSL + certbot (certs válidos hasta Jun 2026) |
-| 14 | ✅ | Migración 025 aplicada en PostgreSQL prod |
-| 15 | ✅ | Credenciales FS registradas en SFCE PostgreSQL (cifradas Fernet) |
-| 16 | ✅ | 13 empresas creadas: 4 en uralde, 5 en gestoriaa, 4 en javier |
-| 17 | ✅ | backup_total.sh actualizado con 3 dumps MariaDB nuevos |
-| 18 | ✅ | E2E: HTTPS 302, API tokens OK, aislamiento 401, certs SSL, containers UP |
+Las 3 instancias FS independientes están **totalmente operativas en producción**:
+- HTTPS funcionando con SSL Let's Encrypt (certbot auto-renueva)
+- API tokens activos y aislados (401 si usas token de otra instancia)
+- 13 empresas distribuidas entre las 3 instancias
+- Credenciales Fernet cifradas en SFCE PostgreSQL
+- Backups diarios incluyen los 3 nuevos MariaDB
+- docker-compose con red nginx_default persistida
 
-### Arquitectura instancias FS (OPERATIVA)
+---
+
+## ⚡ PRÓXIMA SESIÓN — Lista de tareas pendientes
+
+### PRIORIDAD ALTA — Pendientes técnicos directos
+
+**1. Importar PGC en cada empresa (manual via web)**
+
+El script `setup_fs_instancia.py` NO puede importar PGC porque `EditEjercicio?action=importar` requiere sesión web autenticada, no token API. Hay que hacerlo a mano:
+
+Para cada instancia, login como `carloscanetegomez` / `Uralde2026!` y navegar a:
+- `Administración → Ejercicios → [ejercicio] → Importar plan contable`
+
+| Instancia | URL panel | Ejercicios a importar PGC |
+|-----------|-----------|---------------------------|
+| https://fs-uralde.prometh-ai.es | Login carloscanete | 0002 (pymes), 0003 (general), 0004 (pymes), 0005 (general) |
+| https://fs-gestoriaa.prometh-ai.es | Login carloscanete | 0002 (general), 0003 (pymes), 0004-0006 (pymes) |
+| https://fs-javier.prometh-ai.es | Login carloscanete | 0002-0005 (general/pymes según empresa) |
+
+**2. Actualizar SQLite local con idempresa_fs nuevos**
+
+El SQLite dev tiene `idempresa_fs=NULL` en todas las empresas (se limpió en sesión 48 para recrearlas). Ejecutar:
+```bash
+python -c "
+import sqlite3
+conn = sqlite3.connect('sfce.db')
+# Uralde
+conn.execute(\"UPDATE empresas SET idempresa_fs=2, codejercicio_fs='0002' WHERE id=1\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=3, codejercicio_fs='0003' WHERE id=2\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=4, codejercicio_fs='0004' WHERE id=3\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=5, codejercicio_fs='0005' WHERE id=4\")
+# GestoriaA
+conn.execute(\"UPDATE empresas SET idempresa_fs=2, codejercicio_fs='0002' WHERE id=5\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=3, codejercicio_fs='0003' WHERE id=6\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=4, codejercicio_fs='0004' WHERE id=7\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=5, codejercicio_fs='0005' WHERE id=8\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=6, codejercicio_fs='0006' WHERE id=9\")
+# Javier
+conn.execute(\"UPDATE empresas SET idempresa_fs=2, codejercicio_fs='0002' WHERE id=10\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=3, codejercicio_fs='0003' WHERE id=11\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=4, codejercicio_fs='0004' WHERE id=12\")
+conn.execute(\"UPDATE empresas SET idempresa_fs=5, codejercicio_fs='0005' WHERE id=13\")
+conn.commit()
+print('OK')
+"
+```
+
+**3. Actualizar nombres de gestorías en producción PostgreSQL**
+
+Los nombres en prod son "Gestoría Norte/Sur" (datos de prueba). Corregir:
+```bash
+ssh carli@65.108.60.69
+PGPASSWORD="R&9tP8TrmgRGB%OOg6hU*Xwf6KNRdeni" psql -h 127.0.0.1 -p 5433 -U sfce_user -d sfce_prod -c "
+UPDATE gestorias SET nombre='ASESORIA LOPEZ DE URALDE SL' WHERE id=1;
+UPDATE gestorias SET nombre='Gestoría A' WHERE id=2;
+"
+```
+
+**4. Instalar plugins fiscales en las 3 instancias FS nuevas**
+
+La instancia compartida `contabilidad.prometh-ai.es` tiene: Modelo303, 111, 347, 130, 115, Verifactu.
+Las instancias nuevas NO tienen plugins instalados. Si se van a usar para declaraciones fiscales reales, instalar via panel admin de cada instancia.
+
+**5. Actualizar docs/LIBRO/**
+
+- `docs/LIBRO/_temas/01-infraestructura.md` — añadir las 3 instancias FS, puertos, rutas
+- `docs/LIBRO/_temas/26-infra-docker-backups.md` — actualizar con 3 nuevos dumps MariaDB
+- `docs/LIBRO/_temas/24-facturascripts.md` — documentar arquitectura multi-instancia
+
+### PRIORIDAD MEDIA
+
+**6. Verificar pipeline_runner con nuevas credenciales**
+
+`pipeline_runner.py` ya tiene `_resolver_credenciales_fs()` que lee de `gestorias.fs_url/fs_token_enc`. Verificar que el pipeline de una empresa de Uralde usa `fs-uralde.prometh-ai.es` y no el FS compartido.
+
+Test rápido:
+```bash
+export $(grep -v '^#' .env | xargs)
+python scripts/pipeline.py --empresa-id 1 --dry-run
+# Debe mostrar FS URL: https://fs-uralde.prometh-ai.es/api/3
+```
+
+**7. Migración 025 en SQLite local**
+
+La migración 025 crea gestoría Javier con gestoria_id=3 en PostgreSQL prod, pero en SQLite local tiene gestoria_id=4. Aplicar la migración localmente:
+```bash
+python sfce/db/migraciones/025_gestoria_javier.py
+```
+Nota: puede fallar si ya existe "Javier Independiente" — verificar primero.
+
+---
+
+### ARQUITECTURA FINAL (para referencia rápida)
 
 ```
-fs-uralde.prometh-ai.es     (puerto 8010) → Uralde: PASTORINO, GERARDO, CHIRINGUITO, ELENA
-fs-gestoriaa.prometh-ai.es  (puerto 8011) → GestoriaA: MARCOS, LAMAREA, AURORA, CATERING, DISTRIB
-fs-javier.prometh-ai.es     (puerto 8012) → Javier: COMUNIDAD, FRANMORA, GASTRO, BERMUDEZ
-contabilidad.prometh-ai.es  → carloscanetegomez (superadmin global, intacto)
+contabilidad.prometh-ai.es      → FS compartido, superadmin carloscanetegomez
+fs-uralde.prometh-ai.es:8010    → Uralde (gestoria_id=1), empresas SFCE 1-4
+fs-gestoriaa.prometh-ai.es:8011 → GestoriaA (gestoria_id=2), empresas SFCE 5-9
+fs-javier.prometh-ai.es:8012    → Javier (gestoria_id=3 prod/4 dev), empresas SFCE 10-13
 ```
-
-### Tokens API FS por instancia (en SFCE BD Fernet-cifrados)
-
-| Instancia | Token | gestoria_id (prod) |
-|-----------|-------|--------------------|
-| fs-uralde | `d0ed76fcc22785424b6c` | 1 |
-| fs-gestoriaa | `deaff29f162b66b7bbd2` | 2 |
-| fs-javier | `6f8307e8330dcb78022c` | 3 |
-
-### Pendiente (baja prioridad)
-
-- **PGC manual**: importar Plan General Contable en cada empresa via panel web FS (script falla porque `EditEjercicio` requiere sesión web, no API token)
-- **nombres gestorias prod**: "Gestoría Norte/Sur" en vez de nombres reales (datos de prueba). Actualizar via psql si se quiere
-- **sqlite idempresa_fs**: local SQLite tiene idempresa_fs=NULL (limpiado para crear en nuevas instancias). Los nuevos idempresa_fs son 2-5 en cada instancia respectivamente
 
 ---
 
