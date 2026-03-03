@@ -554,6 +554,36 @@ fs-javier.prometh-ai.es        → javier
 
 ---
 
+## Estado actual (03/03/2026, sesión 46 — Auditoría revisada, fixes pendientes)
+
+**Rama activa**: `main`
+**Último commit**: `a4fa91d` (sin cambios de código esta sesión)
+**Tests**: 2573 PASS, 4 skipped, 0 FAILED
+
+### Pendiente próxima sesión — Fixes Auditoría (`docs/auditoria/2026-03-super-auditoria/`)
+
+**Bugs activos en producción (atacar primero):**
+
+| ID | Archivo | Fix |
+|----|---------|-----|
+| FE-1 | `onboarding-masivo-page.tsx:12`, `perfil-revision-card.tsx:6`, `wizard-onboarding-page.tsx:9`, `revision-page.tsx:14` | `localStorage` → `sessionStorage.getItem('sfce_token')` |
+| API-3 | `sfce/api/rutas/correo.py:177` | `crear_engine()` → `crear_motor(_leer_config_bd())` |
+| VULN-1 | `sfce/api/rutas/auth_rutas.py:530-533` | Log token reset → solo `sha256(token)[:12]` |
+| BUG-4 | `sfce/core/pipeline_runner.py:120-125` | `subprocess.run()` → `await asyncio.to_thread(...)` |
+| VULN-4/5/6 | `sfce/api/rutas/colas.py` | `verificar_acceso_empresa()` + check rol mínimo asesor |
+| VULN-7 | `sfce/api/rutas/migracion.py:11-47` | `verificar_acceso_empresa()` |
+| VULN-8 | `sfce/api/rutas/empresas.py:33-66` | Check rol mínimo en `POST /api/empresas` |
+| FE-3 | sidebar + `types/index.ts` | `'admin'` → `'superadmin'` |
+
+**Segunda ronda:**
+- `IMP-6/BUG-1` — `datetime` naive/aware en workers
+- `IMP-8` — NC penalizadas incorrectamente en `coherencia_fiscal.py`
+- `MIGR-2` — `023_onboarding_modo.py` idempotente
+- `VULN-2` — reset password con UPDATE atómico
+- `DB-1/DB-2` — FK en ColaProcesamiento y SupplierRule
+
+---
+
 ## Estado actual (03/03/2026, sesión 45 — Aislamiento gestorías pasos 1+2 + Onboarding histórico)
 
 **Rama activa**: `main`
