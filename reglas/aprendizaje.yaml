@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-02-27T22:06:54.511547'
+ultima_actualizacion: '2026-03-03T20:50:13.869943'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -536,3 +536,44 @@ patrones:
   origen: auto
   error_original: '400 Client Error: Bad Request for url: https://contabilidad.lemonfresh-tuc.com/api/3/asientos'
   ultimo_exito: '2026-02-27T21:15:14.647035'
+- id: auto_20260303_195823
+  regex: 422\ Client\ Error:\ Unprocessable\ Entity\ for\ url:\ https://contabilidad\.prometh\-ai\.es/api/3/crearFacturaProveedor
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-03-03T19:58:23.466994'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '422 Client Error: Unprocessable Entity for url: https://contabilidad.prometh-ai.es/api/3/crearFacturaProveedor'
+- id: auto_20260303_195846
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://contabilidad\.prometh\-ai\.es/api/3/crearFacturaProveedor
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-03-03T19:58:46.760775'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://contabilidad.prometh-ai.es/api/3/crearFacturaProveedor'
+- id: auto_20260303_200808
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/crearFacturaProveedor
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-03-03T20:08:08.992473'
+  exitos: 5
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/crearFacturaProveedor'
+  ultimo_exito: '2026-03-03T20:13:27.926449'
+- id: auto_20260303_203146
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaproveedores
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FC
+  aprendido: '2026-03-03T20:31:46.870349'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaproveedores'
