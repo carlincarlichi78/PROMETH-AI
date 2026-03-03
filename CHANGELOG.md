@@ -1,5 +1,37 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 54 — 03/03/2026: FacturaScripts instancias operativas
+
+### Resumen
+Resolución definitiva del problema de empresa activa en las 3 instancias FS + todos los usuarios con acceso correcto.
+
+### Problema FS empresa activa — 4 causas encadenadas
+| Causa | Síntoma | Fix |
+|-------|---------|-----|
+| `users.homepage='Wizard'` | Wizard bloqueaba el login | `UPDATE users SET homepage=NULL` |
+| `Dinamic/` vacía | Menú no aparecía | AdminPlugins → Reconstruir |
+| `settings.default.idempresa=1` | Mostraba E-9881 | UPDATE MariaDB + borrar caché + confirmar en EditSettings |
+| `nombrecorto=NULL` | Mostraba `%company%` | `UPDATE empresas SET nombrecorto='NOMBRE'` |
+
+### Estado final instancias FS
+| Instancia | Empresa activa | Usuarios |
+|-----------|---------------|---------|
+| fs-uralde.prometh-ai.es | PASTORINO (idempresa=2) ✅ | carloscanete/sergio/francisco/mgarcia/llupianez |
+| fs-gestoriaa.prometh-ai.es | MARCOS (idempresa=2) ✅ | carloscanete/gestor1/gestor2 |
+| fs-javier.prometh-ai.es | COMUNIDAD (idempresa=2) ✅ | carloscanete/javier |
+
+Todos con `password=Uralde2026!`, `level=99`, `admin=1`.
+
+### Cómo cambiar empresa activa en FS (referencia futura)
+`Administrador → Panel de control` (`/EditSettings`) → dropdown "Empresa" → Guardar
+
+### Otros cambios sesión 53+54
+- Balance/PyG operativos (`func.strftime` → `func.to_char`)
+- 66 archivos git limpiados (datos cliente borrados + scripts añadidos)
+- `docs/problemas/fs-cambio-empresa.md` — documentación completa del problema
+
+---
+
 ## Sesión 53 — 03/03/2026: Puesta en marcha producción completa
 
 ### Resumen

@@ -325,6 +325,38 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
+## Estado actual (03/03/2026, sesión 54 — FacturaScripts instancias operativas)
+
+**Rama activa**: `main`
+**Tests**: 2607 PASS, 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO sesiones 53+54
+
+| Item | Estado |
+|------|--------|
+| Login SFCE (admin@sfce.local) | ✅ |
+| 13 empresas en PostgreSQL prod | ✅ |
+| 7 usuarios reales con empresas asignadas | ✅ |
+| PGC importado en 13 empresas (3 instancias FS) | ✅ |
+| Balance/PyG (fix strftime→to_char) | ✅ |
+| FS instancias operativas con empresa correcta | ✅ |
+| Todos los usuarios FS (level=99, admin=1, password OK) | ✅ |
+
+### FS — lecciones instancias nuevas (CRÍTICO para próximas instancias)
+1. `users.homepage='Wizard'` → bloquea login → `UPDATE users SET homepage=NULL`
+2. `Dinamic/` vacía → menú no aparece → AdminPlugins → Reconstruir
+3. `settings.default.idempresa=1` → empresa incorrecta → UPDATE MariaDB + borrar `MyFiles/Tmp/FileCache/tools-settings.cache` + confirmar en `/EditSettings`
+4. `nombrecorto=NULL` → muestra `%company%` → `UPDATE empresas SET nombrecorto='NOMBRE'`
+5. Cambiar empresa activa: `/EditSettings` → dropdown "Empresa" → Guardar
+
+### Pendiente próxima sesión
+1. `SFCE_CI_TOKEN` en GitHub Secrets (smoke test CI falla sin él)
+2. Plugins fiscales en instancias FS nuevas (Modelo303, 111, 347, etc.)
+3. Fixes auditoría (ver sección sesión 46)
+4. Actualizar `docs/LIBRO/` (temas 01, 24, 26)
+
+---
+
 ## Estado actual (03/03/2026, sesión 53 — Pipeline API + Producción operativa)
 
 **Rama activa**: `main`
