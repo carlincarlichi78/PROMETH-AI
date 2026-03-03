@@ -78,3 +78,55 @@ def _slug_desde_ruta(ruta: Path) -> Optional[str]:
     if carpeta != "inbox":
         return None
     return slug
+
+
+def _subir_pdf(ruta: Path, empresa_id: int) -> str:
+    """Sube el PDF al servidor SFCE.
+
+    Retorna 'subido' (201) o 'duplicado' (200 con estado duplicado).
+    Lanza excepción en cualquier otro caso.
+    """
+    with open(ruta, "rb") as f:
+        resp = requests.post(
+            f"{API_URL}/api/pipeline/documentos/subir",
+            headers={"X-Pipeline-Token": PIPELINE_TOKEN},
+            data={"empresa_id": empresa_id},
+            files={"archivo": (ruta.name, f, "application/pdf")},
+            timeout=60,
+        )
+    if resp.status_code == 201:
+        return "subido"
+    if resp.status_code == 200 and resp.json().get("estado") == "duplicado":
+        return "duplicado"
+    resp.raise_for_status()
+    return "subido"  # unreachable
+
+
+def _subir_con_reintentos(
+    ruta: Path,
+    empresa_id: int,
+    max_reintentos: int = 3,
+    backoff: tuple = (5, 15, 30),
+) -> str:
+    """Intenta subir el PDF con reintentos y backoff exponencial.
+
+    Lanza la última excepción si agota todos los reintentos.
+    """
+    ultimo_error: Exception = RuntimeError("sin intentos")
+    for intento in range(max_reintentos):
+        try:
+            return _subir_pdf(ruta, empresa_id)
+        except Exception as e:
+            ultimo_error = e
+            if intento < len(backoff):
+                espera = backoff[intento]
+                logger.warning(
+                    "Intento %d/%d fallido para %s: %s. Reintentando en %ds",
+                    intento + 1,
+                    max_reintentos,
+                    ruta.name,
+                    e,
+                    espera,
+                )
+                time.sleep(espera)
+    raise ultimo_error

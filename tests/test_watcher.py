@@ -145,3 +145,86 @@ class TestCargarEmpresaId:
             slug = _slug_desde_ruta(ruta)
 
         assert slug is None
+
+
+class TestSubirPdf:
+    """Tests para _subir_pdf() y _subir_con_reintentos()."""
+
+    def _make_pdf(self, tmp_path: Path) -> Path:
+        pdf = tmp_path / "factura.pdf"
+        pdf.write_bytes(b"%PDF-1.4 fake content")
+        return pdf
+
+    def test_subir_pdf_201_retorna_subido(self, tmp_path):
+        """Respuesta 201 del servidor → 'subido'."""
+        from watcher import _subir_pdf
+        pdf = self._make_pdf(tmp_path)
+        resp_mock = MagicMock()
+        resp_mock.status_code = 201
+
+        with patch("watcher.requests.post", return_value=resp_mock):
+            resultado = _subir_pdf(pdf, empresa_id=2)
+
+        assert resultado == "subido"
+
+    def test_subir_pdf_200_duplicado(self, tmp_path):
+        """Respuesta 200 con estado 'duplicado' → 'duplicado'."""
+        from watcher import _subir_pdf
+        pdf = self._make_pdf(tmp_path)
+        resp_mock = MagicMock()
+        resp_mock.status_code = 200
+        resp_mock.json.return_value = {"estado": "duplicado", "documento_id": 42}
+
+        with patch("watcher.requests.post", return_value=resp_mock):
+            resultado = _subir_pdf(pdf, empresa_id=2)
+
+        assert resultado == "duplicado"
+
+    def test_subir_pdf_error_http_lanza(self, tmp_path):
+        """Respuesta 4xx/5xx lanza excepción via raise_for_status."""
+        from watcher import _subir_pdf
+        import requests as req
+        pdf = self._make_pdf(tmp_path)
+        resp_mock = MagicMock()
+        resp_mock.status_code = 503
+        resp_mock.raise_for_status.side_effect = req.HTTPError("503")
+
+        with patch("watcher.requests.post", return_value=resp_mock):
+            with pytest.raises(req.HTTPError):
+                _subir_pdf(pdf, empresa_id=2)
+
+    def test_subir_con_reintentos_exito_primer_intento(self, tmp_path):
+        """Si el primer intento es exitoso, retorna sin reintentar."""
+        from watcher import _subir_con_reintentos
+        pdf = self._make_pdf(tmp_path)
+
+        with patch("watcher._subir_pdf", return_value="subido") as mock_subir:
+            resultado = _subir_con_reintentos(pdf, empresa_id=2)
+
+        assert resultado == "subido"
+        assert mock_subir.call_count == 1
+
+    def test_subir_con_reintentos_falla_y_reintenta(self, tmp_path):
+        """Si falla una vez, reintenta. Si la segunda es OK, retorna."""
+        from watcher import _subir_con_reintentos
+        import requests as req
+        pdf = self._make_pdf(tmp_path)
+
+        side_effects = [req.ConnectionError("timeout"), "subido"]
+        with patch("watcher._subir_pdf", side_effect=side_effects) as mock_subir:
+            with patch("watcher.time.sleep"):
+                resultado = _subir_con_reintentos(pdf, empresa_id=2, max_reintentos=3)
+
+        assert resultado == "subido"
+        assert mock_subir.call_count == 2
+
+    def test_subir_con_reintentos_agota_y_lanza(self, tmp_path):
+        """Si agota todos los reintentos, lanza la última excepción."""
+        from watcher import _subir_con_reintentos
+        import requests as req
+        pdf = self._make_pdf(tmp_path)
+
+        with patch("watcher._subir_pdf", side_effect=req.ConnectionError("sin red")):
+            with patch("watcher.time.sleep"):
+                with pytest.raises(req.ConnectionError):
+                    _subir_con_reintentos(pdf, empresa_id=2, max_reintentos=3)
