@@ -4,9 +4,11 @@ empresa:
   cif: "24813607B"
   tipo: autonomo
   idempresa: 5
-  codagente_fs: "LLUPI"
-  ejercicio_activo: "2025"
   codejercicio: "0005"
+  codagente_fs: "LLUPI"
+  fs_url: "https://fs-uralde.prometh-ai.es/api/3"
+  fs_token: "d0ed76fcc22785424b6c"
+  ejercicio_activo: "2025"
   regimen_iva: exento_parcial
   prorrata: 35
   direccion: "Calle Recogidas 44, Local, 18005 Granada"

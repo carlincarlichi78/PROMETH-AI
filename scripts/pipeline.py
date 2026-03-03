@@ -33,6 +33,8 @@ from sfce.core.recurrentes import generar_alertas_recurrentes
 try:
     from sfce.db.base import crear_motor, crear_sesion, inicializar_bd
     from sfce.db.repositorio import Repositorio
+    from sfce.db.modelos import Documento
+    from sqlalchemy.orm import Session as _SqlSession
     _BD_DISPONIBLE = True
 except ImportError:
     _BD_DISPONIBLE = False
@@ -310,6 +312,7 @@ def main():
 
     # Inicializar repositorio BD (opcional — si falla, pipeline sigue funcionando)
     repo = None
+    engine = None
     empresa_bd_id = None
     if _BD_DISPONIBLE:
         try:
@@ -612,7 +615,71 @@ def main():
                          f"Pipeline completado. Score: {confianza['score']}%")
     auditoria.guardar()
 
+    # Sincronizar resultados a BD SFCE (no bloquea si falla)
+    if empresa_bd_id and _BD_DISPONIBLE and repo and engine:
+        try:
+            _sincronizar_resultados_bd(
+                engine, empresa_bd_id, ejercicio, registro_data
+            )
+        except Exception as exc_sync:
+            logger.warning(f"No se pudo sincronizar resultados a BD SFCE: {exc_sync}")
+
     return 0
+
+
+def _sincronizar_resultados_bd(engine, empresa_id: int,
+                                ejercicio: str, registro_data: dict) -> None:
+    """Persiste los resultados del pipeline en la tabla documentos de SFCE BD.
+
+    Hace upsert por hash_sha256 para que re-ejecuciones sean idempotentes.
+    No lanza excepciones — el pipeline sigue aunque falle la sincronización.
+    """
+    from datetime import datetime, timezone
+    from sqlalchemy import select
+
+    registrados = registro_data.get("registrados", [])
+    fallidos = registro_data.get("fallidos", [])
+    cuarentena_docs = registro_data.get("cuarentena", [])
+
+    if not (registrados or fallidos or cuarentena_docs):
+        return
+
+    with _SqlSession(engine) as s:
+        def _upsert(doc_data: dict, estado: str, motivo: str | None = None) -> None:
+            hash_pdf = (doc_data.get("hash_sha256") or doc_data.get("hash_pdf") or "")
+            if not hash_pdf:
+                return
+            doc = s.execute(
+                select(Documento).where(
+                    Documento.empresa_id == empresa_id,
+                    Documento.hash_pdf == hash_pdf,
+                )
+            ).scalar_one_or_none()
+            if doc is None:
+                doc = Documento(empresa_id=empresa_id, hash_pdf=hash_pdf,
+                                ejercicio=ejercicio)
+                s.add(doc)
+            doc.tipo_doc = (doc_data.get("tipo") or doc_data.get("tipo_doc") or "FC")
+            doc.estado = estado
+            doc.confianza = doc_data.get("confianza_global") or doc_data.get("confianza")
+            doc.datos_ocr = doc_data.get("datos_extraidos") or doc_data.get("datos_ocr")
+            idf = doc_data.get("idfactura")
+            doc.factura_id_fs = int(idf) if idf else None
+            if motivo:
+                doc.motivo_cuarentena = motivo
+            doc.fecha_proceso = datetime.now(timezone.utc)
+
+        for d in registrados:
+            _upsert(d, "registrado")
+        for d in cuarentena_docs:
+            _upsert(d, "cuarentena",
+                    d.get("motivo") or d.get("motivo_cuarentena"))
+        for d in fallidos:
+            _upsert(d, "error", d.get("motivo") or d.get("error"))
+
+        s.commit()
+        n = len(registrados) + len(cuarentena_docs) + len(fallidos)
+        logger.info(f"BD SFCE sincronizada: {n} documento(s) en empresa_id={empresa_id}")
 
 
 if __name__ == "__main__":

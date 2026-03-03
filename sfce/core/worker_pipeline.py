@@ -11,6 +11,12 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import select, update
 
+from sfce.api.websocket import (
+    EVENTO_CUARENTENA_NUEVO,
+    EVENTO_DOCUMENTO_PROCESADO,
+    EVENTO_PIPELINE_PROGRESO,
+    gestor_ws,
+)
 from sfce.core.pipeline_runner import (
     ejecutar_pipeline_empresa,
     adquirir_lock_empresa,
@@ -19,6 +25,16 @@ from sfce.core.pipeline_runner import (
 from sfce.db.modelos import ColaProcesamiento, ConfigProcesamientoEmpresa
 
 logger = logging.getLogger(__name__)
+
+
+def _emitir_evento_pipeline(empresa_id: int, evento: str, datos: dict) -> None:
+    """Emite evento WS desde contexto sincrono. No bloquea el pipeline si falla."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(gestor_ws.emitir_a_empresa(empresa_id, evento, datos))
+    except Exception:
+        pass
 
 _INTERVALO_CICLO = 60  # segundos entre ciclos del worker
 
@@ -137,6 +153,11 @@ def _notificar_cuarentena_docs(empresa_id: int, sesion_factory) -> None:
                     nombre_archivo=doc.ruta_pdf,
                     documento_id=doc.id,
                 )
+                _emitir_evento_pipeline(empresa_id, EVENTO_CUARENTENA_NUEVO, {
+                    "nombre_archivo": doc.ruta_pdf or "",
+                    "motivo": doc.motivo_cuarentena or "Revision requerida",
+                    "empresa_id": empresa_id,
+                })
     except Exception as e:
         logger.warning(f"Error notificando cuarentena empresa {empresa_id}: {e}")
 
@@ -160,12 +181,23 @@ def ejecutar_ciclo_worker(sesion_factory) -> None:
                 continue
 
             logger.info(f"Empresa {empresa_id}: lanzando pipeline para {len(doc_ids)} docs")
+            _emitir_evento_pipeline(empresa_id, EVENTO_PIPELINE_PROGRESO, {
+                "estado": "procesando",
+                "docs_count": len(doc_ids),
+                "empresa_id": empresa_id,
+            })
             resultado = ejecutar_pipeline_empresa(
                 empresa_id=empresa_id,
                 sesion_factory=sesion_factory,
                 documentos_ids=doc_ids,
             )
             _actualizar_ultimo_pipeline(empresa_id, sesion_factory)
+            estado_final = "registrado" if resultado.exito else "error"
+            _emitir_evento_pipeline(empresa_id, EVENTO_DOCUMENTO_PROCESADO, {
+                "estado": estado_final,
+                "docs_procesados": resultado.docs_procesados,
+                "empresa_id": empresa_id,
+            })
             logger.info(
                 f"Empresa {empresa_id}: pipeline completado — "
                 f"{resultado.docs_procesados} OK, {resultado.docs_cuarentena} cuarentena, "

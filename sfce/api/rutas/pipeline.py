@@ -301,3 +301,93 @@ def sync_status(request: Request):
                 }
 
         return list(por_empresa.values())
+
+
+class DocumentoResultado(dict):
+    """Esquema de un resultado individual de documento del pipeline."""
+    pass
+
+
+@router.post("/documentos/resultado", status_code=200)
+def reportar_resultado(request: Request, payload: dict):
+    """Recibe resultados del pipeline y los persiste en la BD SFCE.
+
+    El pipeline local llama este endpoint al finalizar la fase de registro
+    para que el dashboard refleje el estado de cada documento procesado.
+
+    Payload esperado:
+        empresa_id: int
+        ejercicio: str
+        registrados: list[dict]   — docs con idfactura, idasiento, confianza…
+        fallidos: list[dict]      — docs que no se registraron (motivo)
+        cuarentena: list[dict]    — docs en cuarentena con motivo
+    """
+    ts = verificar_token_servicio(request)
+    sf = request.app.state.sesion_factory
+
+    empresa_id = payload.get("empresa_id")
+    if not empresa_id:
+        raise HTTPException(status_code=422, detail="empresa_id requerido")
+
+    with sf() as s:
+        _verificar_scope(ts, empresa_id, s)
+
+        ejercicio = payload.get("ejercicio", "")
+        creados = 0
+        actualizados = 0
+
+        def _upsert(doc_data: dict, estado: str, motivo: str | None = None):
+            nonlocal creados, actualizados
+            hash_pdf = doc_data.get("hash_sha256") or doc_data.get("hash_pdf")
+            if not hash_pdf:
+                return
+
+            # Buscar por hash para evitar duplicados
+            doc = s.execute(
+                select(Documento).where(
+                    Documento.empresa_id == empresa_id,
+                    Documento.hash_pdf == hash_pdf,
+                )
+            ).scalar_one_or_none()
+
+            if doc is None:
+                doc = Documento(
+                    empresa_id=empresa_id,
+                    hash_pdf=hash_pdf,
+                    ejercicio=ejercicio,
+                )
+                s.add(doc)
+                creados += 1
+            else:
+                actualizados += 1
+
+            doc.tipo_doc = doc_data.get("tipo") or doc_data.get("tipo_doc") or "FC"
+            doc.estado = estado
+            doc.confianza = doc_data.get("confianza_global") or doc_data.get("confianza")
+            doc.datos_ocr = doc_data.get("datos_extraidos") or doc_data.get("datos_ocr")
+            doc.factura_id_fs = (
+                int(doc_data["idfactura"]) if doc_data.get("idfactura") else None
+            )
+            if motivo:
+                doc.motivo_cuarentena = motivo
+            doc.fecha_proceso = datetime.now(timezone.utc)
+
+        for doc_data in payload.get("registrados", []):
+            _upsert(doc_data, "registrado")
+
+        for doc_data in payload.get("cuarentena", []):
+            motivo = doc_data.get("motivo") or doc_data.get("motivo_cuarentena")
+            _upsert(doc_data, "cuarentena", motivo)
+
+        for doc_data in payload.get("fallidos", []):
+            motivo = doc_data.get("motivo") or doc_data.get("error")
+            _upsert(doc_data, "error", motivo)
+
+        s.commit()
+
+    return {
+        "ok": True,
+        "empresa_id": empresa_id,
+        "creados": creados,
+        "actualizados": actualizados,
+    }

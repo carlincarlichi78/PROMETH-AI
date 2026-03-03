@@ -2,8 +2,11 @@ empresa:
   nombre: "PASTORINO COSTA DEL SOL S.L."
   cif: "B13995519"
   tipo: sl
-  idempresa: 1
+  idempresa: 2
+  codejercicio: "0002"
   codagente_fs: "FRANC"
+  fs_url: "https://fs-uralde.prometh-ai.es/api/3"
+  fs_token: "d0ed76fcc22785424b6c"
   ejercicio_activo: "2025"
   regimen_iva: general
   direccion: "Av. General Lopez Dominguez 12, 29603 Marbella, Malaga"
