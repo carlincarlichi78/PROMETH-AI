@@ -285,6 +285,42 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
+## Estado actual (03/03/2026, sesión 55 — Diseño Pipeline en Vivo)
+
+**Rama activa**: `main`
+**Último commit**: `ffefdc7`
+**Tests**: 2634 PASS, 4 skipped, 0 FAILED (sin cambios de código esta sesión)
+
+### ✅ COMPLETADO en sesión 55
+
+| Tarea | Detalle |
+|-------|---------|
+| Diseño Pipeline en Vivo | `docs/plans/2026-03-03-pipeline-live-design.md` — glassmorphism, SVG partículas, WebSocket, drill-down empresa |
+| Plan implementación | `docs/plans/2026-03-03-pipeline-live.md` — 12 tasks TDD con código completo |
+
+### ⚡ PRÓXIMA SESIÓN — Implementar Pipeline en Vivo
+
+**Plan**: `docs/plans/2026-03-03-pipeline-live.md`
+
+| Task | Qué hace |
+|------|----------|
+| 1 | Backend `GET /api/dashboard/pipeline-status` (JWT auth) + 3 tests |
+| 2 | CSS @keyframes en `index.css` (particle-travel, flow-dash, aurora-spin) |
+| 3 | Hook `usePipelineWebSocket` — WS + partículas activas |
+| 4 | Hook `usePipelineSyncStatus` — polling 30s |
+| 5 | Componente `PipelineNode` — glassmorphism + aurora border + count animado |
+| 6 | Componente `FlowConnector` — SVG bezier + stroke-dashoffset |
+| 7 | Componente `DocumentParticle` — CSS offset-path |
+| 8 | Componente `PipelineFlowDiagram` — orquestador SVG |
+| 9 | `GlobalStatsStrip` + `EmpresaBadges` |
+| 10 | `LiveEventFeed` — Framer Motion AnimatePresence |
+| 11 | `pipeline-live-page.tsx` — integración completa |
+| 12 | Routing `/pipeline/live` + sidebar + regresión |
+
+**NOTA CRÍTICA Task 1**: verificar nombre exacto del dependency JWT en `sfce/api/auth.py` antes de implementar (`requiere_autenticacion` / `get_usuario_actual` / `verificar_jwt`).
+
+---
+
 ## Estado actual (03/03/2026, sesión 54 — Grupos FS + codagente pipeline)
 
 **Rama activa**: `main`
