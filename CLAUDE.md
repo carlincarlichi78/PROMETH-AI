@@ -248,6 +248,71 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 60 — Mejoras sistema ingesta email)
+
+**Rama activa**: `main`
+**Último commit**: pendiente
+**Tests**: 2661 PASS (+27), 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 60
+
+| Tarea | Detalle |
+|-------|---------|
+| Forwarding entre asesores | `reenvio.py` nuevo: detecta reenvíos, extrae remitente original, enruta a empresa correcta |
+| Atomicidad email | Commit por email individual — fallo en email N no pierde anteriores |
+| `empresa_destino_id` fix | Cuentas `dedicada`: ya no guarda `None` → historial de score funciona correctamente |
+| N+1 queries | `_detectar_ambiguedad_remitente_bulk()` — 1 query IN en lugar de 1 por empresa |
+| `calcular_score_email` x múltiples | Llamada exactamente 1 vez por email |
+| Timeout IMAP 30s | `imap_servicio.py` — evita workers colgados indefinidamente |
+| 18 tests nuevos | `tests/test_correo/test_reenvio.py` |
+
+### ⚡ PRÓXIMA SESIÓN — Email accounts configuración
+
+**Pendiente arquitectura email**:
+1. Crear `CuentaCorreo tipo='dedicada'` para cada asesor Uralde:
+   - `francisco@prometh-ai.es` → empresa_id=1 (PASTORINO), gestoria_id=1
+   - `maria@prometh-ai.es` → empresa_id=2 (GERARDO) — cuenta principal, gestoria_id=1
+   - `luis@prometh-ai.es` → empresa_id=4 (ELENA), gestoria_id=1
+   - Nota: Maria gestiona 2 empresas (GERARDO + CHIRINGUITO) — cuenta se asocia a la principal
+2. Configurar App Passwords Google Workspace para cada cuenta
+3. Añadir remitentes frecuentes a `RemitenteAutorizado` por empresa
+4. Verificar pipeline completo con Gerardo (crearFacturaProveedor 2 pasos — ver sesión 55)
+
+---
+
+## Estado actual (03/03/2026, sesión 60 — Diseño + plan inbox watcher)
+
+**Rama activa**: `main`
+**Último commit**: `05c98cd`
+**Tests**: 2595 PASS, 0 FAILED (sin cambios de código esta sesión)
+
+### ✅ COMPLETADO en sesión 60
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Diseño inbox watcher | `35cfd08` | `docs/plans/2026-03-03-inbox-watcher-design.md` — arquitectura, componentes, flujos, error handling |
+| Plan implementación | `05c98cd` | `docs/plans/2026-03-03-inbox-watcher.md` — 9 tasks TDD, 17 tests, código completo |
+
+### ⚡ PRÓXIMA SESIÓN — Implementar inbox watcher
+
+**Plan**: `docs/plans/2026-03-03-inbox-watcher.md`
+
+| Task | Qué hace |
+|------|----------|
+| 1 | `sfce.empresa_id` en los 6 `clientes/*/config.yaml` |
+| 2 | Variables `.env` / `.env.example` para watcher |
+| 3 | TDD `_esperar_estabilidad` (FileStabilizer) |
+| 4 | TDD `_cargar_empresa_id` + `_slug_desde_ruta` |
+| 5 | TDD `_subir_pdf` + `_subir_con_reintentos` |
+| 6 | TDD `_procesar_archivo` + `startup_scan` |
+| 7 | `InboxEventHandler` + `main()` |
+| 8 | `iniciar_dashboard.bat` con watcher |
+| 9 | Test E2E manual |
+
+**Ejecutar con**: `superpowers:executing-plans` o subagents por task
+
+---
+
 ## Estado actual (03/03/2026, sesión 59 — Verificación configs + commits pendientes)
 
 **Rama activa**: `main`
