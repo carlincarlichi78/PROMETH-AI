@@ -369,6 +369,51 @@ El endpoint estándar usa lookup por rango de fechas (`fechainicio <= fecha <= f
 
 ---
 
+## Estado actual (03/03/2026, sesión 55 — Pipeline en Vivo: Tasks 1-3/12)
+
+**Rama activa**: `main`
+**Último commit**: `91bcb72`
+**Tests**: 2637 PASS (+3 nuevos), 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 55
+
+Plan activo: `docs/plans/2026-03-03-pipeline-live.md` — 12 tasks, ejecutados 1-3
+
+| Task | Commit | Detalle |
+|------|--------|---------|
+| 1 — Backend `GET /api/dashboard/pipeline-status` | `03b7e14` | Auth JWT (no X-Pipeline-Token), counts por fase, filtro por rol/gestoría, 3 tests |
+| 2 — CSS animations globales | `80b644c` | `index.css` +52 líneas: `@keyframes` particle-travel/flow-dash/node-pulse/node-active/burst/count-flip + clases utilitarias |
+| 3 — Hook `usePipelineWebSocket` | `91bcb72` | Conexión WS, gestión partículas, TTL eventos 30s, auto-limpieza |
+
+### Correcciones al plan (diferencias con código real)
+
+- `Empresa.nif` → `Empresa.cif` (el modelo real usa `cif`)
+- `estado="procesado"` → `estado="registrado"` (el modelo Documento no tiene "procesado")
+- `requiere_autenticacion` → `obtener_usuario_actual` + `get_sesion_factory` (patrón real)
+- `Gestoria` requiere `email_contacto` y `plan_tier="basico"` (string, no int)
+- Login devuelve `access_token`, no `token`
+- `Usuario.activa` → `Usuario.activo`
+
+### ⚡ PRÓXIMA SESIÓN — Continuar plan pipeline-live Tasks 4-12
+
+Plan: `docs/plans/2026-03-03-pipeline-live.md`
+
+| Task | Qué hace |
+|------|----------|
+| 4 | Hook `usePipelineSyncStatus` — polling `/api/dashboard/pipeline-status` cada 30s |
+| 5 | Componente `PipelineNode` — glassmorphism con glow y count animado |
+| 6 | Componente `FlowConnector` — SVG bezier con stroke-dashoffset |
+| 7 | Componente `DocumentParticle` — animación offset-path |
+| 8 | Componente `PipelineFlowDiagram` — orquestador SVG + nodos + partículas |
+| 9 | Componentes `GlobalStatsStrip` + `EmpresaBadges` |
+| 10 | Componente `LiveEventFeed` — Framer Motion stream |
+| 11 | Página `pipeline-live-page.tsx` |
+| 12 | Routing + Sidebar + Regresión completa |
+
+**Al retomar**: `python -m pytest tests/test_pipeline_dashboard.py -v` debe dar 3 PASS.
+
+---
+
 ## Estado actual (03/03/2026, sesión 54 — Grupos FS + codagente pipeline)
 
 **Rama activa**: `main`
