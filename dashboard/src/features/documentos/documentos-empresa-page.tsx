@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   FileText, CheckCircle2, AlertTriangle, Clock, XCircle,
   Mail, Upload, FolderOpen, Terminal, Download, ChevronRight,
+  Loader2, RefreshCw,
 } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { PageHeader } from '@/components/page-header'
@@ -30,6 +31,14 @@ interface AsientoDoc {
   fecha?: string
   concepto?: string
   partidas: PartidaDoc[]
+}
+
+interface AsientoFsData {
+  idasiento_fs: number
+  fecha: string | null
+  concepto: string | null
+  partidas: PartidaDoc[]
+  fs_url: string
 }
 
 interface DocumentoItem {
@@ -98,6 +107,37 @@ function fmtEur(n: number | string | null | undefined): string {
 
 // ─── Componentes panel ────────────────────────────────────────────────────────
 
+function TablaPartidas({ partidas }: { partidas: PartidaDoc[] }) {
+  if (!partidas.length) return null
+  return (
+    <div className="mt-3">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Partidas</p>
+      <div className="rounded-md border overflow-hidden">
+        <table className="w-full text-xs font-mono">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="text-left px-2 py-1.5 font-medium">Subcuenta</th>
+              <th className="text-left px-2 py-1.5 font-medium">Concepto</th>
+              <th className="text-right px-2 py-1.5 font-medium text-blue-400">Debe</th>
+              <th className="text-right px-2 py-1.5 font-medium text-amber-400">Haber</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {partidas.map((p, i) => (
+              <tr key={i} className="hover:bg-muted/20">
+                <td className="px-2 py-1.5 text-muted-foreground">{p.subcuenta}</td>
+                <td className="px-2 py-1.5 max-w-[120px] truncate text-muted-foreground">{p.concepto ?? ''}</td>
+                <td className="px-2 py-1.5 text-right">{p.debe > 0 ? <span className="text-blue-400">{p.debe.toFixed(2)}</span> : ''}</td>
+                <td className="px-2 py-1.5 text-right">{p.haber > 0 ? <span className="text-amber-400">{p.haber.toFixed(2)}</span> : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 function Campo({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 py-1.5">
@@ -121,6 +161,15 @@ function DocumentoPanel({ doc, empresaId }: { doc: DocumentoItem; empresaId: num
   const OrigenIcono = origenMeta.icono
   const tier = doc.ocr_tier != null ? OCR_TIER[doc.ocr_tier] : null
   const tieneOcr = doc.emisor || doc.emisor_cif || doc.numero_factura || doc.total != null
+
+  const [buscarFs, setBuscarFs] = useState(false)
+  const { data: asientoFs, isFetching: buscandoFs, error: errorFs } = useQuery({
+    queryKey: ['asiento-fs', empresaId, doc.id],
+    queryFn: () => api.get<AsientoFsData>(`/api/documentos/${empresaId}/${doc.id}/asiento-fs`),
+    enabled: buscarFs,
+    retry: false,
+    staleTime: Infinity,
+  })
 
   return (
     <div className="space-y-5 py-2">
@@ -229,46 +278,63 @@ function DocumentoPanel({ doc, empresaId }: { doc: DocumentoItem; empresaId: num
       </SeccionPanel>
 
       {/* Contabilización FS */}
-      {doc.asiento && (
+      {(doc.asiento || asientoFs || doc.factura_id_fs) && (
         <>
           <Separator />
           <SeccionPanel titulo="Contabilización en FacturaScripts">
-            {doc.asiento.numero != null && (
-              <Campo label="Asiento contable" value={`#${doc.asiento.numero}`} />
+            {/* Caso 1: asiento sincronizado en BD local */}
+            {doc.asiento && (
+              <>
+                {doc.asiento.numero != null && (
+                  <Campo label="Asiento contable" value={`#${doc.asiento.numero}`} />
+                )}
+                {doc.asiento.fecha && <Campo label="Fecha asiento" value={doc.asiento.fecha} />}
+                {doc.asiento.concepto && <Campo label="Concepto" value={doc.asiento.concepto} />}
+                {doc.factura_id_fs && (
+                  <Campo label="idfactura FS" value={<span className="font-mono">{doc.factura_id_fs}</span>} />
+                )}
+                {doc.asiento.idasiento_fs && (
+                  <Campo label="idasiento FS" value={<span className="font-mono">{doc.asiento.idasiento_fs}</span>} />
+                )}
+                <TablaPartidas partidas={doc.asiento.partidas} />
+              </>
             )}
-            {doc.asiento.fecha && <Campo label="Fecha asiento" value={doc.asiento.fecha} />}
-            {doc.asiento.concepto && <Campo label="Concepto" value={doc.asiento.concepto} />}
-            {doc.factura_id_fs && (
-              <Campo label="idfactura FS" value={<span className="font-mono">{doc.factura_id_fs}</span>} />
+
+            {/* Caso 2: asiento obtenido on-demand desde FS API */}
+            {!doc.asiento && asientoFs && (
+              <>
+                {doc.factura_id_fs && (
+                  <Campo label="idfactura FS" value={<span className="font-mono">{doc.factura_id_fs}</span>} />
+                )}
+                <Campo label="idasiento FS" value={<span className="font-mono">{asientoFs.idasiento_fs}</span>} />
+                {asientoFs.fecha && <Campo label="Fecha asiento" value={asientoFs.fecha} />}
+                {asientoFs.concepto && <Campo label="Concepto" value={asientoFs.concepto} />}
+                <TablaPartidas partidas={asientoFs.partidas} />
+              </>
             )}
-            {doc.asiento.idasiento_fs && (
-              <Campo label="idasiento FS" value={<span className="font-mono">{doc.asiento.idasiento_fs}</span>} />
-            )}
-            {doc.asiento.partidas.length > 0 && (
-              <div className="mt-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Partidas</p>
-                <div className="rounded-md border overflow-hidden">
-                  <table className="w-full text-xs font-mono">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="text-left px-2 py-1.5 font-medium">Subcuenta</th>
-                        <th className="text-left px-2 py-1.5 font-medium">Concepto</th>
-                        <th className="text-right px-2 py-1.5 font-medium text-blue-400">Debe</th>
-                        <th className="text-right px-2 py-1.5 font-medium text-amber-400">Haber</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {doc.asiento.partidas.map((p, i) => (
-                        <tr key={i} className="hover:bg-muted/20">
-                          <td className="px-2 py-1.5 text-muted-foreground">{p.subcuenta}</td>
-                          <td className="px-2 py-1.5 max-w-[120px] truncate text-muted-foreground">{p.concepto ?? ''}</td>
-                          <td className="px-2 py-1.5 text-right">{p.debe > 0 ? <span className="text-blue-400">{p.debe.toFixed(2)}</span> : ''}</td>
-                          <td className="px-2 py-1.5 text-right">{p.haber > 0 ? <span className="text-amber-400">{p.haber.toFixed(2)}</span> : ''}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
+            {/* Caso 3: no hay asiento local, hay factura_id_fs → botón consultar */}
+            {!doc.asiento && !asientoFs && doc.factura_id_fs && (
+              <div className="py-1 space-y-2">
+                <Campo label="idfactura FS" value={<span className="font-mono">{doc.factura_id_fs}</span>} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 mt-2"
+                  onClick={() => setBuscarFs(true)}
+                  disabled={buscandoFs}
+                >
+                  {buscandoFs
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <RefreshCw className="h-4 w-4" />
+                  }
+                  {buscandoFs ? 'Consultando FacturaScripts…' : 'Consultar asiento en FS'}
+                </Button>
+                {errorFs && (
+                  <p className="text-xs text-destructive text-center">
+                    No se pudo obtener el asiento
+                  </p>
+                )}
               </div>
             )}
           </SeccionPanel>

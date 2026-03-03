@@ -1,6 +1,7 @@
 """SFCE API — Rutas de documentos."""
 
 import hashlib
+import requests as _requests
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -14,7 +15,9 @@ from sfce.api.app import get_sesion_factory
 from sfce.api.audit import AuditAccion, auditar, ip_desde_request
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.api.schemas import CuarentenaOut, DocumentoOut, ResolverCuarentenaIn
+from sfce.core.fs_api import obtener_credenciales_gestoria
 from sfce.db.modelos import Cuarentena, Documento, Empresa
+from sfce.db.modelos_auth import Gestoria
 
 router = APIRouter(prefix="/api/documentos", tags=["documentos"])
 
@@ -192,3 +195,79 @@ async def descargar_documento(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{nombre_original}"'},
     )
+
+
+@router.get("/{empresa_id}/{doc_id}/asiento-fs")
+def obtener_asiento_fs(
+    empresa_id: int,
+    doc_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Obtiene el asiento contable desde FacturaScripts para un documento registrado.
+
+    Útil cuando asiento_id es NULL en BD local (pipeline registró en FS pero
+    no sincronizó el asiento a la BD SFCE).
+    """
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as s:
+        verificar_acceso_empresa(usuario, empresa_id, s)
+        doc = s.scalar(
+            select(Documento).where(
+                Documento.id == doc_id,
+                Documento.empresa_id == empresa_id,
+            )
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+        if not doc.factura_id_fs:
+            raise HTTPException(status_code=422, detail="Documento sin idfactura en FacturaScripts")
+
+        empresa = s.scalar(select(Empresa).where(Empresa.id == empresa_id))
+        gestoria = s.scalar(select(Gestoria).where(Gestoria.id == empresa.gestoria_id)) if empresa else None
+        factura_id_fs = doc.factura_id_fs
+        tipo_doc = doc.tipo_doc
+
+    fs_base, fs_token = obtener_credenciales_gestoria(gestoria)
+    headers = {"Token": fs_token}
+
+    # Determinar endpoint según tipo de documento
+    endpoint_factura = "facturaproveedores" if tipo_doc in ("FC", "NC", "SUM", "NOM") else "facturaclientes"
+
+    # Obtener factura para extraer idasiento
+    resp = _requests.get(f"{fs_base}/api/3/{endpoint_factura}/{factura_id_fs}", headers=headers, timeout=10)
+    if resp.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"FacturaScripts devolvió {resp.status_code}")
+
+    factura = resp.json()
+    idasiento = factura.get("idasiento")
+    if not idasiento:
+        raise HTTPException(status_code=404, detail="La factura no tiene asiento asociado en FS")
+
+    # Obtener datos del asiento
+    resp_asiento = _requests.get(f"{fs_base}/api/3/asientos/{idasiento}", headers=headers, timeout=10)
+    asiento = resp_asiento.json() if resp_asiento.status_code == 200 else {}
+
+    # Obtener todas las partidas y filtrar por idasiento (filtros FS no funcionan)
+    resp_partidas = _requests.get(
+        f"{fs_base}/api/3/partidas", headers=headers, params={"limit": 500}, timeout=15
+    )
+    todas = resp_partidas.json() if resp_partidas.status_code == 200 else []
+    partidas = [
+        {
+            "subcuenta": p.get("codsubcuenta", ""),
+            "concepto": p.get("concepto", ""),
+            "debe": float(p.get("debe", 0)),
+            "haber": float(p.get("haber", 0)),
+        }
+        for p in todas
+        if str(p.get("idasiento")) == str(idasiento)
+    ]
+
+    return {
+        "idasiento_fs": idasiento,
+        "fecha": asiento.get("fecha"),
+        "concepto": asiento.get("concepto"),
+        "partidas": partidas,
+        "fs_url": fs_base,
+    }
