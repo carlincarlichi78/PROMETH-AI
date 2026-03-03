@@ -85,6 +85,7 @@ const ORIGEN_META: Record<string, { icono: React.FC<{ className?: string }>; lab
   watcher:  { icono: FolderOpen, label: 'Carpeta vigilada' },
   pipeline: { icono: Terminal,   label: 'Pipeline manual' },
 }
+const ORIGEN_FALLBACK = { icono: Terminal, label: 'Pipeline manual' }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -116,7 +117,7 @@ function SeccionPanel({ titulo, children }: { titulo: string; children: React.Re
 }
 
 function DocumentoPanel({ doc, empresaId }: { doc: DocumentoItem; empresaId: number }) {
-  const origenMeta = ORIGEN_META[doc.origen] ?? ORIGEN_META.pipeline
+  const origenMeta = ORIGEN_META[doc.origen] ?? ORIGEN_FALLBACK
   const OrigenIcono = origenMeta.icono
   const tier = doc.ocr_tier != null ? OCR_TIER[doc.ocr_tier] : null
   const tieneOcr = doc.emisor || doc.emisor_cif || doc.numero_factura || doc.total != null
