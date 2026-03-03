@@ -132,7 +132,7 @@ class ExtractorEnriquecimiento:
             f"Texto del email:\n{texto[:2000]}"
         )
         resp = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             temperature=0,
             messages=[
                 {"role": "system", "content": _PROMPT_SISTEMA},
