@@ -48,3 +48,33 @@ def _esperar_estabilidad(
         tamanyo_anterior = tamanyo_actual
         time.sleep(segundos)
     return False
+
+
+def _cargar_empresa_id(slug: str) -> Optional[int]:
+    """Lee sfce.empresa_id del config.yaml del cliente. Retorna None si no existe."""
+    config_path = CLIENTES_DIR / slug / "config.yaml"
+    if not config_path.exists():
+        return None
+    with open(config_path, encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    return cfg.get("sfce", {}).get("empresa_id")
+
+
+def _slug_desde_ruta(ruta: Path) -> Optional[str]:
+    """Extrae el slug del cliente desde la ruta.
+
+    Solo considera rutas en clientes/{slug}/inbox/{archivo}.
+    Ignora archivos en subido/ o error/ (ya procesados).
+    """
+    try:
+        rel = ruta.relative_to(CLIENTES_DIR)
+    except ValueError:
+        return None
+    parts = rel.parts
+    # Estructura esperada: (slug, "inbox", archivo.pdf)
+    if len(parts) != 3:
+        return None
+    slug, carpeta, _ = parts
+    if carpeta != "inbox":
+        return None
+    return slug

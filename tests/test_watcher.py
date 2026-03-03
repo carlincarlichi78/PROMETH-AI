@@ -65,3 +65,83 @@ class TestEsperarEstabilidad:
         resultado = _esperar_estabilidad(pdf, segundos=0.01, intentos=3)
 
         assert resultado is False
+
+
+class TestCargarEmpresaId:
+    """Tests para _cargar_empresa_id() y _slug_desde_ruta()."""
+
+    def test_carga_empresa_id_correcto(self, tmp_path):
+        """Debe leer sfce.empresa_id del config.yaml."""
+        from watcher import _cargar_empresa_id
+        config_dir = tmp_path / "gerardo" / "config.yaml"
+        config_dir.parent.mkdir(parents=True)
+        config_dir.write_text(
+            "empresa:\n  nombre: Gerardo\nsfce:\n  empresa_id: 2\n",
+            encoding="utf-8",
+        )
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            resultado = _cargar_empresa_id("gerardo")
+
+        assert resultado == 2
+
+    def test_carga_empresa_id_sin_seccion_sfce(self, tmp_path):
+        """Config sin sección sfce debe retornar None."""
+        from watcher import _cargar_empresa_id
+        config_dir = tmp_path / "pastorino" / "config.yaml"
+        config_dir.parent.mkdir(parents=True)
+        config_dir.write_text("empresa:\n  nombre: Pastorino\n", encoding="utf-8")
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            resultado = _cargar_empresa_id("pastorino")
+
+        assert resultado is None
+
+    def test_carga_empresa_id_sin_config(self, tmp_path):
+        """Si no existe config.yaml, debe retornar None."""
+        from watcher import _cargar_empresa_id
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            resultado = _cargar_empresa_id("cliente-inexistente")
+
+        assert resultado is None
+
+    def test_slug_desde_ruta_inbox_directo(self, tmp_path):
+        """Archivo en clientes/gerardo/inbox/ → slug 'gerardo'."""
+        from watcher import _slug_desde_ruta
+        ruta = tmp_path / "gerardo" / "inbox" / "factura.pdf"
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            slug = _slug_desde_ruta(ruta)
+
+        assert slug == "gerardo"
+
+    def test_slug_desde_ruta_en_subido_retorna_none(self, tmp_path):
+        """Archivo en inbox/subido/ debe ser ignorado (retorna None)."""
+        from watcher import _slug_desde_ruta
+        ruta = tmp_path / "gerardo" / "inbox" / "subido" / "factura.pdf"
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            slug = _slug_desde_ruta(ruta)
+
+        assert slug is None
+
+    def test_slug_desde_ruta_en_error_retorna_none(self, tmp_path):
+        """Archivo en inbox/error/ debe ser ignorado."""
+        from watcher import _slug_desde_ruta
+        ruta = tmp_path / "gerardo" / "inbox" / "error" / "factura.pdf"
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            slug = _slug_desde_ruta(ruta)
+
+        assert slug is None
+
+    def test_slug_desde_ruta_fuera_de_inbox_retorna_none(self, tmp_path):
+        """Archivo en clientes/gerardo/ (no en inbox/) debe retornar None."""
+        from watcher import _slug_desde_ruta
+        ruta = tmp_path / "gerardo" / "factura.pdf"
+
+        with patch("watcher.CLIENTES_DIR", tmp_path):
+            slug = _slug_desde_ruta(ruta)
+
+        assert slug is None
