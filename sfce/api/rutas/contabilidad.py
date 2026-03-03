@@ -109,7 +109,7 @@ def obtener_pyg2(
         # Determinar rango de fechas (usar año de fecha, no codejercicio que puede ser "C422")
         if not desde or not hasta:
             anyo_max = s.execute(
-                select(func.max(func.strftime("%Y", Asiento.fecha))).where(Asiento.empresa_id == empresa_id)
+                select(func.max(func.to_char(Asiento.fecha, "YYYY"))).where(Asiento.empresa_id == empresa_id)
             ).scalar()
             anyo = int(anyo_max) if anyo_max else date.today().year
             if not desde:
@@ -231,7 +231,7 @@ def obtener_pyg2(
     with sesion_factory() as s:
         meses_rows = s.execute(
             select(
-                func.strftime("%Y-%m", Asiento.fecha).label("mes"),
+                func.to_char(Asiento.fecha, "YYYY-MM").label("mes"),
                 func.sum(
                     case(
                         (Partida.subcuenta.like("7%"), Partida.haber - Partida.debe),
@@ -346,7 +346,7 @@ def obtener_balance2(
 
         if not fecha_corte:
             anyo_max = s.execute(
-                select(func.max(func.strftime("%Y", Asiento.fecha))).where(Asiento.empresa_id == empresa_id)
+                select(func.max(func.to_char(Asiento.fecha, "YYYY"))).where(Asiento.empresa_id == empresa_id)
             ).scalar()
             anyo = int(anyo_max) if anyo_max else date.today().year
             fecha_corte = date(anyo, 12, 31)
