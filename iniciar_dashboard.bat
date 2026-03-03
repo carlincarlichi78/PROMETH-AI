@@ -15,6 +15,9 @@ timeout /t 4 /nobreak > nul
 REM Arrancar Dashboard frontend (puerto 3000)
 start "SFCE Dashboard" cmd /k "cd /d C:\Users\carli\PROYECTOS\CONTABILIDAD\dashboard && npm run dev"
 
+REM Arrancar Watcher inbox (pipeline automático desde carpetas inbox)
+start "SFCE Watcher" cmd /k "cd /d C:\Users\carli\PROYECTOS\CONTABILIDAD && python scripts\watcher.py"
+
 REM Esperar a que Vite compile
 timeout /t 6 /nobreak > nul
 
