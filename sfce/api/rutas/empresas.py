@@ -404,9 +404,15 @@ def listar_documentos_empresa(
     usuario=Depends(obtener_usuario_actual),
 ):
     """Lista documentos procesados por el pipeline para una empresa."""
+    from sqlalchemy.orm import selectinload
+
     with sesion_factory() as s:
         verificar_acceso_empresa(usuario, empresa_id, s)
-        q = s.query(Documento).filter(Documento.empresa_id == empresa_id)
+        q = (
+            s.query(Documento)
+            .options(selectinload(Documento.asiento).selectinload(Asiento.partidas))
+            .filter(Documento.empresa_id == empresa_id)
+        )
         if ejercicio:
             q = q.filter(Documento.ejercicio == ejercicio)
         if estado:
@@ -415,26 +421,66 @@ def listar_documentos_empresa(
             q = q.filter(Documento.tipo_doc == tipo_doc)
         total = q.count()
         docs = q.order_by(Documento.fecha_proceso.desc()).offset(offset).limit(limit).all()
-        return {
-            "total": total,
-            "items": [
-                {
-                    "id": d.id,
-                    "tipo_doc": d.tipo_doc,
-                    "estado": d.estado,
-                    "confianza": d.confianza,
-                    "factura_id_fs": d.factura_id_fs,
-                    "ejercicio": d.ejercicio,
-                    "fecha_proceso": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
-                    "motivo_cuarentena": d.motivo_cuarentena,
-                    "emisor": (d.datos_ocr or {}).get("emisor_nombre"),
-                    "total": (d.datos_ocr or {}).get("total"),
-                    "numero_factura": (d.datos_ocr or {}).get("numero_factura"),
-                    "fecha_factura": (d.datos_ocr or {}).get("fecha"),
+
+        items = []
+        for d in docs:
+            ocr = d.datos_ocr or {}
+
+            # Detectar canal de entrada desde la ruta en disco
+            ruta = (d.ruta_disco or d.ruta_pdf or "").lower()
+            if "correo" in ruta or "imap" in ruta or "@" in ruta:
+                origen = "email"
+            elif "portal" in ruta:
+                origen = "portal"
+            elif "watcher" in ruta or "inbox" in ruta:
+                origen = "watcher"
+            else:
+                origen = "pipeline"
+
+            asiento_data = None
+            if d.asiento:
+                asiento_data = {
+                    "id": d.asiento.id,
+                    "numero": d.asiento.numero,
+                    "idasiento_fs": d.asiento.idasiento_fs,
+                    "fecha": d.asiento.fecha.isoformat() if d.asiento.fecha else None,
+                    "concepto": d.asiento.concepto,
+                    "partidas": [
+                        {
+                            "subcuenta": p.subcuenta,
+                            "debe": float(p.debe),
+                            "haber": float(p.haber),
+                            "concepto": p.concepto,
+                        }
+                        for p in d.asiento.partidas
+                    ],
                 }
-                for d in docs
-            ],
-        }
+
+            items.append({
+                "id": d.id,
+                "tipo_doc": d.tipo_doc,
+                "estado": d.estado,
+                "confianza": d.confianza,
+                "ocr_tier": d.ocr_tier,
+                "ruta_pdf": d.ruta_pdf,
+                "origen": origen,
+                "factura_id_fs": d.factura_id_fs,
+                "ejercicio": d.ejercicio,
+                "fecha_proceso": d.fecha_proceso.isoformat() if d.fecha_proceso else None,
+                "motivo_cuarentena": d.motivo_cuarentena,
+                # Campos extraídos por OCR
+                "emisor": ocr.get("emisor_nombre"),
+                "emisor_cif": ocr.get("emisor_cif"),
+                "total": ocr.get("total"),
+                "base_imponible": ocr.get("base_imponible"),
+                "iva_importe": ocr.get("iva_importe") or ocr.get("cuota_iva"),
+                "numero_factura": ocr.get("numero_factura"),
+                "fecha_factura": ocr.get("fecha") or ocr.get("fecha_factura"),
+                # Asiento contable con partidas
+                "asiento": asiento_data,
+            })
+
+        return {"total": total, "items": items}
 
 
 @router.post("/{empresa_id}/invitar-cliente", status_code=201)
