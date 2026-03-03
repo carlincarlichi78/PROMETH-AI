@@ -293,29 +293,42 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (03/03/2026, sesión 44 — Migración dominio FS + investigación aislamiento gestorías)
+## Estado actual (03/03/2026, sesión 45 — Aislamiento gestorías pasos 1+2 + Onboarding histórico)
 
 **Rama activa**: `main`
-**Último commit**: `5cea953`
-**Tests**: 2565 PASS, 4 skipped, 0 FAILED (sin cambios en tests)
+**Último commit**: `a4fa91d`
+**Tests**: 2573 PASS, 4 skipped, 0 FAILED (+8 tests pipeline_runner)
 
-### Sesión 44 — Lo realizado
+### Sesión 45 — Lo realizado
 
 | Tarea | Detalle |
 |-------|---------|
-| Investigación aislamiento FS | FS NO tiene per-user empresa restriction. `users.idempresa` = empresa por defecto, no restricción. Tabs EditUser: datos/roles/opciones/emails — NO hay tab "Empresas" |
-| Conclusión multi-gestoría | Requiere instancias FS separadas (2-3 semanas refactor) o gestores solo vía SFCE. Paso 1 pendiente: añadir `fs_url`+`fs_token` a tabla `gestorias` |
-| Migración dominio FS | `contabilidad.lemonfresh-tuc.com` → `contabilidad.prometh-ai.es` |
-| nginx config | `/opt/infra/nginx/conf.d/contabilidad-prometh-ai.conf` creado. Config viejo desactivado (`facturascripts.conf.disabled`) |
-| SSL | Let's Encrypt para `contabilidad.prometh-ai.es` (expira 2026-06-01) |
-| Código actualizado | `fs_api.py`, `fs_setup.py`, `aprendizaje.yaml`, `.env.example`, `.env` producción |
-| FS admin credentials | Usuario: `carloscanetegomez` / Pass: `Admin2026` (user `pastorino` no existía) |
+| Migración 024 | `gestorias.fs_url` + `gestorias.fs_token_enc` (Fernet). Aplicada en SQLite dev y PG producción (ALTER TABLE vía SSH psql) |
+| `modelos_auth.py` | Columnas `fs_url` + `fs_token_enc` en modelo `Gestoria` |
+| `fs_api.py` | `obtener_credenciales_gestoria(gestoria)` — devuelve (url, token) propio o global |
+| Admin endpoints | `PUT/GET /api/admin/gestorias/{id}/fs-credenciales` — superadmin only, token cifrado en BD, nunca expuesto |
+| `pipeline_runner.py` | `_resolver_credenciales_fs(empresa, sesion)` + env injection en subprocess (`FS_API_URL`/`FS_API_TOKEN`) |
+| Tests | 5 tests `TestFsCredenciales` en `test_admin.py` + 3 tests en `test_pipeline_runner.py` |
+| Fix `fs_setup.py` | `crear_empresa()` parsea respuesta anidada `{ok, data: {idempresa: X}}` correctamente |
+| Onboarding histórico Task 7 | Marcos Ruiz (idempresa=1) + La Marea (idempresa=2) creadas en FS con ejercicio 2024 + PGC |
+| Onboarding histórico Task 8 | Pipeline fase 0+1 sobre 16+17 PDFs — 0 cuarentena, todos IMP/NOM. OCR 0% confianza (esperado: PDFs generados ≠ formularios reales AEAT) |
+
+### Aislamiento gestorías — arquitectura implementada
+
+```
+Gestoria.fs_url + Gestoria.fs_token_enc
+    ↓ _resolver_credenciales_fs()
+    ↓ env_subprocess = {**os.environ, FS_API_URL: ..., FS_API_TOKEN: ...}
+    ↓ subprocess.run(scripts/pipeline.py, env=env_subprocess)
+    ↓ fs_api.API_BASE + obtener_token() leen del entorno del proceso
+```
+
+Si la gestoría NO tiene credenciales propias → subprocess hereda FS global del sistema.
 
 ### Pendiente próxima sesión
-1. **Aislamiento gestorías paso 1**: añadir `fs_url` + `fs_token` (cifrado Fernet) a tabla `gestorias` — migración 024
-2. Onboarding histórico Tasks 5-8 (generar PDFs reales, crear empresas en FS, correr pipeline)
-3. Alias `documentacion@prometh-ai.es` en Google Admin
-4. Actualizar `docs/LIBRO/` (temas 11, 17, 20)
+1. Alias `documentacion@prometh-ai.es` en Google Admin (manual)
+2. Actualizar `docs/LIBRO/` (temas 11 API, 17 BD, 23 clientes)
+3. Onboarding histórico Task 6 real (PDFs reales AEAT 2024 → pipeline completo)
 
 ---
 
