@@ -321,6 +321,54 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
+## Estado actual (03/03/2026, sesión 55 — Pipeline Gerardo: 8 bugs corregidos, bloqueado en crearFacturaProveedor)
+
+**Rama activa**: `main`
+**Último commit**: `3ef6b08`
+**Tests**: 2634 PASS, 4 skipped, 0 FAILED (sin cambios de tests)
+
+### ✅ COMPLETADO en sesión 55
+
+8 bugs encontrados y corregidos ejecutando el pipeline real con Gerardo González:
+
+| Bug | Archivo | Fix |
+|-----|---------|-----|
+| `ejecutar_registro/correccion()` recibían `motor=`/`backend=` kwargs no aceptados | `scripts/pipeline.py:392,406` | Eliminar kwargs |
+| `gemini-2.0-flash` deprecado → 404 | `smart_parser.py:62`, `auditor_asientos.py:66` | → `gemini-2.5-flash` |
+| SmartParser devolvía `proveedor_cif` pero intake.py esperaba `emisor_cif` | `smart_parser.py` PROMPT_PARSEO | Corregir nombres de campo |
+| CIF intracomunitario "ES 76638663H" ≠ "76638663H" del config | `sfce/phases/intake.py` | Añadir `_cif_coincide()` con `endswith()` |
+| Fecha inglesa "Feb 28, 2025" rechazada por pre_validation | `sfce/core/nombres.py`, `pre_validation.py` | Añadir patrones ingleses a `_PATRONES_FECHA` + normalizar antes de extraer año |
+| Campos internos `_intracomunitario`/`_decision_log` enviados a FS API → 400 | `sfce/phases/registration.py:912` | Filtrar claves `_*` antes del POST |
+| Fecha "Feb 28, 2025" enviada tal cual a FS → rechazada | `sfce/phases/registration.py:274` | Convertir a DD-MM-YYYY |
+| Pipeline usaba FS compartido en vez de `fs-uralde` | `clientes/gerardo-gonzalez-callejon/config.yaml`, `scripts/core/config.py`, `scripts/pipeline.py` | Añadir `fs_url`/`fs_token` a config + override `sfce.core.fs_api.API_BASE` |
+
+### ❌ BLOQUEADO — crearFacturaProveedor + multi-empresa FS
+
+**Causa raíz**: `crearFacturaProveedor` busca el ejercicio por `codejercicio = YEAR(fecha)` (ej: `'2025'`). En nuestras instancias nuevas (fs-uralde etc.), `PRIMARY KEY(codejercicio)` es GLOBAL, así que 4 empresas tienen códigos `0002`/`0003`/`0004`/`0005` — ninguno coincide con `'2025'`.
+
+El FS compartido funcionaba porque solo había UNA empresa activa con `codejercicio='2025'`.
+
+**Solución para próxima sesión**: reemplazar `crearFacturaProveedor` con el enfoque estándar de 2 pasos:
+1. `POST /api/3/facturaproveedores` (cabecera)
+2. `POST /api/3/lineasfacturaproveedores` (líneas)
+
+El endpoint estándar usa lookup por rango de fechas (`fechainicio <= fecha <= fechafin`), no por código de ejercicio.
+
+### ⚡ PRÓXIMA SESIÓN — Tareas en orden
+
+**1. CRÍTICO: Migrar registration.py a endpoint estándar**
+- Reemplazar `crearFacturaProveedor`/`crearFacturaCliente` con POST de 2 pasos
+- Verificar que el pipeline completa un ciclo con Gerardo Google.pdf
+- Luego lanzar los 9 PDFs del inbox de Gerardo
+
+**2. Añadir fs_url/fs_token a config.yaml de PASTORINO, CHIRINGUITO, ELENA** (ya está en Gerardo)
+
+**3. SFCE_CI_TOKEN en GitHub Secrets** (smoke test CI falla sin él)
+
+**4. Fixes auditoría** (FE-1, API-3, VULN-1, etc.)
+
+---
+
 ## Estado actual (03/03/2026, sesión 54 — Grupos FS + codagente pipeline)
 
 **Rama activa**: `main`
