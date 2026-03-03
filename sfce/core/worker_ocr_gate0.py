@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from .logger import crear_logger
+from .smart_ocr import SmartOCR
 
 logger = crear_logger("worker_ocr")
 
@@ -47,46 +48,16 @@ def obtener_pendientes(sesion, limite: int = _LIMITE_POR_CICLO):
 # ---------------------------------------------------------------------------
 
 def _ejecutar_ocr_tiers(ruta_pdf: Path) -> Optional[dict]:
-    """Ejecuta OCR en cascada Tier 0 → Tier 1 → Tier 2.
+    """Ejecuta SmartOCR: pdfplumber→EasyOCR→PaddleOCR→Mistral→GPT→Gemini.
 
-    Tier 0: Mistral OCR3 (primario, más económico)
-    Tier 1: GPT-4o (fallback Tier 0)
-    Tier 2: Gemini Flash (fallback final)
-
-    Retorna dict con datos extraídos o None si todos fallan.
+    Consulta caché automáticamente. No reprocesa si ya existe resultado.
     """
-    # Tier 0: Mistral
-    try:
-        from sfce.core.ocr_mistral import extraer_factura_mistral
-        datos = extraer_factura_mistral(ruta_pdf)
-        if datos:
-            logger.info(f"Tier 0 (Mistral) OK: {ruta_pdf.name}")
-            return datos
-    except Exception as e:
-        logger.warning(f"Tier 0 Mistral falló para {ruta_pdf.name}: {e}")
-
-    # Tier 1: GPT-4o
-    try:
-        from sfce.core.ocr_gpt import extraer_factura_gpt
-        datos = extraer_factura_gpt(ruta_pdf)
-        if datos:
-            logger.info(f"Tier 1 (GPT-4o) OK: {ruta_pdf.name}")
-            return datos
-    except Exception as e:
-        logger.warning(f"Tier 1 GPT falló para {ruta_pdf.name}: {e}")
-
-    # Tier 2: Gemini
-    try:
-        from sfce.core.ocr_gemini import extraer_factura_gemini
-        datos = extraer_factura_gemini(ruta_pdf)
-        if datos:
-            logger.info(f"Tier 2 (Gemini) OK: {ruta_pdf.name}")
-            return datos
-    except Exception as e:
-        logger.warning(f"Tier 2 Gemini falló para {ruta_pdf.name}: {e}")
-
-    logger.error(f"Todos los tiers OCR fallaron para {ruta_pdf.name}")
-    return None
+    datos = SmartOCR.extraer(ruta_pdf)
+    if datos:
+        logger.info("OCR completado para %s (fuente: %s)", ruta_pdf.name, datos.get("_fuente", "?"))
+    else:
+        logger.error("OCR falló para %s tras todos los motores", ruta_pdf.name)
+    return datos
 
 
 # ---------------------------------------------------------------------------
