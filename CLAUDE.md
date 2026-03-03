@@ -222,47 +222,53 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (03/03/2026, sesión 47 — Diseño + plan instancias FS independientes)
+## Estado actual (03/03/2026, sesión 48 — Instancias FS independientes COMPLETADAS)
 
 **Rama activa**: `main`
-**Último commit**: `bc3cb44`
-**Tests**: 2573 PASS (sin cambios de código esta sesión)
+**Tests**: 2573 PASS (sin cambios de código)
 
-### Lo realizado en sesión 47
+### Lo realizado en sesión 48 — Plan 18 tasks COMPLETADO
 
-| Tarea | Detalle |
-|-------|---------|
-| Diseño aprobado | 3 instancias Docker FS independientes (Uralde/GestoriaA/Javier) |
-| Decisiones clave | Cada instancia con su propio MariaDB; Javier como gestoria_id=3; gestor1+gestor2 admin_gestoria (socios iguales) |
-| Doc diseño | `docs/plans/2026-03-03-instancias-fs-independientes-design.md` |
-| Plan implementación | `docs/plans/2026-03-03-instancias-fs-independientes-plan.md` (18 tasks, 2 fases) |
+| Task | Estado | Detalle |
+|------|--------|---------|
+| 1 | ✅ | DNS propagado: fs-uralde/gestoriaa/javier.prometh-ai.es → 65.108.60.69 |
+| 2 | ✅ | Migración 025 — gestoría Javier, javier→admin_gestoria, empresas 10-13 asignadas |
+| 3 | ✅ | nginx vhosts locales: `infra/nginx/fs-uralde/gestoriaa/javier.conf` |
+| 4 | ✅ | `scripts/setup_fs_instancia.py` — crea empresas por gestoría en su FS |
+| 5 | ✅ | git push + CI fixed (.dockerignore `!scripts/motor_campo/`) |
+| 6-9 | ✅ | 3 contenedores Docker FS+MariaDB levantados (puertos 8010/8011/8012) |
+| 10 | ✅ | Wizard FS completado en los 3 via POST (admin=carloscanete) |
+| 11 | ✅ | Usuarios FS creados via MariaDB por instancia |
+| 12 | ✅ | Tokens API: uralde=`d0ed76...`, gestoriaa=`deaff2...`, javier=`6f8307...` |
+| 13 | ✅ | nginx SSL + certbot (certs válidos hasta Jun 2026) |
+| 14 | ✅ | Migración 025 aplicada en PostgreSQL prod |
+| 15 | ✅ | Credenciales FS registradas en SFCE PostgreSQL (cifradas Fernet) |
+| 16 | ✅ | 13 empresas creadas: 4 en uralde, 5 en gestoriaa, 4 en javier |
+| 17 | ✅ | backup_total.sh actualizado con 3 dumps MariaDB nuevos |
+| 18 | ✅ | E2E: HTTPS 302, API tokens OK, aislamiento 401, certs SSL, containers UP |
 
-### Próxima sesión — Ejecutar plan instancias FS
+### Arquitectura instancias FS (OPERATIVA)
 
-**Leer**: `docs/plans/2026-03-03-instancias-fs-independientes-plan.md`
-
-**Orden obligatorio:**
-1. DNS manual en DonDominio (primero — necesita propagación)
-2. Migración 025 local + tests
-3. Nginx vhosts locales + script setup_fs_instancia.py
-4. Push + SSH servidor: 3 docker-compose + setup wizard + usuarios + tokens
-5. nginx SSL + certbot
-6. Migración 025 en prod + registrar credenciales SFCE
-7. Crear empresas via script por gestoria
-8. Verificación E2E
-
-**Arquitectura instancias:**
 ```
-fs-uralde.prometh-ai.es     (puerto 8010) → gestoria_id=1, empresas 1-4
-fs-gestoriaa.prometh-ai.es  (puerto 8011) → gestoria_id=2, empresas 5-9
-fs-javier.prometh-ai.es     (puerto 8012) → gestoria_id=3, empresas 10-13
+fs-uralde.prometh-ai.es     (puerto 8010) → Uralde: PASTORINO, GERARDO, CHIRINGUITO, ELENA
+fs-gestoriaa.prometh-ai.es  (puerto 8011) → GestoriaA: MARCOS, LAMAREA, AURORA, CATERING, DISTRIB
+fs-javier.prometh-ai.es     (puerto 8012) → Javier: COMUNIDAD, FRANMORA, GASTRO, BERMUDEZ
 contabilidad.prometh-ai.es  → carloscanetegomez (superadmin global, intacto)
 ```
 
-**Pendiente código** (parte de la siguiente sesión):
-- `sfce/db/migraciones/025_gestoria_javier.py`
-- `infra/nginx/fs-uralde.conf`, `fs-gestoriaa.conf`, `fs-javier.conf`
-- `scripts/setup_fs_instancia.py`
+### Tokens API FS por instancia (en SFCE BD Fernet-cifrados)
+
+| Instancia | Token | gestoria_id (prod) |
+|-----------|-------|--------------------|
+| fs-uralde | `d0ed76fcc22785424b6c` | 1 |
+| fs-gestoriaa | `deaff29f162b66b7bbd2` | 2 |
+| fs-javier | `6f8307e8330dcb78022c` | 3 |
+
+### Pendiente (baja prioridad)
+
+- **PGC manual**: importar Plan General Contable en cada empresa via panel web FS (script falla porque `EditEjercicio` requiere sesión web, no API token)
+- **nombres gestorias prod**: "Gestoría Norte/Sur" en vez de nombres reales (datos de prueba). Actualizar via psql si se quiere
+- **sqlite idempresa_fs**: local SQLite tiene idempresa_fs=NULL (limpiado para crear en nuevas instancias). Los nuevos idempresa_fs son 2-5 en cada instancia respectivamente
 
 ---
 
