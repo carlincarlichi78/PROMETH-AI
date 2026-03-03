@@ -179,6 +179,95 @@ class TestGestoriasAdmin:
         assert resp.status_code == 403
 
 
+class TestFsCredenciales:
+    """Tests T-FS-CRED — credenciales FS por gestoría (migración 024)."""
+
+    @pytest.fixture
+    def gestoria_id(self, client, superadmin_token):
+        resp = client.post("/api/admin/gestorias", json={
+            "nombre": "Gestoría FS Test",
+            "email_contacto": "fs@gestoria.com",
+            "cif": "B99887766",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+        assert resp.status_code == 201
+        return resp.json()["id"]
+
+    def test_configurar_credenciales_fs(self, client, superadmin_token, gestoria_id):
+        resp = client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={
+                "fs_url": "https://fs.migestoria.es/api/3",
+                "fs_token": "token-secreto-123",
+            },
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["fs_url"] == "https://fs.migestoria.es/api/3"
+        assert data["fs_credenciales_configuradas"] is True
+
+    def test_consultar_estado_fs_credenciales(self, client, superadmin_token, gestoria_id):
+        # Configurar primero
+        client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={"fs_url": "https://fs.ejemplo.es/api/3", "fs_token": "tok"},
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        resp = client.get(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["fs_credenciales_configuradas"] is True
+        assert data["usa_instancia_global"] is False
+        assert "fs_token" not in data  # el token nunca se expone
+
+    def test_eliminar_credenciales_vuelve_a_global(self, client, superadmin_token, gestoria_id):
+        client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={"fs_url": "https://fs.ejemplo.es/api/3", "fs_token": "tok"},
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        resp = client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={"fs_url": None, "fs_token": None},
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["fs_url"] is None
+        assert data["fs_credenciales_configuradas"] is False
+
+    def test_url_sin_token_422(self, client, superadmin_token, gestoria_id):
+        resp = client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={"fs_url": "https://fs.ejemplo.es/api/3", "fs_token": None},
+            headers={"Authorization": f"Bearer {superadmin_token}"},
+        )
+        assert resp.status_code == 422
+
+    def test_no_superadmin_403(self, client, superadmin_token, gestoria_id):
+        # Crear asesor
+        resp_inv = client.post(f"/api/admin/gestorias/{gestoria_id}/invitar", json={
+            "email": "asesor.fs@test.com",
+            "nombre": "Asesor FS",
+            "rol": "asesor",
+        }, headers={"Authorization": f"Bearer {superadmin_token}"})
+        token_inv = resp_inv.json()["invitacion_token"]
+        resp_login = client.post("/api/auth/aceptar-invitacion", json={
+            "token": token_inv, "password": "AsesorFS123!"
+        })
+        asesor_token = resp_login.json()["access_token"]
+
+        resp = client.put(
+            f"/api/admin/gestorias/{gestoria_id}/fs-credenciales",
+            json={"fs_url": "https://hack.es/api/3", "fs_token": "hack"},
+            headers={"Authorization": f"Bearer {asesor_token}"},
+        )
+        assert resp.status_code == 403
+
+
 class TestInvitarCliente:
 
     @pytest.fixture

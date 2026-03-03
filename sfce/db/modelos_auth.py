@@ -28,6 +28,11 @@ class Gestoria(Base):
     plan_tier         = Column(String(10), nullable=False, default=TIER_BASICO, server_default=TIER_BASICO)
     limite_empresas   = Column(Integer, nullable=True)  # None = ilimitado
 
+    # Credenciales FacturaScripts por gestoría (migración 024)
+    # Si son NULL, se usa la instancia global (FS_API_URL / FS_API_TOKEN del sistema)
+    fs_url       = Column(String(500), nullable=True)   # URL base API FS (sin barra final)
+    fs_token_enc = Column(String(500), nullable=True)   # Token API cifrado con Fernet
+
     __table_args__ = (
         CheckConstraint(_TIERS_CHECK, name="ck_gestorias_plan_tier"),
     )

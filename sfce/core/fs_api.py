@@ -1,8 +1,11 @@
 """Cliente unificado para la API REST de FacturaScripts."""
 import os
 import requests
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from .logger import crear_logger
+
+if TYPE_CHECKING:
+    from sfce.db.modelos_auth import Gestoria
 
 API_BASE = os.environ.get("FS_API_URL", "https://contabilidad.prometh-ai.es/api/3")
 TOKEN_FALLBACK = "iOXmrA1Bbn8RDWXLv91L"
@@ -13,6 +16,28 @@ logger = crear_logger("fs_api")
 def obtener_token() -> str:
     """Obtiene token de variable de entorno o fallback."""
     return os.environ.get("FS_API_TOKEN", TOKEN_FALLBACK)
+
+
+def obtener_credenciales_gestoria(gestoria: "Gestoria | None") -> tuple[str, str]:
+    """Devuelve (url_base, token) para una gestoría.
+
+    Si la gestoría tiene fs_url y fs_token_enc configurados, usa esas credenciales.
+    Si no, usa la instancia global del sistema (FS_API_URL / FS_API_TOKEN).
+
+    Returns:
+        (url_base, token) — url_base sin barra final, token en claro
+    """
+    if gestoria is not None and gestoria.fs_url and gestoria.fs_token_enc:
+        from sfce.core.cifrado import descifrar
+        try:
+            token = descifrar(gestoria.fs_token_enc)
+            return gestoria.fs_url.rstrip("/"), token
+        except Exception:
+            logger.warning(
+                "No se pudo descifrar fs_token_enc de gestoría %s — usando instancia global",
+                getattr(gestoria, "id", "?"),
+            )
+    return API_BASE.rstrip("/"), obtener_token()
 
 
 def api_get(endpoint: str, params: dict = None, token: str = None,

@@ -348,6 +348,91 @@ def actualizar_plan_usuario(
         return {"id": u.id, "email": u.email, "plan_tier": u.plan_tier}
 
 
+# ── Credenciales FacturaScripts por gestoría ──────────────────────────────────
+
+class FsCredencialesRequest(BaseModel):
+    fs_url: str | None = None       # None = eliminar (volver a instancia global)
+    fs_token: str | None = None     # Token en claro; se cifra antes de guardar
+
+
+@router.put("/gestorias/{gestoria_id}/fs-credenciales")
+def actualizar_fs_credenciales(
+    gestoria_id: int,
+    datos: FsCredencialesRequest,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Configura (o elimina) las credenciales FS propias de una gestoría.
+
+    - Pasar fs_url + fs_token: configura instancia FS privada para esta gestoría.
+    - Pasar ambos como null: elimina las credenciales, vuelve a instancia global.
+    Solo superadmin.
+    """
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+
+    if datos.fs_url is not None and not datos.fs_token:
+        raise HTTPException(
+            status_code=422,
+            detail="Si se especifica fs_url, también debe especificarse fs_token",
+        )
+    if datos.fs_token is not None and not datos.fs_url:
+        raise HTTPException(
+            status_code=422,
+            detail="Si se especifica fs_token, también debe especificarse fs_url",
+        )
+
+    with sesion_factory() as sesion:
+        g = sesion.get(Gestoria, gestoria_id)
+        if not g:
+            raise HTTPException(status_code=404, detail="Gestoría no encontrada")
+
+        if datos.fs_url is None:
+            # Eliminar credenciales: volver a instancia global
+            g.fs_url = None
+            g.fs_token_enc = None
+        else:
+            from sfce.core.cifrado import cifrar
+            g.fs_url = datos.fs_url.rstrip("/")
+            g.fs_token_enc = cifrar(datos.fs_token)
+
+        sesion.commit()
+        return {
+            "id": g.id,
+            "nombre": g.nombre,
+            "fs_url": g.fs_url,
+            "fs_credenciales_configuradas": g.fs_token_enc is not None,
+        }
+
+
+@router.get("/gestorias/{gestoria_id}/fs-credenciales")
+def obtener_fs_credenciales(
+    gestoria_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Consulta el estado de las credenciales FS de una gestoría (sin exponer el token).
+
+    Solo superadmin.
+    """
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+
+    with sesion_factory() as sesion:
+        g = sesion.get(Gestoria, gestoria_id)
+        if not g:
+            raise HTTPException(status_code=404, detail="Gestoría no encontrada")
+        return {
+            "id": g.id,
+            "nombre": g.nombre,
+            "fs_url": g.fs_url,
+            "fs_credenciales_configuradas": g.fs_token_enc is not None,
+            "usa_instancia_global": g.fs_url is None,
+        }
+
+
 @router.post("/clientes-directos", status_code=201)
 def crear_cliente_directo(
     datos: CrearClienteDirectoRequest,
