@@ -34,7 +34,9 @@ class FsSetup:
         """Crea una nueva empresa en FacturaScripts."""
         data = {"nombre": nombre, "cifnif": cif, **kwargs}
         resultado = self._post("empresas", data)
-        idempresa = resultado.get("idempresa") or resultado.get("id")
+        # FS puede responder {"idempresa": X} o {"ok":"...", "data": {"idempresa": X}}
+        datos = resultado.get("data", resultado)
+        idempresa = datos.get("idempresa") or datos.get("id")
         if not idempresa:
             raise ValueError(f"FS no devolvio idempresa: {resultado}")
         logger.info("Empresa creada en FS con id=%s", idempresa)
