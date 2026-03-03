@@ -19,7 +19,7 @@ class ResultadoSetup:
 class FsSetup:
     def __init__(self, base_url: Optional[str] = None, token: Optional[str] = None):
         self._base = (base_url or os.getenv(
-            "FS_API_URL", "https://contabilidad.lemonfresh-tuc.com/api/3"
+            "FS_API_URL", "https://contabilidad.prometh-ai.es/api/3"
         )).rstrip("/")
         self._token = token or os.getenv("FS_API_TOKEN", "")
         self._headers = {"Token": self._token}

@@ -4,7 +4,7 @@ import requests
 from typing import Any
 from .logger import crear_logger
 
-API_BASE = "https://contabilidad.lemonfresh-tuc.com/api/3"
+API_BASE = os.environ.get("FS_API_URL", "https://contabilidad.prometh-ai.es/api/3")
 TOKEN_FALLBACK = "iOXmrA1Bbn8RDWXLv91L"
 
 logger = crear_logger("fs_api")

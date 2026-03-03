@@ -315,7 +315,7 @@ patrones:
   origen: auto
   error_original: No se encontro entidad en FS para 20251222 Gerardo Internet.pdf
 - id: auto_20260227_005806
-  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://contabilidad\.lemonfresh\-tuc\.com/api/3/crearFacturaCliente
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://contabilidad\.prometh\-ai\.es/api/3/crearFacturaCliente
   estrategia: adaptar_campos_ocr
   tipo_doc:
   - SUM
@@ -323,7 +323,7 @@ patrones:
   exitos: 17
   fallos: 0
   origen: auto
-  error_original: '400 Client Error: Bad Request for url: https://contabilidad.lemonfresh-tuc.com/api/3/crearFacturaCliente'
+  error_original: '400 Client Error: Bad Request for url: https://contabilidad.prometh-ai.es/api/3/crearFacturaCliente'
   ultimo_exito: '2026-02-27T01:00:57.092044'
 - id: evol_005
   regex: Subcuenta gasto.*6000000000.*esperada|subcuenta_incorrecta.*6000
