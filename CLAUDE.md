@@ -290,18 +290,45 @@ Reconexión automática con backoff: 3s → 10s → 30s. No reconecta en 4401/44
 
 ---
 
-## Estado actual (03/03/2026, sesión 56 — Fixes servidor FS)
+## Estado actual (03/03/2026, sesión 58 — Pipeline 2 pasos + Auditoría completa)
 
 **Rama activa**: `main`
-**Último commit**: `259117f`
-**Tests**: 2634 PASS (sin cambios de código)
+**Último commit**: `8e131af`
+**Tests**: 2640 PASS (+3 nuevos), 0 FAILED
 
-### ✅ COMPLETADO en sesión 56
+### ✅ COMPLETADO en sesión 58
 
 | Tarea | Detalle |
 |-------|---------|
-| PHP display_errors Off | `z-custom.ini` en los 4 containers FS (printf, no echo) |
-| Tablas provincias+ciudades | Creadas en fs-uralde, fs-gestoriaa, fs-javier (COLLATE utf8mb4_unicode_520_ci) |
+| crearFacturaProveedor → 2 pasos | `registration.py` usa `_crear_factura_2pasos()` (ya existía, no estaba conectada) |
+| SFCE_CI_TOKEN | JWT superadmin generado y subido a GitHub Secrets via `gh secret set` |
+| FE-1 | `localStorage('token')` → `sessionStorage('sfce_token')` en 4 componentes |
+| API-3 | `crear_engine()` → `crear_motor(_leer_config_bd())` en correo.py (usa PG en prod) |
+| VULN-1 | Log token reset → `sha256(token)[:12]` (no exponer token completo en logs) |
+| BUG-4 | `loop_worker_pipeline` usa `await asyncio.to_thread(ejecutar_ciclo_worker, ...)` |
+| VULN-4/5/6 | `GET /api/colas/revision` verifica acceso empresa + requiere rol asesor mínimo |
+| VULN-7 | `POST /api/migracion/{empresa_id}/libro-iva` verifica acceso empresa |
+| VULN-8 | `POST /api/empresas` requiere `admin_gestoria` o `superadmin` |
+| FE-3 | Sidebar `=== 'superadmin'`; `types/index.ts` solo tiene roles reales |
+
+### ⚡ PRÓXIMA SESIÓN — Pipeline Gerardo + Pipeline en Vivo
+
+**1. Verificar pipeline Gerardo con el fix de 2 pasos** (bloqueante para Gerardo)
+```bash
+export $(grep -v '^#' .env | xargs)
+python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo
+```
+
+**2. Pipeline en Vivo Tasks 4-12** (plan: `docs/plans/2026-03-03-pipeline-live.md`)
+
+| Task | Qué hace |
+|------|----------|
+| 4 | Hook `usePipelineSyncStatus` — polling 30s |
+| 5-8 | Componentes PipelineNode, FlowConnector, DocumentParticle, PipelineFlowDiagram |
+| 9 | `GlobalStatsStrip` + `EmpresaBadges` |
+| 10 | `LiveEventFeed` — Framer Motion |
+| 11 | `pipeline-live-page.tsx` |
+| 12 | Routing + Sidebar + Regresión |
 
 ---
 
