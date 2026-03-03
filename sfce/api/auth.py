@@ -1,5 +1,6 @@
 """SFCE API — Autenticacion JWT con 3 roles (admin, gestor, readonly)."""
 
+import hashlib
 import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -9,7 +10,7 @@ import bcrypt
 import jwt
 from fastapi import HTTPException, Request, status
 
-from sfce.db.modelos_auth import Usuario
+from sfce.db.modelos_auth import TokenServicio, Usuario
 
 
 # --- Hashing de passwords ---
@@ -204,6 +205,39 @@ def crear_usuarios_ci(sesion_factory) -> None:
                     empresas_ids=[],
                 ))
         sesion.commit()
+
+
+def verificar_token_servicio(request: Request, sesion_factory=None) -> TokenServicio:
+    """Verifica header X-Pipeline-Token. Lanza 401 si inválido o revocado.
+
+    El token raw se pasa en el header X-Pipeline-Token.
+    Se compara su SHA256 con el almacenado en BD.
+    Actualiza ultimo_uso en cada request.
+    """
+    token_raw = request.headers.get("X-Pipeline-Token")
+    if not token_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Pipeline-Token requerido",
+        )
+    token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+    sf = sesion_factory or request.app.state.sesion_factory
+    with sf() as sesion:
+        ts = sesion.query(TokenServicio).filter_by(
+            token_hash=token_hash,
+            activo=True,
+        ).first()
+        if not ts:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token de servicio inválido o revocado",
+            )
+        ts.ultimo_uso = datetime.now(timezone.utc).isoformat()
+        sesion.commit()
+        # Capturar atributos antes de cerrar la sesión (evitar DetachedInstanceError)
+        _ = ts.id, ts.nombre, ts.token_hash, ts.gestoria_id, ts.empresa_ids, ts.activo, ts.ultimo_uso
+        sesion.expunge(ts)
+    return ts
 
 
 from sfce.db.modelos import Empresa

@@ -1,4 +1,6 @@
 """Endpoints exclusivos de superadmin: gestorias, usuarios globales."""
+import hashlib
+import json
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -10,7 +12,7 @@ from pydantic import BaseModel, EmailStr
 from sfce.api.app import get_sesion_factory
 from sfce.api.auth import obtener_usuario_actual, hashear_password
 from sfce.core.tiers import TIER_BASICO, TIER_PRO, TIER_PREMIUM
-from sfce.db.modelos_auth import Gestoria, Usuario
+from sfce.db.modelos_auth import Gestoria, TokenServicio, Usuario
 from sfce.db.modelos import Empresa, ConfigProcesamientoEmpresa
 
 logger = logging.getLogger(__name__)
@@ -558,3 +560,96 @@ def put_config_procesamiento(
             "notif_calidad_cliente": cfg.notif_calidad_cliente,
             "notif_contable_gestor": cfg.notif_contable_gestor,
         }
+
+
+# ---------------------------------------------------------------------------
+# Tokens de servicio (autenticación pipeline y otras integraciones)
+# ---------------------------------------------------------------------------
+
+class CrearTokenServicioIn(BaseModel):
+    nombre: str
+    gestoria_id: int | None = None
+    empresa_ids: list[int] = []
+
+
+@router.post("/tokens-servicio", status_code=201)
+def crear_token_servicio(
+    body: CrearTokenServicioIn,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Crea un token de servicio. Devuelve el token raw UNA SOLA VEZ — no se puede recuperar."""
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin puede crear tokens de servicio")
+
+    token_raw = secrets.token_hex(32)
+    token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        ts = TokenServicio(
+            nombre=body.nombre,
+            token_hash=token_hash,
+            gestoria_id=body.gestoria_id,
+            empresa_ids=json.dumps(body.empresa_ids),
+            activo=True,
+            creado_en=datetime.now(timezone.utc).isoformat(),
+        )
+        s.add(ts)
+        s.commit()
+        s.refresh(ts)
+        return {
+            "id": ts.id,
+            "nombre": ts.nombre,
+            "gestoria_id": ts.gestoria_id,
+            "empresa_ids": body.empresa_ids,
+            "token_raw": token_raw,  # Solo se devuelve aquí — no se almacena en BD
+            "creado_en": ts.creado_en,
+        }
+
+
+@router.get("/tokens-servicio")
+def listar_tokens_servicio(
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista tokens de servicio. Nunca devuelve el token raw."""
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin puede ver tokens de servicio")
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        tokens = s.query(TokenServicio).order_by(TokenServicio.creado_en.desc()).all()
+        return [
+            {
+                "id": ts.id,
+                "nombre": ts.nombre,
+                "gestoria_id": ts.gestoria_id,
+                "empresa_ids": json.loads(ts.empresa_ids or "[]"),
+                "activo": ts.activo,
+                "creado_en": ts.creado_en,
+                "ultimo_uso": ts.ultimo_uso,
+                "token_hash_prefix": ts.token_hash[:12] + "...",
+            }
+            for ts in tokens
+        ]
+
+
+@router.delete("/tokens-servicio/{token_id}", status_code=200)
+def revocar_token_servicio(
+    token_id: int,
+    request: Request,
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Revoca un token de servicio (activo=False). No borra el registro."""
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin puede revocar tokens de servicio")
+
+    sf = request.app.state.sesion_factory
+    with sf() as s:
+        ts = s.get(TokenServicio, token_id)
+        if not ts:
+            raise HTTPException(status_code=404, detail="Token no encontrado")
+        ts.activo = False
+        s.commit()
+        return {"id": ts.id, "nombre": ts.nombre, "revocado": True}

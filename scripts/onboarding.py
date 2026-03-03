@@ -341,19 +341,18 @@ def crear_estructura_carpetas(ruta_cliente: Path, ejercicio: str):
     """Crea estructura de carpetas del cliente."""
     carpetas = [
         ruta_cliente / "inbox",
+        ruta_cliente / "inbox" / ".cache",
         ruta_cliente / "cuarentena",
-        ruta_cliente / ejercicio / "procesado" / "T1",
-        ruta_cliente / ejercicio / "procesado" / "T2",
-        ruta_cliente / ejercicio / "procesado" / "T3",
-        ruta_cliente / ejercicio / "procesado" / "T4",
+        ruta_cliente / ejercicio / "procesado",
         ruta_cliente / ejercicio / "auditoria",
         ruta_cliente / ejercicio / "modelos_fiscales",
     ]
     for carpeta in carpetas:
         carpeta.mkdir(parents=True, exist_ok=True)
 
-    # Crear .gitkeep en carpetas vacias
-    for carpeta in carpetas:
+    # .gitkeep solo en carpetas visibles (no en .cache)
+    visibles = [c for c in carpetas if ".cache" not in str(c)]
+    for carpeta in visibles:
         gitkeep = carpeta / ".gitkeep"
         if not gitkeep.exists() and not any(carpeta.iterdir()):
             gitkeep.touch()

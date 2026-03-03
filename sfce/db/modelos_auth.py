@@ -93,6 +93,25 @@ class Usuario(Base):
     )
 
 
+class TokenServicio(Base):
+    """Token de servicio para autenticación del pipeline y otras integraciones.
+
+    El token raw se entrega una sola vez al crear. En BD se almacena SHA256.
+    gestoria_id=None → scope superadmin (todos los datos).
+    empresa_ids='[]' → todas las empresas de la gestoría.
+    """
+    __tablename__ = "tokens_servicio"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nombre = Column(String(200), nullable=False)
+    token_hash = Column(String(64), nullable=False, unique=True)
+    gestoria_id = Column(Integer, nullable=True)
+    empresa_ids = Column(String, nullable=False, default="[]")  # JSON array
+    activo = Column(Boolean, nullable=False, default=True)
+    creado_en = Column(String, nullable=False)
+    ultimo_uso = Column(String, nullable=True)
+
+
 class AuditLog(Base):
     """Registro de auditoría RGPD. Inmutable — nunca se modifica ni borra."""
     __tablename__ = "audit_log_seguridad"
