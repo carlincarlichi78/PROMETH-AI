@@ -16,6 +16,23 @@ router = APIRouter(prefix="/api/correo", tags=["correo"])
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _test_conexion_imap(servidor: str, puerto: int, ssl: bool, usuario: str, contrasena: str) -> bool:
+    """Intenta conectar vía IMAP para verificar credenciales."""
+    import imaplib
+    try:
+        cls = imaplib.IMAP4_SSL if ssl else imaplib.IMAP4
+        conn = cls(servidor, puerto)
+        conn.login(usuario, contrasena)
+        conn.logout()
+        return True
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------------------------
 
@@ -36,9 +53,10 @@ class CrearCuentaRequest(BaseModel):
 
 class CrearCuentaAdminRequest(BaseModel):
     nombre: str
-    tipo_cuenta: str = "empresa"     # 'empresa'|'dedicada'|'gestoria'|'sistema'
+    tipo_cuenta: str = "empresa"     # 'empresa'|'dedicada'|'gestoria'|'sistema'|'asesor'
     empresa_id: int | None = None
     gestoria_id: int | None = None
+    usuario_id: int | None = None    # FK a usuarios.id, requerido para tipo='asesor'
     servidor: str | None = None
     puerto: int = 993
     ssl: bool = True
@@ -365,6 +383,7 @@ def admin_crear_cuenta(
             tipo_cuenta=body.tipo_cuenta,
             empresa_id=body.empresa_id,
             gestoria_id=body.gestoria_id,
+            usuario_id=body.usuario_id,
             protocolo="imap",
             servidor=body.servidor,
             puerto=body.puerto,
@@ -380,6 +399,7 @@ def admin_crear_cuenta(
             "id": cuenta.id,
             "nombre": cuenta.nombre,
             "tipo_cuenta": cuenta.tipo_cuenta,
+            "usuario_id": cuenta.usuario_id,
             "usuario": cuenta.usuario,
             "activa": cuenta.activa,
         }
@@ -431,6 +451,30 @@ def admin_desactivar_cuenta(
         cuenta.activa = False
         s.commit()
         return {"ok": True}
+
+
+@router.post("/admin/cuentas/{cuenta_id}/test")
+def test_cuenta_conexion(
+    cuenta_id: int,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """Prueba la conexión IMAP de una cuenta. Solo superadmin."""
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol != "superadmin":
+        raise HTTPException(status_code=403, detail="Solo superadmin")
+    with sesion_factory() as s:
+        cuenta = s.get(CuentaCorreo, cuenta_id)
+        if not cuenta:
+            raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        from sfce.core.cifrado import descifrar
+        contrasena = descifrar(cuenta.contrasena_enc) if cuenta.contrasena_enc else ""
+        servidor = cuenta.servidor or ""
+        puerto = cuenta.puerto or 993
+        ssl = cuenta.ssl if cuenta.ssl is not None else True
+        usuario_imap = cuenta.usuario or ""
+    ok = _test_conexion_imap(servidor, puerto, ssl, usuario_imap, contrasena)
+    return {"ok": ok, "mensaje": "Conexión exitosa" if ok else "No se pudo conectar"}
 
 
 # ---------------------------------------------------------------------------
