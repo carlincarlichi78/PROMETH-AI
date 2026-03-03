@@ -81,7 +81,7 @@ def extraer_adjuntos(
     for adj in adjuntos:
         mime = adj.get("mime_type", "")
         nombre = adj.get("nombre", "")
-        contenido = adj.get("contenido", b"")
+        contenido = adj.get("contenido") or adj.get("datos_bytes", b"")
 
         # Soporte para adjuntos .eml (email reenviado como adjunto)
         if mime == "message/rfc822" or nombre.lower().endswith(".eml"):

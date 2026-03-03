@@ -357,7 +357,7 @@ class IngestaCorreo:
             estado = "CUARENTENA"
             motivo_cuarentena = "SIN_CIF_IDENTIFICABLE"
 
-        return EmailProcesado(
+        email_obj = EmailProcesado(
             cuenta_id=cuenta_id,
             uid_servidor=email_data["uid"],
             message_id=email_data.get("message_id"),
@@ -372,6 +372,9 @@ class IngestaCorreo:
             score_confianza=None,
             motivo_cuarentena=motivo_cuarentena,
         )
+        # Marcar para encolar si el CIF fue identificado correctamente
+        email_obj._decision_encola = "AUTO" if empresa_destino_id else "CUARENTENA"  # type: ignore[attr-defined]
+        return email_obj
 
     def _construir_email_dedicada(
         self, email_data, cuenta_id, empresa_id, gestoria_id,
