@@ -288,3 +288,21 @@ def verificar_acceso_empresa(usuario, empresa_id: int, sesion) -> Empresa:
             detail="No tienes acceso a esta empresa",
         )
     return empresa
+
+
+def verificar_token_ws(token: str | None, sesion) -> "Usuario | None":
+    """Verifica JWT para conexiones WebSocket. Devuelve usuario o None si invalido."""
+    if not token:
+        return None
+    try:
+        payload = decodificar_token(token)
+        email = payload.get("sub")
+        if not email:
+            return None
+        usuario = sesion.query(Usuario).filter(
+            Usuario.email == email,
+            Usuario.activo == True,
+        ).first()
+        return usuario
+    except Exception:
+        return None
