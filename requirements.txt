@@ -92,3 +92,8 @@ python-dateutil==2.9.0.post0
 MarkupSafe==3.0.3
 sniffio==1.3.1
 click==8.3.1
+
+# ── OCR local (motores gratuitos) ────────────────────────────────────────────
+easyocr>=1.7.0
+paddlepaddle>=2.6.0
+paddleocr>=2.7.0
