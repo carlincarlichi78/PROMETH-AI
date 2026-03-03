@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,6 +20,7 @@ interface NuevaCuentaForm {
   contrasena: string
   gestoria_id?: number
   empresa_id?: number
+  usuario_id?: number
 }
 
 async function fetchCuentas(token: string) {
@@ -84,6 +86,19 @@ export function CuentasCorreoPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cuentas-correo"] }),
   })
 
+  const testConexionMut = useMutation({
+    mutationFn: async (id: number) => {
+      const r = await fetch(`/api/correo/admin/cuentas/${id}/test`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${tokenStr}` },
+      })
+      return r.json()
+    },
+    onSuccess: (data) => {
+      alert(data.ok ? "✓ Conexión exitosa" : `✗ Error: ${data.mensaje}`)
+    },
+  })
+
   const porTipo = (tipo: string) => cuentas.filter((c: any) => c.tipo_cuenta === tipo)
 
   return (
@@ -116,6 +131,7 @@ export function CuentasCorreoPage() {
                     <SelectItem value="gestoria">Gestoría</SelectItem>
                     <SelectItem value="sistema">Sistema (noreply)</SelectItem>
                     <SelectItem value="empresa">Empresa individual</SelectItem>
+                    <SelectItem value="asesor">Asesor (IMAP personal)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -175,6 +191,47 @@ export function CuentasCorreoPage() {
           </div>
         )
       })}
+
+      {/* Cuentas IMAP Asesores */}
+      <div className="mt-8">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Cuentas IMAP — Asesores individuales
+        </h3>
+        {porTipo("asesor").length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin cuentas asesor configuradas.</p>
+        ) : (
+          <div className="space-y-2">
+            {porTipo("asesor").map((c: any) => (
+              <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                <div>
+                  <p className="font-medium text-sm">{c.nombre}</p>
+                  <p className="text-xs text-muted-foreground">{c.usuario}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={c.activa ? "default" : "secondary"}>
+                    {c.activa ? "Activa" : "Inactiva"}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => testConexionMut.mutate(c.id)}
+                    disabled={testConexionMut.isPending}
+                  >
+                    Probar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => desactivarMut.mutate(c.id)}
+                  >
+                    Desactivar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
