@@ -138,3 +138,6 @@ tolerancias:
   cuadre_asiento: 0.01
   comparacion_importes: 0.02
   confianza_minima: 85
+
+sfce:
+  empresa_id: 5
