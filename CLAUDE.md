@@ -35,8 +35,8 @@ Servicio de contabilidad y gestoria que ofrezco a mis clientes usando FacturaScr
 Claude me asiste controlando FacturaScripts via navegador para registrar facturas, generar modelos fiscales, etc.
 
 ## Infraestructura (compartida para todos los clientes)
-- **FacturaScripts**: https://contabilidad.lemonfresh-tuc.com
-- **API REST**: base URL `https://contabilidad.lemonfresh-tuc.com/api/3/`, Header: `Token: iOXmrA1Bbn8RDWXLv91L`
+- **FacturaScripts**: https://contabilidad.prometh-ai.es (antes: contabilidad.lemonfresh-tuc.com)
+- **API REST**: base URL `https://contabilidad.prometh-ai.es/api/3/`, Header: `Token: iOXmrA1Bbn8RDWXLv91L`
 - **Servidor**: 65.108.60.69 (Hetzner), user: carli (root SSH con clave)
 - **Docker**: /opt/apps/facturascripts/ (app PHP/Apache + MariaDB 10.11) — NO TOCAR
 - **Nginx**: Docker, conf en `/opt/infra/nginx/conf.d/`. Reload: `docker exec nginx nginx -s reload`
@@ -256,25 +256,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (02/03/2026, sesión 43 — Motor Testeo ejecutado — 2565 tests)
+## Estado actual (03/03/2026, sesión 44 — Migración dominio FS + investigación aislamiento gestorías)
 
 **Rama activa**: `main`
-**Último commit**: `00ae851`
-**Tests**: 2565 PASS, 4 skipped, 0 FAILED
+**Último commit**: `5cea953`
+**Tests**: 2565 PASS, 4 skipped, 0 FAILED (sin cambios en tests)
 
-### Motor Testeo SFCE — ciclo completo ejecutado (sesión 43)
+### Sesión 44 — Lo realizado
 
-| Fix | Detalle |
-|-----|---------|
-| `ingesta_correo.py` — CUARENTENA gestoría | IA decía SPAM → IGNORADO. Ahora en gestoría: si IA dice SPAM, va a CUARENTENA para revisión manual |
-| `migracion_021_empresa_slug_backfill.py` — wrapper | Módulo con nombre que empieza en dígito no importable. Alias via `importlib` |
-| `test_worker_testing_extra.py` (+8 tests) | Heartbeat Kuma ok/bugs/error, modos vigilancia/regression, resultados timeout/bug |
-| `test_procesador_lote_extra.py` (+5 tests) | Archivo externo ValueError, no-file en grupo, excepción clasificación, aptos_automatico, migración 022 idempotente |
+| Tarea | Detalle |
+|-------|---------|
+| Investigación aislamiento FS | FS NO tiene per-user empresa restriction. `users.idempresa` = empresa por defecto, no restricción. Tabs EditUser: datos/roles/opciones/emails — NO hay tab "Empresas" |
+| Conclusión multi-gestoría | Requiere instancias FS separadas (2-3 semanas refactor) o gestores solo vía SFCE. Paso 1 pendiente: añadir `fs_url`+`fs_token` a tabla `gestorias` |
+| Migración dominio FS | `contabilidad.lemonfresh-tuc.com` → `contabilidad.prometh-ai.es` |
+| nginx config | `/opt/infra/nginx/conf.d/contabilidad-prometh-ai.conf` creado. Config viejo desactivado (`facturascripts.conf.disabled`) |
+| SSL | Let's Encrypt para `contabilidad.prometh-ai.es` (expira 2026-06-01) |
+| Código actualizado | `fs_api.py`, `fs_setup.py`, `aprendizaje.yaml`, `.env.example`, `.env` producción |
+| FS admin credentials | Usuario: `carloscanetegomez` / Pass: `Admin2026` (user `pastorino` no existía) |
 
 ### Pendiente próxima sesión
-1. Onboarding histórico Tasks 5-8 (generar PDFs reales, crear empresas en FS, correr pipeline)
-2. Alias `documentacion@prometh-ai.es` en Google Admin
-3. Actualizar `docs/LIBRO/` (temas 11, 17, 20)
+1. **Aislamiento gestorías paso 1**: añadir `fs_url` + `fs_token` (cifrado Fernet) a tabla `gestorias` — migración 024
+2. Onboarding histórico Tasks 5-8 (generar PDFs reales, crear empresas en FS, correr pipeline)
+3. Alias `documentacion@prometh-ai.es` en Google Admin
+4. Actualizar `docs/LIBRO/` (temas 11, 17, 20)
 
 ---
 
