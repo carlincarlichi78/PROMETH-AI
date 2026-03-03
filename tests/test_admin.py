@@ -304,3 +304,113 @@ class TestInvitarCliente:
             "nombre": "Test",
         })
         assert resp.status_code == 401
+
+
+# --- Tests migración 025 ---
+
+class TestMigracion025GestoriaJavier:
+    """Verifica que la migración 025 aplica correctamente en BD de test."""
+
+    @pytest.fixture
+    def sesion_con_datos(self, sesion_factory):
+        """BD con gestorías, usuarios y empresas de prueba."""
+        from sfce.db.modelos_auth import Gestoria, Usuario
+        from sfce.db.modelos import Empresa
+        from sfce.api.auth import hashear_password
+
+        with sesion_factory() as s:
+            # Gestorías base
+            g1 = Gestoria(nombre="Uralde", email_contacto="sergio@test.com", activa=True, plan_tier="basico")
+            g2 = Gestoria(nombre="Gestoría A", email_contacto="gestor1@test.com", activa=True, plan_tier="basico")
+            s.add_all([g1, g2])
+            s.flush()
+
+            # Usuarios
+            javier = Usuario(
+                email="javier@prometh-ai.es", nombre="Javier Test",
+                hash_password=hashear_password("pwd"), rol="asesor_independiente",
+                gestoria_id=None, activo=True, empresas_asignadas=[],
+            )
+            g1u = Usuario(
+                email="gestor1@prometh-ai.es", nombre="Gestor1",
+                hash_password=hashear_password("pwd"), rol="asesor",
+                gestoria_id=g2.id, activo=True, empresas_asignadas=[],
+            )
+            g2u = Usuario(
+                email="gestor2@prometh-ai.es", nombre="Gestor2",
+                hash_password=hashear_password("pwd"), rol="asesor",
+                gestoria_id=g2.id, activo=True, empresas_asignadas=[],
+            )
+            s.add_all([javier, g1u, g2u])
+
+            # Empresas 10-13 sin gestoría asignada
+            for i in range(10, 14):
+                emp = Empresa(
+                    nombre=f"Empresa {i}", cif=f"B{i:08d}",
+                    forma_juridica="sl", territorio="peninsula",
+                    regimen_iva="general",
+                    gestoria_id=None, activa=True,
+                )
+                s.add(emp)
+            s.commit()
+
+        return sesion_factory
+
+    def test_gestoria_javier_creada(self, sesion_con_datos):
+        import importlib.util
+        import pathlib
+        spec = importlib.util.spec_from_file_location(
+            "mig025",
+            pathlib.Path(__file__).parent.parent / "sfce/db/migraciones/025_gestoria_javier.py",
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        with sesion_con_datos() as s:
+            mod.upgrade(s)
+
+        from sfce.db.modelos_auth import Gestoria
+        with sesion_con_datos() as s:
+            gestoria = s.query(Gestoria).filter_by(email_contacto="javier@prometh-ai.es").first()
+            assert gestoria is not None
+            assert gestoria.nombre == "Javier Independiente"
+
+    def test_javier_rol_actualizado(self, sesion_con_datos):
+        import importlib.util
+        import pathlib
+        spec = importlib.util.spec_from_file_location(
+            "mig025b",
+            pathlib.Path(__file__).parent.parent / "sfce/db/migraciones/025_gestoria_javier.py",
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        with sesion_con_datos() as s:
+            mod.upgrade(s)
+
+        from sfce.db.modelos_auth import Usuario, Gestoria
+        with sesion_con_datos() as s:
+            javier = s.query(Usuario).filter_by(email="javier@prometh-ai.es").first()
+            assert javier.rol == "admin_gestoria"
+            gestoria = s.query(Gestoria).filter_by(email_contacto="javier@prometh-ai.es").first()
+            assert javier.gestoria_id == gestoria.id
+
+    def test_gestor1_gestor2_admin_gestoria(self, sesion_con_datos):
+        import importlib.util
+        import pathlib
+        spec = importlib.util.spec_from_file_location(
+            "mig025c",
+            pathlib.Path(__file__).parent.parent / "sfce/db/migraciones/025_gestoria_javier.py",
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        with sesion_con_datos() as s:
+            mod.upgrade(s)
+
+        from sfce.db.modelos_auth import Usuario
+        with sesion_con_datos() as s:
+            g1 = s.query(Usuario).filter_by(email="gestor1@prometh-ai.es").first()
+            g2 = s.query(Usuario).filter_by(email="gestor2@prometh-ai.es").first()
+            assert g1.rol == "admin_gestoria"
+            assert g2.rol == "admin_gestoria"
