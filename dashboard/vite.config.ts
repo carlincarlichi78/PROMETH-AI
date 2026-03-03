@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/*.svg'],
       manifest: {
-        name: 'SPICE — Sistema Fiscal Contable',
-        short_name: 'SPICE',
+        name: 'PROMETH-AI — Sistema Fiscal Contable',
+        short_name: 'PROMETH-AI',
         description: 'Sistema Fiscal Contable Evolutivo para gestorías',
         theme_color: '#1e293b',
         background_color: '#ffffff',

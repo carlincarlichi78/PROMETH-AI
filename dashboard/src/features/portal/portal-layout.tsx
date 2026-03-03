@@ -9,10 +9,10 @@ export default function PortalLayout() {
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white px-6 py-3 flex items-center gap-3 shadow-sm">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white font-bold text-sm select-none">
-          S
+          P
         </div>
         <div>
-          <span className="font-semibold text-sm text-slate-900">SPICE</span>
+          <span className="font-semibold text-sm text-slate-900">PROMETH-AI</span>
           <span className="text-slate-400 text-sm"> — Portal Cliente</span>
         </div>
       </header>

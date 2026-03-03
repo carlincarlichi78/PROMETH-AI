@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Download, FileText, Receipt, TrendingUp, TrendingDown, Clock, AlertCircle } from 'lucide-react'
+import { Download, FileText, Receipt, TrendingUp, TrendingDown, Clock, AlertCircle, Upload } from 'lucide-react'
+import { useRef } from 'react'
 
 interface ResumenPortal {
   empresa_id: number
@@ -51,6 +52,9 @@ export default function PortalPage() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [descargando, setDescargando] = useState(false)
+  const [subiendo, setSubiendo] = useState(false)
+  const [mensajeSubida, setMensajeSubida] = useState<string | null>(null)
+  const inputFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!token) return
@@ -79,6 +83,32 @@ export default function PortalPage() {
         <div className="text-muted-foreground text-sm">Cargando...</div>
       </div>
     )
+  }
+
+  const subirDocumento = async (archivo: File) => {
+    if (!token) return
+    setSubiendo(true)
+    setMensajeSubida(null)
+    try {
+      const form = new FormData()
+      form.append('archivo', archivo)
+      form.append('tipo', 'Factura')
+      const res = await fetch(`/api/portal/${empresaId}/documentos/subir`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      if (!res.ok) throw new Error(`${res.status}`)
+      setMensajeSubida('Documento enviado correctamente. Se procesará en breve.')
+      // Recargar lista documentos
+      const d = await apiFetch<{ documentos: DocumentoPortal[] }>(`/api/portal/${empresaId}/documentos`, token)
+      setDocumentos(d.documentos ?? [])
+    } catch {
+      setMensajeSubida('No se pudo enviar el documento. Inténtalo de nuevo.')
+    } finally {
+      setSubiendo(false)
+      if (inputFileRef.current) inputFileRef.current.value = ''
+    }
   }
 
   const descargarDatos = async () => {
@@ -189,6 +219,45 @@ export default function PortalPage() {
           </Card>
         </div>
       )}
+
+      <Separator />
+
+      {/* Subir documento */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-slate-700">Enviar documento</h2>
+        <div className="rounded-lg border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
+          <Upload className="h-8 w-8 mx-auto text-slate-300 mb-3" />
+          <p className="text-sm text-slate-500 mb-4">
+            Sube tus facturas, tickets o cualquier documento contable
+          </p>
+          <input
+            ref={inputFileRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            aria-label="Seleccionar documento a subir"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) subirDocumento(f)
+            }}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={subiendo}
+            onClick={() => inputFileRef.current?.click()}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            {subiendo ? 'Enviando...' : 'Seleccionar archivo'}
+          </Button>
+          {mensajeSubida && (
+            <p className={`mt-3 text-xs ${mensajeSubida.includes('correctamente') ? 'text-emerald-600' : 'text-red-500'}`}>
+              {mensajeSubida}
+            </p>
+          )}
+        </div>
+      </div>
 
       <Separator />
 

@@ -83,7 +83,7 @@ def resumen_portal(
     with sf() as sesion:
         empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
 
-        ej = empresa.ejercicio_activo or str(date.today().year)
+        ej = str(date.today().year)
 
         # Resultado simplificado desde partidas
         partidas = list(sesion.execute(
@@ -172,7 +172,7 @@ def calendario_ical(
     sf = request.app.state.sesion_factory
     with sf() as sesion:
         empresa = verificar_acceso_empresa(_user, empresa_id, sesion)
-        ejercicio = empresa.ejercicio_activo or str(date.today().year)
+        ejercicio = str(date.today().year)
 
     from sfce.core.servicio_fiscal import ServicioFiscal
     tipo_empresa = "sl"  # default; podria leerse de config empresa
