@@ -14,6 +14,8 @@ from typing import Optional
 
 import requests
 import yaml
+from watchdog.events import FileSystemEventHandler, FileCreatedEvent
+from watchdog.observers import Observer
 
 RAIZ = Path(__file__).parent.parent
 CLIENTES_DIR = RAIZ / os.getenv("SFCE_CLIENTES_DIR", "clientes")
@@ -201,3 +203,67 @@ def startup_scan(callback=None) -> None:
             # Solo archivos directamente en inbox/, no en subdirectorios
             if pdf.parent == inbox_dir:
                 fn(pdf)
+
+
+class InboxEventHandler(FileSystemEventHandler):
+    """Watchdog handler: procesa PDFs creados en inbox/."""
+
+    def __init__(self, executor: ThreadPoolExecutor):
+        self._executor = executor
+
+    def on_created(self, event: FileCreatedEvent) -> None:
+        if event.is_directory:
+            return
+        ruta = Path(event.src_path)
+        if ruta.suffix.lower() != ".pdf":
+            return
+        # Solo archivos en inbox/ directo (no en subdirectorios subido/error/)
+        slug = _slug_desde_ruta(ruta)
+        if slug is None:
+            return
+        logger.info("Nuevo archivo detectado: %s", ruta.name)
+        self._executor.submit(_procesar_archivo, ruta)
+
+
+def main() -> None:
+    """Punto de entrada del daemon. Ctrl+C para detener."""
+    logger.info("=" * 60)
+    logger.info("SFCE Inbox Watcher arrancando")
+    logger.info("Monitorizando: %s", CLIENTES_DIR)
+    logger.info("API URL: %s", API_URL)
+    logger.info("=" * 60)
+
+    if not PIPELINE_TOKEN:
+        logger.error("SFCE_WATCHER_TOKEN no configurado. Saliendo.")
+        raise SystemExit(1)
+
+    if not CLIENTES_DIR.exists():
+        logger.error("Directorio clientes no encontrado: %s", CLIENTES_DIR)
+        raise SystemExit(1)
+
+    executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="watcher")
+
+    # Procesar PDFs que ya estaban al arrancar
+    logger.info("Startup scan...")
+    startup_scan()
+
+    handler = InboxEventHandler(executor)
+    observer = Observer()
+    observer.schedule(handler, str(CLIENTES_DIR), recursive=True)
+    observer.start()
+    logger.info("Observer iniciado. Esperando cambios...")
+
+    try:
+        while observer.is_alive():
+            observer.join(timeout=5)
+    except KeyboardInterrupt:
+        logger.info("Señal de parada recibida")
+    finally:
+        observer.stop()
+        observer.join()
+        executor.shutdown(wait=False)
+        logger.info("Watcher detenido")
+
+
+if __name__ == "__main__":
+    main()
