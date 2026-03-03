@@ -285,6 +285,46 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
+## Estado actual (03/03/2026, sesión 54 — Grupos FS + codagente pipeline)
+
+**Rama activa**: `main`
+**Último commit**: `5f140a1`
+**Tests**: 2634 PASS, 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 54
+
+| Tarea | Detalle |
+|-------|---------|
+| Instancias FS operativas | Reconstruir en uralde/gestoriaa/javier → menú completo, empresa activa correcta |
+| Problemas FS documentados | `24-facturascripts.md` — 4 problemas + checklist 10 pasos puesta en marcha |
+| Grupos FS configurados | "gestores" en uralde (francisco/mgarcia/llupianez) y gestoriaa (gestor1/gestor2) |
+| Agentes FS vinculados | users.codagente configurado en ambas instancias |
+| `codagente_fs` en BD | Migración 027 + columna `empresas.codagente_fs` en prod PG + SQLite |
+| Pipeline codagente | `registration.py` pasa `codagente` al crear facturas en FS |
+
+### Mapeo empresa → agente FS
+
+| Empresa | Agente | Usuario |
+|---------|--------|---------|
+| PASTORINO | FRANC | francisco |
+| GERARDO + CHIRINGUITO | MGARC | mgarcia |
+| ELENA | LLUPI | llupianez |
+| MARCOS + AURORA + DISTRIB | GEST1 | gestor1 |
+| LAMAREA + CATERING | GEST2 | gestor2 |
+| fs-javier (4 empresas) | — | javier (sin restricción) |
+
+### ⚡ PRÓXIMA SESIÓN
+
+**1. SFCE_CI_TOKEN en GitHub Secrets** (smoke test CI falla sin él)
+
+**2. Fixes auditoría** (ver más abajo)
+
+**3. Añadir `codagente_fs` a cada config.yaml de clientes** para que el pipeline local también lo pase
+
+**4. Actualizar docs/LIBRO/** (`01-infraestructura.md`, `11-api-endpoints.md`)
+
+---
+
 ## Estado actual (03/03/2026, sesión 53 — Pipeline API + Producción operativa)
 
 **Rama activa**: `main`
