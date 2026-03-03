@@ -30,17 +30,15 @@ class _ImaplibAdapter:
         _status, data = self._raw.uid("fetch", uid_str, f"({fmt})")
         resultado: dict[bytes, dict] = {}
         # imaplib devuelve pares (header_bytes, raw_bytes) + b")"
-        i = 0
-        while i < len(data):
-            parte = data[i]
+        # Al usar uid("fetch", ...) Gmail devuelve numero de secuencia en el header,
+        # no el UID. Mapeamos por posicion usando los UIDs solicitados.
+        uid_iter = iter(uids)
+        for parte in data:
             if isinstance(parte, tuple):
-                # parte[0] contiene "N (RFC822 {size})", parte[1] es el raw
-                header = parte[0]
                 raw = parte[1]
-                # Extraer UID del header: b"3 (RFC822 ...)"
-                uid = header.split()[0]
-                resultado[uid] = {b"RFC822": raw}
-            i += 1
+                uid = next(uid_iter, None)
+                if uid is not None:
+                    resultado[uid] = {b"RFC822": raw}
         return resultado
 
     def logout(self) -> None:

@@ -346,10 +346,12 @@ class IngestaCorreo:
         for adj in email_data.get("adjuntos", []):
             b = adj.get("bytes") or adj.get("datos_bytes", b"")
             if b:
-                cif = _extraer_cif_pdf(b)
-                if cif:
+                for cif in _extraer_cif_pdf(b):
                     empresa_destino_id = _resolver_empresa_por_cif(cif, empresas_asesor)
-                    break
+                    if empresa_destino_id:
+                        break
+            if empresa_destino_id:
+                break
 
         if empresa_destino_id is None:
             estado = "CUARENTENA"
@@ -683,20 +685,24 @@ _CIF_PATRON = _re.compile(
 )
 
 
-def _extraer_cif_pdf(bytes_pdf: bytes) -> str | None:
-    """Extrae el primer CIF/NIF encontrado en el texto del PDF (pdfplumber)."""
+def _extraer_cif_pdf(bytes_pdf: bytes) -> list[str]:
+    """Extrae todos los CIF/NIF únicos del PDF (pdfplumber), por orden de aparición."""
+    encontrados: list[str] = []
+    vistos: set[str] = set()
     try:
         import io
         import pdfplumber
         with pdfplumber.open(io.BytesIO(bytes_pdf)) as pdf:
             for pagina in pdf.pages:
                 texto = pagina.extract_text() or ""
-                m = _CIF_PATRON.search(texto)
-                if m:
-                    return m.group(1)
+                for m in _CIF_PATRON.finditer(texto):
+                    cif = m.group(1)
+                    if cif not in vistos:
+                        vistos.add(cif)
+                        encontrados.append(cif)
     except Exception:
         logger.debug("_extraer_cif_pdf: no se pudo leer el PDF", exc_info=True)
-    return None
+    return encontrados
 
 
 def _resolver_empresa_por_cif(
