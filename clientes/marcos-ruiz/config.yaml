@@ -4,6 +4,7 @@ empresa:
   cif: "29457823K"
   tipo: autonomo
   idempresa: 1
+  codagente_fs: "GEST1"
   ejercicio_activo: "2025"
   codejercicio: "0001"
   regimen_iva: general

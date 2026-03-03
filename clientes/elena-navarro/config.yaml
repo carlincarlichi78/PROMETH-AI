@@ -4,6 +4,7 @@ empresa:
   cif: "24813607B"
   tipo: autonomo
   idempresa: 5
+  codagente_fs: "LLUPI"
   ejercicio_activo: "2025"
   codejercicio: "0005"
   regimen_iva: exento_parcial

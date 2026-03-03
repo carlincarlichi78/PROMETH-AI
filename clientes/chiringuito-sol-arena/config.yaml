@@ -3,6 +3,7 @@ empresa:
   cif: "B29066776"
   tipo: sl
   idempresa: 4
+  codagente_fs: "MGARC"
   ejercicio_activo: "2025"
   codejercicio: "0004"
   regimen_iva: general

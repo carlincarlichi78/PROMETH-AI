@@ -3,6 +3,7 @@ empresa:
   cif: "76638663H"
   tipo: autonomo
   idempresa: 2
+  codagente_fs: "MGARC"
   ejercicio_activo: "2025"
   codejercicio: "0002"
   regimen_iva: general

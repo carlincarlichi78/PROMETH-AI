@@ -3,6 +3,7 @@ empresa:
   cif: "B13995519"
   tipo: sl
   idempresa: 1
+  codagente_fs: "FRANC"
   ejercicio_activo: "2025"
   regimen_iva: general
   direccion: "Av. General Lopez Dominguez 12, 29603 Marbella, Malaga"
