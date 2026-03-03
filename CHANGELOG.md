@@ -1,5 +1,52 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 44 — 03/03/2026: Quipu Gerardo 2025 — OCR pipeline completo
+
+### Resumen
+Generación de `gastos_gerardo_2025.xlsx` (219 PDFs → Quipu import) para Gerardo González Callejo. Pipeline tres capas: pdfplumber → Mistral OCR → GPT-4o parsing. 219/219 filas, 0 rojas, suma 59.417,01 EUR.
+
+### Scripts creados / modificados
+| Archivo | Cambio |
+|---------|--------|
+| `scripts/generar_quipu_facturas2025.py` | Mistral OCR fallback + GPT-4o parsing + cache en disco |
+| `scripts/comparar_ocr_engines.py` | Comparador independiente Mistral / GPT-4o-mini / Gemini |
+| `scripts/ocr_cache_gerardo.json` | Cache SHA256 PDF → texto OCR + respuesta GPT (evita re-llamadas) |
+
+### Pipeline OCR implementado
+1. **pdfplumber** — gratis, cubre ~80% PDFs con texto nativo
+2. **Mistral OCR** (`mistral-ocr-latest`) — para scans/PDFs espejados: $0.002/pág
+3. **GPT-4o** — segundo paso cuando regex no extrae número o total del texto OCR
+4. **Cache en disco** (`ocr_cache_gerardo.json`) — SHA256 del PDF como clave. Re-ejecuciones: $0
+
+### Comparativa motores (3 facturas Asesoría Laboral escaneadas)
+| Motor | numero_factura | total | modo |
+|-------|---------------|-------|------|
+| Mistral OCR + mistral-small | ✓ | ✓ | OCR nativo → texto |
+| GPT-4o-mini | ✓ | ✓ | Vision (imagen PNG via PyMuPDF) |
+| Gemini 2.5 Flash | ✓ | ✓ | Vision (imagen PNG via PyMuPDF) |
+
+Los tres sacan los mismos resultados. La diferencia es el modo y el coste.
+
+### Costes reales (corregidos)
+| Motor | Precio real |
+|-------|------------|
+| Mistral OCR | $2.00/1000 págs = $0.002/pág |
+| GPT-4o-mini | ~$0.001/llamada (texto o visión) |
+| Gemini 2.5 Flash | ~$0.0002/imagen (casi gratis) |
+| GPT-4o | $2.50/1M tokens input + $10/1M output (caro) |
+
+### Lecciones de extracción número de factura
+- 11 patrones regex con NIF/CIF exclusion (`/` en cadena → nunca es NIF/CIF)
+- Patrones DOTALL para valores en línea distinta del label (SkinClinic, WakeUp, Vectem)
+- GPT-4o como safety net para casos que el regex no cubre
+
+### Infraestructura
+- **PyMuPDF** (`fitz`) para PDF→PNG en Windows (pdf2image requiere Poppler, no instalado)
+- **google-generativeai**: usar `from google import genai` + `client.models.generate_content()`
+- Gemini: modelo `gemini-2.5-flash` (los modelos `2.0-flash-*` no disponibles para nuevos usuarios en este API key)
+
+---
+
 ## Sesión 43 — 02/03/2026: Motor Testeo SFCE — ciclo completo
 
 ### Resumen

@@ -1,25 +1,85 @@
 # Clientes y Configuracion
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
+> **Actualizado:** 2026-03-03 (sesión 45)
 > **Fuentes principales:** `clientes/elena-navarro/config.yaml`, `sfce/core/config.py`, `sfce/core/config_desde_bd.py`, `sfce/api/rutas/admin.py`, `sfce/api/rutas/portal.py`, `sfce/api/rutas/auth_rutas.py`
 
 ---
 
-## Clientes actuales
+## Estado actual de FacturaScripts
 
-| idempresa | Slug | Nombre | Forma juridica | Estado | Ejercicios activos |
-|-----------|------|--------|----------------|--------|--------------------|
-| 1 | `pastorino-costa-del-sol` | PASTORINO COSTA DEL SOL S.L. | S.L. | Contabilidad completa | 2022, 2023, 2024 |
-| 2 | `gerardo-gonzalez-callejon` | GERARDO GONZALEZ CALLEJON | Autonomo | FS configurado, carpetas creadas | 2025 |
-| 3 | `EMPRESA PRUEBA` | EMPRESA PRUEBA S.L. | S.L. | Sandbox testing — pipeline 46/46 OK | 2025 |
-| 4 | `chiringuito-sol-arena` | CHIRINGUITO SOL Y ARENA S.L. | S.L. | Datos inyectados: 1200 FC + 596 FV + 112 asientos | C422, C423, C424, 0004 |
-| 5 | `elena-navarro` | ELENA NAVARRO PRECIADOS | Autonomo | Pipeline completado | 2025 |
-| 6 | — | GESTORIA CARLOS CANETE | S.L. | Empresa default del admin superadmin | 2025 |
+> **FS reseteado a CERO** en sesión 37 (borrado total vía SSH + MariaDB). Solo existen las empresas creadas en sesión 45 para onboarding histórico.
+
+### Empresas en FacturaScripts (estado 03/03/2026)
+
+| idempresa | codejercicio | Nombre | Forma juridica | Ejercicio | Estado |
+|-----------|--------------|--------|----------------|-----------|--------|
+| 1 | 0001 | MARCOS RUIZ DELGADO | Autonomo | 2024 | PGC importado ✓ |
+| 2 | 0002 | RESTAURANTE LA MAREA S.L. | S.L. | 2024 | PGC importado ✓ |
 
 > Nota: el `idempresa` es el ID de empresa en FacturaScripts, no un ID interno del SFCE.
-> El `codejercicio` puede diferir del ano — empresa 4 usa "0004", no "2025".
-> La empresa 6 (GESTORIA CARLOS CANETE) es la empresa interna; no tiene slug de cliente ni config.yaml.
+> El `codejercicio` puede diferir del año — usar siempre el valor del config.yaml/BD.
+
+### Clientes en SFCE BD (gestoria_id=1 — López de Uralde)
+
+| SFCE id | Slug | Nombre | Forma juridica | Estado SFCE |
+|---------|------|--------|----------------|-------------|
+| 1 | `pastorino-costa-del-sol` | PASTORINO COSTA DEL SOL S.L. | S.L. | activa=False (oculta del dashboard) |
+| 2 | `gerardo-gonzalez-callejon` | GERARDO GONZALEZ CALLEJON | Autonomo | En BD |
+| 3 | `chiringuito-sol-arena` | CHIRINGUITO SOL Y ARENA S.L. | S.L. | En BD |
+| 4 | `elena-navarro` | ELENA NAVARRO PRECIADOS | Autonomo | En BD |
+
+> Estos 4 clientes están en la BD SFCE pero **no tienen empresa en FS** (FS fue reseteado). Para activarlos habrá que crear sus empresas en FS y actualizar `idempresa_fs` en la BD.
+
+### Clientes onboarding histórico (Marcos Ruiz + La Marea)
+
+Estos dos clientes son los objetivos del onboarding histórico. Tienen empresa en FS pero aún no tienen entrada en la BD SFCE como clientes de gestoría.
+
+| Cliente | FS idempresa | Carpeta | Documentos onboarding |
+|---------|-------------|---------|----------------------|
+| Marcos Ruiz Delgado (autónomo fontanero) | 1 | `clientes/marcos-ruiz/` | 303×4, 390, 130×4, 111×4, 190, balance, P&G |
+| Restaurante La Marea S.L. (hostelería) | 2 | `clientes/restaurante-la-marea/` | 303×4, 390, 111×4, 190, 115×4, 180, balance, P&G |
+
+---
+
+## Aislamiento de FacturaScripts por Gestoría (sesión 45)
+
+Cada gestoría puede tener su propia instancia de FacturaScripts. La arquitectura es:
+
+### Configuración
+
+- `gestorias.fs_url`: URL base de la API REST propia (ej: `https://fs.migestoria.es/api/3`)
+- `gestorias.fs_token_enc`: token API cifrado con Fernet
+- Si ambos son NULL → se usa la instancia global (`FS_API_URL` / `FS_API_TOKEN` del entorno)
+
+Configurar via `PUT /api/admin/gestorias/{id}/fs-credenciales` (solo superadmin).
+
+### Helper `obtener_credenciales_gestoria()` (`sfce/core/fs_api.py`)
+
+```python
+url, token = obtener_credenciales_gestoria(gestoria)
+# Si gestoria.fs_url existe: usa las credenciales propias (descifra token_enc)
+# Si no: lee FS_API_URL y FS_API_TOKEN del entorno (instancia global)
+```
+
+### Inyección en el pipeline (`sfce/core/pipeline_runner.py`)
+
+```python
+env_subprocess = {**os.environ, "FS_API_URL": url, "FS_API_TOKEN": token}
+subprocess.run(["python", "scripts/pipeline.py", ...], env=env_subprocess)
+```
+
+El subprocess hereda las credenciales correctas sin modificar el pipeline. `fs_api.py` (dentro del subprocess) lee del entorno, por lo que funciona igual con FS propio o global.
+
+### Flujo completo
+
+```
+Dashboard/API → pipeline_runner._resolver_credenciales_fs(empresa, sesion)
+                   ↓ busca empresa.gestoria → gestoria.fs_url/fs_token_enc
+                   ↓ si NULL: usa entorno global
+              → subprocess(pipeline.py, env={FS_API_URL, FS_API_TOKEN})
+              → pipeline.py usa fs_api.py → lee env → llama a FS correcto
+```
 
 ---
 

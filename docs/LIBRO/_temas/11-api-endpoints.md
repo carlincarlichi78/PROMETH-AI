@@ -1,7 +1,7 @@
 # 11 — API: Todos los Endpoints
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-02 (sesión 10)
+> **Actualizado:** 2026-03-03 (sesión 45)
 > **Fuentes:** `sfce/api/rutas/*.py`, `sfce/api/auth.py`
 
 ---
@@ -124,6 +124,35 @@ Solo accesible para roles `superadmin` y `admin_gestoria` (este ultimo solo sobr
 | Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
 | POST | `/api/admin/clientes-directos` | superadmin | Crear cliente sin gestoria asociada (gestoria_id=NULL). Body: `{email, nombre}`. Devuelve token de invitacion |
+
+### Credenciales FacturaScripts por Gestoría (sesión 45)
+
+Permite asignar a cada gestoría su propia instancia de FacturaScripts. Si no se configuran, se usa la instancia global del sistema.
+
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| PUT | `/api/admin/gestorias/{gestoria_id}/fs-credenciales` | superadmin | Configura (o elimina) credenciales FS privadas. Body: `{fs_url, fs_token}`. Pasar ambos como `null` elimina las credenciales y vuelve a la instancia global. El token se cifra con Fernet antes de guardar. Si se especifica uno sin el otro → 422 |
+| GET | `/api/admin/gestorias/{gestoria_id}/fs-credenciales` | superadmin | Consulta estado de credenciales FS. Devuelve `{id, nombre, fs_url, fs_credenciales_configuradas, usa_instancia_global}`. **Nunca devuelve el token en claro.** |
+
+**Respuesta del PUT:**
+```json
+{
+  "id": 1,
+  "nombre": "ASESORIA LOPEZ DE URALDE SL",
+  "fs_url": "https://fs.migestoria.es/api/3",
+  "fs_credenciales_configuradas": true
+}
+```
+
+**Flujo aislamiento gestorías (pipeline):**
+```
+Gestoria.fs_url + Gestoria.fs_token_enc
+    ↓ _resolver_credenciales_fs(empresa, sesion)   [pipeline_runner.py]
+    ↓ env_subprocess = {**os.environ, FS_API_URL: ..., FS_API_TOKEN: ...}
+    ↓ subprocess.run(scripts/pipeline.py, env=env_subprocess)
+    ↓ fs_api.API_BASE + obtener_token() leen del entorno del proceso
+```
+Si la gestoría no tiene credenciales propias → subprocess hereda variables FS globales del sistema.
 
 ### Config Pipeline por Empresa (sesión 9)
 

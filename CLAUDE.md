@@ -75,27 +75,46 @@ Cargar: `export $(grep -v '^#' .env | xargs)` (`.env` en raiz, NO en git)
 | Subcuentas/Cuentas | `/api/3/subcuentas`, `/api/3/cuentas` | GET/POST |
 | **NO disponible via API**: modelos fiscales, conciliacion bancaria, informes |
 
-## Plugins activos
-Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71
+## Plugins activos en FS
+Modelo303 v2.7, Modelo111 v2.2, Modelo347 v3.51, Modelo130 v3.71, **Modelo115 v1.6**, **Verifactu v0.84**
 
-## Clientes
-| Cliente | Carpeta | SFCE id | FS idempresa | Gestor SFCE | Estado |
-|---------|---------|---------|--------------|-------------|--------|
-| PASTORINO COSTA DEL SOL S.L. | clientes/pastorino-costa-del-sol/ | 1 | 1 | Francisco Rodríguez | activa=False en SFCE (oculta del dashboard) |
-| GERARDO GONZALEZ CALLEJON (autonomo) | clientes/gerardo-gonzalez-callejon/ | 2 | 2 | María García | En SFCE BD |
-| CHIRINGUITO SOL Y ARENA S.L. | clientes/chiringuito-sol-arena/ | 3 | 8 | Luis Lupiañez | En SFCE BD |
-| ELENA NAVARRO PRECIADOS (autonoma) | clientes/elena-navarro/ | 4 | 11 | Francisco Rodríguez | En SFCE BD |
+## FacturaScripts — usuarios
+URL: https://contabilidad.prometh-ai.es | Password universal: `Uralde2026!`
+Nicks: `carloscanetegomez` (nivel 99), `sergio` (10), `francisco/mgarcia/llupianez/gestor1/gestor2/javier` (5)
+**LIMITACION**: FS no tiene aislamiento nativo por empresa. Ver próxima sesión.
 
-## Gestoría activa (primer cliente real)
-| Dato | Valor |
-|------|-------|
-| Nombre | ASESORIA LOPEZ DE URALDE SL |
-| CIF | B92010768 (confirmar con Sergio) |
-| Email | comunicaciones@lopezdeuralde.es |
-| SFCE id | gestoria_id=1 |
-| Admin | sergio@prometh-ai.es / Uralde2025! |
-| Asesores | francisco@, maria@, luis@ @prometh-ai.es / Uralde2025! |
-| Credenciales completas | PROYECTOS/ACCESOS.md sección 27 |
+## Terreno de juego completo (sesión 46)
+**Contraseña universal SFCE + FS + Google Workspace**: `Uralde2026!`
+
+### Gestorías SFCE
+| gestoria_id | Nombre | Admin |
+|-------------|--------|-------|
+| 1 | ASESORIA LOPEZ DE URALDE SL | sergio@prometh-ai.es |
+| 2 | Gestoría A | gestor1@prometh-ai.es |
+
+### Usuarios SFCE (todos Uralde2026!)
+| Email | Rol | Gestoría |
+|-------|-----|---------|
+| admin@prometh-ai.es | superadmin | — |
+| sergio@prometh-ai.es | admin_gestoria | Uralde |
+| francisco@, maria@, luis@ @prometh-ai.es | asesor | Uralde |
+| gestor1@, gestor2@ @prometh-ai.es | asesor | Gestoría A |
+| javier@prometh-ai.es | asesor_independiente | — |
+
+### Empresas (13 total)
+| SFCE id | FS idempresa | Empresa | Gestoría |
+|---------|-------------|---------|---------|
+| 1 | 10 | PASTORINO COSTA DEL SOL S.L. | Uralde |
+| 2 | 11 | GERARDO GONZALEZ CALLEJON | Uralde |
+| 3 | 12 | CHIRINGUITO SOL Y ARENA S.L. | Uralde |
+| 4 | 13 | ELENA NAVARRO PRECIADOS | Uralde |
+| 5 | 1 | MARCOS RUIZ DELGADO | Gestoría A |
+| 6 | 2 | RESTAURANTE LA MAREA S.L. | Gestoría A |
+| 7-9 | 3-5 | Aurora Digital, Catering Costa, Distrib. Levante | Gestoría A |
+| 10-13 | 6-9 | Comunidad Mirador, F.Mora, Gastro Holding, Bermúdez | Javier |
+
+Credenciales completas clientes: PROYECTOS/ACCESOS.md sección 27
+Scripts seed: `scripts/seed_usuarios.py`, `scripts/setup_fs_todas_empresas.py`
 
 ## Scripts principales
 | Script | Uso |
@@ -182,7 +201,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ## Dashboard SFCE
 - **API**: `cd sfce && uvicorn sfce.api.app:crear_app --factory --reload --port 8000`
 - **Frontend**: `cd dashboard && npm run dev` (proxy a localhost:8000)
-- **Login**: admin@sfce.local / admin
+- **Login local**: admin@sfce.local / Uralde2026! (o admin@prometh-ai.es / Uralde2026!)
 - **Estado actual**: build ✓ 4.50s, 131 entries precacheadas. Sesión 10: +6 páginas Advisor Intelligence Platform (CommandCenter, Restaurant360, ProductIntelligence, SectorBrain, Autopilot, SalaEstrategia) + AdvisorGate.
 - `.claude/launch.json` configurado con env vars inline — `preview_start` funciona directamente
 - `iniciar_dashboard.bat` en raíz para arranque manual alternativo
@@ -203,26 +222,45 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (03/03/2026, sesión 46 — Planificación test real con gestoría)
+## Estado actual (03/03/2026, sesión 46 — Terreno de juego completo + FS usuarios)
 
-**Sesión**: planificación únicamente — sin cambios de código.
-**Objetivo definido**: test real de contabilidad 2025 completa con una S.L. y un autónomo reales de gestoría amiga.
+**Rama activa**: `main`
+**Tests**: 2573 PASS (sin cambios de código esta sesión)
 
-### Decisiones de la sesión
+### Lo realizado en sesión 46
 
-| Decisión | Detalle |
-|----------|---------|
-| Documentación mínima para test | Balance 31/12/2024 · facturas emitidas/recibidas PDF · extractos bancarios · nóminas · modelos presentados 2025 |
-| Software cliente | **Cegid** — puede exportar libro diario, libros IVA y balance directamente en Excel/CSV |
-| Estrategia test | **Opción A**: PDFs originales → pipeline OCR → comparar vs Cegid como ground truth. Más completo. |
-| Herramienta entregada | `docs/checklist_onboarding_2025.pdf` + `.png` — checklist visual A4 para enviar por WhatsApp |
+| Tarea | Detalle |
+|-------|---------|
+| SFCE BD | 2 gestorías + 8 usuarios gestores/asesores + 13 usuarios clientes + 13 empresas |
+| FacturaScripts | 8 usuarios creados (passwords hasheados correctamente con bcrypt) |
+| FS plugins | Modelo115 v1.6 + Verifactu v0.84 instalados (activar manualmente en panel admin) |
+| ACCESOS.md | Sección 27 completamente reescrita con todos los accesos |
+| Google Workspace | 8 cuentas @prometh-ai.es activas, password Uralde2026! |
+| Emails clientes | Actualizados a emails realistas (.es para empresas, gmail para autónomos) |
+| 2FA FS admin | Desactivado en carloscanetegomez |
 
-### Próxima sesión
+### Próxima sesión — Instancias FS por gestoría
 
-1. Recibir documentación de la gestoría (S.L. + autónomo, Cegid exports + PDFs)
-2. Crear clientes en SFCE: nueva S.L. y nuevo autónomo real
-3. Ejecutar pipeline completo sobre facturas reales 2025
-4. Comparar modelos calculados vs presentados en AEAT
+**Objetivo**: aislamiento total — cada gestor ve solo sus empresas en FacturaScripts.
+
+**Plan**:
+1. Levantar 3 contenedores Docker FS nuevos en servidor (Uralde + GestoriaA + Javier)
+2. Configurar nginx + DNS + SSL para cada uno:
+   - `fs-uralde.prometh-ai.es`
+   - `fs-gestoriaa.prometh-ai.es`
+   - `fs-javier.prometh-ai.es`
+3. Crear ejercicios + importar PGC en cada instancia para sus empresas
+4. Actualizar `gestorias.fs_url` + `gestorias.fs_token_enc` en SFCE BD (migración 024 ya lista)
+5. Crear usuarios FS en cada instancia con permisos correctos
+6. Mover empresas del FS compartido a cada instancia propia
+
+**Arquitectura final**:
+```
+contabilidad.prometh-ai.es     → carloscanetegomez (superadmin, ve todo via SFCE)
+fs-uralde.prometh-ai.es        → sergio (admin) + francisco + mgarcia + llupianez
+fs-gestoriaa.prometh-ai.es     → gestor1 (admin) + gestor2
+fs-javier.prometh-ai.es        → javier
+```
 
 ---
 

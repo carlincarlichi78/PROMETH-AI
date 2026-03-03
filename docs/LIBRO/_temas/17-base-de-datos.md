@@ -1,7 +1,7 @@
 # 17 — Base de Datos: Las 45 Tablas
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-02 (sesión 10)
+> **Actualizado:** 2026-03-03 (sesión 45)
 > **Fuentes:** `sfce/db/modelos.py`, `sfce/db/modelos_auth.py`, `sfce/db/base.py`, `sfce/db/migraciones/`
 
 ---
@@ -137,6 +137,8 @@ erDiagram
 | `activa` | Boolean | Gestoria activa o suspendida |
 | `fecha_alta` | DateTime | Fecha de creacion |
 | `fecha_vencimiento` | DateTime nullable | Fecha de vencimiento del plan |
+| `fs_url` | Text nullable | URL base de la API REST de FacturaScripts propia (ej: `https://fs.migestoria.es/api/3`). NULL = usa instancia global del sistema. **Migración 024** |
+| `fs_token_enc` | Text nullable | Token API de FacturaScripts cifrado con Fernet (`SFCE_FERNET_KEY`). NULL = usa token global. **Migración 024** |
 
 **`usuarios`** — Usuario del sistema con roles, seguridad y onboarding por invitacion.
 
@@ -494,6 +496,8 @@ Jerarquia de aplicacion: CIF+empresa > CIF global > nombre patron.
 | 006 | — | No existe. Los numeros saltan de 005 a 007 intencionalmente. | — |
 | 007 | `007_gate0.py` | Tablas `cola_procesamiento` y `documento_tracking`. Indices por estado y sha256. | Ejecutada |
 | 008 | `008_supplier_rules.py` | Tabla `supplier_rules`. Indices por `(empresa_id, emisor_cif)` y `auto_aplicable`. | Ejecutada |
+| 009-023 | varios | Tablas onboarding, testing, analytics, notificaciones, correo, plan_tiers, cuentas_correo, slugs, star_schema, cnae, etc. | Ejecutadas (ver `sfce/db/migraciones/`) |
+| 024 | `024_fs_credentials_gestoria.py` | Columnas `fs_url` + `fs_token_enc` (nullable) en `gestorias`. Permite asignar FS privado por gestoría. Token cifrado con Fernet. Ejecutar vía `DATABASE_URL=... python sfce/db/migraciones/024_fs_credentials_gestoria.py` | Ejecutada (SQLite dev + PG prod) |
 
 Ejecucion de migraciones:
 
