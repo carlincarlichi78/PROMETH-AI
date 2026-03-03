@@ -222,6 +222,50 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 47 — Diseño + plan instancias FS independientes)
+
+**Rama activa**: `main`
+**Último commit**: `bc3cb44`
+**Tests**: 2573 PASS (sin cambios de código esta sesión)
+
+### Lo realizado en sesión 47
+
+| Tarea | Detalle |
+|-------|---------|
+| Diseño aprobado | 3 instancias Docker FS independientes (Uralde/GestoriaA/Javier) |
+| Decisiones clave | Cada instancia con su propio MariaDB; Javier como gestoria_id=3; gestor1+gestor2 admin_gestoria (socios iguales) |
+| Doc diseño | `docs/plans/2026-03-03-instancias-fs-independientes-design.md` |
+| Plan implementación | `docs/plans/2026-03-03-instancias-fs-independientes-plan.md` (18 tasks, 2 fases) |
+
+### Próxima sesión — Ejecutar plan instancias FS
+
+**Leer**: `docs/plans/2026-03-03-instancias-fs-independientes-plan.md`
+
+**Orden obligatorio:**
+1. DNS manual en DonDominio (primero — necesita propagación)
+2. Migración 025 local + tests
+3. Nginx vhosts locales + script setup_fs_instancia.py
+4. Push + SSH servidor: 3 docker-compose + setup wizard + usuarios + tokens
+5. nginx SSL + certbot
+6. Migración 025 en prod + registrar credenciales SFCE
+7. Crear empresas via script por gestoria
+8. Verificación E2E
+
+**Arquitectura instancias:**
+```
+fs-uralde.prometh-ai.es     (puerto 8010) → gestoria_id=1, empresas 1-4
+fs-gestoriaa.prometh-ai.es  (puerto 8011) → gestoria_id=2, empresas 5-9
+fs-javier.prometh-ai.es     (puerto 8012) → gestoria_id=3, empresas 10-13
+contabilidad.prometh-ai.es  → carloscanetegomez (superadmin global, intacto)
+```
+
+**Pendiente código** (parte de la siguiente sesión):
+- `sfce/db/migraciones/025_gestoria_javier.py`
+- `infra/nginx/fs-uralde.conf`, `fs-gestoriaa.conf`, `fs-javier.conf`
+- `scripts/setup_fs_instancia.py`
+
+---
+
 ## Estado actual (03/03/2026, sesión 46 — Terreno de juego completo + FS usuarios)
 
 **Rama activa**: `main`
