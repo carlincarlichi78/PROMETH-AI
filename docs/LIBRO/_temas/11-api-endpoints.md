@@ -269,6 +269,7 @@ Directorio global CIF unico compartido entre todas las empresas/gestorias.
 | GET | `/api/documentos/{empresa_id}/cuarentena` | Si | Documentos en cuarentena pendientes de resolucion |
 | GET | `/api/documentos/{empresa_id}/{doc_id}` | Si | Detalle de documento con datos OCR y estado pipeline |
 | POST | `/api/documentos/{empresa_id}/cuarentena/{cuarentena_id}/resolver` | Si | Resolver documento en cuarentena |
+| GET | `/api/documentos/{empresa_id}/{doc_id}/descargar` | Si | **Descarga PDF autenticada** con auditoría. Verifica acceso empresa, existencia en disco e integridad SHA256. Genera entrada en `audit_log_seguridad`. Rate limit heredado del limiter de usuario. Respuestas: 200 PDF, 401 sin token, 403 empresa ajena, 404 no existe, 410 archivo borrado, 500 integridad comprometida. |
 
 ---
 
@@ -643,7 +644,7 @@ curl -H "Authorization: Bearer <token>" \
 | Portal Cliente | `/api/portal` | 10 |
 | Gestor Movil | `/api/gestor` | 4 |
 | Directorio | `/api/directorio` | 7 |
-| Documentos | `/api/documentos` | 4 |
+| Documentos | `/api/documentos` | 5 |
 | Contabilidad | `/api/contabilidad` | 15 |
 | Economico | `/api/economico` | 7 |
 | Bancario | `/api/bancario` | 6 |

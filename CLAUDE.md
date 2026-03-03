@@ -248,67 +248,40 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (03/03/2026, sesión 51 — Limpieza carpetas + plan estructura + libro Excel)
+## Estado actual (03/03/2026, sesión 52 — Auditoría arquitectura + Fase 1 centralización docs)
 
 **Rama activa**: `main`
-**Último commit**: `b8b831f`
-**Tests**: 2607 PASS (sin cambios de código)
+**Último commit**: `d74891e`
+**Tests**: 2613 PASS, 0 FAILED (+6 tests seguridad)
 
-### ✅ COMPLETADO en sesión 51
+### ✅ COMPLETADO en sesión 52
 
 | Tarea | Detalle |
 |-------|---------|
-| Limpieza carpetas clientes | Eliminados: inbox_prueba, inbox_muestra, procesado, auditoria, cuarentena, pipeline_state, scripts/bats específicos |
-| Reorganización PDFs | elena: inbox_muestra/ → inbox/ (60 PDFs + 59 cachés OCR). Pastorino: 2025/inbox/ + legal/ → inbox/ (119 PDFs) |
-| Plan estructura carpetas | `docs/plans/2026-03-03-estructura-carpetas-libro-excel.md` — 7 tasks listos para ejecutar |
+| Auditoría arquitectura docs | Confirmado: dos sistemas aislados (pipeline local vs dashboard). Sin integración. |
+| Decisión arquitectónica | El servidor es la fuente de verdad. `clientes/` local desaparece progresivamente. |
+| Plan centralización | `C:\Users\carli\.claude\plans\expressive-napping-origami.md` — 3 fases, 12 tasks |
+| **Fase 1 completa** | Endpoint `GET /api/documentos/{empresa_id}/{doc_id}/descargar` con auditoría + 6 tests |
+| Nginx verificado | Sin exposición pública de `/docs/uploads/` en servidor ✓ |
 
-### Estado carpetas clientes (post-limpieza)
+**Plan cancelado**: `docs/plans/2026-03-03-estructura-carpetas-libro-excel.md` — mejoraba estructura local que va a desaparecer.
 
-| Cliente | inbox PDFs | Cache OCR | Config |
-|---------|-----------|-----------|--------|
-| aurora-digital | — | — | — |
-| catering-costa | — | — | — |
-| chiringuito-sol-arena | 35 | — | ✓ |
-| comunidad-mirador-del-mar | — | — | — |
-| distribuciones-levante | — | — | — |
-| elena-navarro | 60 | 59 | ✓ |
-| francisco-mora | — | — | — |
-| gastro-holding | — | — | — |
-| gerardo-gonzalez-callejon | 9 | 40 | ✓ + FACTURAS 2025/ (211 originales) |
-| jose-antonio-bermudez | — | — | — |
-| marcos-ruiz | 16 | 16 | ✓ |
-| pastorino-costa-del-sol | 119 | — | ✓ |
-| restaurante-la-marea | 17 | 17 | ✓ |
+### Nuevo endpoint (sesión 52)
 
-### ⚡ PRÓXIMA SESIÓN — Plan a ejecutar
+`GET /api/documentos/{empresa_id}/{doc_id}/descargar` — `sfce/api/rutas/documentos.py:105`
 
-**Plan**: `docs/plans/2026-03-03-estructura-carpetas-libro-excel.md`
-**Skill**: `superpowers:executing-plans`
+Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empresa (404) → archivo en disco (410) → integridad SHA256 (500). Genera `audit_log_seguridad` con `accion=export, recurso=documento`.
+
+### ⚡ PRÓXIMA SESIÓN — Fase 2 centralización
+
+**Plan**: `C:\Users\carli\.claude\plans\expressive-napping-origami.md`
 
 | Task | Qué hace |
 |------|----------|
-| 1 | `scripts/onboarding.py` — elimina T1-T4, añade `.cache/`, crea Excel en alta |
-| 2 | `sfce/core/libro_cliente.py` — módulo nuevo con 10 tests (TDD) |
-| 3 | `sfce/phases/intake.py` — mueve PDFs a `procesado/`, `.ocr.json` a `.cache/`, actualiza Excel |
-| 4 | `sfce/conectores/correo/ingesta_correo.py` — OCR inline → `clientes/{slug}/inbox/` renombrado |
-| 5 | `scripts/migrar_ocr_a_libro_excel.py` — genera Excel historial de clientes existentes |
-| 6 | `scripts/migrar_cache_a_subcarpeta.py` — mueve `.ocr.json` sueltos a `inbox/.cache/` |
-| 7 | Suite regresión completa + ejecutar migraciones sobre datos reales |
-
-### Estructura de carpetas objetivo (tras ejecutar el plan)
-
-```
-clientes/{slug}/
-├── config.yaml
-├── {slug}.xlsx                ← libro acumulativo (pestañas por ejercicio)
-├── inbox/                     ← PDFs pendientes (nombre original)
-│   └── .cache/                ← .ocr.json separados
-├── cuarentena/                ← rechazados (nombre original)
-└── {ejercicio}/
-    ├── procesado/             ← PDFs renombrados: FV_MAPFRE_20250115_001.pdf
-    ├── auditoria/
-    └── modelos_fiscales/
-```
+| 5 | Token JWT de servicio para pipeline (`rol=pipeline_service`, 365d) |
+| 6 | Endpoints `/api/pipeline/documentos/*` (pendientes, descargar, resultado, cuarentena, subir) |
+| 7 | Adaptar `scripts/pipeline.py` para usar API en lugar de filesystem local |
+| 8 | Script `migrar_docs_local_a_servidor.py` — sube PDFs locales al servidor vía API |
 
 ---
 

@@ -408,6 +408,17 @@ Los métodos permitidos son `GET, POST, PUT, PATCH, DELETE, OPTIONS`. Los header
 
 **No mezclar** las dos tablas. El módulo RGPD usa `audit_log_seguridad` para registrar exportaciones. Las acciones del pipeline usan `audit_log`.
 
+#### Acciones registradas en `audit_log_seguridad`
+
+| Acción | Cuándo | Recurso | Detalles |
+|--------|--------|---------|---------|
+| `login` | Login exitoso | `auth` | `{rol, gestoria_id}` |
+| `login_failed` | Login fallido | `auth` | `{email_intentado}` |
+| `export` (RGPD) | Generación token RGPD | `export` | `{nonce}` |
+| `export` (descarga) | **Descarga PDF autenticada** `GET /api/documentos/{emp}/{doc}/descargar` | `documento` | `{empresa_id, tipo, hash}` |
+
+La descarga de PDFs genera audit con `accion=export`, `recurso=documento`, `recurso_id=doc_id`. Incluye IP de origen. Se escribe en la misma transacción, antes del `commit()`, garantizando consistencia.
+
 ### Campos de `audit_log_seguridad`
 
 ```python
