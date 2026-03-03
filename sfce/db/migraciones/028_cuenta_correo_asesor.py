@@ -14,5 +14,6 @@ def aplicar(engine: Engine) -> None:
 
 
 if __name__ == "__main__":
-    from sfce.db.base import crear_motor, _leer_config_bd
+    from sfce.db.base import crear_motor
+    from sfce.api.app import _leer_config_bd
     aplicar(crear_motor(_leer_config_bd()))
