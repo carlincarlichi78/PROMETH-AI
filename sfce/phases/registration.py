@@ -267,12 +267,14 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     datos = doc.get("datos_extraidos", {})
     es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
 
-    # Datos base — convertir fecha a DD-MM-YYYY para FS API
+    # Datos base — convertir fecha a YYYY-MM-DD para FS API
+    # (crearFacturaProveedor/crearFacturaCliente usan setDate() que requiere
+    # formato MySQL YYYY-MM-DD para comparar con fechainicio/fechafin en DB)
     from ..core.nombres import _normalizar_fecha
     fecha_raw = datos.get("fecha", "")
     fecha_norm = _normalizar_fecha(str(fecha_raw))  # → YYYYMMDD
     if fecha_norm != "SIN-FECHA" and len(fecha_norm) == 8:
-        fecha_fs = f"{fecha_norm[6:8]}-{fecha_norm[4:6]}-{fecha_norm[0:4]}"  # → DD-MM-YYYY
+        fecha_fs = f"{fecha_norm[0:4]}-{fecha_norm[4:6]}-{fecha_norm[6:8]}"  # → YYYY-MM-DD
     else:
         fecha_fs = fecha_raw
     form = {
@@ -446,19 +448,31 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
     except Exception as e:
         return [f"No se pudo verificar factura {idfactura}: {e}"]
 
-    # Verificar fecha — normalizar ambos a YYYY-MM-DD
-    fecha_esperada = datos.get("fecha", "")
-    fecha_fs = factura_fs.get("fecha", "")
-    if fecha_esperada and fecha_fs:
-        # FS puede devolver DD-MM-YYYY, normalizar a YYYY-MM-DD
-        import re as _re
-        match_fs = _re.match(r'^(\d{2})-(\d{2})-(\d{4})$', fecha_fs)
-        if match_fs:
-            fecha_fs_norm = f"{match_fs.group(3)}-{match_fs.group(2)}-{match_fs.group(1)}"
+    # Verificar fecha — normalizar ambos a YYYY-MM-DD para comparar
+    from ..core.nombres import _normalizar_fecha
+    import re as _re
+    fecha_esperada_raw = datos.get("fecha", "")
+    fecha_fs_raw = factura_fs.get("fecha", "")
+    if fecha_esperada_raw and fecha_fs_raw:
+        # Normalizar fecha esperada (OCR puede devolver "Feb 28, 2025", "28-02-2025", etc.)
+        fecha_esp_norm_8 = _normalizar_fecha(str(fecha_esperada_raw))
+        if fecha_esp_norm_8 != "SIN-FECHA" and len(fecha_esp_norm_8) == 8:
+            fecha_esp_norm = f"{fecha_esp_norm_8[0:4]}-{fecha_esp_norm_8[4:6]}-{fecha_esp_norm_8[6:8]}"
         else:
-            fecha_fs_norm = fecha_fs
-        if fecha_esperada != fecha_fs_norm:
-            discrepancias.append(f"Fecha: esperada={fecha_esperada}, FS={fecha_fs_norm}")
+            fecha_esp_norm = fecha_esperada_raw
+
+        # Normalizar fecha FS (puede devolver YYYY-MM-DD o DD-MM-YYYY)
+        match_dd = _re.match(r'^(\d{2})-(\d{2})-(\d{4})$', fecha_fs_raw)
+        match_iso = _re.match(r'^(\d{4})-(\d{2})-(\d{2})$', fecha_fs_raw)
+        if match_dd:
+            fecha_fs_norm = f"{match_dd.group(3)}-{match_dd.group(2)}-{match_dd.group(1)}"
+        elif match_iso:
+            fecha_fs_norm = fecha_fs_raw
+        else:
+            fecha_fs_norm = fecha_fs_raw
+
+        if fecha_esp_norm != fecha_fs_norm:
+            discrepancias.append(f"Fecha: esperada={fecha_esp_norm}, FS={fecha_fs_norm}")
 
     # Verificar total — comparar en divisa original
     total_esperado = float(datos.get("total", 0))
@@ -526,6 +540,103 @@ def _eliminar_factura(idfactura: int, tipo_doc: str) -> bool:
     }
     endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
     return api_delete(endpoint)
+
+
+def _enriquecer_cabecera_con_entidad(form_cabecera: dict, es_proveedor: bool) -> dict:
+    """Añade cifnif, nombre y codalmacen al form de cabecera.
+
+    El endpoint estándar POST /api/3/facturaproveedores requiere cifnif/nombre
+    explícitos (no los infiere de codproveedor) y codalmacen de la empresa.
+    """
+    resultado = {**form_cabecera}
+
+    # Obtener datos de la entidad (proveedor/cliente)
+    if es_proveedor:
+        codproveedor = form_cabecera.get("codproveedor")
+        if codproveedor:
+            try:
+                prov = api_get_one(f"proveedores/{codproveedor}")
+                if prov:
+                    resultado["cifnif"] = prov.get("cifnif", "")
+                    resultado["nombre"] = prov.get("nombre", "")
+            except Exception:
+                pass
+    else:
+        codcliente = form_cabecera.get("codcliente")
+        if codcliente:
+            try:
+                cli = api_get_one(f"clientes/{codcliente}")
+                if cli:
+                    resultado["cifnif"] = cli.get("cifnif", "")
+                    resultado["nombre"] = cli.get("nombre", "")
+            except Exception:
+                pass
+
+    # Obtener codalmacen de la empresa (en instancias multi-empresa no es 'ALG')
+    # También deriva codpago con el mismo código (FS crea ambos secuencialmente).
+    idempresa = form_cabecera.get("idempresa")
+    if idempresa and "codalmacen" not in resultado:
+        try:
+            almacenes = api_get("almacenes")
+            for alm in almacenes:
+                if str(alm.get("idempresa", "")) == str(idempresa):
+                    codalmacen = alm.get("codalmacen")
+                    resultado["codalmacen"] = codalmacen
+                    # En instancias FS multi-empresa, formaspago usa mismo índice
+                    # que almacenes (creados secuencialmente por empresa)
+                    if "codpago" not in resultado or not resultado.get("codpago"):
+                        resultado["codpago"] = codalmacen
+                    break
+        except Exception:
+            pass
+
+    return resultado
+
+
+def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
+    """Crea factura en FS usando endpoint estándar en 2 pasos.
+
+    Reemplaza crearFacturaProveedor/crearFacturaCliente (incompatibles con
+    instancias multi-empresa donde codejercicio != year(fecha)).
+
+    El endpoint estándar requiere cifnif/nombre explícitos (no los rellena
+    automáticamente desde codproveedor/codcliente).
+
+    Paso 1: POST /api/3/facturaproveedores o facturaclientes (cabecera)
+    Paso 2: POST /api/3/lineasfacturaproveedores o lineasfacturaclientes (líneas)
+
+    Returns:
+        idfactura creada
+
+    Raises:
+        ValueError si la respuesta no incluye idfactura
+    """
+    # Separar líneas de la cabecera
+    lineas_json = form_enviado.get("lineas", "[]")
+    lineas = json.loads(lineas_json) if isinstance(lineas_json, str) else lineas_json
+    form_cabecera = {k: v for k, v in form_enviado.items() if k != "lineas"}
+
+    # Enriquecer con cifnif/nombre (obligatorios en endpoint estándar)
+    form_cabecera = _enriquecer_cabecera_con_entidad(form_cabecera, es_proveedor)
+
+    # Paso 1: crear cabecera
+    endpoint_cabecera = "facturaproveedores" if es_proveedor else "facturaclientes"
+    respuesta = api_post(endpoint_cabecera, data=form_cabecera)
+
+    # Respuesta formato: {"ok": "...", "data": {"idfactura": "X", ...}}
+    idfactura = (respuesta.get("data") or {}).get("idfactura")
+    if not idfactura:
+        idfactura = respuesta.get("idfactura")
+    if not idfactura:
+        raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
+
+    # Paso 2: crear líneas
+    endpoint_lineas = "lineafacturaproveedores" if es_proveedor else "lineafacturaclientes"
+    for linea in lineas:
+        linea_data = {**linea, "idfactura": idfactura}
+        api_post(endpoint_lineas, data=linea_data)
+
+    return int(idfactura)
 
 
 def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
@@ -903,21 +1014,17 @@ def ejecutar_registro(
         form_data = _construir_form_data(doc_trabajo, tipo_doc, config, codigo_entidad)
 
         # 3. POST crear factura (con retry por aprendizaje)
+        # Usa crearFacturaProveedor/crearFacturaCliente con campos obligatorios
+        # para instancias multi-empresa: codalmacen, codpago, fecha YYYY-MM-DD
         es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
-        endpoint = "crearFacturaProveedor" if es_proveedor else "crearFacturaCliente"
         idfactura = None
 
         for intento in range(resolutor.max_reintentos):
             try:
                 # Filtrar campos internos (_*) antes de enviar a FS
                 form_enviado = {k: v for k, v in form_data.items() if not k.startswith("_")}
-                logger.debug(f"  POST {endpoint} payload: {form_enviado}")
-                respuesta = api_post(endpoint, data=form_enviado)
-                idfactura = respuesta.get("doc", {}).get("idfactura")
-                if not idfactura:
-                    idfactura = respuesta.get("idfactura")
-                if not idfactura:
-                    raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
+                logger.debug(f"  POST 2pasos ({'prov' if es_proveedor else 'cli'}) payload: {form_enviado}")
+                idfactura = _crear_factura_2pasos(es_proveedor, form_enviado)
                 logger.info(f"  Factura creada: ID {idfactura}")
                 break
             except Exception as e:
