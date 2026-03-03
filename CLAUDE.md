@@ -248,6 +248,63 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 57 — Tarjetas empresa tiempo real WebSocket)
+
+**Rama activa**: `main`
+**Último commit**: `0fceec8`
+**Tests**: 2643 PASS, 0 FAILED (+9 nuevos)
+
+### ✅ COMPLETADO en sesión 57 — Plan `docs/plans/2026-03-03-tarjetas-realtime.md`
+
+| Task | Commit | Detalle |
+|------|--------|---------|
+| 1 — Fix import gestor_ws | `831360e` | Ya estaba de sesión anterior |
+| 2 — Auth JWT en WebSocket | `a57f9fb` | `verificar_token_ws()` en `auth.py` + `ws_rutas.py` con `?token=JWT`. Código 4401 sin token, 4403 sin acceso |
+| 3 — Eventos desde worker_pipeline | `b701fa0` | `_emitir_evento_pipeline()` + `EVENTO_PIPELINE_PROGRESO/DOCUMENTO_PROCESADO/CUARENTENA_NUEVO` |
+| 4+5 — Hook + EmpresaCard | `704ba09` | `use-empresa-websocket.ts` + `empresa-card.tsx` actualizado con spinner, última actividad, alerta cuarentena |
+| Fix tests WS existentes | `0fceec8` | `test_websocket.py::TestWebSocketEndpoint` adaptados a auth requerida |
+
+### Arquitectura WebSocket actual
+
+```
+Frontend EmpresaCard
+  → useEmpresaWebSocket(empresaId)
+  → WebSocket /api/ws/{empresa_id}?token=JWT
+  → ws_rutas.py: verificar_token_ws + verificar_acceso_empresa
+  → gestor_ws (singleton GestorWebSocket)
+  ← worker_pipeline._emitir_evento_pipeline() → gestor_ws.emitir_a_empresa()
+```
+
+Eventos emitidos: `pipeline_progreso` (inicio), `documento_procesado` (fin), `cuarentena_nuevo` (doc cuarentena)
+Reconexión automática con backoff: 3s → 10s → 30s. No reconecta en 4401/4403.
+
+### ⚡ PRÓXIMA SESIÓN — Tareas pendientes
+
+**1. SFCE_CI_TOKEN en GitHub Secrets** (smoke test CI falla sin él)
+
+**2. Fixes auditoría** (FE-1, API-3, VULN-1, BUG-4, VULN-4/5/6/7/8, FE-3)
+
+**3. Añadir fs_url/fs_token a config.yaml de PASTORINO, CHIRINGUITO, ELENA** (Gerardo ya tiene)
+
+**4. Pipeline Gerardo**: lanzar los 9 PDFs del inbox con endpoint 2 pasos (crearFacturaProveedor ya migrado a `5161c28`)
+
+---
+
+## Estado actual (03/03/2026, sesión 56 — Fixes servidor FS)
+
+**Rama activa**: `main`
+**Último commit**: `259117f`
+**Tests**: 2634 PASS (sin cambios de código)
+
+### ✅ COMPLETADO en sesión 56
+
+| Tarea | Detalle |
+|-------|---------|
+| PHP display_errors Off | `z-custom.ini` en los 4 containers FS (printf, no echo) |
+| Tablas provincias+ciudades | Creadas en fs-uralde, fs-gestoriaa, fs-javier (COLLATE utf8mb4_unicode_520_ci) |
+
+---
+
 ## Estado actual (03/03/2026, sesión 52 — Auditoría arquitectura + Fase 1 centralización docs)
 
 **Rama activa**: `main`
