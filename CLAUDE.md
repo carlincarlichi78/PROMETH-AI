@@ -256,6 +256,43 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
+## Estado actual (03/03/2026, sesión 45 — Aislamiento gestorías paso 1 + Onboarding histórico Tasks 7-8)
+
+**Rama activa**: `main`
+**Último commit**: `8e4d845`
+**Tests**: 2565 PASS + 5 nuevos (TestFsCredenciales) = **2570 PASS**, 4 skipped, 0 FAILED
+
+### Sesión 45 — Lo realizado
+
+| Tarea | Detalle |
+|-------|---------|
+| Migración 024 | `fs_url` + `fs_token_enc` (nullable, Fernet) en tabla `gestorias` |
+| Modelo ORM | `Gestoria.fs_url` + `Gestoria.fs_token_enc` en `modelos_auth.py` |
+| Helper fs_api | `obtener_credenciales_gestoria(gestoria)` → `(url, token)` con fallback global |
+| Endpoints admin | `PUT/GET /api/admin/gestorias/{id}/fs-credenciales` — solo superadmin |
+| Fix fs_setup | `crear_empresa` parseaba solo root del JSON; ahora soporta `{ok, data:{idempresa}}` |
+| FS empresas | Marcos Ruiz (idempresa=1, ej 0001 2024 PGC✓) + La Marea (idempresa=2, ej 0002 2024 PGC✓) |
+| Onboarding Task 7 | Ambas empresas creadas en FacturaScripts en blanco |
+| Onboarding Task 8 | Pipeline fase 0 ejecutado: 16 docs Marcos (IMP/NOM, 0 cuarentena) + 17 docs La Marea (IMP/NOM, 0 cuarentena) |
+
+### Hallazgos pipeline onboarding histórico
+
+| Observación | Detalle |
+|-------------|---------|
+| Clasificación ✓ | Todos los modelos clasificados correctamente: 303/130/390/111/190/115/180/balance/pyg → IMP o NOM |
+| Confianza 0% | OCR no extrae casillas de los PDFs generados — solo tipo+CIF básico |
+| 0 cuarentena | Ningún doc rechazado — el pipeline los acepta todos como IMP válidos |
+| Gap identificado | Para onboarding histórico real: el pipeline registra modelos fiscales como IMP pero no registra en FS (no hay asientos para modelos presentados). Es comportamiento correcto — los modelos históricos son solo referencia |
+
+### Pendiente próxima sesión
+
+1. **Aislamiento gestorías paso 2**: usar `obtener_credenciales_gestoria()` en pipeline/FS setup para empresas de gestoría con FS propio — migración 025 (`fs_url`+`fs_token_enc` añadir a `empresas` o mantenerse en gestorías)
+2. **Aplicar migración 024 en producción** vía SSH (`DATABASE_URL=... python sfce/db/migraciones/024_fs_credentials_gestoria.py`)
+3. Alias `documentacion@prometh-ai.es` en Google Admin
+4. Actualizar `docs/LIBRO/` (temas 11, 17, 23)
+
+---
+
 ## Estado actual (03/03/2026, sesión 44 — Migración dominio FS + investigación aislamiento gestorías)
 
 **Rama activa**: `main`
