@@ -248,49 +248,36 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
-## Estado actual (03/03/2026, sesión 58 — Fixes auditoría + SFCE_CI_TOKEN)
+## Estado actual (03/03/2026, sesión 59 — Verificación configs + commits pendientes)
 
 **Rama activa**: `main`
-**Último commit**: `8e131af`
+**Último commit**: `496110f`
 **Tests**: 2595 PASS, 0 FAILED
 
-### ✅ COMPLETADO en sesión 58
+### ✅ COMPLETADO en sesión 59
 
 | Tarea | Commit | Detalle |
 |-------|--------|---------|
-| SFCE_CI_TOKEN en GitHub Secrets | — | JWT `ci@sfce.local` (superadmin, expira 2027-01-01) via `gh secret set`. Smoke test CI ya puede autenticarse contra `api.prometh-ai.es` |
-| Fixes auditoría (ya en cc8c059) | cc8c059 | FE-1, FE-3, API-3, VULN-1, BUG-4, VULN-4/5/6/7/8 todos aplicados |
-| reglas YAML | 8e131af | `aprendizaje.yaml` + `errores_conocidos.yaml` actualizados |
-
-### Fixes auditoría aplicados (referencia)
-
-| ID | Fix |
-|----|-----|
-| FE-1 | `localStorage` → `sessionStorage.getItem('sfce_token')` en 4 páginas FE |
-| FE-3 | `'admin'` → `'superadmin'` en app-sidebar + types/index.ts |
-| API-3 | `crear_engine()` → `crear_motor(_leer_config_bd())` en correo.py |
-| VULN-1 | Log token reset → `sha256(token)[:12]` en auth_rutas.py |
-| BUG-4 | `ejecutar_ciclo_worker` → `asyncio.to_thread(...)` en worker_pipeline |
-| VULN-4/5/6 | `verificar_acceso_empresa()` + rol mínimo asesor en colas.py |
-| VULN-7 | `verificar_acceso_empresa()` en migracion.py |
-| VULN-8 | Check rol `admin_gestoria/superadmin` en `POST /api/empresas` |
+| Verificar fs_url/fs_token PASTORINO/CHIRINGUITO/ELENA | — | Ya estaban correctos (sesión anterior sin commit) |
+| Email reenvío entre asesores | `ffd4ec8` | `reenvio.py` (128 líneas) + refactor `ingesta_correo.py` + 386 tests. Detecta Forward/FWD, extrae remitente original, enruta a empresa correcta |
+| Documentos pipeline por empresa | `496110f` | `GET /api/empresas/{id}/documentos` + ruta `/empresa/:id/documentos` + sidebar link |
 
 ### ⚡ PRÓXIMA SESIÓN — Tareas pendientes
 
-**1. Añadir fs_url/fs_token a config.yaml de PASTORINO, CHIRINGUITO, ELENA** (Gerardo ya tiene)
-
-**2. Pipeline Gerardo**: lanzar los 9 PDFs del inbox con endpoint 2 pasos (ya en `5161c28`)
+**1. Pipeline Gerardo**: lanzar los 9 PDFs del inbox con endpoint 2 pasos
 ```bash
 export $(grep -v '^#' .env | xargs)
 python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo
 ```
 
-**3. Segunda ronda fixes auditoría** (baja prioridad):
+**2. Segunda ronda fixes auditoría** (baja prioridad):
 - `IMP-6/BUG-1` — `datetime` naive/aware en workers
 - `IMP-8` — NC penalizadas incorrectamente en `coherencia_fiscal.py`
 - `MIGR-2` — `023_onboarding_modo.py` idempotente
 - `VULN-2` — reset password con UPDATE atómico
 - `DB-1/DB-2` — FK en ColaProcesamiento y SupplierRule
+
+**3. Actualizar `docs/LIBRO/_temas/20-correo.md`** — documentar `reenvio.py` y flujo de enrutamiento
 
 ---
 
