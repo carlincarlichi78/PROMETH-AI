@@ -35,6 +35,7 @@ from ..core.errors import ResultadoFase
 from ..core.logger import crear_logger
 from ..core.nombres import renombrar_documento
 from ..core.ocr_mistral import extraer_factura_mistral
+from ..core.smart_ocr import SmartOCR
 from ..core.prompts import PROMPT_EXTRACCION
 
 # Import condicional Gemini (solo Tier 2)
@@ -756,6 +757,11 @@ def _votacion_tres_motores(ext_mistral: dict, ext_gpt: dict,
     return resultado
 
 
+def _extraer_datos_ocr(ruta_pdf: Path, tipo_doc: str | None = None) -> dict | None:
+    """Extrae datos OCR usando SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)."""
+    return SmartOCR.extraer(ruta_pdf, tipo_doc=tipo_doc)
+
+
 _gemini_lock = threading.Lock()
 
 
@@ -801,112 +807,11 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
         return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
 
-    # 2. Extraccion OCR con estrategia de Tiers
-    datos_gpt = None
+    # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
+    datos_gpt = _extraer_datos_ocr(ruta_pdf)
     ocr_tier = 0
-    tier_motivo = ""
-    motores_usados = []
-
-    # --- Paso 1: Siempre llamar Mistral primero ---
-    datos_mistral = None
-    if motor_primario == "mistral":
-        logger.info(f"  [{nombre_archivo}] Mistral OCR3...")
-        datos_mistral = extraer_factura_mistral(ruta_pdf)
-        if datos_mistral:
-            motores_usados.append("mistral")
-        else:
-            logger.warning(f"  [{nombre_archivo}] Mistral fallo")
-
-    # Si Mistral fallo, fallback GPT
-    if not datos_mistral:
-        if client:
-            logger.info(f"  [{nombre_archivo}] Fallback GPT-4o...")
-            if texto_raw.strip():
-                datos_gpt = _llamar_gpt_texto(client, texto_raw)
-            else:
-                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-                if imagen_b64:
-                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
-            if datos_gpt:
-                motores_usados.append("gpt")
-                ocr_tier = 1
-                tier_motivo = "Mistral fallo, fallback GPT directo"
-        elif motor_primario != "mistral" and client:
-            if texto_raw.strip():
-                datos_gpt = _llamar_gpt_texto(client, texto_raw)
-            else:
-                imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-                if imagen_b64:
-                    datos_gpt = _llamar_gpt_vision(client, imagen_b64)
-            if datos_gpt:
-                motores_usados.append("gpt")
-                ocr_tier = 1
-                tier_motivo = "Solo GPT disponible"
-
-    # Si tenemos datos Mistral, evaluar Tier 0
-    if datos_mistral and not datos_gpt:
-        datos_gpt = datos_mistral
-
-        tipo_doc_prov = _clasificar_tipo_documento(datos_mistral, config)
-        entidad_prov = _identificar_entidad(datos_mistral, tipo_doc_prov, config)
-        doc_conf_prov = _construir_documento_confianza(
-            nombre_archivo, hash_pdf, texto_raw, datos_mistral,
-            tipo_doc_prov, entidad_prov, config
-        )
-
-        eval_t0 = _evaluar_tier_0(datos_mistral, tipo_doc_prov, doc_conf_prov)
-
-        if eval_t0["aceptado"]:
-            ocr_tier = 0
-            tier_motivo = eval_t0["motivo"]
-            logger.info(f"  [{nombre_archivo}] Tier 0 OK")
-        else:
-            logger.info(f"  [{nombre_archivo}] Tier 0 rechazado: {eval_t0['motivo']}")
-            if client:
-                datos_gpt_t1 = None
-                if texto_raw.strip():
-                    datos_gpt_t1 = _llamar_gpt_texto(client, texto_raw)
-                else:
-                    imagen_b64 = _pdf_a_imagen_base64(ruta_pdf)
-                    if imagen_b64:
-                        datos_gpt_t1 = _llamar_gpt_vision(client, imagen_b64)
-
-                if datos_gpt_t1:
-                    motores_usados.append("gpt")
-                    comp = _comparar_dos_extracciones(datos_mistral, datos_gpt_t1,
-                                                      tipo_doc_prov)
-                    if comp["coinciden"]:
-                        ocr_tier = 1
-                        tier_motivo = "Tier 1: Mistral+GPT coinciden"
-                        logger.info(f"  [{nombre_archivo}] Tier 1 OK: consenso")
-                    else:
-                        disc = ", ".join(comp["campos_discrepantes"])
-                        logger.warning(f"  [{nombre_archivo}] Tier 1 disc: {disc}")
-
-                        if gemini_disponible:
-                            with _gemini_lock:
-                                logger.info(f"  [{nombre_archivo}] Tier 2 Gemini...")
-                                datos_gemini = extraer_factura_gemini(ruta_pdf)
-                            if datos_gemini:
-                                motores_usados.append("gemini")
-                                datos_gpt = _votacion_tres_motores(
-                                    datos_mistral, datos_gpt_t1, datos_gemini,
-                                    tipo_doc_prov
-                                )
-                                ocr_tier = 2
-                                tier_motivo = f"Tier 2: votacion 2-de-3 (disc: {disc})"
-                            else:
-                                ocr_tier = 1
-                                tier_motivo = f"Tier 1: Gemini fallo (disc: {disc})"
-                        else:
-                            ocr_tier = 1
-                            tier_motivo = f"Tier 1: sin Gemini (disc: {disc})"
-                else:
-                    ocr_tier = 0
-                    tier_motivo = "Tier 0 forzado: GPT fallo"
-            else:
-                ocr_tier = 0
-                tier_motivo = "Tier 0 forzado: sin GPT"
+    tier_motivo = "SmartOCR"
+    motores_usados = ["smart_ocr"]
 
     if not datos_gpt:
         _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
