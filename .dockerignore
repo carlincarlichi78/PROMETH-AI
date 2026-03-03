@@ -45,8 +45,9 @@ docs/1/
 # Tests (not needed in production)
 tests/
 
-# Dev scripts
+# Dev scripts (excepto motor_campo que se incluye en la imagen)
 scripts/
+!scripts/motor_campo/
 
 # Other
 *.log
