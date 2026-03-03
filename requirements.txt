@@ -93,7 +93,6 @@ MarkupSafe==3.0.3
 sniffio==1.3.1
 click==8.3.1
 
-# ── OCR local (motores gratuitos) ────────────────────────────────────────────
-easyocr>=1.7.0
-paddlepaddle>=2.6.0
-paddleocr>=2.7.0
+# ── OCR local — EXCLUIDO de producción (arrastran NVIDIA CUDA ~8GB, sin GPU en servidor)
+# Para instalar localmente: pip install easyocr paddlepaddle paddleocr
+# smart_ocr.py los importa con try/except y cae a Mistral si no están disponibles
