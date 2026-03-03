@@ -1,5 +1,42 @@
 # CHANGELOG — Proyecto CONTABILIDAD
 
+## Sesión 53 — 03/03/2026: Puesta en marcha producción completa
+
+### Resumen
+Sesión de puesta en producción: login SFCE funcional, usuarios reales creados, 13 empresas sembradas, PGC importado en las 3 instancias FS (13/13 OK), balance de situación y PyG operativos.
+
+### Cambios técnicos
+
+| Archivo | Cambio |
+|---------|--------|
+| `dashboard/src/index.css` | Login más claro: fondo oklch(0.17), texto inputs visible, placeholder legible |
+| `requirements.txt` | Eliminados easyocr/paddlepaddle/paddleocr (CUDA ~8GB en CI) |
+| `.github/workflows/deploy.yml` | Paso limpieza disco antes de Docker build |
+| `sfce/api/rutas/contabilidad.py` | `func.strftime` → `func.to_char` (3 líneas) para compatibilidad PostgreSQL |
+| `scripts/importar_pgc_prod.py` | Script importación PGC en los 3 FS via sesión web curl |
+
+### Producción — estado tras sesión
+
+**Usuarios SFCE creados en PostgreSQL prod:**
+- admin@sfce.local (superadmin) — contraseña reseteada, funcional
+- sergio@prometh-ai.es (admin_gestoria, gestoria_id=1, empresas [1,2,3,4])
+- francisco@, maria@, luis@ @prometh-ai.es (asesor, gestoria_id=1)
+  - francisco: empresas [1,2], maria: [3,4], luis: [1,2,3,4]
+- gestor1@prometh-ai.es (admin_gestoria, gestoria_id=2, empresas [5,6,7])
+- gestor2@prometh-ai.es (admin_gestoria, gestoria_id=2, empresas [8,9])
+- javier@prometh-ai.es (admin_gestoria, gestoria_id=3, empresas [10,11,12,13])
+
+**13 empresas sembradas** en PostgreSQL prod con idempresa_fs e instancia FS correcta.
+
+**PGC importado** en las 3 instancias FS (721 subcuentas cada ejercicio, 13/13 OK).
+- Nick FS usado: `carloscanete` (max 10 chars, no `carloscanetegomez`)
+- URL correcta: `/EditEjercicio?code=X` (no `/index.php?page=...`)
+
+**Balance/PyG**: operativos tras fix `func.strftime` → `func.to_char`. Deploy completado.
+
+### Pendiente conocido
+- Smoke test en CI falla por `SFCE_CI_TOKEN` no configurado en GitHub Secrets. El deploy en sí funciona correctamente.
+
 ## Sesión 44 — 03/03/2026: Quipu Gerardo 2025 — OCR pipeline completo
 
 ### Resumen

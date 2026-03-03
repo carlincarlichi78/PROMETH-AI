@@ -285,6 +285,39 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
+## Estado actual (03/03/2026, sesión 53 — Producción operativa)
+
+**Rama activa**: `main`
+**Último commit**: `624ec4e`
+**Tests**: 2607 PASS, 4 skipped, 0 FAILED
+
+### ✅ COMPLETADO en sesión 53 — Puesta en marcha producción
+
+| Tarea | Detalle |
+|-------|---------|
+| Login SFCE | admin@sfce.local funcional. CSS login más claro (oklch 0.17) |
+| CI/CD fix | Eliminados easyocr/paddleocr de requirements.txt (CUDA ~8GB rompía build) |
+| Usuarios prod | sergio, francisco, maria, luis, gestor1, gestor2, javier — empresas asignadas |
+| 13 empresas | Sembradas en PostgreSQL prod con idempresa_fs e instancias FS |
+| PGC 13/13 | Importado en todas las empresas de las 3 instancias FS |
+| Balance/PyG | Fix `func.strftime` → `func.to_char` — operativos en producción |
+
+### Pendiente próxima sesión
+
+**1. SFCE_CI_TOKEN en GitHub Secrets** (smoke test falla sin él)
+- Crear JWT para `ci@sfce.local` y añadir como secret en GitHub → Settings → Secrets
+
+**2. Fixes auditoría pendientes** (ver sección más abajo: "Estado actual sesión 46")
+
+**3. Plugins fiscales en instancias FS nuevas**
+- fs-uralde, fs-gestoriaa, fs-javier no tienen Modelo303, 111, 347, etc.
+- Instalar desde panel admin de cada instancia si se van a usar para declaraciones
+
+**4. Actualizar docs/LIBRO/**
+- `01-infraestructura.md`, `26-infra-docker-backups.md`, `24-facturascripts.md`
+
+---
+
 ## Estado actual (03/03/2026, sesión 50 — Smart OCR: implementación completa 11/11 tasks)
 
 **Rama activa**: `main`
