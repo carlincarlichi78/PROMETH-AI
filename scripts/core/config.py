@@ -86,6 +86,21 @@ class ConfigCliente:
         return self.empresa.get("codejercicio", self.ejercicio)
 
     @property
+    def codagente_fs(self) -> str | None:
+        """Codigo del agente FS asignado a esta empresa."""
+        return self.empresa.get("codagente_fs")
+
+    @property
+    def fs_url(self) -> str | None:
+        """URL base de la instancia FS de esta empresa."""
+        return self.empresa.get("fs_url")
+
+    @property
+    def fs_token(self) -> str | None:
+        """Token API de la instancia FS de esta empresa."""
+        return self.empresa.get("fs_token")
+
+    @property
     def obligaciones(self) -> dict:
         """Devuelve obligaciones fiscales/contables segun tipo de entidad."""
         return self._tipo_entidad or {}

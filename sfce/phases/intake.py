@@ -218,13 +218,18 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
         return "REC"
 
     # Determinar si es compra o venta por el CIF
-    emisor_cif = (datos_gpt.get("emisor_cif") or "").upper()
-    receptor_cif = (datos_gpt.get("receptor_cif") or "").upper()
-    cif_empresa = config.cif.upper()
+    from ..core.config import _normalizar_cif
+    emisor_cif = _normalizar_cif(datos_gpt.get("emisor_cif") or "")
+    receptor_cif = _normalizar_cif(datos_gpt.get("receptor_cif") or "")
+    cif_empresa = _normalizar_cif(config.cif)
 
-    if emisor_cif == cif_empresa:
+    # Comparacion con y sin prefijo pais (ej: "ES76638663H" == "76638663H")
+    def _cif_coincide(cif_ocr: str, cif_ref: str) -> bool:
+        return cif_ocr == cif_ref or cif_ocr.endswith(cif_ref) or cif_ref.endswith(cif_ocr)
+
+    if emisor_cif and _cif_coincide(emisor_cif, cif_empresa):
         return "FV"
-    if receptor_cif == cif_empresa:
+    if receptor_cif and _cif_coincide(receptor_cif, cif_empresa):
         return "FC"
 
     # Fallback

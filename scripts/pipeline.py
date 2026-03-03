@@ -12,6 +12,7 @@ Uso:
 """
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -298,6 +299,15 @@ def main():
     if args.ejercicio:
         config.empresa["ejercicio_activo"] = args.ejercicio
 
+    # Configurar instancia FS correcta si el cliente tiene fs_url propio
+    if config.fs_url or config.fs_token:
+        import sfce.core.fs_api as _fs_api_mod
+        if config.fs_url:
+            _fs_api_mod.API_BASE = config.fs_url.rstrip("/")
+            logger.info(f"FS instancia: {_fs_api_mod.API_BASE}")
+        if config.fs_token:
+            os.environ["FS_API_TOKEN"] = config.fs_token
+
     # Inicializar repositorio BD (opcional — si falla, pipeline sigue funcionando)
     repo = None
     empresa_bd_id = None
@@ -389,9 +399,7 @@ def main():
             "indice": 2,
             "descripcion": "Fase 2: Registro en FacturaScripts",
             "ejecutar": lambda: ejecutar_registro(config, ruta_cliente,
-                                                    auditoria=auditoria,
-                                                    motor=motor,
-                                                    backend=backend),
+                                                    auditoria=auditoria),
             "dry_run_skip": True,
         },
         {
@@ -409,8 +417,7 @@ def main():
             "ejecutar": lambda: ejecutar_correccion(config, ruta_cliente,
                                                       catalogo=catalogo,
                                                       auditoria=auditoria,
-                                                      motor=motor,
-                                                      backend=backend),
+                                                      motor=motor),
             "dry_run_skip": True,
         },
         {
@@ -461,7 +468,9 @@ def main():
         try:
             resultado = fase_def["ejecutar"]()
         except Exception as e:
+            import traceback
             logger.error(f"Error inesperado en {nombre}: {e}")
+            logger.debug(traceback.format_exc())
             auditoria.registrar(nombre, "error", f"Error inesperado: {e}")
             auditoria.guardar()
             if not args.force:

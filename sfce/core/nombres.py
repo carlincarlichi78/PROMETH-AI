@@ -11,6 +11,15 @@ from pathlib import Path
 
 logger = logging.getLogger("sfce.nombres")
 
+_MESES_EN = {"jan": "01", "feb": "02", "mar": "03", "apr": "04", "may": "05",
+             "jun": "06", "jul": "07", "aug": "08", "sep": "09", "oct": "10",
+             "nov": "11", "dec": "12"}
+
+
+def _mes_en_a_num(m) -> str:
+    return _MESES_EN.get(m.group(1).lower(), "01")
+
+
 # Mapa de formatos de fecha soportados (mas comunes primero)
 _PATRONES_FECHA = [
     # YYYY-MM-DD o YYYY/MM/DD
@@ -21,6 +30,12 @@ _PATRONES_FECHA = [
     (re.compile(r"^(\d{2})(\d{2})(\d{4})$"), lambda m: f"{m.group(3)}{m.group(2)}{m.group(1)}"),
     # YYYYMMDD ya normalizado
     (re.compile(r"^(\d{8})$"), lambda m: m.group(0)),
+    # Formato ingles Google: "Feb 28, 2025" o "Feb. 28, 2025"
+    (re.compile(r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2}),?\s+(\d{4})$", re.I),
+     lambda m: f"{m.group(3)}{_MESES_EN.get(m.group(1).lower(),'01')}{int(m.group(2)):02d}"),
+    # Formato ingles invertido: "28 Feb 2025"
+    (re.compile(r"^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{4})$", re.I),
+     lambda m: f"{m.group(3)}{_MESES_EN.get(m.group(2).lower(),'01')}{int(m.group(1)):02d}"),
 ]
 
 

@@ -184,12 +184,14 @@ def _validar_fecha_ejercicio(doc: dict, config: ConfigCliente) -> Optional[str]:
     Returns:
         None si correcta, mensaje de error si fuera
     """
+    from ..core.nombres import _normalizar_fecha
     datos = doc.get("datos_extraidos", {})
     fecha = datos.get("fecha")
     if not fecha:
         return "Fecha no extraida del documento"
 
-    anio_doc = fecha[:4] if len(fecha) >= 4 else ""
+    fecha_norm = _normalizar_fecha(str(fecha))
+    anio_doc = fecha_norm[:4] if fecha_norm != "SIN-FECHA" else ""
 
     # ejercicio_activo puede ser el ano (2025) o un codejercicio FS (0003)
     ejercicio = config.ejercicio

@@ -63,7 +63,7 @@ class AuditorAsientos:
             respuesta = await loop.run_in_executor(
                 None,
                 lambda: client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="gemini-2.5-flash",
                     contents=[{"parts": [{"text": prompt}]}],
                     config={"response_mime_type": "application/json", "temperature": 0.1},
                 )

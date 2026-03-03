@@ -18,7 +18,8 @@ _MIN_PALABRAS_GEMINI = 8
 PROMPT_PARSEO = (
     "Eres experto en contabilidad española. Analiza el texto y devuelve "
     "SOLO JSON con: numero_factura, fecha, base_imponible, iva_porcentaje, "
-    "irpf_porcentaje, total, proveedor_nombre, proveedor_cif. "
+    "irpf_porcentaje, total, emisor_nombre, emisor_cif, receptor_nombre, receptor_cif. "
+    "emisor = quien emite la factura. receptor = quien la recibe. "
     "Usa null para campos no encontrados. Importes como decimal, porcentajes como entero.\n\n"
     "Texto:\n{texto}"
 )
@@ -59,7 +60,7 @@ def _parsear_con_gemini(texto: str) -> Optional[dict]:
             return None
         client = genai.Client(api_key=key)
         respuesta = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[{"parts": [{"text": PROMPT_PARSEO.format(texto=texto[:3000])}]}],
             config={"response_mime_type": "application/json", "temperature": 0.1},
         )

@@ -2,10 +2,12 @@ empresa:
   nombre: "GERARDO GONZALEZ CALLEJON"
   cif: "76638663H"
   tipo: autonomo
-  idempresa: 2
+  idempresa: 3
   codagente_fs: "MGARC"
+  fs_url: "https://fs-uralde.prometh-ai.es/api/3"
+  fs_token: "d0ed76fcc22785424b6c"
   ejercicio_activo: "2025"
-  codejercicio: "0002"
+  codejercicio: "0003"
   regimen_iva: general
 
 perfil:

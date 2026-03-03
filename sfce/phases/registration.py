@@ -267,11 +267,18 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     datos = doc.get("datos_extraidos", {})
     es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
 
-    # Datos base
+    # Datos base — convertir fecha a DD-MM-YYYY para FS API
+    from ..core.nombres import _normalizar_fecha
+    fecha_raw = datos.get("fecha", "")
+    fecha_norm = _normalizar_fecha(str(fecha_raw))  # → YYYYMMDD
+    if fecha_norm != "SIN-FECHA" and len(fecha_norm) == 8:
+        fecha_fs = f"{fecha_norm[6:8]}-{fecha_norm[4:6]}-{fecha_norm[0:4]}"  # → DD-MM-YYYY
+    else:
+        fecha_fs = fecha_raw
     form = {
         "idempresa": config.idempresa,
         "codejercicio": config.codejercicio,
-        "fecha": datos.get("fecha", ""),
+        "fecha": fecha_fs,
     }
     # Agente asignado a la empresa (para filtro 'solo mis registros' por grupo)
     if config.codagente_fs:
@@ -902,7 +909,10 @@ def ejecutar_registro(
 
         for intento in range(resolutor.max_reintentos):
             try:
-                respuesta = api_post(endpoint, data=form_data)
+                # Filtrar campos internos (_*) antes de enviar a FS
+                form_enviado = {k: v for k, v in form_data.items() if not k.startswith("_")}
+                logger.debug(f"  POST {endpoint} payload: {form_enviado}")
+                respuesta = api_post(endpoint, data=form_enviado)
                 idfactura = respuesta.get("doc", {}).get("idfactura")
                 if not idfactura:
                     idfactura = respuesta.get("idfactura")
