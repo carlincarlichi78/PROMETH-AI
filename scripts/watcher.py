@@ -130,3 +130,74 @@ def _subir_con_reintentos(
                 )
                 time.sleep(espera)
     raise ultimo_error
+
+
+_en_vuelo: set[str] = set()  # SHA256 de archivos siendo procesados
+
+
+def _procesar_archivo(ruta: Path) -> None:
+    """Procesa un único archivo PDF: verifica estabilidad, sube y reubica."""
+    if not ruta.exists():
+        return
+
+    slug = _slug_desde_ruta(ruta)
+    if slug is None:
+        return  # archivo en subido/ o error/ — ignorar
+
+    if not _esperar_estabilidad(ruta):
+        logger.warning("Archivo inestable o desaparecido: %s", ruta.name)
+        return
+
+    try:
+        sha = hashlib.sha256(ruta.read_bytes()).hexdigest()
+    except OSError:
+        return
+
+    if sha in _en_vuelo:
+        logger.debug("Ya en proceso (hash duplicado): %s", ruta.name)
+        return
+
+    _en_vuelo.add(sha)
+    try:
+        empresa_id = _cargar_empresa_id(slug)
+        if empresa_id is None:
+            logger.warning(
+                "sfce.empresa_id ausente en config de '%s'. Ignorando %s",
+                slug,
+                ruta.name,
+            )
+            return
+
+        resultado = _subir_con_reintentos(ruta, empresa_id)
+
+        # Mover a subido/YYYY-MM-DD/
+        fecha = datetime.now().strftime("%Y-%m-%d")
+        destino_dir = ruta.parent / "subido" / fecha
+        destino_dir.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(ruta), str(destino_dir / ruta.name))
+        logger.info("[%s] %s → %s/inbox/subido/%s/", resultado, ruta.name, slug, fecha)
+
+    except Exception as e:
+        logger.error("Error procesando %s: %s", ruta.name, e)
+        error_dir = ruta.parent / "error"
+        error_dir.mkdir(exist_ok=True)
+        try:
+            shutil.move(str(ruta), str(error_dir / ruta.name))
+        except OSError:
+            pass
+    finally:
+        _en_vuelo.discard(sha)
+
+
+def startup_scan(callback=None) -> None:
+    """Escanea inbox/ de todos los clientes al arrancar y procesa PDFs existentes.
+
+    El parámetro callback se usa en tests para interceptar los archivos encontrados.
+    En producción, cada PDF se envía a _procesar_archivo.
+    """
+    fn = callback if callback is not None else _procesar_archivo
+    for inbox_dir in CLIENTES_DIR.glob("*/inbox"):
+        for pdf in inbox_dir.glob("*.pdf"):
+            # Solo archivos directamente en inbox/, no en subdirectorios
+            if pdf.parent == inbox_dir:
+                fn(pdf)
