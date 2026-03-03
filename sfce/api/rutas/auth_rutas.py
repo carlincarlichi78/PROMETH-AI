@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from math import ceil
 
 import base64
+import hashlib
 import io
 
 import pyotp
@@ -526,10 +527,11 @@ def recuperar_password(body: _RecuperarBody, request: Request):
                 svc = EmailService()
                 svc.enviar_reset_password(body.email, u.nombre, token)
             except Exception:
-                # Sin SMTP: loguear token para que el admin lo recupere
+                # Sin SMTP: loguear hash parcial del token (no el token completo)
+                token_hint = hashlib.sha256(token.encode()).hexdigest()[:12]
                 _logger_reset.warning(
-                    "RESET PASSWORD sin SMTP — email=%s token=%s (valido 2h)",
-                    body.email, token,
+                    "RESET PASSWORD sin SMTP — email=%s token_hint=%s (valido 2h)",
+                    body.email, token_hint,
                 )
 
     return {"mensaje": "Si el email esta registrado recibiras instrucciones para restablecer tu contrasena."}

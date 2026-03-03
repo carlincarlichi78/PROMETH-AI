@@ -292,7 +292,7 @@ export function AppSidebar() {
         )}
 
         {/* Admin — solo superadmin */}
-        {usuario?.rol === 'admin' && (
+        {usuario?.rol === 'superadmin' && (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>

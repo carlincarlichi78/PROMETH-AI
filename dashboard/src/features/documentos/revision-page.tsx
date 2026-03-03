@@ -11,7 +11,7 @@ const BASE = import.meta.env.VITE_API_URL ?? ""
 const ITEMS_POR_PAGINA = 20
 
 async function apiFetch(path: string, opts?: RequestInit) {
-  const token = localStorage.getItem("sfce_token")
+  const token = sessionStorage.getItem("sfce_token")
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...opts?.headers },

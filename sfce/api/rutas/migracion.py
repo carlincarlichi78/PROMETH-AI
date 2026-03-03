@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.core.migracion_historica import parsear_libro_iva_csv
 
 router = APIRouter(prefix="/api/migracion", tags=["migracion"])
@@ -13,9 +13,12 @@ async def cargar_libro_iva(
     empresa_id: int,
     archivo: UploadFile = File(...),
     request: Request = None,
+    sesion_factory=Depends(get_sesion_factory),
     _user=Depends(obtener_usuario_actual),
 ):
     """Carga un libro de IVA CSV y extrae proveedores habituales."""
+    with sesion_factory() as sesion:
+        verificar_acceso_empresa(_user, empresa_id, sesion)
     contenido = await archivo.read()
     texto = contenido.decode("utf-8", errors="replace")
     registros = parsear_libro_iva_csv(texto)

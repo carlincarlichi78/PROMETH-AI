@@ -9,7 +9,7 @@ import { LoteProgressCard } from './lote-progress-card'
 import { PerfilRevisionCard } from './perfil-revision-card'
 
 const API = (path: string) => `/api${path}`
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
+const auth = () => ({ Authorization: `Bearer ${sessionStorage.getItem('sfce_token')}` })
 
 interface Lote {
   lote_id: number

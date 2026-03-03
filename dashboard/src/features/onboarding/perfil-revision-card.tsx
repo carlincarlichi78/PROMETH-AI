@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, ChevronDown, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
+const auth = () => ({ Authorization: `Bearer ${sessionStorage.getItem('sfce_token')}` })
 
 interface Perfil {
   id: number

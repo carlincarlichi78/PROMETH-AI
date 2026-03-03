@@ -6,7 +6,7 @@ from datetime import date
 
 logger = logging.getLogger(__name__)
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from sqlalchemy import func, select
@@ -38,6 +38,8 @@ def crear_empresa(
 ):
     """Crea una nueva empresa asociada a la gestoría del usuario autenticado (wizard paso 1)."""
     usuario = obtener_usuario_actual(request)
+    if usuario.rol not in ("admin_gestoria", "superadmin"):
+        raise HTTPException(status_code=403, detail="Solo admin_gestoria o superadmin puede crear empresas")
     with sesion_factory() as sesion:
         empresa = Empresa(
             cif=datos.cif,

@@ -237,7 +237,7 @@ async def loop_worker_pipeline(sesion_factory, intervalo: int = _INTERVALO_CICLO
     try:
         while True:
             try:
-                ejecutar_ciclo_worker(sesion_factory)
+                await asyncio.to_thread(ejecutar_ciclo_worker, sesion_factory)
             except Exception as e:
                 logger.error(f"Error en ciclo worker pipeline: {e}", exc_info=True)
             await asyncio.sleep(intervalo)

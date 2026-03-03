@@ -173,9 +173,10 @@ def sincronizar_cuenta(
             raise HTTPException(status_code=404, detail="Cuenta no encontrada")
         verificar_acceso_empresa(usuario, cuenta.empresa_id, s)
 
-    from sfce.db.base import crear_engine
+    from sfce.db.base import crear_motor
+    from sfce.api.app import _leer_config_bd
     from sfce.conectores.correo.ingesta_correo import IngestaCorreo
-    nuevos = IngestaCorreo(engine=crear_engine()).procesar_cuenta(cuenta_id)
+    nuevos = IngestaCorreo(engine=crear_motor(_leer_config_bd())).procesar_cuenta(cuenta_id)
     return {"nuevos_emails": nuevos}
 
 

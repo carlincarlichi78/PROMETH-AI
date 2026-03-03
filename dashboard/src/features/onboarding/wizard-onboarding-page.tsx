@@ -6,7 +6,7 @@ import { PageTitle } from '@/components/ui/page-title'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
+const auth = () => ({ Authorization: `Bearer ${sessionStorage.getItem('sfce_token')}` })
 
 interface EmpresaWizard {
   nif: string

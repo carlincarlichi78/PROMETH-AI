@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from sfce.api.app import get_sesion_factory
-from sfce.api.auth import obtener_usuario_actual
+from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.db.modelos import ColaProcesamiento, DocumentoTracking
 
 logger = logging.getLogger(__name__)
@@ -24,9 +24,12 @@ def listar_cola_revision(
     sesion_factory=Depends(get_sesion_factory),
 ):
     """Cola de revisión del gestor: docs con decisión COLA_REVISION."""
-    obtener_usuario_actual(request)  # verifica auth
+    usuario = obtener_usuario_actual(request)
+    if usuario.rol not in ("asesor", "admin_gestoria", "superadmin", "asesor_independiente"):
+        raise HTTPException(status_code=403, detail="Se requiere rol de asesor o superior")
     offset = (pagina - 1) * limite
     with sesion_factory() as sesion:
+        verificar_acceso_empresa(usuario, empresa_id, sesion)
         stmt = (
             select(ColaProcesamiento)
             .where(

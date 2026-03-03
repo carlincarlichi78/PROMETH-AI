@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from sfce.db.base import Base
 import sfce.db.modelos  # noqa
 import sfce.db.modelos_auth  # noqa
-from sfce.db.modelos import ColaProcesamiento
+from sfce.db.modelos import ColaProcesamiento, Empresa
 
 
 @pytest.fixture
@@ -51,6 +51,26 @@ def client_gestor_colas(app_with_items):
         gestoria = Gestoria(nombre="Test Gestoría", email_contacto="g@test.com")
         sesion.add(gestoria)
         sesion.flush()
+        empresa = Empresa(
+            id=1,
+            cif="B12345678",
+            nombre="Empresa Test",
+            forma_juridica="sl",
+            territorio="peninsula",
+            regimen_iva="general",
+            gestoria_id=gestoria.id,
+        )
+        sesion.add(empresa)
+        empresa2 = Empresa(
+            id=2,
+            cif="B99999999",
+            nombre="Empresa Sin Items",
+            forma_juridica="sl",
+            territorio="peninsula",
+            regimen_iva="general",
+            gestoria_id=gestoria.id,
+        )
+        sesion.add(empresa2)
         usuario = Usuario(
             email="gestor@test.com",
             nombre="Gestor Test",
@@ -121,6 +141,6 @@ def test_item_no_existente_retorna_404(client_gestor_colas):
 
 def test_listar_cola_vacia_si_no_hay_pendientes(client_gestor_colas):
     client, headers = client_gestor_colas
-    resp = client.get("/api/colas/revision?empresa_id=999", headers=headers)
+    resp = client.get("/api/colas/revision?empresa_id=2", headers=headers)
     assert resp.status_code == 200
     assert resp.json()["items"] == []
