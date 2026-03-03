@@ -285,36 +285,54 @@ Verificaciones en orden: JWT → acceso empresa (403) → doc pertenece a empres
 
 ---
 
-## Estado actual (03/03/2026, sesión 53 — Producción operativa)
+## Estado actual (03/03/2026, sesión 53 — Pipeline API + Producción operativa)
 
 **Rama activa**: `main`
-**Último commit**: `624ec4e`
-**Tests**: 2607 PASS, 4 skipped, 0 FAILED
+**Último commit**: `fe0dd9c`
+**Tests**: 2634 PASS, 4 skipped, 0 FAILED (+27 nuevos)
 
-### ✅ COMPLETADO en sesión 53 — Puesta en marcha producción
+### ✅ COMPLETADO en sesión 53
 
-| Tarea | Detalle |
-|-------|---------|
-| Login SFCE | admin@sfce.local funcional. CSS login más claro (oklch 0.17) |
-| CI/CD fix | Eliminados easyocr/paddleocr de requirements.txt (CUDA ~8GB rompía build) |
-| Usuarios prod | sergio, francisco, maria, luis, gestor1, gestor2, javier — empresas asignadas |
-| 13 empresas | Sembradas en PostgreSQL prod con idempresa_fs e instancias FS |
-| PGC 13/13 | Importado en todas las empresas de las 3 instancias FS |
-| Balance/PyG | Fix `func.strftime` → `func.to_char` — operativos en producción |
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Login SFCE | `c107248` | CSS login más claro (oklch 0.17) |
+| CI/CD fix | `1668391` | Eliminados easyocr/paddleocr de requirements.txt (CUDA ~8GB) |
+| Balance/PyG prod | `624ec4e` | Fix `func.strftime` → `func.to_char` PostgreSQL |
+| Descarga docs | `d74891e` | GET /api/documentos/{id}/descargar con auditoría + 180 tests |
+| **Token servicio** | `fe0dd9c` | Migración 026, TokenServicio ORM, `verificar_token_servicio()` |
+| **Pipeline API** | `fe0dd9c` | 4 endpoints `/api/pipeline/` + 21 tests + migración en prod |
 
-### Pendiente próxima sesión
+### Pipeline API — endpoints operativos en producción
 
-**1. SFCE_CI_TOKEN en GitHub Secrets** (smoke test falla sin él)
-- Crear JWT para `ci@sfce.local` y añadir como secret en GitHub → Settings → Secrets
+```
+Header auth: X-Pipeline-Token: {token_raw}
 
-**2. Fixes auditoría pendientes** (ver sección más abajo: "Estado actual sesión 46")
+POST /api/pipeline/documentos/subir       → sube PDF, dedup SHA256, encola
+GET  /api/pipeline/documentos/pendientes  → cola PENDIENTE/CUARENTENA paginada
+GET  /api/pipeline/empresas               → empresas en scope del token
+GET  /api/pipeline/sync-status            → contadores por empresa
+
+POST /api/admin/tokens-servicio           → crear token (superadmin)
+GET  /api/admin/tokens-servicio           → listar tokens
+DELETE /api/admin/tokens-servicio/{id}    → revocar
+```
+
+**Scope token**: `gestoria_id` + `empresa_ids[]` (vacío = todas de la gestoría)
+**Flujo**: pipeline sube PDF → worker_pipeline.py lo procesa en el siguiente ciclo (60s)
+
+### ⚡ PRÓXIMA SESIÓN
+
+**1. SFCE_CI_TOKEN en GitHub Secrets** (smoke test CI falla sin él)
+- JWT de `ci@sfce.local` → GitHub Settings → Secrets → `SFCE_CI_TOKEN`
+
+**2. Fixes auditoría** (ver "Estado actual sesión 46" más abajo)
+- FE-1, API-3, VULN-1, BUG-4, VULN-4/5/6/7/8, FE-3
 
 **3. Plugins fiscales en instancias FS nuevas**
-- fs-uralde, fs-gestoriaa, fs-javier no tienen Modelo303, 111, 347, etc.
-- Instalar desde panel admin de cada instancia si se van a usar para declaraciones
+- fs-uralde, fs-gestoriaa, fs-javier sin Modelo303/111/347 etc.
 
 **4. Actualizar docs/LIBRO/**
-- `01-infraestructura.md`, `26-infra-docker-backups.md`, `24-facturascripts.md`
+- `01-infraestructura.md`, `26-infra-docker-backups.md`, `24-facturascripts.md`, `11-api-endpoints.md`
 
 ---
 
