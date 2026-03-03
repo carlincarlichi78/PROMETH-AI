@@ -27,6 +27,7 @@ from ..core.errors import ResultadoFase
 from ..core.fs_api import api_get
 from ..core.logger import crear_logger
 from ..core.ocr_gemini import auditar_asiento_gemini
+from ..core.auditor_asientos import AuditorAsientos
 
 logger = crear_logger("cross_validation")
 
@@ -471,6 +472,19 @@ def _check_cruce_por_cliente(datos: dict, tolerancia: float = 0.02) -> dict:
     }
 
 
+def _auditar_asiento(asiento: dict) -> dict:
+    """Audita un asiento con consenso multi-modelo (Gemini+Haiku+GPT-mini)."""
+    auditor = AuditorAsientos()
+    resultado = auditor.auditar_sync(asiento)
+    return {
+        "resultado": "OK" if resultado.aprobado else "ALERTA",
+        "nivel": resultado.nivel,
+        "confianza": resultado.confianza,
+        "problemas": [{"descripcion": resultado.detalle}] if not resultado.aprobado else [],
+        "_fuente": f"multi_modelo_votos:{resultado.votos}",
+    }
+
+
 def _check_auditor_ia(datos: dict, config, ruta_ejercicio) -> dict:
     """Capa 5: Auditor IA revisa cada asiento con Gemini Flash."""
     import os
@@ -511,7 +525,7 @@ def _check_auditor_ia(datos: dict, config, ruta_ejercicio) -> dict:
             "checks_previos": f"{asiento.get('problemas_detectados', 0)} problemas, {asiento.get('correcciones_aplicadas', 0)} corregidos",
         }
 
-        resultado = auditar_asiento_gemini(datos_ext, asiento, contexto)
+        resultado = _auditar_asiento(asiento)
 
         if resultado.get("resultado") == "ALERTA":
             for problema in resultado.get("problemas", []):
