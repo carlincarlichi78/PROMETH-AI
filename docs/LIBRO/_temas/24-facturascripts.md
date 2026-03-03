@@ -547,3 +547,189 @@ sequenceDiagram
     Pipeline->>BD: Guardar asiento + partidas en BD local
     Note over BD: Sync post-correcciones para capturar estado final
 ```
+
+---
+
+## Problemas frecuentes en instancias nuevas — diagnóstico y solución
+
+Documentados en sesión 54 tras resolver los 3 problemas que afectaban a fs-uralde, fs-gestoriaa y fs-javier.
+
+---
+
+### PROBLEMA 1: El menú de navegación aparece vacío
+
+**Síntoma:** Tras login, el header azul no muestra ningún elemento de menú (sin Administrador, Almacén, Compras, Contabilidad, Informes, Ventas). Solo aparece el logotipo y los iconos de la derecha.
+
+**Causa:** La carpeta `Dinamic/` está vacía o incompleta. FS genera el menú dinámicamente desde esta carpeta, que contiene el código compilado de Core + Plugins. Sin ella, FS no sabe qué páginas registrar en la tabla `pages` de MariaDB.
+
+Esto ocurre cuando:
+- La instancia se instaló pero el wizard se interrumpió antes de completarse
+- Se copió `Dinamic/` de otra instancia con versión diferente
+- Se hizo un deploy parcial
+
+**Solución: Reconstruir desde AdminPlugins**
+
+```
+Navegar a: https://fs-instancia.prometh-ai.es/AdminPlugins
+Hacer clic en: Reconstruir (botón amarillo)
+Resultado esperado: "Reconstrucción completada" + menú completo visible
+```
+
+Esto regenera `Dinamic/` desde el código fuente de Core + todos los plugins instalados, y rellena la tabla `pages` con todas las páginas disponibles.
+
+**Alternativa via HTTP** (si ni siquiera carga AdminPlugins):
+```bash
+curl -s https://fs-instancia.prometh-ai.es/deploy
+# Si responde "already exists":
+docker exec fs-instancia-facturascripts-1 rm -rf /var/www/html/Dinamic
+curl -s https://fs-instancia.prometh-ai.es/deploy
+```
+
+---
+
+### PROBLEMA 2: El usuario queda atrapado en el wizard al hacer login
+
+**Síntoma:** Cualquier usuario que hace login es redirigido al asistente de configuración inicial (wizard) independientemente de si ya se completó antes. No hay forma de salir — volver a la página anterior también redirige al wizard.
+
+**Causa:** El campo `homepage` en la tabla `users` de MariaDB tiene el valor `'Wizard'`. FS usa este campo para decidir a qué página redirigir al usuario tras login. Si `homepage='Wizard'`, siempre va al wizard.
+
+Este valor se puede quedar así si:
+- El wizard se inició pero no se completó
+- Un script de setup lo dejó en ese estado
+- La empresa se creó desde el wizard y el usuario admin quedó marcado
+
+**Diagnóstico:**
+```bash
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts \
+  -e "SELECT nick, homepage FROM users;"
+```
+
+**Solución:**
+```bash
+# Poner homepage a NULL para todos (FK ON DELETE SET NULL lo permite)
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts \
+  -e "UPDATE users SET homepage=NULL WHERE homepage='Wizard' OR homepage='Dashboard';"
+
+# IMPORTANTE: 'Dashboard' tampoco es válido — no existe en la tabla pages
+# Los únicos valores válidos son: NULL o un nombre real de la tabla pages
+# Con NULL, FS usa la página por defecto del sistema
+```
+
+Además, para que el wizard no vuelva a aparecer, marcar como visitado en la tabla `settings`:
+```bash
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts \
+  -e "INSERT IGNORE INTO settings (name, properties) VALUES ('wizard', '{\"visited\":\"true\"}')
+      ON DUPLICATE KEY UPDATE properties='{\"visited\":\"true\"}';"
+
+# CRÍTICO: el valor debe ser el string "true" (con comillas), NO el booleano true
+# {"visited":"true"}  ← CORRECTO
+# {"visited":true}    ← INCORRECTO — FS no lo reconoce
+```
+
+---
+
+### PROBLEMA 3: La empresa activa muestra E-9881 en lugar de la empresa real
+
+**Síntoma:** El header muestra `E-9881` (o `%company%`) en lugar del nombre de la empresa principal (PASTORINO, MARCOS, COMUNIDAD). Todos los usuarios ven la empresa del wizard.
+
+**Causa:** `Core/Model/User.php` sobreescribe el `idempresa` del usuario con el valor de `settings.default.idempresa` en cada login. Si ese valor es `1` (empresa del wizard), todos los usuarios ven E-9881.
+
+La empresa `idempresa=1` en cada instancia es la empresa vacía creada automáticamente por el wizard. Las empresas reales son `idempresa=2` en adelante.
+
+**Solución completa (3 pasos):**
+
+**Paso 1 — Corregir en MariaDB:**
+```bash
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts \
+  -e "UPDATE settings SET properties=JSON_SET(properties, '$.idempresa', '2')
+      WHERE name='default';"
+```
+
+**Paso 2 — Borrar caché:**
+```bash
+docker exec fs-uralde-facturascripts-1 \
+  rm -f /var/www/html/MyFiles/Tmp/FileCache/tools-settings.cache
+```
+
+**Paso 3 — Confirmar desde panel web** (obligatorio para que FS persista el cambio correctamente):
+```
+Administrador → Panel de control → campo "Empresa" → seleccionar empresa correcta → Guardar
+```
+URL directa: `https://fs-instancia.prometh-ai.es/EditSettings`
+
+**Síntoma `%company%`:** Si tras borrar caché aparece el literal `%company%` en el header, significa que la columna `nombrecorto` de la tabla `empresas` está a NULL. Fix:
+```bash
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts \
+  -e "UPDATE empresas SET nombrecorto='PASTORINO' WHERE idempresa=2;"
+```
+
+---
+
+### PROBLEMA 4: Tabla `partidas` no existe (error al acceder a Contabilidad)
+
+**Síntoma:** Al navegar a `Contabilidad → Asientos` (`/ListAsiento`) aparece el error:
+```
+Table 'facturascripts.partidas' doesn't exist
+```
+
+**Causa:** FS crea las tablas contables de forma lazy (bajo demanda) cuando se accede a cada controlador web por primera vez. Las llamadas via token API no crean tablas — solo las visitas web autenticadas lo hacen.
+
+**Solución A — Visita web** (recomendada, crea todas las tablas a la vez):
+```
+Navegar autenticado a /ListAsiento, /ListCuenta, /ListSubcuenta
+```
+
+**Solución B — Crear tabla manualmente** (si la web tampoco funciona):
+```bash
+docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts << 'SQL'
+CREATE TABLE IF NOT EXISTS partidas (
+  idpartida INT NOT NULL AUTO_INCREMENT,
+  idasiento INT NOT NULL,
+  idsubcuenta INT NOT NULL,
+  idcontrapartida INT DEFAULT NULL,
+  baseimponible DOUBLE NOT NULL DEFAULT 0,
+  cifnif VARCHAR(30) DEFAULT NULL,
+  codcontrapartida VARCHAR(15) DEFAULT NULL,
+  coddivisa VARCHAR(3) DEFAULT NULL,
+  codserie VARCHAR(4) DEFAULT NULL,
+  codsubcuenta VARCHAR(15) NOT NULL,
+  concepto VARCHAR(255) DEFAULT NULL,
+  debe DOUBLE NOT NULL DEFAULT 0,
+  documento VARCHAR(50) DEFAULT NULL,
+  factura VARCHAR(15) DEFAULT NULL,
+  haber DOUBLE NOT NULL DEFAULT 0,
+  iva DOUBLE DEFAULT NULL,
+  orden INT NOT NULL DEFAULT 0,
+  punteada TINYINT(1) NOT NULL DEFAULT 0,
+  recargo DOUBLE DEFAULT 0,
+  saldo DOUBLE DEFAULT 0,
+  tasaconv DOUBLE NOT NULL DEFAULT 0,
+  PRIMARY KEY (idpartida),
+  CONSTRAINT ca_partidas_asientos FOREIGN KEY (idasiento)
+    REFERENCES asientos (idasiento) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT ca_partidas_subcuentas FOREIGN KEY (idsubcuenta)
+    REFERENCES subcuentas (idsubcuenta) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT ca_partidas_subcuentas2 FOREIGN KEY (idcontrapartida)
+    REFERENCES subcuentas (idsubcuenta) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+SQL
+```
+
+---
+
+### Checklist puesta en marcha de instancia FS nueva
+
+Al levantar una instancia nueva, ejecutar en este orden:
+
+```
+[ ] 1. Wizard completado vía curl (POST /) → HTTP 302
+[ ] 2. Plugins copiados + permisos www-data + /deploy ejecutado
+[ ] 3. Reconstruir en AdminPlugins → "Reconstrucción completada"
+[ ] 4. users.homepage=NULL para todos los usuarios (evita bucle wizard)
+[ ] 5. settings wizard visitado: {"visited":"true"} (string, no boolean)
+[ ] 6. Empresas creadas (idempresa 2+), nombrecorto relleno
+[ ] 7. settings.default.idempresa = "2" en MariaDB + caché borrada
+[ ] 8. Confirmar empresa activa en Panel de control (EditSettings) → Guardar
+[ ] 9. Ejercicios creados + PGC importado (721 subcuentas)
+[ ] 10. Visitar /ListAsiento para crear tabla partidas (lazy)
+```

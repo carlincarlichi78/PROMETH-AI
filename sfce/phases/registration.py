@@ -273,6 +273,9 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         "codejercicio": config.codejercicio,
         "fecha": datos.get("fecha", ""),
     }
+    # Agente asignado a la empresa (para filtro 'solo mis registros' por grupo)
+    if config.codagente_fs:
+        form["codagente"] = config.codagente_fs
 
     if es_proveedor:
         form["codproveedor"] = codigo_entidad

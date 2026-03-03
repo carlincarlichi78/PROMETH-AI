@@ -78,6 +78,11 @@ class ConfigCliente:
         return self.empresa.get("codejercicio", self.ejercicio)
 
     @property
+    def codagente_fs(self) -> str | None:
+        """Codigo del agente FS asignado a esta empresa (para filtro por grupo de usuarios)."""
+        return self.empresa.get("codagente_fs")
+
+    @property
     def obligaciones(self) -> dict:
         """Devuelve obligaciones fiscales/contables segun tipo de entidad."""
         return self._tipo_entidad or {}
