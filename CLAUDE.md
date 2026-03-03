@@ -248,6 +248,44 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 49 — Smart OCR: diseño + plan optimización costes API)
+
+**Rama activa**: `main`
+**Último commit**: `763a42c`
+**Tests**: 2573 PASS (sin cambios de código esta sesión)
+
+### Lo realizado en sesión 49
+
+| Tarea | Detalle |
+|-------|---------|
+| Diagnóstico costes | 5 causas: 2 llamadas Mistral/doc, cascade 4x, GPT-4o Vision, sin caché worker, comparar_engines sin caché |
+| Inventario completo | Todos los usos de API: Mistral, OpenAI, Gemini, Claude Haiku (copilot.py) |
+| Diseño aprobado | 3 routers: SmartOCR + SmartParser + AuditorAsientos multi-modelo paralelo |
+| Doc diseño | `docs/plans/2026-03-03-smart-ocr-design.md` |
+| Plan implementación | `docs/plans/2026-03-03-smart-ocr-plan.md` (11 tasks, 29 tests nuevos) |
+
+### Próxima sesión — Ejecutar plan Smart OCR
+
+**Leer**: `docs/plans/2026-03-03-smart-ocr-plan.md`
+**Skill a usar**: `superpowers:executing-plans`
+
+**11 tasks en orden**:
+1. Dependencias EasyOCR + PaddleOCR
+2. `PDFAnalyzer` (`sfce/core/pdf_analyzer.py`)
+3. `SmartOCR.extraer_texto()` (`sfce/core/smart_ocr.py`)
+4. `SmartParser.parsear()` (`sfce/core/smart_parser.py`)
+5. Fachada `SmartOCR.extraer()` con caché
+6. `AuditorAsientos` (`sfce/core/auditor_asientos.py`)
+7. Conectar `intake.py`
+8. Conectar `worker_ocr_gate0.py`
+9. Conectar `cross_validation.py`
+10. `extractor_enriquecimiento`: GPT-4o → GPT-4o-mini
+11. Regresión completa
+
+**Ahorro esperado**: $15-40/mes → $0.50-3/mes
+
+---
+
 ## Estado actual (03/03/2026, sesión 48 — Instancias FS independientes COMPLETADAS)
 
 **Rama activa**: `main`
