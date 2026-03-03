@@ -92,6 +92,85 @@ def test_pipeline_error_no_propagado(sf_con_empresa):
     assert "fallo" in resultado.errores[0]
 
 
+def test_resolver_credenciales_fs_sin_gestoria(sf_con_empresa):
+    """Sin gestoría, _resolver_credenciales_fs devuelve dict vacío."""
+    sf, _ = sf_con_empresa
+    from sfce.core.pipeline_runner import _resolver_credenciales_fs
+
+    with sf() as sesion:
+        empresa = sesion.get(__import__("sfce.db.modelos", fromlist=["Empresa"]).Empresa, 5)
+        env = _resolver_credenciales_fs(empresa, sesion)
+
+    assert env == {}
+
+
+def test_resolver_credenciales_fs_con_gestoria_configurada(sf_con_empresa):
+    """Con gestoría que tiene fs_url y fs_token_enc, devuelve FS_API_URL y FS_API_TOKEN."""
+    import os
+    os.environ.setdefault("SFCE_FERNET_KEY", __import__("cryptography.fernet", fromlist=["Fernet"]).Fernet.generate_key().decode())
+
+    from sfce.core.cifrado import cifrar
+    from sfce.core.pipeline_runner import _resolver_credenciales_fs
+    from sfce.db.modelos_auth import Gestoria
+    from sfce.db.modelos import Empresa
+
+    sf, _ = sf_con_empresa
+    with sf() as sesion:
+        g = Gestoria(
+            id=10, nombre="Gestoría Test FS", email_contacto="g@test.com",
+            fs_url="https://fs.migestoria.es/api/3",
+            fs_token_enc=cifrar("token-secreto-gestoria"),
+        )
+        sesion.add(g)
+        emp = sesion.get(Empresa, 5)
+        emp.gestoria_id = 10
+        sesion.flush()
+        sesion.refresh(g)
+        env = _resolver_credenciales_fs(emp, sesion)
+
+    assert env["FS_API_URL"] == "https://fs.migestoria.es/api/3"
+    assert env["FS_API_TOKEN"] == "token-secreto-gestoria"
+
+
+def test_lanzar_pipeline_pasa_env_fs_al_subprocess(sf_con_empresa):
+    """_lanzar_pipeline_interno pasa FS_API_URL/TOKEN al env del subprocess."""
+    import os, subprocess
+    os.environ.setdefault("SFCE_FERNET_KEY", __import__("cryptography.fernet", fromlist=["Fernet"]).Fernet.generate_key().decode())
+
+    from sfce.core.cifrado import cifrar
+    from sfce.db.modelos_auth import Gestoria
+    from sfce.db.modelos import Empresa
+
+    sf, _ = sf_con_empresa
+    with sf() as sesion:
+        g = Gestoria(
+            id=11, nombre="Gestoría SubP", email_contacto="sp@test.com",
+            fs_url="https://fs.subp.es/api/3",
+            fs_token_enc=cifrar("tok-subprocess"),
+        )
+        sesion.add(g)
+        emp = sesion.get(Empresa, 5)
+        emp.gestoria_id = 11
+        sesion.commit()
+
+    env_capturado = {}
+
+    def mock_subprocess_run(cmd, **kwargs):
+        env_capturado.update(kwargs.get("env", {}))
+        r = MagicMock()
+        r.returncode = 0
+        r.stdout = ""
+        r.stderr = ""
+        return r
+
+    with patch("sfce.core.pipeline_runner.subprocess.run", side_effect=mock_subprocess_run):
+        from sfce.core.pipeline_runner import _lanzar_pipeline_interno
+        _lanzar_pipeline_interno(5, sf, None, {}, False)
+
+    assert env_capturado.get("FS_API_URL") == "https://fs.subp.es/api/3"
+    assert env_capturado.get("FS_API_TOKEN") == "tok-subprocess"
+
+
 def test_lock_evita_concurrencia(sf_con_empresa):
     """No se puede lanzar el pipeline para la misma empresa dos veces a la vez."""
     from sfce.core.pipeline_runner import adquirir_lock_empresa, liberar_lock_empresa

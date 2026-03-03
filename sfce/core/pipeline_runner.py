@@ -88,6 +88,31 @@ def ejecutar_pipeline_empresa(
     return resultado
 
 
+def _resolver_credenciales_fs(empresa, sesion) -> dict[str, str]:
+    """Devuelve env vars FS para el subprocess según gestoría de la empresa.
+
+    Si la gestoría tiene fs_url + fs_token_enc propios, los descifra y
+    los devuelve como FS_API_URL / FS_API_TOKEN.
+    Si no, devuelve dict vacío (el subprocess usa sus propias variables de entorno).
+    """
+    try:
+        gestoria = getattr(empresa, "gestoria", None)
+        if gestoria is None and getattr(empresa, "gestoria_id", None):
+            from sfce.db.modelos_auth import Gestoria
+            gestoria = sesion.get(Gestoria, empresa.gestoria_id)
+        if gestoria and gestoria.fs_url and gestoria.fs_token_enc:
+            from sfce.core.cifrado import descifrar
+            token = descifrar(gestoria.fs_token_enc)
+            logger.info(
+                "Empresa %s: usando FS propio de gestoría %s (%s)",
+                empresa.id, gestoria.id, gestoria.fs_url,
+            )
+            return {"FS_API_URL": gestoria.fs_url, "FS_API_TOKEN": token}
+    except Exception as exc:
+        logger.warning("No se pudieron resolver credenciales FS de gestoría: %s", exc)
+    return {}
+
+
 def _lanzar_pipeline_interno(
     empresa_id: int,
     sesion_factory,
@@ -100,13 +125,16 @@ def _lanzar_pipeline_interno(
     Delega a scripts/pipeline.py vía subprocess.
     En la siguiente fase se integrará directamente con sfce/phases/.
     """
+    import os
     from sfce.db.modelos import Empresa
 
+    env_fs: dict[str, str] = {}
     with sesion_factory() as sesion:
         empresa = sesion.get(Empresa, empresa_id)
         if not empresa or not empresa.slug:
             raise ValueError(f"Empresa {empresa_id} no tiene slug configurado")
         slug = empresa.slug
+        env_fs = _resolver_credenciales_fs(empresa, sesion)
 
     cmd = [
         sys.executable, "scripts/pipeline.py",
@@ -116,12 +144,16 @@ def _lanzar_pipeline_interno(
     if dry_run:
         cmd.append("--dry-run")
 
+    # Heredar env del proceso padre y sobrescribir credenciales FS si la gestoría tiene las suyas
+    env_subprocess = {**os.environ, **env_fs}
+
     raiz_proyecto = Path(__file__).parent.parent.parent
     proc = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
         cwd=raiz_proyecto,
+        env=env_subprocess,
     )
 
     if proc.returncode not in (0, 1):
