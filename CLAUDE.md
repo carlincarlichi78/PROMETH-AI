@@ -248,6 +248,38 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 59 — Portal cliente operativo)
+
+**Rama activa**: `main`
+**Último commit**: `9a9b878`
+**Tests**: 2595 PASS, 0 FAILED
+
+### ✅ COMPLETADO en sesión 59
+
+| Tarea | Detalle |
+|-------|---------|
+| Portal cliente funcional | Login Gerardo `gerardo.gonzalez@gmail.com` / `Uralde2026!` → `https://app.prometh-ai.es/portal/2` |
+| Branding PROMETH-AI | `portal-layout.tsx`, `index.html`, `vite.config.ts` — eliminado "SPICE" |
+| Subida documentos portal | Zona upload en portal con `POST /api/portal/{id}/documentos/subir` |
+| Fix `ejercicio_activo` | `portal.py` líneas 86 y 175 — atributo inexistente → `str(date.today().year)` |
+| Nginx no-cache SW | `app-prometh-ai.conf` — `sw.js` sin caché para forzar update PWA automático |
+| Deploy correcto | Frontend → `/opt/apps/sfce/dashboard_dist/` (no `/frontend/`) |
+| Usuario Gerardo en BD prod | `id=22`, `rol=cliente`, `empresas_asignadas=[2]`, `gestoria_id=1` |
+
+### ⚡ PRÓXIMA SESIÓN
+
+**1. Mejorar contenido app móvil** (`mobile/`) — revisar UX, pantallas y flujos del empresario/gestor
+
+**2. Pipeline Gerardo** — lanzar 9 PDFs con fix 2 pasos:
+```bash
+export $(grep -v '^#' .env | xargs)
+python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo
+```
+
+**3. Segunda ronda fixes auditoría** (baja prioridad): `IMP-6/BUG-1`, `IMP-8`, `MIGR-2`, `VULN-2`, `DB-1/DB-2`
+
+---
+
 ## Estado actual (03/03/2026, sesión 60 — Mejoras sistema ingesta email)
 
 **Rama activa**: `main`
