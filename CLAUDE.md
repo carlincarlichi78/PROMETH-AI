@@ -248,6 +248,28 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **Branch activa**: `main`
 - **Binarios excluidos**: PDFs, Excel, JSONs de clientes (ver .gitignore)
 
+## Estado actual (03/03/2026, sesión 60 — Dashboard documentos pipeline operativo)
+
+**Rama activa**: `main`
+**Último commit**: `5ea5b29`
+
+### ✅ COMPLETADO en esta sesión
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Sync pipeline → BD | (sesión anterior) | `_sincronizar_resultados_bd()` en `scripts/pipeline.py` + `POST /api/pipeline/documentos/resultado` |
+| `GET /api/empresas/{id}/documentos` | (sesión anterior) | Endpoint con filtros ejercicio/estado/tipo_doc. Fix 500: `sesion_factory` → `s` en `verificar_acceso_empresa` |
+| Página Documentos | `4048132` | `dashboard/src/features/documentos/documentos-empresa-page.tsx` — tabla con filtros, badgeEstado, confianza coloreada |
+| Ruta + sidebar | (bundled) | `/empresa/:id/documentos` en App.tsx + enlace "Documentos" en sidebar de empresa |
+| **Resultado** | — | **1 doc Gerardo visible en app.prometh-ai.es/empresa/2/documentos** (FC, registrado, 100%, ID FS 9) |
+
+### ⚡ PRÓXIMA SESIÓN
+
+- **Pipeline Gerardo**: lanzar los 9 PDFs del inbox (la página Documentos mostrará el resultado)
+- **IMAP asesores**: plan `docs/plans/2026-03-03-imap-asesores.md` (Tasks 1-6)
+
+---
+
 ## Estado actual (03/03/2026, sesión 59 — Portal cliente operativo)
 
 **Rama activa**: `main`
