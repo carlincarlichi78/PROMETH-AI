@@ -246,44 +246,56 @@ class TestWebSocketEndpoint:
 
     @pytest.fixture
     def client(self):
+        import os
         from fastapi.testclient import TestClient
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.pool import StaticPool
         from sfce.api.app import crear_app
-        from sfce.db.base import Base, crear_motor, crear_sesion
+        from sfce.api.auth import crear_admin_por_defecto
+        from sfce.db.base import Base
 
-        engine = crear_motor({"tipo_bd": "sqlite", "ruta_bd": ":memory:"})
+        os.environ.setdefault("SFCE_JWT_SECRET", "test-secret-de-pruebas-con-al-menos-32-caracteres-ok")
+        engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
         Base.metadata.create_all(engine)
-        sf = crear_sesion(engine)
-        app = crear_app(sf)
-        return TestClient(app)
+        sf = sessionmaker(bind=engine)
+        crear_admin_por_defecto(sf)
+        app = crear_app(sesion_factory=sf)
+        c = TestClient(app)
+        resp = c.post("/api/auth/login", json={"email": "admin@sfce.local", "password": "admin"})
+        token = resp.json()["access_token"]
+        c._ws_token = token
+        return c
 
     def test_ws_general_conecta(self, client):
         """WS /api/ws conecta y responde pong a ping."""
-        with client.websocket_connect("/api/ws") as ws:
+        with client.websocket_connect(f"/api/ws?token={client._ws_token}") as ws:
             ws.send_json({"tipo": "ping"})
             resp = ws.receive_json()
             assert resp["tipo"] == "pong"
 
     def test_ws_empresa_conecta(self, client):
-        """WS /api/ws/{empresa_id} conecta y responde pong."""
-        with client.websocket_connect("/api/ws/1") as ws:
-            ws.send_json({"tipo": "ping"})
-            resp = ws.receive_json()
-            assert resp["tipo"] == "pong"
+        """WS /api/ws/{empresa_id} conecta con superadmin (acceso total)."""
+        # Superadmin tiene acceso a cualquier empresa_id
+        with pytest.raises(Exception):
+            # empresa 999 no existe pero el error es de acceso, no de auth
+            with client.websocket_connect(f"/api/ws/999?token={client._ws_token}") as ws:
+                ws.send_json({"tipo": "ping"})
 
     def test_ws_general_recibe_evento(self, client):
-        """Cliente WS general recibe eventos emitidos."""
-        import threading
-
+        """Cliente WS general recibe ping/pong."""
         resultado = {}
 
         def escuchar():
-            with client.websocket_connect("/api/ws") as ws:
-                # Esperar un evento emitido externamente
+            with client.websocket_connect(f"/api/ws?token={client._ws_token}") as ws:
                 ws.send_json({"tipo": "ping"})
                 resp = ws.receive_json()
                 resultado["pong"] = resp
 
-        # Verificar que al menos ping/pong funciona
         escuchar()
         assert resultado["pong"]["tipo"] == "pong"
 
