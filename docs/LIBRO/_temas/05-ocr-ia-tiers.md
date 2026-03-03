@@ -1,20 +1,98 @@
-# 05 — OCR e IA: Sistema de Tiers
+# 05 — OCR e IA: Sistema SmartOCR
 
 > **Estado:** COMPLETADO
-> **Actualizado:** 2026-03-01
-> **Fuentes:** `sfce/phases/intake.py`, `sfce/phases/ocr_consensus.py`, `sfce/core/cache_ocr.py`, `sfce/core/worker_ocr_gate0.py`, `sfce/core/recovery_bloqueados.py`, `sfce/core/ocr_036.py`, `sfce/core/ocr_escritura.py`
+> **Actualizado:** 2026-03-03 (sesión 50 — arquitectura SmartOCR)
+> **Fuentes:** `sfce/core/smart_ocr.py`, `sfce/core/smart_parser.py`, `sfce/core/pdf_analyzer.py`, `sfce/core/auditor_asientos.py`, `sfce/core/cache_ocr.py`, `sfce/core/worker_ocr_gate0.py`, `sfce/phases/intake.py`, `sfce/phases/cross_validation.py`
 
 ---
 
-## Motores OCR disponibles
+## Arquitectura SmartOCR (desde sesión 50)
 
-| Motor | Variable API | Tier | Coste relativo | Limites conocidos |
-|-------|-------------|------|----------------|-------------------|
-| Mistral OCR3 | `MISTRAL_API_KEY` | T0 | Bajo | — |
-| GPT-4o | `OPENAI_API_KEY` | T1 | Medio | 30K TPM (satura con 5 workers) |
-| Gemini Flash | `GEMINI_API_KEY` | T2 | Bajo | 5 req/min, 20 req/dia (free tier) |
+La arquitectura de tiers manual fue **reemplazada** por SmartOCR: un sistema de routers inteligentes que elige el motor más barato posible, con caché integrado.
 
-El motor primario lo determina `ejecutar_intake()`: si `MISTRAL_API_KEY` esta en el entorno, motor primario = `"mistral"`. Si no, fallback a `"openai"`. Gemini se activa solo si `_GEMINI_DISPONIBLE` (import condicional) y `GEMINI_API_KEY` presente.
+### Componentes
+
+| Módulo | Archivo | Rol |
+|--------|---------|-----|
+| `PDFAnalyzer` | `sfce/core/pdf_analyzer.py` | Analiza el PDF sin APIs: extrae texto con pdfplumber, detecta imágenes, calcula ratio texto real, detecta CIF |
+| `SmartOCR` | `sfce/core/smart_ocr.py` | Router OCR: elige motor según PDFProfile. Fachada `SmartOCR.extraer()` = OCR + parseo + caché |
+| `SmartParser` | `sfce/core/smart_parser.py` | Router parseo: texto→JSON con motor más barato disponible |
+| `AuditorAsientos` | `sfce/core/auditor_asientos.py` | Auditoría multi-modelo en paralelo con votación 2-de-3 |
+
+### Cascade OCR (SmartOCR.extraer_texto)
+
+```
+pdfplumber (gratis) → EasyOCR local (gratis) → PaddleOCR local (gratis) → Mistral OCR3 (pago)
+```
+
+- **pdfplumber**: siempre primero. Si extrae texto de calidad (>= ratio 0.7 o tipo BAN/IMP/NOM) → fin.
+- **EasyOCR**: para PDFs escaneados. Lee imágenes con `fitz`, OCR en español+inglés.
+- **PaddleOCR**: fallback si EasyOCR da <10 palabras. Mejor para texto girado/espejado.
+- **Mistral OCR3**: último recurso. Solo si motores locales fallan.
+
+### Cascade Parseo (SmartParser.parsear)
+
+```
+template regex ($0) → Gemini Flash free ($0) → GPT-4o-mini ($0.0003/llamada) → GPT-4o ($0.005/llamada)
+```
+
+- **template**: para BAN e IMP (estructura fija conocida).
+- **Gemini Flash**: gratis hasta 1500 req/día, para texto con ≥15 palabras.
+- **GPT-4o-mini**: texto corto o si Gemini falla.
+- **GPT-4o**: último recurso (no debería activarse normalmente).
+
+### Fachada principal: SmartOCR.extraer()
+
+```python
+datos = SmartOCR.extraer(ruta_pdf, tipo_doc="FV")
+# → dict con campos JSON estructurados, o None si todo falla
+# Consulta caché automáticamente antes de llamar a ninguna API
+```
+
+Reemplaza todas las llamadas directas a `extraer_factura_mistral()`, `extraer_factura_gpt()`, `extraer_factura_gemini()`.
+
+### Puntos de integración
+
+| Archivo | Antes | Después |
+|---------|-------|---------|
+| `sfce/phases/intake.py` | Cascade manual 105 líneas | `_extraer_datos_ocr()` → `SmartOCR.extraer()` |
+| `sfce/core/worker_ocr_gate0.py` | `_ejecutar_ocr_tiers()` cascade T0→T1→T2 | `SmartOCR.extraer()` |
+| `sfce/phases/cross_validation.py` | `auditar_asiento_gemini()` solo Gemini | `_auditar_asiento()` → `AuditorAsientos.auditar_sync()` |
+| `sfce/conectores/correo/extractor_enriquecimiento.py` | `gpt-4o` | `gpt-4o-mini` |
+
+### AuditorAsientos — Votación multi-modelo
+
+```python
+# Ejecuta Gemini + Haiku + GPT-4o-mini en paralelo (asyncio.gather)
+resultado = AuditorAsientos().auditar_sync(asiento)
+# resultado.nivel: AUTO_APROBADO | APROBADO | REVISION_HUMANA | BLOQUEADO
+# resultado.confianza: 0.0–1.0
+# resultado.votos: {"gemini": True, "haiku": False, "gpt_mini": True}
+```
+
+Regla de votación: 3/3 → AUTO_APROBADO; 2/3 → APROBADO; 1/3 → REVISION_HUMANA; 0/3 → BLOQUEADO.
+
+### Ahorro de costes estimado
+
+| Caso | Antes | Después |
+|------|-------|---------|
+| FV digital (texto extractable) | ~$0.010 | ~$0.000 |
+| FV escaneada simple | ~$0.030 | ~$0.000 |
+| FV escaneada compleja | ~$0.060 | ~$0.005 |
+| Pipeline mensual ~500 docs | $15–40/mes | $0.50–3/mes |
+
+---
+
+## Motores OCR disponibles (referencia)
+
+| Motor | Variable API | Coste relativo | Limites conocidos |
+|-------|-------------|----------------|-------------------|
+| pdfplumber | — | $0 | Solo PDFs con texto embebido |
+| EasyOCR | — | $0 | Descarga modelos ~200MB |
+| PaddleOCR | — | $0 | Descarga modelos ~300MB |
+| Mistral OCR3 | `MISTRAL_API_KEY` | $0.002/pág | Último recurso |
+| GPT-4o-mini | `OPENAI_API_KEY` | $0.0003/llamada | Para parseo |
+| Gemini Flash | `GEMINI_API_KEY` | $0 | 1500 req/día free tier |
 
 ---
 
