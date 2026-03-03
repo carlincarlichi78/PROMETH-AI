@@ -70,11 +70,14 @@ class ImapServicio:
         self._carpeta = carpeta
         self._conn: Any = None  # _ImaplibAdapter o MagicMock en tests
 
+    # Fix #12: timeout para evitar que el worker se quede colgado indefinidamente
+    TIMEOUT_SEGUNDOS = 30
+
     def _conectar(self) -> None:
         if self._ssl:
-            raw = imaplib.IMAP4_SSL(self._servidor, self._puerto)
+            raw = imaplib.IMAP4_SSL(self._servidor, self._puerto, timeout=self.TIMEOUT_SEGUNDOS)
         else:
-            raw = imaplib.IMAP4(self._servidor, self._puerto)
+            raw = imaplib.IMAP4(self._servidor, self._puerto, timeout=self.TIMEOUT_SEGUNDOS)
         raw.login(self._usuario, self._contrasena)
         raw.select(self._carpeta)
         self._conn = _ImaplibAdapter(raw)
