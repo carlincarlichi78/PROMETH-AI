@@ -172,9 +172,11 @@ class MotorConciliacion:
 
         docs_usados: set = set()
 
-        # CAPA 1 — Exacta y unívoca
+        # CAPA 1 — Exacta y unívoca (mismo importe exacto, fecha dentro de VENTANA_DIAS)
         for mov in pendientes:
-            candidatos = self._docs_por_importe(mov.importe, pct=0, ventana=self.VENTANA_DIAS, usados=docs_usados)
+            candidatos = self._docs_por_importe(
+                mov.importe, pct=0, ventana=self.VENTANA_DIAS, usados=docs_usados, fecha_mov=mov.fecha
+            )
             if len(candidatos) == 1:
                 doc = candidatos[0]
                 self._conciliar_automatico(mov, doc, capa=1, score=1.0)
@@ -186,23 +188,124 @@ class MotorConciliacion:
                     self._insertar_sugerencia(mov, doc, capa=1, score=max(score, 0.70))
                 mov.estado_conciliacion = "sugerido"
 
+        # CAPA 2 — Identidad Documental (NIF en concepto bancario, ventana más amplia)
+        from sfce.core.normalizar_bancario import limpiar_nif, normalizar_concepto, rango_importe
+        pendientes_capa2 = [
+            m for m in pendientes
+            if self.session.get(MovimientoBancario, m.id).estado_conciliacion == "pendiente"
+        ]
+        for mov in pendientes_capa2:
+            concepto_norm = normalizar_concepto(mov.concepto_propio)[0]
+            candidatos = self._docs_por_importe(
+                mov.importe, pct=0.01, ventana=self.VENTANA_NIF, usados=docs_usados, fecha_mov=mov.fecha
+            )
+            for doc in candidatos:
+                if not doc.nif_proveedor:
+                    continue
+                nif_limpio = limpiar_nif(doc.nif_proveedor)
+                if nif_limpio and nif_limpio in concepto_norm:
+                    self._insertar_sugerencia(mov, doc, capa=2, score=0.90)
+                    if mov.estado_conciliacion == "pendiente":
+                        mov.estado_conciliacion = "sugerido"
+
+        # CAPA 3 — Referencia de Factura (nº factura normalizado en concepto banco)
+        pendientes_capa3 = [
+            m for m in pendientes
+            if self.session.get(MovimientoBancario, m.id).estado_conciliacion == "pendiente"
+        ]
+        for mov in pendientes_capa3:
+            concepto_upper = mov.concepto_propio.upper().replace(" ", "").replace("-", "").replace("/", "")
+            candidatos = self._docs_por_importe(
+                mov.importe, pct=0.01, ventana=self.VENTANA_NIF, usados=docs_usados, fecha_mov=mov.fecha
+            )
+            for doc in candidatos:
+                if not doc.numero_factura:
+                    continue
+                ref_norm = doc.numero_factura.upper().replace(" ", "").replace("-", "").replace("/", "")
+                if ref_norm and ref_norm in concepto_upper:
+                    self._insertar_sugerencia(mov, doc, capa=3, score=0.90)
+                    if mov.estado_conciliacion == "pendiente":
+                        mov.estado_conciliacion = "sugerido"
+
+        # CAPA 4 — Patrones Aprendidos (coincidencia por patrón + NIF proveedor)
+        from sfce.db.modelos import PatronConciliacion
+        pendientes_capa4 = [
+            m for m in pendientes
+            if self.session.get(MovimientoBancario, m.id).estado_conciliacion == "pendiente"
+        ]
+        for mov in pendientes_capa4:
+            _, concepto_limpio = normalizar_concepto(mov.concepto_propio)
+            rango = rango_importe(mov.importe)
+            # Busca patrón aprendido cuyo texto esté contenido en el concepto del movimiento
+            patron = (
+                self.session.query(PatronConciliacion)
+                .filter(
+                    PatronConciliacion.empresa_id == self.empresa_id,
+                    PatronConciliacion.rango_importe_aprox == rango,
+                    PatronConciliacion.frecuencia_exito > 0,
+                )
+                .all()
+            )
+            patron = next(
+                (p for p in patron if p.patron_limpio and p.patron_limpio in concepto_limpio),
+                None,
+            )
+            if not patron or not patron.nif_proveedor:
+                continue
+            candidatos = self._docs_por_importe(
+                mov.importe, pct=0.05, ventana=self.VENTANA_PATRON, usados=docs_usados, fecha_mov=mov.fecha
+            )
+            for doc in candidatos:
+                if not doc.nif_proveedor:
+                    continue
+                if limpiar_nif(doc.nif_proveedor) == limpiar_nif(patron.nif_proveedor):
+                    score = min(0.50 + patron.frecuencia_exito * 0.05, 0.95)
+                    self._insertar_sugerencia(mov, doc, capa=4, score=score)
+                    if mov.estado_conciliacion == "pendiente":
+                        mov.estado_conciliacion = "sugerido"
+
+        # CAPA 5 — Aproximada (último recurso, sólo ±1% de diferencia de importe)
+        pendientes_capa5 = [
+            m for m in pendientes
+            if self.session.get(MovimientoBancario, m.id).estado_conciliacion == "pendiente"
+        ]
+        for mov in pendientes_capa5:
+            candidatos = self._docs_por_importe(
+                mov.importe, pct=0.01, ventana=self.VENTANA_DIAS, usados=docs_usados, fecha_mov=mov.fecha
+            )
+            for doc in candidatos:
+                if mov.importe == 0:
+                    continue
+                diff_pct = float(abs(mov.importe - doc.importe_total) / mov.importe)
+                score = 1.0 - diff_pct
+                self._insertar_sugerencia(mov, doc, capa=5, score=score)
+            if candidatos and mov.estado_conciliacion == "pendiente":
+                mov.estado_conciliacion = "revision"
+
         self.session.flush()
         return self._estadisticas_conciliacion(pendientes)
 
-    def _docs_por_importe(self, importe, pct, ventana, usados) -> list:
-        """Consulta SQL: documentos por rango de importe + sin usar."""
+    def _docs_por_importe(self, importe, pct, ventana, usados, fecha_mov=None) -> list:
+        """
+        Consulta SQL: documentos por rango de importe ± pct% y ventana de días.
+
+        Si se pasa fecha_mov, filtra por fecha_documento dentro de ±ventana días.
+        """
         from sfce.db.modelos import Documento
+        from datetime import timedelta
         margen = importe * Decimal(str(pct))
-        return (
-            self.session.query(Documento)
-            .filter(
-                Documento.empresa_id == self.empresa_id,
-                Documento.asiento_id.isnot(None),
-                Documento.importe_total.between(importe - margen, importe + margen),
-                Documento.id.notin_(list(usados)) if usados else True,
-            )
-            .all()
-        )
+        filtros = [
+            Documento.empresa_id == self.empresa_id,
+            Documento.asiento_id.isnot(None),
+            Documento.importe_total.between(importe - margen, importe + margen),
+        ]
+        if usados:
+            filtros.append(Documento.id.notin_(list(usados)))
+        if fecha_mov is not None:
+            fecha_min = fecha_mov - timedelta(days=ventana)
+            fecha_max = fecha_mov + timedelta(days=ventana)
+            filtros.append(Documento.fecha_documento.between(fecha_min, fecha_max))
+        return self.session.query(Documento).filter(*filtros).all()
 
     def _conciliar_automatico(self, mov, doc, capa, score):
         """Marca el movimiento como conciliado y vincula el documento."""

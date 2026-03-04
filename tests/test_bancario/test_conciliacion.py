@@ -57,6 +57,7 @@ def _asiento(session, importe_debe, fecha=None, numero=1):
 
 @pytest.fixture
 def db():
+    import sfce.db.modelos_auth  # registra Gestoria en Base.metadata
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
     with Session(engine) as session:
@@ -292,3 +293,183 @@ class TestMotorCapa1:
         assert mov.estado_conciliacion == "sugerido"
         sugerencias = session.query(SugerenciaMatch).filter_by(movimiento_id=mov.id).all()
         assert len(sugerencias) == 2
+
+
+class TestMotorCapa2NIF:
+    def test_capa2_encuentra_por_nif_en_concepto(self, db_inteligente):
+        """Si el NIF del proveedor aparece en concepto_propio, sugiere el doc."""
+        from sfce.core.motor_conciliacion import MotorConciliacion
+        session = db_inteligente
+        asiento = _asiento(session, Decimal("187.34"))
+        doc = _doc(session, Decimal("187.34"), nif="B82846927", asiento_id=asiento.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CB",
+                                iban="ES21000412347", alias="P", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = MovimientoBancario(
+            empresa_id=1, cuenta_id=cuenta.id,
+            fecha=date(2025, 3, 20),
+            importe=Decimal("187.34"), divisa="EUR", importe_eur=Decimal("187.34"),
+            signo="D", concepto_comun="01",
+            concepto_propio="ENDESA ENERGIA B82846927 RECIBO ENERGIA",
+            referencia_1="", referencia_2="",
+            nombre_contraparte="ENDESA", tipo_clasificado="PROVEEDOR",
+            estado_conciliacion="pendiente",
+            hash_unico="hash_capa2_001",
+        )
+        session.add(mov)
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        assert mov.estado_conciliacion == "sugerido"
+        sugerencias = session.query(SugerenciaMatch).filter_by(movimiento_id=mov.id, activa=True).all()
+        assert len(sugerencias) >= 1
+        assert sugerencias[0].capa_origen == 2
+        assert sugerencias[0].score >= 0.85
+
+    def test_capa2_no_sugiere_si_nif_no_en_concepto(self, db_inteligente):
+        from sfce.core.motor_conciliacion import MotorConciliacion
+        session = db_inteligente
+        asiento = _asiento(session, Decimal("100.00"))
+        doc = _doc(session, Decimal("100.00"), nif="A99999999", asiento_id=asiento.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CB",
+                                iban="ES21000412348", alias="Q", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = MovimientoBancario(
+            empresa_id=1, cuenta_id=cuenta.id, fecha=date(2025, 3, 20),
+            importe=Decimal("100.00"), divisa="EUR", importe_eur=Decimal("100.00"),
+            signo="D", concepto_comun="01",
+            concepto_propio="PAGO SERVICIOS VARIOS",
+            referencia_1="", referencia_2="",
+            nombre_contraparte="VARIOS", tipo_clasificado="OTRO",
+            estado_conciliacion="pendiente", hash_unico="hash_capa2_002",
+        )
+        session.add(mov)
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        sugerencias = session.query(SugerenciaMatch).filter_by(
+            movimiento_id=mov.id, capa_origen=2
+        ).all()
+        assert len(sugerencias) == 0
+
+
+class TestMotorCapa3Referencia:
+    def test_capa3_encuentra_por_numero_factura(self, db_inteligente):
+        """Si el nº de factura (normalizado) aparece en concepto_propio del banco."""
+        from sfce.core.motor_conciliacion import MotorConciliacion
+        session = db_inteligente
+        asiento = _asiento(session, Decimal("500.00"))
+        doc = _doc(session, Decimal("500.00"), numero_factura="FV-2025-0847", asiento_id=asiento.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CB",
+                                iban="ES21000412349", alias="R", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = MovimientoBancario(
+            empresa_id=1, cuenta_id=cuenta.id, fecha=date(2025, 3, 18),
+            importe=Decimal("500.00"), divisa="EUR", importe_eur=Decimal("500.00"),
+            signo="D", concepto_comun="01",
+            concepto_propio="PAGO FV20250847 PROVEEDOR",
+            referencia_1="", referencia_2="",
+            nombre_contraparte="PROVEEDOR", tipo_clasificado="PROVEEDOR",
+            estado_conciliacion="pendiente", hash_unico="hash_capa3_001",
+        )
+        session.add(mov)
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        sugerencias = session.query(SugerenciaMatch).filter_by(
+            movimiento_id=mov.id, capa_origen=3
+        ).all()
+        assert len(sugerencias) >= 1
+
+
+class TestMotorCapa4Patrones:
+    def test_capa4_usa_patron_aprendido(self, db_inteligente):
+        """Si existe patrón en BD aprendido previamente, lo usa para sugerir."""
+        from sfce.core.motor_conciliacion import MotorConciliacion
+        from sfce.db.modelos import PatronConciliacion
+        from datetime import date as dt
+        session = db_inteligente
+
+        session.add(PatronConciliacion(
+            empresa_id=1,
+            patron_texto="NETFLIX",
+            patron_limpio="NETFLIX",
+            nif_proveedor="A00000001",
+            rango_importe_aprox="0-10",
+            frecuencia_exito=5,
+            ultima_confirmacion=dt(2025, 2, 1),
+        ))
+        asiento = _asiento(session, Decimal("9.99"))
+        doc = _doc(session, Decimal("9.99"), nif="A00000001", asiento_id=asiento.id,
+                   fecha=date(2025, 3, 10))
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CB",
+                                iban="ES21000412350", alias="S", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = MovimientoBancario(
+            empresa_id=1, cuenta_id=cuenta.id, fecha=date(2025, 3, 15),
+            importe=Decimal("9.99"), divisa="EUR", importe_eur=Decimal("9.99"),
+            signo="D", concepto_comun="01",
+            concepto_propio="NETFLIX MONTHLY PLAN",
+            referencia_1="", referencia_2="",
+            nombre_contraparte="NETFLIX", tipo_clasificado="OTRO",
+            estado_conciliacion="pendiente", hash_unico="hash_capa4_001",
+        )
+        session.add(mov)
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        sugerencias = session.query(SugerenciaMatch).filter_by(
+            movimiento_id=mov.id, capa_origen=4
+        ).all()
+        assert len(sugerencias) >= 1
+        assert sugerencias[0].score >= 0.70
+
+
+class TestMotorCapa5Aproximada:
+    def test_capa5_sugiere_diferencia_menor_1pct(self, db_inteligente):
+        """Capa 5: importe con diferencia < 1% → estado revision."""
+        from sfce.core.motor_conciliacion import MotorConciliacion
+        session = db_inteligente
+        asiento = _asiento(session, Decimal("100.50"))
+        doc = _doc(session, Decimal("100.50"), asiento_id=asiento.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CB",
+                                iban="ES21000412351", alias="T", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = MovimientoBancario(
+            empresa_id=1, cuenta_id=cuenta.id, fecha=date(2025, 3, 15),
+            importe=Decimal("100.00"), divisa="EUR", importe_eur=Decimal("100.00"),
+            signo="D", concepto_comun="01",
+            concepto_propio="SERVICIO SIN REFERENCIA",
+            referencia_1="", referencia_2="",
+            nombre_contraparte="MISC", tipo_clasificado="OTRO",
+            estado_conciliacion="pendiente", hash_unico="hash_capa5_001",
+        )
+        session.add(mov)
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        assert mov.estado_conciliacion == "revision"
+        sugerencias = session.query(SugerenciaMatch).filter_by(
+            movimiento_id=mov.id, capa_origen=5
+        ).all()
+        assert len(sugerencias) >= 1
