@@ -34,6 +34,13 @@ if hasattr(sys.stdout, "reconfigure"):
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
 
+# Cargar .env con dotenv (evita el problema de xargs con SFCE_FERNET_KEY)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(RAIZ / ".env", override=False)
+except ImportError:
+    pass  # dotenv no instalado — usar variables de entorno del shell
+
 from sfce.api.app import _leer_config_bd
 from sfce.db.base import crear_motor
 from sfce.db.modelos import Documento, MovimientoBancario, SugerenciaMatch
@@ -502,6 +509,19 @@ def registrar_en_bd(docs: List[DocLocal], session: Session) -> List[DocLocal]:
         if existente:
             doc.id_bd = existente.id
             duplicados += 1
+            datos = existente.datos_ocr or {}
+            # Si Gemini extrajo algo nuevo que la BD no tenia, actualizar
+            if doc.importe_total is not None and datos.get('importe_total') is None:
+                datos['importe_total'] = str(doc.importe_total)
+                datos['fuente'] = doc.fuente
+                existente.datos_ocr = datos
+            elif doc.importe_total is None and datos.get('importe_total'):
+                # Recuperar de BD lo que el extractor local no pudo
+                doc.importe_total = _parse_importe(datos['importe_total'])
+            if doc.nombre_emisor is None and datos.get('nombre_emisor'):
+                doc.nombre_emisor = datos['nombre_emisor']
+            if doc.nif_emisor is None and datos.get('nif_emisor'):
+                doc.nif_emisor = datos['nif_emisor']
             continue
 
         datos_ocr_json = {
