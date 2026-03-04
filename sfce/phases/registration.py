@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from ..core.aprendizaje import Resolutor
+from ..core.reglas_pgc import detectar_suplido_en_linea
 from ..core.asientos_directos import (
     crear_asiento_directo,
     construir_partidas_nomina,
@@ -254,6 +255,65 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
     return None
 
 
+def _pre_aplicar_correcciones_conocidas(
+    lineas_fs: list,
+    entidad: dict | None,
+    reglas: list,
+) -> list:
+    """Shift-left: inyecta codimpuesto y codsubcuenta correctos antes del POST.
+
+    Prioridades:
+    1. Suplidos aduaneros → IVA0 + subcuenta 4709
+    2. Regla reclasificar_linea → subcuenta destino del config
+    3. Subcuenta global del proveedor desde config.yaml
+
+    La Fase 4 sigue activa como red de seguridad para casos no cubiertos.
+
+    Returns:
+        Lista de lineas con codimpuesto y codsubcuenta ya corregidos
+    """
+    subcuenta_config = ""
+    if entidad:
+        raw = (entidad.get("subcuenta") or "").strip()
+        if raw:
+            subcuenta_config = raw.ljust(10, "0")
+
+    resultado = []
+    for linea in lineas_fs:
+        l = dict(linea)
+        desc = l.get("descripcion", "")
+
+        # Prioridad 1: suplido aduanero → IVA0 + subcuenta 4709
+        suplido = detectar_suplido_en_linea(desc)
+        if suplido:
+            if l.get("codimpuesto") != "IVA0":
+                logger.info(f"  Pre-corrección suplido: '{desc[:40]}' → IVA0")
+            l["codimpuesto"] = "IVA0"
+            l.setdefault("codsubcuenta", suplido.get("subcuenta", "4709000000"))
+            resultado.append(l)
+            continue
+
+        # Prioridad 2: regla reclasificar_linea → subcuenta destino
+        for regla in reglas:
+            if regla.get("tipo") != "reclasificar_linea":
+                continue
+            patron = regla.get("patron_linea", "")
+            if patron and patron.upper() in desc.upper():
+                dest = regla.get("subcuenta_destino", "")
+                if dest:
+                    l.setdefault("codsubcuenta", dest)
+                    logger.info(f"  Pre-corrección subcuenta: '{desc[:40]}' → {dest}")
+                break
+
+        # Prioridad 3: subcuenta global del proveedor (si no se asignó ya)
+        if subcuenta_config and "codsubcuenta" not in l:
+            l["codsubcuenta"] = subcuenta_config
+
+        resultado.append(l)
+
+    return resultado
+
+
 def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
                          codigo_entidad: str, motor=None) -> dict:
     """Construye form-data para crear factura en FS.
@@ -347,10 +407,9 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         logger.info(f"  Regimen intracomunitario: usando IVA0 (autorepercusion post-registro)")
 
     # Lineas
+    reglas = (entidad.get("reglas_especiales", []) or []) if entidad else []
     lineas_gpt = datos.get("lineas", [])
     if lineas_gpt:
-        # Obtener reglas_especiales para IVA por linea
-        reglas = (entidad.get("reglas_especiales", []) or []) if entidad else []
 
         # Bug fix: detectar si lineas tienen precio con IVA incluido
         # Si sum(precio_unitario) ≈ total (no base), los precios incluyen IVA
@@ -413,6 +472,8 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
                 "codimpuesto": codimpuesto_defecto,
             }]
 
+        # Shift-left: inyectar codimpuesto/codsubcuenta correctos antes del POST
+        lineas_fs = _pre_aplicar_correcciones_conocidas(lineas_fs, entidad, reglas)
         form["lineas"] = json.dumps(lineas_fs)
     else:
         # Sin lineas detalladas: crear una linea con el total
@@ -422,6 +483,8 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
             "pvpunitario": datos.get("base_imponible", datos.get("total", 0)),
             "codimpuesto": codimpuesto_defecto,
         }
+        # Shift-left: inyectar subcuenta del proveedor incluso en linea unica
+        linea_unica = _pre_aplicar_correcciones_conocidas([linea_unica], entidad, reglas)[0]
         form["lineas"] = json.dumps([linea_unica])
 
     # Marcar para post-procesamiento intracomunitario

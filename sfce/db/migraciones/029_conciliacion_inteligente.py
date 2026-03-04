@@ -35,14 +35,16 @@ def aplicar(engine):
 
         # --- sugerencias_match ---
         if not _tabla_existe(conn, dialect, "sugerencias_match"):
-            conn.execute(text("""
+            pk = "INTEGER PRIMARY KEY AUTOINCREMENT" if dialect == "sqlite" else "SERIAL PRIMARY KEY"
+            default_bool = "DEFAULT 1" if dialect == "sqlite" else "DEFAULT TRUE"
+            conn.execute(text(f"""
                 CREATE TABLE sugerencias_match (
-                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id            {pk},
                     movimiento_id INTEGER NOT NULL,
                     documento_id  INTEGER NOT NULL,
                     score         FLOAT NOT NULL,
                     capa_origen   INTEGER NOT NULL,
-                    activa        BOOLEAN NOT NULL DEFAULT 1,
+                    activa        BOOLEAN NOT NULL {default_bool},
                     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(movimiento_id, documento_id)
                 )
@@ -53,9 +55,10 @@ def aplicar(engine):
 
         # --- patrones_conciliacion ---
         if not _tabla_existe(conn, dialect, "patrones_conciliacion"):
-            conn.execute(text("""
+            pk = "INTEGER PRIMARY KEY AUTOINCREMENT" if dialect == "sqlite" else "SERIAL PRIMARY KEY"
+            conn.execute(text(f"""
                 CREATE TABLE patrones_conciliacion (
-                    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id                   {pk},
                     empresa_id           INTEGER NOT NULL,
                     patron_texto         VARCHAR(500) NOT NULL,
                     patron_limpio        VARCHAR(500),
@@ -73,9 +76,10 @@ def aplicar(engine):
 
         # --- conciliaciones_parciales ---
         if not _tabla_existe(conn, dialect, "conciliaciones_parciales"):
-            conn.execute(text("""
+            pk = "INTEGER PRIMARY KEY AUTOINCREMENT" if dialect == "sqlite" else "SERIAL PRIMARY KEY"
+            conn.execute(text(f"""
                 CREATE TABLE conciliaciones_parciales (
-                    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id               {pk},
                     movimiento_id    INTEGER NOT NULL,
                     documento_id     INTEGER NOT NULL,
                     importe_asignado NUMERIC(12,2) NOT NULL,
