@@ -43,17 +43,18 @@ def _carpeta_slug(nombre: str) -> str:
 def _inbox_empresa(empresa_id: int, sesion: Session) -> Path:
     """Resuelve el directorio inbox de una empresa.
 
-    Deriva la carpeta del cliente desde el nombre de la empresa (slug con guiones),
-    apuntando a clientes/{slug}/inbox/ donde el pipeline busca los PDFs.
-    Fallback a docs/{empresa_id}/inbox/ si la carpeta no existe en disco.
+    Prioridad:
+    1. empresa.slug del DB (ya con guiones, ej: gerardo-gonzalez-callejon)
+    2. slug derivado del nombre (fallback para empresas sin slug en DB)
+    3. docs/{empresa_id}/inbox/ si ninguna carpeta existe en disco
     """
     from sfce.db.modelos import Empresa
     empresa = sesion.query(Empresa).filter(Empresa.id == empresa_id).first()
-    if empresa and empresa.nombre:
-        slug = _carpeta_slug(empresa.nombre)
-        candidato = RAIZ_CLIENTES / slug
-        if candidato.exists():
-            return candidato / "inbox"
+    if empresa:
+        for candidato_slug in filter(None, [empresa.slug, _carpeta_slug(empresa.nombre or "")]):
+            candidato = RAIZ_CLIENTES / candidato_slug
+            if candidato.exists():
+                return candidato / "inbox"
     return DIRECTORIO_DOCS / str(empresa_id) / "inbox"
 
 
