@@ -1,5 +1,27 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 84) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 85) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+
+---
+
+## Estado actual (sesión 85 — diseño Pipeline Live Sala de Control)
+
+**Sesión de diseño puro. Brainstorming + design doc + plan de implementación para el rediseño completo del Pipeline en Vivo. Sin código escrito — plan listo para ejecutar en sesión paralela.**
+
+### Tasks completadas (sesión 85)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Brainstorming Pipeline Live | ✅ DONE | 4 rondas de preguntas → diseño aprobado: layout 4 cols, gestorías como columnas, tarjetas empresa con mini-pipeline |
+| Design doc | ✅ DONE | `docs/plans/2026-03-04-pipeline-live-sala-control-design.md` — layout, componentes, efectos visuales, mapping 13 empresas |
+| Plan de implementación | ✅ DONE | `docs/plans/2026-03-04-pipeline-live-sala-control.md` — 9 tasks con código completo, sin cambios de backend |
+
+### Pendientes para sesión 86
+
+1. **Verificar ejecución paralela** del plan `2026-03-04-pipeline-live-sala-control.md` (usuario lo está ejecutando)
+2. **Pipeline FS registration fix** — Fase 2 pipeline.py hace rollback en todas (total FS=0.00). Investigar
+3. **Tests E2E dashboard** — Playwright, flujos críticos: confirmar match, rechazar, bulk, upload C43
+4. **Confirmar matches en producción** — probar flujo completo confirmar/rechazar sugerencias
+5. **Capa C subset-sum VClNegocios** — bajó de 8 a 0 matches (falta OCR de VClNegocios PDFs en inbox prod?)
 
 ---
 

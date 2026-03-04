@@ -234,23 +234,17 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 84)
+## Estado actual (04/03/2026, sesion 85)
 
-**Rama**: `main` | **Ultimo commit**: `33314572` (pusheado) | **Build**: OK 5.23s | **Prod**: sfce_api healthy, frontend desplegado
+**Rama**: `main` | **Ultimo commit**: `703b402d` (pendiente push) | **Build**: OK | **Prod**: sfce_api healthy
 
-### Completado sesion 84
-- OCR 238 PDFs Gerardo (inbox reorganizado: FACTURAS 2025 → inbox, duplicados eliminados) ✓
-- Motor conciliacion contra PG prod via tunel SSH: **125 sugerencias** en prod ✓
-- Migracion datos_ocr → columnas documentos prod (importe_total 166, nombre_archivo 273) ✓
-- 125 movimientos actualizados a estado='sugerido' en prod ✓
-- Fix IMAP admin@prometh-ai.es → password actualizada a `bowa ixgl tijf oaku` ✓
-- Fix DocumentoResumen: añadido `nombre_archivo` (commit `3842722b`) ✓
-- Fix confirmar match: `_confirmar_en_fs` best-effort, no bloquea BD local (commit `33314572`) ✓
-- Filtro por cuenta: `?cuenta_id=N` en endpoint movimientos + selector UI (commit `33314572`) ✓
-- Paginacion: `MovimientosPaginados {items, total, offset, limit}` + UI botones ‹/› (commit `33314572`) ✓
+### Completado sesion 85
+- Brainstorming + diseño Pipeline Live "Sala de Control": 4 cols gestorías, tarjetas empresa con mini-pipeline animado ✓
+- Design doc: `docs/plans/2026-03-04-pipeline-live-sala-control-design.md` ✓
+- Plan implementacion: `docs/plans/2026-03-04-pipeline-live-sala-control.md` (9 tasks, sin cambios backend) ✓
 
-### Proxima sesion — pendientes (sesion 85)
-1. **Confirmar matches en prod** — probar confirmar/rechazar desde dashboard, verificar persistencia
-2. **Pipeline FS registration fix** — todas las facturas hacen rollback (FS devuelve total=0.00). Investigar
-3. **Tests E2E dashboard** (Playwright, flujos criticos: upload, confirmar match, bulk)
-4. **Capa C VClNegocios** — bajó de 8 a 0 matches contra PG prod (faltan PDFs VClNegocios en inbox?)
+### Proxima sesion — pendientes (sesion 86)
+1. **Verificar ejecucion paralela** — revisar resultado del plan pipeline sala de control
+2. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00)
+3. **Tests E2E dashboard** (Playwright, flujos criticos: confirmar match, rechazar, bulk)
+4. **Capa C VClNegocios** — bajó de 8 a 0 matches (faltan PDFs en inbox prod?)
