@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 85)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 86)
 
 ---
 
@@ -34,16 +34,12 @@
 ## Comandos de inicio de sesión
 
 ```bash
-# Verificar estado tests bancario
-python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 166 passed
+# Verificar estado tests completo
+python -m pytest --tb=no -q
+# Esperado: 2773 passed, 4 skipped
 
 # Commits recientes
 git log -5 --oneline
-
-# Test bancario para verificar base
-python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 188 passed, 2 skipped
 
 # Abrir dashboard
 cd dashboard && npm run dev
@@ -51,13 +47,14 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 84)
+## Estado rápido (sesión 86)
 
-- **Completado sesión 84:** Motor bancario operativo en prod — 125 sugerencias visibles en dashboard, DocumentoResumen con nombre_archivo, confirmar best-effort, filtro cuenta + paginación
-- **Push:** todo en origin/main ✓ | **Build:** ✓ 5.23s | **Prod:** sfce_api healthy, dashboard desplegado
-- **PRIORIDAD 1:** confirmar/rechazar sugerencias desde dashboard (ya funciona — probar en prod)
-- **PRIORIDAD 2:** pipeline FS registration fix (todas las facturas hacen rollback total=0.00)
-- **PRIORIDAD 2:** pipeline Gerardo en producción → `documentos` empresa_id=2
+- **Completado sesiones 83-86:** Pipeline Operations Center, motor bancario prod (125 sugerencias), diseño Pipeline Live Sala de Control (plan 9 tasks listo)
+- **Bancario Fase 1+2 OK:** saldo ingesta C43, filtros movimientos, doc hydration, rollback estricto FS (commit `6bfd7d88`)
+- **Push:** todo en origin/main ✓ | **Tests:** 2773 PASS | **Prod:** sfce_api healthy
+- **PRIORIDAD 1:** Bancario Fase 3 — FilterBar + panel conciliación manual en frontend React
+- **PRIORIDAD 2:** Bancario Fase 4 — `POST /conciliar-directo` + tab "Asiento Directo"
+- **PRIORIDAD 3:** Pipeline FS registration fix (total FS=0.00 → rollback)
 
 ---
 

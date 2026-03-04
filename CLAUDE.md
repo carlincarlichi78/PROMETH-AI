@@ -234,17 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 85)
+## Estado actual (04/03/2026, sesion 86)
 
-**Rama**: `main` | **Ultimo commit**: `703b402d` (pendiente push) | **Build**: OK | **Prod**: sfce_api healthy
+**Rama**: `main` | **Ultimo commit**: ver git log | **Tests**: 2773 PASS | **Prod**: sfce_api healthy
 
-### Completado sesion 85
-- Brainstorming + diseño Pipeline Live "Sala de Control": 4 cols gestorías, tarjetas empresa con mini-pipeline animado ✓
-- Design doc: `docs/plans/2026-03-04-pipeline-live-sala-control-design.md` ✓
-- Plan implementacion: `docs/plans/2026-03-04-pipeline-live-sala-control.md` (9 tasks, sin cambios backend) ✓
+### Completado sesiones 83-86 (resumen)
+- Pipeline Operations Center — frontend + backend, deploy prod ✓
+- Motor bancario Gerardo prod — 125 sugerencias en dashboard ✓
+- Bancario Fase 1+2 — saldo ingesta C43, filtros mov, doc hydration, rollback estricto FS (commit `6bfd7d88`) ✓
+- Diseño Pipeline Live "Sala de Control" — design doc + plan 9 tasks listo para ejecutar ✓
 
-### Proxima sesion — pendientes (sesion 86)
-1. **Verificar ejecucion paralela** — revisar resultado del plan pipeline sala de control
-2. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00)
-3. **Tests E2E dashboard** (Playwright, flujos criticos: confirmar match, rechazar, bulk)
+### Proxima sesion — pendientes (sesion 87)
+1. **Bancario Fase 3** — FilterBar debounce (q/fecha_desde/fecha_hasta/tipo) + panel conciliacion manual en VistaPendientes
+2. **Bancario Fase 4** — `POST /conciliar-directo` (asiento directo sin factura) + tab "Asiento Directo" en PanelConciliacion
+3. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00)
+4. **Tests E2E dashboard** (Playwright, flujos criticos: confirmar match, rechazar, bulk)
 4. **Capa C VClNegocios** — bajó de 8 a 0 matches (faltan PDFs en inbox prod?)

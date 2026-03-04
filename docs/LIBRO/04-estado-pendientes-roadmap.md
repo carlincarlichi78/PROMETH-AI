@@ -1,5 +1,26 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 85) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 86) | **Branch:** main | **Tests:** 2773 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 86 — cierre sin cambios)
+
+**Sesión de revisión únicamente. Retomamos estado bancario Fase 1+2 (commit 6bfd7d88). No se implementó nada nuevo. Se commitean residuos de sesiones anteriores no commiteados.**
+
+### Tasks completadas (sesión 86)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Commit residuos sesiones 83-85 | ✅ DONE | `scripts/pipeline.py` (import ResultadoFase) + `sfce/core/nombres.py` (fechas español) + `sfce/core/recurrentes.py` (normalizar fechas) + `tipos-pipeline.ts` |
+| Cierre protocolo | ✅ DONE | Docs actualizados, CLAUDE.md sincronizado con sesión 85 |
+
+### Pendientes para sesión 87 (próxima sesión)
+
+1. **Bancario Fase 3 (Frontend)** — FilterBar debounce en VistaPendientes: q, fecha_desde, fecha_hasta, tipo; panel lateral conciliación manual buscando /api/documentos/{empresa_id}; fix IBAN selector; tooltips truncado; AlertDialog bulk confirm
+2. **Bancario Fase 4 (Backend + Frontend)** — endpoint `POST /conciliar-directo` (movimiento_id + subcuenta_destino → asiento directo, sin factura) + tab "Asiento Directo" en PanelConciliacion
+3. **Pipeline FS registration fix** — Fase 2 pipeline.py hace rollback en todas (total FS=0.00). Investigar
+4. **Tests E2E dashboard** — Playwright, flujos críticos: confirmar match, rechazar, bulk, upload C43
+5. **Capa C subset-sum VClNegocios** — bajó de 8 a 0 matches (falta OCR de VClNegocios PDFs en inbox prod?)
 
 ---
 
