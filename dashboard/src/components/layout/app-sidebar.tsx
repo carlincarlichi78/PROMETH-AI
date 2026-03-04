@@ -6,7 +6,7 @@ import {
   DoorClosed, DoorOpen, Wallet, PiggyBank, Target, GitCompare, CreditCard,
   FileBarChart, ExternalLink, Database, Palette, HardDrive, Key, UserCog,
   Briefcase, Receipt, Activity, Archive, HeartPulse, ChevronRight, ChevronsUpDown,
-  Shield, ClipboardCheck, Zap, Mail,
+  Shield, ClipboardCheck, Zap, Mail, ArrowLeftRight,
 } from 'lucide-react'
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -176,6 +176,7 @@ export function AppSidebar() {
                 { titulo: 'Panel Principal', ruta: '/', icono: Home },
                 { titulo: 'Directorio', ruta: '/directorio', icono: Database },
                 { titulo: 'Pipeline en Vivo', ruta: '/pipeline/live', icono: Zap },
+                { titulo: 'Conciliación', ruta: '/conciliacion', icono: ArrowLeftRight },
               ].map((item) => (
                 <SidebarMenuItem key={item.ruta}>
                   <SidebarMenuButton

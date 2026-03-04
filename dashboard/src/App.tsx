@@ -101,6 +101,9 @@ const ProductIntelligence = lazy(() => import('@/features/advisor/product-intell
 const SalaEstrategia = lazy(() => import('@/features/advisor/sala-estrategia-page'))
 const AutopilotPage = lazy(() => import('@/features/advisor/autopilot-page'))
 
+// --- Conciliacion Bancaria ---
+const ConciliacionBancaria = lazy(() => import('@/features/conciliacion/conciliacion-page'))
+
 // --- Admin ---
 const GestoriasPage = lazy(() => import('@/features/admin/gestorias-page'))
 
@@ -212,6 +215,9 @@ export function App() {
           <Route path="/empresa/:id/advisor/productos" element={<AdvisorGate><ProductIntelligence /></AdvisorGate>} />
           <Route path="/empresa/:id/advisor/estrategia" element={<AdvisorGate><SalaEstrategia /></AdvisorGate>} />
           <Route path="/advisor/autopilot" element={<AdvisorGate><AutopilotPage /></AdvisorGate>} />
+
+          {/* Conciliacion Bancaria */}
+          <Route path="/conciliacion" element={<ConciliacionBancaria />} />
 
           {/* Admin */}
           <Route path="/admin/gestorias" element={<GestoriasPage />} />
