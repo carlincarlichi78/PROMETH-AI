@@ -122,47 +122,42 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (04/03/2026, sesion 66 — Conciliacion bancaria Tasks 1-3)
+## Estado actual (04/03/2026, sesion 67)
 
-**Rama**: `main` | **Ultimo commit**: `067f482` | **Tests bancarios**: 141 PASS (+29)
+**Rama**: `main` | **Ultimo commit**: `66c13f7` | **Tests**: 2708 PASS (6 fallos preexistentes en test_correo)
 
-### Completado en sesion 66 — Plan `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md`
-
+### Completado sesion 67 — Motor Conciliacion Bancaria Inteligente (Tasks 4-13)
 | Task | Commit | Detalle |
 |------|--------|---------|
-| 1 — Migracion 029 | `b4ae75e` | 3 tablas: `sugerencias_match`, `patrones_conciliacion`, `conciliaciones_parciales`. Columnas: `documentos` (6), `cuentas_bancarias` (2), `movimientos_bancarios` (4). 4 tests PASS |
-| 2 — normalizar_bancario.py | `91f96dc` | `normalizar_concepto()` + `limpiar_nif()` + `rango_importe()`. 23 tests PASS |
-| 3 — ORM + Capa 1 | `067f482` | ORM: `SugerenciaMatch`, `PatronConciliacion`, `ConciliacionParcial`. Campos nuevos en `Documento`, `CuentaBancaria`, `MovimientoBancario`. `conciliar_inteligente()` + Capa 1 exacta-univoca. 2 tests PASS |
+| 4+5: Capas 2-5 | `0b89e42` | NIF proveedor, referencia factura, patrones aprendidos, aproximada ±1% |
+| 6: Feedback loop | `e91e74b` | `sfce/core/feedback_conciliacion.py`: feedback_positivo/negativo, gestionar_diferencia |
+| 7+8: API endpoints | `66c13f7` | sugerencias, saldo-descuadre, confirmar/rechazar/bulk, patrones CRUD |
+| 9-12: Frontend | `ce04387` | api.ts, match-card, panel-sugerencias, conciliacion-page 5 tabs, tabla-patrones |
 
-### PROXIMA SESION — Continuar plan Tasks 4-13
+### Motor conciliacion — 5 capas
+- **Capa 1**: Importe exacto + fecha ±2d → auto si unívoco, sugerido si ambiguo
+- **Capa 2**: NIF proveedor en concepto bancario → score 0.90, ventana 5d
+- **Capa 3**: Nº factura normalizado en concepto → score 0.90, ventana 5d
+- **Capa 4**: Patrón aprendido (patron_limpio ⊂ concepto) → score 0.55-0.95
+- **Capa 5**: Importe ±1% → estado "revision"
+- **Feedback**: confirmar → incrementa patrón; rechazar capa4 → penaliza (elimina si →0)
 
-**Comando de retoma**: `python -m pytest tests/test_bancario/ --tb=no -q` → debe dar 141 PASS
+### Proxima sesion
+1. **Push** (`main` ahead by 9): `git push origin main`
+2. **Migracion 029 en produccion**:
+```bash
+ssh carli@65.108.60.69 "docker exec sfce_api python -c \"
+import importlib.util, os; from sqlalchemy import create_engine
+spec = importlib.util.spec_from_file_location('m029', 'sfce/db/migraciones/029_conciliacion_inteligente.py')
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+mod.aplicar(create_engine(os.environ['DATABASE_URL']))
+\""
+```
+3. **Migracion 028 en produccion** (pendiente sesion 64) — mismo patron con m028
+4. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier
+5. **Script seed**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
 
-**Plan activo**: `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md`
-
-| Task | Que hace |
-|------|----------|
-| **4** | Capas 2 (NIF en concepto) y 3 (referencia factura) — tests + implementacion en `conciliar_inteligente()` |
-| 5 | Capa 4 (patrones aprendidos) + feedback loop |
-| 6 | Capa 5 (importe similar con tolerancia) |
-| 7 | Endpoint confirmacion conciliacion (FS primero, BD local si FS OK) |
-| 8 | Endpoint aprendizaje patrones (guarda en `patrones_conciliacion`) |
-| 9 | API endpoints dashboard (listar sugerencias, estado) |
-| 10 | Componentes React (vista dividida + PDF modal) |
-| 11 | Pagina conciliacion completa |
-| 12 | Routing + sidebar |
-| 13 | Regresion completa (2665+ tests) |
-
-**NOTAS CRITICAS para retomar Task 4:**
-- `db_inteligente` fixture necesita `import sfce.db.modelos_auth` (FK gestorias.id)
-- `CuentaBancaria` en tests nuevos necesita `gestoria_id=1` (campo NOT NULL)
-- `conciliar_inteligente()` esta en `sfce/core/motor_conciliacion.py` al final de la clase `MotorConciliacion`
-- Los tests de Capa 2/3 estan definidos en el plan a partir de linea ~756
-
-### Pendientes previos (baja prioridad)
-- Migracion 028 en produccion (pendiente sesion 64)
-- App Passwords IMAP — francisco/luis/gestor1/gestor2/javier
-- Script seed produccion: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
-- Push de commits locales al remoto
-- Plugins fiscales en instancias FS nuevas
-- Actualizar `docs/LIBRO/_temas/19-bancario.md`
+### Pendientes baja prioridad
+- Conciliacion N:1 parcial (endpoint planificado, no implementado)
+- Tests E2E dashboard (Playwright)
+- Actualizar `docs/LIBRO/_temas/` (19-bancario.md, 11-api-endpoints.md)
