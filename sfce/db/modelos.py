@@ -945,6 +945,7 @@ class SugerenciaMatch(Base):
     score = Column(Float, nullable=False)
     capa_origen = Column(Integer, nullable=False)
     activa = Column(Boolean, default=True, nullable=False)
+    confirmada = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     movimiento = relationship("MovimientoBancario", foreign_keys=[movimiento_id])

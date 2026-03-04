@@ -297,15 +297,14 @@ class TestSugerencias:
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.post("/api/bancario/999/confirmar-match", json={
             "movimiento_id": 99999,
-            "documento_id": 99999,
+            "sugerencia_id": 99999,
         }, headers=hdrs)
         assert resp.status_code == 404
 
     def test_rechazar_match_no_encontrado(self, client, token_superadmin):
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.post("/api/bancario/999/rechazar-match", json={
-            "movimiento_id": 99999,
-            "documento_id": 99999,
+            "sugerencia_id": 99999,
         }, headers=hdrs)
         assert resp.status_code == 404
 
@@ -448,5 +447,155 @@ class TestMatchParcial:
             "documentos": [
                 {"documento_id": datos_match_parcial["doc_otra_id"], "importe_asignado": 150.00},
             ],
+        }, headers=hdrs)
+        assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Fixture — datos para tests confirmar/rechazar con sugerencia_id (v2)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="class")
+def datos_conciliacion_v2(sesion_factory):
+    """
+    Crea movimientos, documentos y sugerencias para probar la API v2.
+      - mov1: tiene 2 sugerencias (sug1 score=0.90, sug2 score=0.70)
+      - mov2: tiene 1 sugerencia (sug3 score=0.80) — para test de rechazo
+    """
+    from decimal import Decimal
+    from datetime import date
+    from sfce.db.modelos import MovimientoBancario, Documento, SugerenciaMatch
+
+    with sesion_factory() as s:
+        # Movimiento con 2 sugerencias
+        mov1 = MovimientoBancario(
+            empresa_id=10,
+            fecha=date(2025, 12, 5),
+            importe=Decimal("500.00"),
+            signo="D",
+            concepto_propio="PAGO MERCADONA CONCILIACION V2",
+            nombre_contraparte="MERCADONA SA",
+            concepto_comun="",
+            estado_conciliacion="sugerido",
+            hash_unico="test_v2_mov1_doble_sug",
+        )
+        # Movimiento con 1 sugerencia (para test rechazo → pendiente)
+        mov2 = MovimientoBancario(
+            empresa_id=10,
+            fecha=date(2025, 12, 6),
+            importe=Decimal("200.00"),
+            signo="D",
+            concepto_propio="PAGO UNICO SUGERENCIA V2",
+            nombre_contraparte="PROVEEDOR UNICO SA",
+            concepto_comun="",
+            estado_conciliacion="sugerido",
+            hash_unico="test_v2_mov2_sug_unica",
+        )
+        s.add_all([mov1, mov2])
+        s.flush()
+
+        doc1 = Documento(empresa_id=10, tipo_doc="FV", estado="pendiente",
+                         importe_total=Decimal("500.00"), nif_proveedor="B12345678",
+                         numero_factura="F2025/100")
+        doc2 = Documento(empresa_id=10, tipo_doc="FV", estado="pendiente",
+                         importe_total=Decimal("495.00"), nif_proveedor="B87654321")
+        doc3 = Documento(empresa_id=10, tipo_doc="FV", estado="pendiente",
+                         importe_total=Decimal("200.00"), nif_proveedor="B11111111")
+        s.add_all([doc1, doc2, doc3])
+        s.flush()
+
+        sug1 = SugerenciaMatch(movimiento_id=mov1.id, documento_id=doc1.id,
+                               score=0.90, capa_origen=2, activa=True)
+        sug2 = SugerenciaMatch(movimiento_id=mov1.id, documento_id=doc2.id,
+                               score=0.70, capa_origen=5, activa=True)
+        sug3 = SugerenciaMatch(movimiento_id=mov2.id, documento_id=doc3.id,
+                               score=0.80, capa_origen=2, activa=True)
+        s.add_all([sug1, sug2, sug3])
+        s.flush()
+
+        ids = {
+            "mov1_id": mov1.id, "mov2_id": mov2.id,
+            "doc1_id": doc1.id, "doc2_id": doc2.id, "doc3_id": doc3.id,
+            "sug1_id": sug1.id, "sug2_id": sug2.id, "sug3_id": sug3.id,
+        }
+        s.commit()
+    return ids
+
+
+# ---------------------------------------------------------------------------
+# Tests — API v2: confirmar/rechazar por sugerencia_id
+# ---------------------------------------------------------------------------
+
+class TestConfirmarRechazarV2:
+    """Valida los endpoints con la nueva API basada en sugerencia_id."""
+
+    def test_sugerencias_filtro_movimiento_id(self, client, token_superadmin, datos_conciliacion_v2):
+        """GET /sugerencias?movimiento_id=X devuelve solo las sugerencias de ese movimiento."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        mov_id = datos_conciliacion_v2["mov1_id"]
+        resp = client.get(f"/api/bancario/10/sugerencias?movimiento_id={mov_id}", headers=hdrs)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        for s in data:
+            assert s["movimiento_id"] == mov_id
+
+    def test_confirmar_match_por_sugerencia_id(self, client, token_superadmin,
+                                               datos_conciliacion_v2, sesion_factory):
+        """Confirmar match via sugerencia_id → movimiento conciliado, alternativas desactivadas."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/confirmar-match", json={
+            "movimiento_id": datos_conciliacion_v2["mov1_id"],
+            "sugerencia_id": datos_conciliacion_v2["sug1_id"],
+        }, headers=hdrs)
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+        with sesion_factory() as s:
+            from sfce.db.modelos import MovimientoBancario, SugerenciaMatch
+            mov = s.get(MovimientoBancario, datos_conciliacion_v2["mov1_id"])
+            assert mov.estado_conciliacion == "conciliado"
+            assert mov.documento_id == datos_conciliacion_v2["doc1_id"]
+
+            sug1 = s.get(SugerenciaMatch, datos_conciliacion_v2["sug1_id"])
+            assert sug1.confirmada is True
+            assert sug1.activa is False
+
+            # Sugerencia alternativa también desactivada
+            sug2 = s.get(SugerenciaMatch, datos_conciliacion_v2["sug2_id"])
+            assert sug2.activa is False
+
+    def test_confirmar_match_sugerencia_no_encontrada(self, client, token_superadmin):
+        """sugerencia_id inexistente → 404."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/confirmar-match", json={
+            "movimiento_id": 99999,
+            "sugerencia_id": 99999,
+        }, headers=hdrs)
+        assert resp.status_code == 404
+
+    def test_rechazar_match_ultima_sugerencia_revierte_pendiente(
+            self, client, token_superadmin, datos_conciliacion_v2, sesion_factory):
+        """Rechazar la última sugerencia activa → movimiento vuelve a 'pendiente'."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/rechazar-match", json={
+            "sugerencia_id": datos_conciliacion_v2["sug3_id"],
+        }, headers=hdrs)
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+        with sesion_factory() as s:
+            from sfce.db.modelos import MovimientoBancario, SugerenciaMatch
+            mov = s.get(MovimientoBancario, datos_conciliacion_v2["mov2_id"])
+            assert mov.estado_conciliacion == "pendiente"
+
+            sug = s.get(SugerenciaMatch, datos_conciliacion_v2["sug3_id"])
+            assert sug.activa is False
+
+    def test_rechazar_match_sugerencia_no_encontrada(self, client, token_superadmin):
+        """sugerencia_id inexistente → 404."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/rechazar-match", json={
+            "sugerencia_id": 99999,
         }, headers=hdrs)
         assert resp.status_code == 404

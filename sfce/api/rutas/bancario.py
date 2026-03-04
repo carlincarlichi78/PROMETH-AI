@@ -18,12 +18,13 @@ from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
 from sfce.api.app import get_sesion_factory
+from sfce.api.audit import AuditAccion, auditar, ip_desde_request
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes
 from sfce.core.motor_conciliacion import MotorConciliacion
 from sfce.db.modelos import (
     CuentaBancaria, MovimientoBancario, SugerenciaMatch,
-    PatronConciliacion, Documento, ConciliacionParcial,
+    PatronConciliacion, Documento, ConciliacionParcial, Empresa,
 )
 
 router = APIRouter(prefix="/api/bancario", tags=["bancario"])
@@ -268,14 +269,44 @@ def estado_conciliacion(
 # Schemas Pydantic — Conciliación inteligente
 # ---------------------------------------------------------------------------
 
-class ConfirmarMatchIn(BaseModel):
+class DocumentoResumen(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    tipo: Optional[str]
+    nif_proveedor: Optional[str]
+    numero_factura: Optional[str]
+    importe_total: Optional[float]
+    fecha: Optional[str]
+
+
+class MovimientoResumen(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    fecha: str
+    importe: float
+    concepto_propio: str
+    nombre_contraparte: str
+
+
+class SugerenciaOut(BaseModel):
+    id: int
     movimiento_id: int
     documento_id: int
+    score: float
+    capa_origen: int
+    movimiento: MovimientoResumen
+    documento: Optional[DocumentoResumen]
+
+
+class ConfirmarMatchIn(BaseModel):
+    movimiento_id: int
+    sugerencia_id: int
 
 
 class RechazarMatchIn(BaseModel):
-    movimiento_id: int
-    documento_id: int
+    sugerencia_id: int
 
 
 class ConfirmarBulkIn(BaseModel):
@@ -296,53 +327,60 @@ class MatchParcialIn(BaseModel):
 # Endpoints — Sugerencias (Task 7)
 # ---------------------------------------------------------------------------
 
-@router.get("/{empresa_id}/sugerencias")
+@router.get("/{empresa_id}/sugerencias", response_model=List[SugerenciaOut])
 def listar_sugerencias(
     empresa_id: int,
     request: Request,
+    movimiento_id: Optional[int] = None,
     sesion_factory=Depends(get_sesion_factory),
 ):
-    """Lista sugerencias activas de conciliación ordenadas por score DESC."""
+    """Lista sugerencias activas de conciliación ordenadas por score DESC.
+
+    Parámetros opcionales:
+      - movimiento_id: filtra por movimiento bancario específico
+    """
     usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
         verificar_acceso_empresa(usuario, empresa_id, session)
-        sugerencias = (
+        q = (
             session.query(SugerenciaMatch)
             .join(SugerenciaMatch.movimiento)
             .filter(
                 MovimientoBancario.empresa_id == empresa_id,
                 SugerenciaMatch.activa == True,
             )
-            .order_by(SugerenciaMatch.score.desc())
-            .all()
         )
-        return [
-            {
-                "id": s.id,
-                "movimiento_id": s.movimiento_id,
-                "documento_id": s.documento_id,
-                "score": s.score,
-                "capa_origen": s.capa_origen,
-                "movimiento": {
-                    "fecha": s.movimiento.fecha.isoformat(),
-                    "importe": float(s.movimiento.importe),
-                    "signo": s.movimiento.signo,
-                    "concepto_propio": s.movimiento.concepto_propio,
-                    "nombre_contraparte": s.movimiento.nombre_contraparte,
-                    "estado_conciliacion": s.movimiento.estado_conciliacion,
-                },
-                "documento": {
-                    "id": s.documento.id,
-                    "nombre_archivo": s.documento.nombre_archivo,
-                    "tipo_doc": s.documento.tipo_doc,
-                    "importe_total": float(s.documento.importe_total) if s.documento.importe_total else None,
-                    "nif_proveedor": s.documento.nif_proveedor,
-                    "numero_factura": s.documento.numero_factura,
-                    "fecha_documento": s.documento.fecha_documento.isoformat() if s.documento.fecha_documento else None,
-                } if s.documento else None,
-            }
-            for s in sugerencias
-        ]
+        if movimiento_id is not None:
+            q = q.filter(SugerenciaMatch.movimiento_id == movimiento_id)
+        sugerencias = q.order_by(SugerenciaMatch.score.desc()).all()
+
+        resultado = []
+        for s in sugerencias:
+            mov = s.movimiento
+            doc = s.documento
+            resultado.append(SugerenciaOut(
+                id=s.id,
+                movimiento_id=s.movimiento_id,
+                documento_id=s.documento_id,
+                score=s.score,
+                capa_origen=s.capa_origen,
+                movimiento=MovimientoResumen(
+                    id=mov.id,
+                    fecha=mov.fecha.isoformat(),
+                    importe=float(mov.importe),
+                    concepto_propio=mov.concepto_propio,
+                    nombre_contraparte=mov.nombre_contraparte,
+                ),
+                documento=DocumentoResumen(
+                    id=doc.id,
+                    tipo=doc.tipo_doc,
+                    nif_proveedor=doc.nif_proveedor,
+                    numero_factura=doc.numero_factura,
+                    importe_total=float(doc.importe_total) if doc.importe_total else None,
+                    fecha=doc.fecha_documento.isoformat() if doc.fecha_documento else None,
+                ) if doc else None,
+            ))
+        return resultado
 
 
 @router.get("/{empresa_id}/saldo-descuadre")
@@ -390,6 +428,57 @@ def saldo_descuadre(
 # Endpoints — Confirmar / Rechazar / Bulk (Task 8)
 # ---------------------------------------------------------------------------
 
+def _confirmar_en_fs(empresa: Empresa, doc: Documento, mov: MovimientoBancario) -> Optional[int]:
+    """
+    Vincula o crea el asiento en FacturaScripts de forma atómica.
+
+    Lógica:
+      - Si el movimiento ya tiene asiento_id → nada que hacer en FS.
+      - Si la empresa no tiene idempresa_fs → modo local (sin FS).
+      - Si el doc tiene asiento_id → verificar que existe en FS.
+      - Si ninguno tiene asiento → crear asiento nuevo en FS (requiere codejercicio_fs).
+
+    Returns: asiento_id a usar en BD local (None si modo local sin asiento).
+    Raises: HTTPException 502 si FS falla o no está disponible.
+    """
+    import requests as _requests
+    from sfce.core.fs_api import api_get_one, api_post, obtener_credenciales_gestoria
+
+    if mov.asiento_id:
+        return mov.asiento_id
+
+    if not empresa.idempresa_fs:
+        return doc.asiento_id
+
+    _url, token = obtener_credenciales_gestoria(empresa.gestoria)
+
+    if doc.asiento_id:
+        try:
+            resultado = api_get_one(f"asientos/{doc.asiento_id}", token=token)
+            if resultado is None:
+                raise HTTPException(404, f"Asiento {doc.asiento_id} no encontrado en FacturaScripts")
+            return doc.asiento_id
+        except _requests.HTTPError as exc:
+            raise HTTPException(502, f"Error FacturaScripts al verificar asiento: {exc}")
+        except _requests.ConnectionError:
+            raise HTTPException(502, "FacturaScripts no disponible")
+
+    codejercicio = empresa.codejercicio_fs
+    if not codejercicio:
+        return None
+
+    try:
+        resp = api_post("asientos", {
+            "idempresa": empresa.idempresa_fs,
+            "codejercicio": codejercicio,
+            "concepto": f"Conciliación bancaria movimiento #{mov.id}",
+        }, token=token)
+        datos = resp.get("data", {}) if isinstance(resp, dict) else {}
+        return datos.get("idasiento")
+    except (_requests.HTTPError, _requests.ConnectionError) as exc:
+        raise HTTPException(502, f"FacturaScripts no pudo crear asiento: {exc}")
+
+
 @router.post("/{empresa_id}/confirmar-match")
 def confirmar_match(
     empresa_id: int,
@@ -397,36 +486,78 @@ def confirmar_match(
     request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
-    """Confirma un match sugerido. Desactiva sugerencias del movimiento y aprende el patrón."""
+    """
+    Confirma un match sugerido. Flujo atómico:
+      1. Verificar propiedad del movimiento y la sugerencia.
+      2. Llamar a FacturaScripts (vincular / crear asiento).
+      3. Solo si FS OK → actualizar BD local.
+      4. Desactivar sugerencias alternativas y aprender el patrón.
+      5. Registrar en audit_log_seguridad.
+    """
     from sfce.core.feedback_conciliacion import feedback_positivo, gestionar_diferencia
     usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
         verificar_acceso_empresa(usuario, empresa_id, session)
+
+        sug = session.get(SugerenciaMatch, body.sugerencia_id)
+        if not sug:
+            raise HTTPException(404, "Sugerencia no encontrada")
+
         mov = session.get(MovimientoBancario, body.movimiento_id)
-        doc = session.get(Documento, body.documento_id)
         if not mov or mov.empresa_id != empresa_id:
             raise HTTPException(404, "Movimiento no encontrado")
+
+        if sug.movimiento_id != mov.id:
+            raise HTTPException(400, "La sugerencia no corresponde al movimiento indicado")
+
+        doc = session.get(Documento, sug.documento_id)
         if not doc or doc.empresa_id != empresa_id:
             raise HTTPException(404, "Documento no encontrado")
 
+        empresa = session.get(Empresa, empresa_id)
+
+        # --- Paso 1: FS primero (confirmación atómica) ---
+        asiento_id = _confirmar_en_fs(empresa, doc, mov)
+
+        # --- Paso 2: BD local (solo si FS no lanzó excepción) ---
         diferencia_info = gestionar_diferencia(mov.importe, doc.importe_total or mov.importe)
 
         mov.documento_id = doc.id
-        mov.asiento_id = doc.asiento_id
+        mov.asiento_id = asiento_id
         mov.estado_conciliacion = "conciliado"
         mov.score_confianza = 1.0
         mov.capa_match = 0  # 0 = manual
 
-        session.query(SugerenciaMatch).filter_by(movimiento_id=body.movimiento_id).update({"activa": False})
+        # Marcar sugerencia confirmada y desactivar todas las del movimiento
+        sug.confirmada = True
+        sug.activa = False
+        session.query(SugerenciaMatch).filter(
+            SugerenciaMatch.movimiento_id == mov.id,
+            SugerenciaMatch.id != sug.id,
+        ).update({"activa": False})
 
+        # --- Paso 3: Feedback loop (PatronConciliacion) ---
         feedback_positivo(
             session=session,
             empresa_id=empresa_id,
             concepto_bancario=mov.concepto_propio,
             importe=mov.importe,
             nif_proveedor=doc.nif_proveedor,
-            capa_origen=0,
+            capa_origen=sug.capa_origen,
         )
+
+        # --- Paso 4: Auditoría RGPD ---
+        auditar(
+            session, AuditAccion.CONCILIAR, "movimiento",
+            email_usuario=usuario.email,
+            usuario_id=usuario.id,
+            rol=usuario.rol,
+            gestoria_id=usuario.gestoria_id,
+            recurso_id=str(mov.id),
+            ip_origen=ip_desde_request(request),
+            detalles={"sugerencia_id": sug.id, "documento_id": doc.id, "asiento_id": asiento_id},
+        )
+
         session.commit()
         return {"ok": True, "diferencia": diferencia_info}
 
@@ -438,26 +569,60 @@ def rechazar_match(
     request: Request,
     sesion_factory=Depends(get_sesion_factory),
 ):
-    """Rechaza una sugerencia. Penaliza el patrón si vino de capa 4."""
+    """
+    Rechaza una sugerencia de conciliación.
+      - Desactiva la sugerencia (activa=False).
+      - Si era la última sugerencia activa del movimiento → vuelve a 'pendiente'.
+      - Penaliza el patrón si la sugerencia vino de capa 4.
+      - Registra en audit_log_seguridad.
+    """
     from sfce.core.feedback_conciliacion import feedback_negativo
     usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
         verificar_acceso_empresa(usuario, empresa_id, session)
-        mov = session.get(MovimientoBancario, body.movimiento_id)
+
+        sug = session.get(SugerenciaMatch, body.sugerencia_id)
+        if not sug:
+            raise HTTPException(404, "Sugerencia no encontrada")
+
+        mov = session.get(MovimientoBancario, sug.movimiento_id)
         if not mov or mov.empresa_id != empresa_id:
-            raise HTTPException(404, "Movimiento no encontrado")
-        sug = session.query(SugerenciaMatch).filter_by(
-            movimiento_id=body.movimiento_id, documento_id=body.documento_id,
-        ).first()
-        capa = sug.capa_origen if sug else 0
+            raise HTTPException(404, "Movimiento no encontrado o no pertenece a la empresa")
+
+        # Desactivar la sugerencia
+        sug.activa = False
+
+        # Si no quedan más sugerencias activas → devolver a pendiente
+        otras_activas = session.query(SugerenciaMatch).filter(
+            SugerenciaMatch.movimiento_id == mov.id,
+            SugerenciaMatch.id != sug.id,
+            SugerenciaMatch.activa == True,
+        ).count()
+        if otras_activas == 0:
+            mov.estado_conciliacion = "pendiente"
+
+        # Penalización en patrones (solo capa 4)
         feedback_negativo(
             session=session,
             empresa_id=empresa_id,
             concepto_bancario=mov.concepto_propio,
             importe=mov.importe,
-            capa_origen=capa,
-            sugerencia_id=sug.id if sug else None,
+            capa_origen=sug.capa_origen,
+            sugerencia_id=None,  # ya desactivada arriba directamente
         )
+
+        # Auditoría RGPD
+        auditar(
+            session, AuditAccion.UPDATE, "sugerencia_match",
+            email_usuario=usuario.email,
+            usuario_id=usuario.id,
+            rol=usuario.rol,
+            gestoria_id=usuario.gestoria_id,
+            recurso_id=str(sug.id),
+            ip_origen=ip_desde_request(request),
+            detalles={"accion": "rechazar", "movimiento_id": mov.id, "capa_origen": sug.capa_origen},
+        )
+
         session.commit()
         return {"ok": True}
 
