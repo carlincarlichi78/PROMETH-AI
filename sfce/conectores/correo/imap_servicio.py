@@ -93,13 +93,14 @@ class ImapServicio:
         self._conectar()
         try:
             uids_raw = self._conn.search(f"UID {ultimo_uid + 1}:*")
-            # Normalizar: puede ser lista de bytes individuales
+            # imaplib devuelve los UIDs como un único bytes separado por espacios
+            # ej: [b'9 15 22'] → hay que split antes de filtrar
             uids: list[bytes] = []
             for u in uids_raw:
-                if isinstance(u, bytes):
-                    uids.append(u)
-                else:
-                    uids.append(str(u).encode())
+                raw_b = u if isinstance(u, bytes) else str(u).encode()
+                for token in raw_b.split():
+                    if token:
+                        uids.append(token)
 
             # Filtrar UIDs realmente mayores que ultimo_uid
             uids = [u for u in uids if u.isdigit() and int(u) > ultimo_uid]

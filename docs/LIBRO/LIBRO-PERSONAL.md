@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 88)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 88b)
 
 ---
 
@@ -47,13 +47,14 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 88)
+## Estado rápido (sesión 88b)
 
-- **Completado sesión 88:** Fix conciliación — error feedback confirmar/rechazar (silent error → mensaje visible) + filtrado de documentos en PanelSugerencias + FilterBar en tabs Revisión/Conciliados/Asiento Directo
-- **Push:** todo en origin/main ✓ | **Tests:** 2568 PASS | **Build:** OK
-- **PRIORIDAD 1:** Pipeline FS registration fix — Fase 2 rollback todas las facturas (FS total=0.00)
-- **PRIORIDAD 2:** Tests E2E Playwright dashboard (confirmar match, FilterBar, conciliar-directo)
-- **PRIORIDAD 3:** Verificación visual sala de control prod + VClNegocios capa C
+- **Completado sesión 88b:** Ejercicio 2026 Gerardo en FS (GG26) + `ConfigCliente.codejercicio` dinámico (ambos config.py) + Fix IMAP UID parsing (`imap_servicio.py` split bug) + workers health flags en `app.py`
+- **Push:** pendiente (commit en esta sesión) | **Tests:** 2568 PASS
+- **PRIORIDAD 1:** F8 — Pipeline FS registration fix (Fase 2 rollback, FS total=0.00, `registered.json` nunca generado)
+- **PRIORIDAD 2:** F6 — Ruta inbox email→pipeline (worker guarda en `clientes/{id}/inbox/`, pipeline lee `clientes/{slug}/{año}/inbox/`)
+- **PRIORIDAD 3:** Tests E2E Playwright dashboard + Capa C VClNegocios
+- **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
 

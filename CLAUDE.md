@@ -234,17 +234,18 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 88)
+## Estado actual (04/03/2026, sesion 88b)
 
-**Rama**: `main` | **Ultimo commit**: `369d8829` (pusheado) | **Build**: OK | **Tests**: 2568 PASS
+**Rama**: `main` | **Ultimo commit**: *(pendiente push)* | **Tests**: 2568 PASS
 
-### Completado sesion 88
-- Fix bug: confirmar sugerido no hacía nada (error silencioso 502 FS) — `SeccionSugerencias` + `PanelSugerencias` muestran mensaje de error ✓
-- Filtrado documentos en tab "Sugerencias" — campo de búsqueda por NIF/factura/concepto con contador ✓
-- FilterBar añadido a `TabMovimientos` (tabs "Revisión", "Conciliados", "Asiento Directo") ✓
+### Completado sesion 88b
+- Ejercicio económico 2026 Gerardo González en FS: codejercicio="GG26", idempresa=3, fechas 01/01/2026-31/12/2026 ✓
+- `ConfigCliente.codejercicio` dinámico en `scripts/core/config.py` y `sfce/core/config.py` — resuelve por mapa `ejercicios` ✓
+- Fix crítico IMAP UIDs: `imap_servicio.py` — `b'9 10'.split()` antes de `.isdigit()` (Gmail retorna todos UIDs en un solo bytes) ✓
+- Workers health flags: `app.py` ahora setea `worker_ocr_activo`, `worker_pipeline_activo`, `worker_correo_activo = True` ✓
 
 ### Proxima sesion — pendientes (sesion 89)
-1. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). Investigar
-2. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar (q/fecha), conciliar-directo, bulk
-3. **Verificacion visual sala de control** — arrancar `npm run dev`, navegar `/pipeline/live`, comprobar animaciones WS
-4. **Capa C VClNegocios** — bajó de 8 a 0 matches (faltan PDFs en inbox prod?)
+1. **F8 — Pipeline FS registration fix** — Fase 2 rollback (FS total=0.00, `registered.json` nunca generado). Investigar `registration.py` con logs detallados de respuesta FS
+2. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`. Alinear rutas
+3. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
+4. **Capa C VClNegocios** — bajó de 8 a 0 matches

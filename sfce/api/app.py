@@ -117,11 +117,13 @@ async def lifespan(app: FastAPI):
         loop_worker_ocr(sesion_factory=sesion_factory)
     )
     app.state.worker_ocr_task = worker_task
+    app.state.worker_ocr_activo = True
 
     # Iniciar worker pipeline en background
     from sfce.core.worker_pipeline import loop_worker_pipeline
     pipeline_task = asyncio.create_task(loop_worker_pipeline(sesion_factory))
     app.state.worker_pipeline_task = pipeline_task
+    app.state.worker_pipeline_activo = True
 
     # Iniciar worker polling de correo en background
     from sfce.conectores.correo.daemon_correo import loop_polling_correo
@@ -129,6 +131,7 @@ async def lifespan(app: FastAPI):
         loop_polling_correo(sesion_factory=sesion_factory)
     )
     app.state.worker_correo_task = correo_task
+    app.state.worker_correo_activo = True
 
     # Iniciar worker testing en background
     from sfce.core.worker_testing import loop_worker_testing

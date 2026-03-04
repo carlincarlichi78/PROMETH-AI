@@ -1,5 +1,33 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 88) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 88b) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 88b — Ejercicio 2026 Gerardo + bugs correo/IMAP)
+
+### Commits sesión 88b
+
+| Hash | Descripción |
+|------|-------------|
+| *(pendiente commit)* | fix(correo): IMAP UID parsing, workers health flags, ejercicio dinámico |
+
+### Tasks completadas (sesión 88b)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Ejercicio 2026 Gerardo en FS | ✅ DONE | Creado codejercicio="GG26" en fs-uralde idempresa=3. Config.yaml usa mapa `ejercicios` |
+| ConfigCliente.codejercicio dinámico | ✅ DONE | Resuelve codejercicio por mapa `{año: cod}` en ambos config.py (scripts/ y sfce/) |
+| Bug IMAP UIDs no parseados | ✅ DONE | `imap_servicio.py`: split() antes de isdigit(). UIDs en Gmail vienen como `b'9 10'` |
+| Workers health flags faltantes | ✅ DONE | `app.py`: añadidos `worker_ocr_activo`, `worker_pipeline_activo`, `worker_correo_activo = True` |
+| Ruta inbox email → pipeline | ⚠️ WORKAROUND | Email guarda en `clientes/{id}/inbox/`, pipeline lee de `clientes/{slug}/{año}/inbox/`. Copia manual por ahora |
+
+### Pendientes para sesión 89
+
+1. **F8 — Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). `registered.json` nunca se genera → pipeline bloqueado. Investigar `registration.py` + respuesta real FS con logs detallados
+2. **F6 — Ruta inbox email→pipeline** — Worker correo guarda en `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`. Alinear rutas o añadir paso de movimiento automático
+3. **Tests E2E dashboard** — Playwright flujos críticos: confirmar match, rechazar, FilterBar, conciliar-directo, bulk, upload C43
+4. **Confirmar matches en producción** — probar flujo completo post-fix
+5. **Capa C VClNegocios** — bajó de 8 a 0 matches
 
 ---
 

@@ -82,8 +82,27 @@ class ConfigCliente:
 
     @property
     def codejercicio(self) -> str:
-        """Codigo de ejercicio en FS (puede diferir del ano, ej: '0004' vs '2025')."""
-        return self.empresa.get("codejercicio", self.ejercicio)
+        """Codigo de ejercicio en FS para el ejercicio activo.
+
+        Resolucion (por orden de prioridad):
+        1. Mapa ejercicios: {año: codejercicio} en config.yaml
+        2. Campo plano codejercicio (compatibilidad hacia atras)
+        3. El año mismo como fallback
+        """
+        año = self.ejercicio
+        mapa = self.empresa.get("ejercicios", {})
+        if año in mapa:
+            return str(mapa[año])
+        return self.empresa.get("codejercicio", año)
+
+    def codejercicio_para(self, año: str) -> str:
+        """Devuelve el codejercicio FS para un año concreto."""
+        mapa = self.empresa.get("ejercicios", {})
+        if año in mapa:
+            return str(mapa[año])
+        if año == self.ejercicio:
+            return self.empresa.get("codejercicio", año)
+        return año
 
     @property
     def codagente_fs(self) -> str | None:
