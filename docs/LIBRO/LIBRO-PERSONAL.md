@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 79)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 80)
 
 ---
 
@@ -43,7 +43,7 @@ git log -5 --oneline
 
 # Test bancario para verificar base
 python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 182 passed (suite completa: 2741)
+# Esperado: 188 passed, 2 skipped
 
 # Abrir dashboard
 cd dashboard && npm run dev
@@ -51,15 +51,15 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 79)
+## Estado rápido (sesión 80)
 
 - **Plan activo:** ninguno
-- **Completado sesión 79:** fix dotenv GEMINI_API_KEY + dedup BD fallback en `conciliar_facturas_gerardo.py`
+- **Completado sesión 80:** migración 030 prod, ingesta C43 verificada, cuentas duplicadas limpiadas (IDs 1-3 inactivas), motor /conciliar → V2 deployado manualmente
+- **Completado sesión 79:** fix dotenv GEMINI_API_KEY + dedup BD fallback
 - **Completado sesión 78:** endpoint `/conciliar` + extracción 3 tiers (pdfplumber→pymupdf→Gemini Flash)
-- **Completado sesión 77:** motor conciliación 4 capas sin LLM, 278 PDFs, 107 sugerencias, 24.8% cobertura
-- **Push pendiente:** `f4074dd7`, `b6a60b72`, `ff8406d7`
-- **Tests:** 188 PASS bancario (suite completa pendiente verificar)
-- **Próximo paso:** migración 030 prod + subir TT280226.423.txt Dashboard para validar E2E
+- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario
+- **Bloqueante:** tabla `documentos` solo tiene 1 doc para empresa_id=2 (sin importe). Motor V2 sin datos para conciliar.
+- **Próximo paso:** ejecutar pipeline Gerardo en producción para poblar `documentos` → verificar sugerencias
 
 ---
 

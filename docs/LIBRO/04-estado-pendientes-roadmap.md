@@ -1,5 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 79) | **Branch:** main | **Tests:** 188 PASS bancario | **Push pendiente**
+> **Actualizado:** 2026-03-04 (sesión 80) | **Branch:** main | **Tests:** 188 PASS bancario | **Push:** OK
+
+---
+
+## Estado actual (sesión 80 — limpieza BD duplicados + motor V2 deploy + verificación C43)
+
+**Sesión de consolidación del módulo bancario. Se ejecutaron los planes de sesiones 78 y 79 pendientes. Sin commits de código nuevos (todo ya en `f4074dd7`). Solo cambios en BD producción y deploy manual.**
+
+### Tasks completadas (sesión 80)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Push pendiente | ✅ DONE | Todos los commits ya estaban en origin/main al iniciar la sesión |
+| Migración 030 producción | ✅ DONE | Columna `confirmada` (boolean) en `sugerencias_match` vía importlib |
+| Ingesta C43 Gerardo | ✅ DONE | `TT280226.423.txt` ya procesado (1064 movs, 0 duplicados, hash_unico OK) |
+| Fix interceptor Axios 422 | ✅ DONE | `api-client.ts` ya tenía el Array→string correcto — no requirió cambios |
+| Limpieza cuentas duplicadas | ✅ DONE | IDs 1-3 (IBAN corto 18 dígitos) → `activa=False`; IDs 4-6 activas |
+| Motor /conciliar → V2 | ✅ DONE | Endpoint usa `conciliar_inteligente()` + `session.commit()` (f4074dd7) |
+| Deploy manual prod | ✅ DONE | `docker cp bancario.py sfce_api` + restart. CI/CD GHCR pendiente de pull |
+| Verificación sugerencias | ✅ DONE | Motor ejecutado: 0 matches (BD solo 1 doc empresa_id=2 sin importe) |
+
+### Diagnóstico bloqueante
+
+**Motor V2 retorna 0 sugerencias** porque la tabla `documentos` solo tiene 1 registro para `empresa_id=2` sin `importe_total`. Para generar sugerencias hay que ejecutar el pipeline OCR con las facturas PDF de Gerardo en producción.
+
+### Pendientes para sesión 81
+
+1. **Pipeline Gerardo en producción** — `python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo` para poblar tabla `documentos`
+2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros
+3. **Tests E2E dashboard** — Playwright, flujos críticos conciliación
+4. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace
+5. **CI/CD GHCR pull** — verificar que próximo deploy incluye `bancario.py` nuevo desde imagen
 
 ---
 

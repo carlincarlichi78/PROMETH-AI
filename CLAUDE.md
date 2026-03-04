@@ -234,20 +234,20 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 79)
+## Estado actual (04/03/2026, sesion 80)
 
-**Rama**: `main` | **Ultimo commit**: `ff8406d7` (pendiente push) | **Tests**: 188 PASS bancario
+**Rama**: `main` | **Ultimo commit**: `2a709359` (pusheado) | **Tests**: 188 PASS bancario
 
-### Completado sesiones 78+79
-- Sesion 78: endpoint `/conciliar` usa `MotorConciliacion.conciliar_inteligente()` + tipos frontend
-- Sesion 78: extraccion PDF 3 tiers — pdfplumber → pymupdf (fitz) → Gemini Flash (20 req/dia gratis)
-- Sesion 79: fix `load_dotenv` en `conciliar_facturas_gerardo.py` (GEMINI_API_KEY no cargaba con xargs)
-- Sesion 79: dedup BD fallback — al encontrar doc existente por hash_pdf, recupera importe/emisor/nif de datos_ocr
+### Completado sesion 80
+- Migración 030 en producción: columna `confirmada` (boolean) en `sugerencias_match` ✓
+- Ingesta C43 Gerardo verificada: 1064 movimientos, hash_unico OK, 0 duplicados ✓
+- Cuentas duplicadas limpiadas: IDs 1-3 (IBAN corto) → `activa=False` en prod ✓
+- Fix interceptor Axios: ya estaba correcto en `api-client.ts`, sin cambios ✓
+- Motor /conciliar → V2: deployado manualmente (docker cp), commit `f4074dd7` ya en prod ✓
+- Diagnóstico: 0 sugerencias porque `documentos` solo tiene 1 registro sin importe para empresa_id=2
 
-### Proxima sesion — pendientes (sesion 80)
-1. **PUSH pendiente** — commits `f4074dd7`, `b6a60b72`, `ff8406d7` sin push
-2. **Migracion 030 en produccion** — columna `confirmada` en `sugerencias_match`
-3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real
-4. **Fix interceptor Axios 422** — `detail` array → `detail.map(d => d.msg).join(", ")`
-5. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
-6. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED
+### Proxima sesion — pendientes (sesion 81)
+1. **Pipeline Gerardo en produccion** — ejecutar pipeline OCR para poblar tabla `documentos` empresa_id=2
+2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros
+3. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+4. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace
