@@ -697,7 +697,7 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
 
     # Paso 1: crear cabecera
     endpoint_cabecera = "facturaproveedores" if es_proveedor else "facturaclientes"
-    logger.debug(f"  POST cabecera → {endpoint_cabecera}: {form_cabecera}")
+    logger.debug(f"  POST cabecera → {endpoint_cabecera}: {json.dumps(form_cabecera)[:300]}")
     respuesta = api_post(endpoint_cabecera, data=form_cabecera)
     logger.debug(f"  Respuesta cabecera: {json.dumps(respuesta)[:400]}")
 
@@ -711,25 +711,53 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
         raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
 
     # Paso 2: crear líneas
+    # FS REST API no auto-calcula pvpsindto/pvptotal: pasarlos explícitamente
     endpoint_lineas = "lineafacturaproveedores" if es_proveedor else "lineafacturaclientes"
+    neto_total = 0.0
+    totaliva_total = 0.0
+    totalirpf_total = 0.0
     for i, linea in enumerate(lineas):
-        linea_data = {**linea, "idfactura": idfactura}
+        pvp = float(linea.get("pvpunitario") or 0)
+        cant = float(linea.get("cantidad") or 1)
+        pvpsindto = round(pvp * cant, 4)
+        linea_data = {
+            **linea,
+            "idfactura": idfactura,
+            "pvpsindto": pvpsindto,
+            "pvptotal": pvpsindto,  # sin descuento
+        }
         logger.debug(f"  POST linea {i+1}/{len(lineas)} → {endpoint_lineas}: {linea_data}")
         resp_linea = api_post(endpoint_lineas, data=linea_data)
-        logger.debug(f"  Respuesta linea {i+1}: {json.dumps(resp_linea)[:300]}")
+        logger.debug(f"  Respuesta linea {i+1}: {json.dumps(resp_linea)[:400]}")
         if resp_linea.get("error"):
             raise ValueError(
                 f"FS error creando linea {i+1} (idfactura={idfactura}): "
                 f"{resp_linea['error']} | datos={linea_data}"
             )
+        # Acumular totales desde la respuesta de FS
+        ld = resp_linea.get("data") or {}
+        pvptotal_resp = float(ld.get("pvptotal") or pvpsindto)
+        iva_pct = float(ld.get("iva") or linea.get("_iva_pct", 0))
+        irpf_pct = float(ld.get("irpf") or linea.get("_irpf_pct", 0))
+        neto_total += pvptotal_resp
+        totaliva_total += round(pvptotal_resp * iva_pct / 100, 4)
+        totalirpf_total += round(pvptotal_resp * irpf_pct / 100, 4)
 
-    # Paso 3: forzar recálculo de totales (FS puede no actualizarlos en el POST de líneas)
+    # Paso 3: actualizar totales en la cabecera (FS REST API no los recalcula automáticamente)
     endpoint_factura = f"{endpoint_cabecera}/{idfactura}"
+    total_calculado = round(neto_total + totaliva_total - totalirpf_total, 4)
     try:
-        api_put(endpoint_factura, data={"idfactura": idfactura})
-        logger.debug(f"  PUT recálculo cabecera {idfactura} OK")
+        api_put(endpoint_factura, data={
+            "neto": round(neto_total, 4),
+            "totaliva": round(totaliva_total, 4),
+            "totalirpf": round(totalirpf_total, 4),
+            "total": total_calculado,
+        })
+        logger.info(f"  PUT totales cabecera {idfactura}: neto={neto_total:.2f} "
+                    f"iva={totaliva_total:.2f} irpf={totalirpf_total:.2f} "
+                    f"total={total_calculado:.2f}")
     except Exception as e:
-        logger.warning(f"  PUT recálculo cabecera {idfactura} falló (no crítico): {e}")
+        logger.warning(f"  PUT totales cabecera {idfactura} falló (no crítico): {e}")
 
     return int(idfactura)
 
