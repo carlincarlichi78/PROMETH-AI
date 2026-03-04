@@ -204,3 +204,91 @@ class TestMultiplesMovimientos:
 
         matches = MotorConciliacion(session, empresa_id=1).conciliar()
         assert isinstance(matches[0], ResultadoMatch)
+
+
+# =====================================================================
+# Tests motor inteligente — Capa 1 (exacta y unívoca)
+# =====================================================================
+
+from sfce.db.modelos import Documento, SugerenciaMatch
+
+
+def _doc(session, importe, nif="B12345678", numero_factura="FV-2025-001", asiento_id=None, fecha=None):
+    """Helper: crea un Documento simulando resultado del pipeline."""
+    doc = Documento(
+        empresa_id=1,
+        gestoria_id=1,
+        nombre_archivo="factura.pdf",
+        ruta_pdf="/tmp/factura.pdf",
+        tipo_doc="FV",
+        estado="registrado",
+        importe_total=importe,
+        nif_proveedor=nif,
+        numero_factura=numero_factura,
+        asiento_id=asiento_id,
+        fecha_documento=fecha or date(2025, 3, 15),
+    )
+    session.add(doc)
+    session.flush()
+    return doc
+
+
+@pytest.fixture
+def db_inteligente():
+    """BD con tablas nuevas (migración 029)."""
+    import importlib.util
+    import sfce.db.modelos_auth  # registra Gestoria en Base.metadata
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    spec = importlib.util.spec_from_file_location(
+        "m029", "sfce/db/migraciones/029_conciliacion_inteligente.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.aplicar(engine)
+    return Session(engine)
+
+
+class TestMotorCapa1:
+    def test_capa1_univoca_concilia_automatico(self, db_inteligente):
+        """Si hay exactamente 1 doc con mismo importe + fecha → conciliado automático."""
+        session = db_inteligente
+        asiento = _asiento(session, Decimal("187.34"))
+        doc = _doc(session, Decimal("187.34"), asiento_id=asiento.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CaixaBank",
+                                iban="ES21000412345", alias="Principal", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = _mov(session, cuenta.id, Decimal("187.34"))
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        resultado = motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        assert mov.estado_conciliacion == "conciliado"
+        assert mov.documento_id == doc.id
+        assert mov.capa_match == 1
+        assert resultado["conciliados_auto"] == 1
+
+    def test_capa1_ambigua_degrada_a_sugerido(self, db_inteligente):
+        """Si hay 2 docs con mismo importe + fecha → degrada a 'sugerido'."""
+        session = db_inteligente
+        asiento1 = _asiento(session, Decimal("50.00"), numero=1)
+        asiento2 = _asiento(session, Decimal("50.00"), numero=2)
+        doc1 = _doc(session, Decimal("50.00"), nif="A11111111", asiento_id=asiento1.id)
+        doc2 = _doc(session, Decimal("50.00"), nif="B22222222", asiento_id=asiento2.id)
+        cuenta = CuentaBancaria(empresa_id=1, gestoria_id=1, banco_codigo="2100", banco_nombre="CaixaBank",
+                                iban="ES21000412346", alias="Sec", divisa="EUR")
+        session.add(cuenta)
+        session.flush()
+        mov = _mov(session, cuenta.id, Decimal("50.00"), hash_sfx="002")
+        session.commit()
+
+        motor = MotorConciliacion(session, empresa_id=1)
+        motor.conciliar_inteligente()
+
+        session.refresh(mov)
+        assert mov.estado_conciliacion == "sugerido"
+        sugerencias = session.query(SugerenciaMatch).filter_by(movimiento_id=mov.id).all()
+        assert len(sugerencias) == 2
