@@ -101,6 +101,19 @@ async def ingestar_documento(
 
             logger.info("Documento encolado: %s, score=%.0f, decision=%s, regla=%s",
                         preflight.nombre_sanitizado, score, decision.value, supplier_rule_aplicada)
+            # Emitir evento WS para actualizar dashboard en tiempo real
+            try:
+                from sfce.api.websocket import gestor_ws, EVENTO_WATCHER_NUEVO_PDF
+                import asyncio
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(gestor_ws.emitir_a_empresa(empresa_id, EVENTO_WATCHER_NUEVO_PDF, {
+                        "empresa_id": empresa_id,
+                        "nombre_archivo": preflight.nombre_sanitizado,
+                        "fuente": "manual",
+                    }))
+            except Exception:
+                pass
             return {
                 "cola_id": item.id,
                 "nombre": preflight.nombre_sanitizado,
