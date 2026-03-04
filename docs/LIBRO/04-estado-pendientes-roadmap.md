@@ -1,5 +1,40 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 91) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** pendiente
+> **Actualizado:** 2026-03-04 (sesión 92) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 92 — Asientos MARIA ISABEL + diagnóstico OCR Gemini)
+
+### Commits sesión 92
+
+| Hash | Descripción |
+|------|-------------|
+| *(sin commits de código — trabajo vía SSH/SQL directo en FS Uralde)* | Generación asientos + fix recargo + enlace idasiento |
+
+### Tasks completadas (sesión 92)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Fase 3 asientos MARIA ISABEL | ✅ DONE | PHP CLI: importar PGC (802 cuentas) + `InvoiceToAccounting::generate()` para 29 facturas. Root cause "asiento descuadrado": `lineasfacturasprov.recargo=5.2` (RE heredado de IVA21 instancia Uralde). Fix: `UPDATE lineasfacturasprov SET recargo=0 WHERE idfactura BETWEEN 28 AND 56`. UPDATE manual `facturasprov.idasiento = idfactura + 16`. idasientos 44-72 asignados. |
+| Fases 4-6 MARIA ISABEL | ✅ DONE | Fase 4 (corrección): 1 aviso. Fase 5 (verificación cruzada): 13/13 PASS. Fase 6 (salidas): informe generado. |
+| Diagnóstico cuarentena/inbox | ✅ DONE | 193 PDFs en inbox, 160 en cuarentena raíz. 80 `.ocr.json` con todos los campos null (Gemini falló en escáneres). 112 con datos parciales y nombres basura. Causa: Gemini como motor primario para PDFs físicos de baja calidad. |
+
+### Pendientes para sesión 93 — ARRANQUE LIMPIO MARIA ISABEL
+
+**PREPARACIÓN FS (hacer primero):**
+1. **Borrar asientos FS empresa 7** — DELETE asientos idasiento 44-72 + partidas asociadas vía MariaDB o API DELETE
+2. **Borrar facturas FS empresa 7** — DELETE facturasprov idfactura 28-56 + lineas asociadas (o usar DELETE API)
+3. **Verificar proveedores empresa 7** — mantener los que ya existen (no recrear). Verificar que `codsubcuenta` sea 400x correcto
+4. **Verificar recargo=0 en IVA21** — `UPDATE impuestos SET recargo=0 WHERE codimpuesto='IVA21'` en instancia Uralde (para que no se repita el problema)
+
+**OCR Y RE-PROCESADO:**
+5. **Re-OCR con Mistral** — todos los JSONs borrados (el usuario ya los borró). Ejecutar pipeline fase 0/1 con Mistral como motor primario. Inbox: `clientes/maria-isabel-navarro-lopez/inbox/` (facturas recibidas + bancarios) + subcarpeta `inbox/ingresos/` (facturas emitidas/honorarios → tipo FV)
+6. **Recuperar cuarentena** — mover 160 PDFs de `cuarentena/` raíz a `inbox/` antes de re-procesar
+7. **Pipeline completo** — fases 1-6 con todos los documentos (~353 PDFs totales)
+
+**POST-PIPELINE:**
+8. **Comparar vs M130/M303** — una vez todos los documentos registrados
+9. **F6 ruta inbox email→pipeline** — worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`
 
 ---
 

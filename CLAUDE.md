@@ -234,17 +234,26 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 91)
+## Estado actual (04/03/2026, sesion 92)
 
-**Rama**: `main` | **Ultimo commit**: `9744447b` (sesión 90 pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `07cceceb` (sesión 91 pusheado) | **Tests**: ~2568 PASS
 
-### Completado sesion 91
-- Onboarding MARIA ISABEL NAVARRO LOPEZ: FS idempresa=7, SFCE empresa_id=14, config.yaml 25+ proveedores ✓
-- Fix bug F8 raíz: `validated_batch.json` clave `"validados"` (pipeline paralelo) ≠ `"documentos"` que leía `registration.py` → sin `registered.json`. Fix en [registration.py](sfce/phases/registration.py#L1011) ✓
-- Pipeline fase 2 MARIA ISABEL: 29 facturas registradas (IDs 28-56), 0 fallidos ✓
+### Completado sesion 92
+- Asientos MARIA ISABEL: root cause = `recargo=5.2` en IVA21 instancia Uralde (RE). Fix SQL + PHP CLI `InvoiceToAccounting` + UPDATE manual `idasiento`. 29 asientos generados (idasientos 44-72) ✓
+- Fases 4-6 pipeline MARIA ISABEL: 13/13 checks PASS ✓
+- Diagnóstico OCR: 80 `.ocr.json` nullos (Gemini falló en escáneres). 160 PDFs en cuarentena raíz. Usuario borró todos los JSON para re-procesar.
 
-### Proxima sesion — pendientes (sesion 92)
-1. **Fase 3 asientos MARIA ISABEL** — 29 facturas sin asiento. Método 2-step bypassa el observer FS. Probar `crearFacturaProveedor` con `codejercicio=0007` o buscar endpoint contabilizar
-2. **Completar pipeline MARIA ISABEL** — fases 4-6 + comparar vs M130/M303 presentados
-3. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`
-4. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
+### Proxima sesion — pendientes (sesion 93) — ARRANQUE LIMPIO MARIA ISABEL
+
+**PRIMERO — limpiar FS empresa 7 (idempresa=7, codejercicio=0007):**
+1. Borrar asientos 44-72 + sus partidas: `DELETE FROM partidas WHERE idasiento BETWEEN 44 AND 72; DELETE FROM asientos WHERE idasiento BETWEEN 44 AND 72;` (MariaDB fs-uralde)
+2. Borrar facturas 28-56 + líneas: `DELETE FROM lineasfacturasprov WHERE idfactura BETWEEN 28 AND 56; DELETE FROM facturasprov WHERE idfactura BETWEEN 28 AND 56;`
+3. Fix permanente RE: `UPDATE impuestos SET recargo=0 WHERE codimpuesto='IVA21';` en instancia Uralde
+4. Verificar proveedores empresa 7 existentes (mantener, no recrear)
+
+**LUEGO — re-procesar todos los documentos:**
+5. Mover 160 PDFs de `cuarentena/` raíz → `inbox/` (los JSON ya fueron borrados por el usuario)
+6. Pipeline `--inbox inbox` con Mistral (no Gemini). Subcarpeta `inbox/ingresos/` = facturas emitidas (FV)
+7. Total: ~353 PDFs (193 inbox + 160 cuarentena recuperada). Comparar con M130/M303 al final.
+8. **F6** — Ruta inbox email→pipeline
+9. **Tests E2E dashboard** — Playwright

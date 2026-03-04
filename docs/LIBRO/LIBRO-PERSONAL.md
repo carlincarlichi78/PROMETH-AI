@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 90)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 92)
 
 ---
 
@@ -47,13 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 90)
+## Estado rápido (sesión 92)
 
-- **Completado sesión 90:** F8 resuelto — `pvpsindto = pvpunitario * cantidad` explícito en cada línea + PUT cabecera tras insertar líneas para actualizar totales. FS ya no devuelve `total=0.00`.
-- **Push:** OK `fb8f9ced` | **Tests:** ~2568 PASS
-- **PRIORIDAD 1:** Verificar F8 en producción — pipeline completo con factura real empresa 2 (Gerardo)
-- **PRIORIDAD 2:** Verificar confirmar-match — mov 132 en pendiente, re-confirmar y ver asiento FS con importe
-- **PRIORIDAD 3:** F6 — Ruta inbox email→pipeline + Tests E2E Playwright
+- **Completado sesión 92:** Asientos MARIA ISABEL resueltos (recargo=0 + PHP CLI + UPDATE manual). Fases 4-6 PASS 13/13. Diagnóstico OCR: Gemini falla en escáneres físicos → 160 PDFs en cuarentena, 80 caches nullos. Usuario borró JSONs.
+- **Push:** OK `07cceceb` | **Tests:** ~2568 PASS
+- **PRIORIDAD SESIÓN 93:** Arranque limpio MARIA ISABEL — (1) borrar asientos+facturas FS empresa 7, (2) fix RE `UPDATE impuestos SET recargo=0`, (3) mover cuarentena→inbox, (4) pipeline completo con Mistral, (5) `inbox/ingresos/` = FV
+- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
