@@ -32,7 +32,7 @@ except ImportError:
 
 from scripts.core.config import cargar_config
 from sfce.core.confidence import calcular_nivel
-from sfce.core.errors import CatalogoErrores
+from sfce.core.errors import CatalogoErrores, ResultadoFase
 from sfce.core.logger import AuditoriaLogger, crear_logger
 from sfce.core.recurrentes import generar_alertas_recurrentes
 

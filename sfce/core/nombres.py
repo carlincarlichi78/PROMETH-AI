@@ -15,6 +15,26 @@ _MESES_EN = {"jan": "01", "feb": "02", "mar": "03", "apr": "04", "may": "05",
              "jun": "06", "jul": "07", "aug": "08", "sep": "09", "oct": "10",
              "nov": "11", "dec": "12"}
 
+_MESES_ES = {"ene": "01", "feb": "02", "mar": "03", "abr": "04", "may": "05",
+             "jun": "06", "jul": "07", "ago": "08", "sep": "09", "oct": "10",
+             "nov": "11", "dic": "12"}
+
+_MESES_ES_LARGO = {
+    "enero": "01", "febrero": "02", "marzo": "03", "abril": "04",
+    "mayo": "05", "junio": "06", "julio": "07", "agosto": "08",
+    "septiembre": "09", "octubre": "10", "noviembre": "11", "diciembre": "12",
+}
+
+
+def _mes_es_largo_a_num(m) -> str:
+    return _MESES_ES_LARGO.get(m.group(2).lower(), "01")
+
+
+def _fmt_dia_mes_largo_anyo(m) -> str:
+    dia = f"{int(m.group(1)):02d}"
+    mes = _MESES_ES_LARGO.get(m.group(2).lower(), "01")
+    return f"{m.group(3)}{mes}{dia}"
+
 
 def _mes_en_a_num(m) -> str:
     return _MESES_EN.get(m.group(1).lower(), "01")
@@ -36,6 +56,14 @@ _PATRONES_FECHA = [
     # Formato ingles invertido: "28 Feb 2025"
     (re.compile(r"^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{4})$", re.I),
      lambda m: f"{m.group(3)}{_MESES_EN.get(m.group(2).lower(),'01')}{int(m.group(1)):02d}"),
+    # Formato espanol abreviado solo mes+año: "jun. 2025", "ene. 2025" → dia 01
+    (re.compile(r"^(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?\s+(\d{4})$", re.I),
+     lambda m: f"{m.group(2)}{_MESES_ES.get(m.group(1).lower(),'01')}01"),
+    # Formato espanol dia+mes+año: "28 de junio de 2025", "28 junio 2025", "31 de Diciembre 2025"
+    (re.compile(r"^(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\.?\s+(?:de\s+)?(\d{4})$", re.I),
+     _fmt_dia_mes_largo_anyo),
+    # DD/MM/YY o DD-MM-YY (año 2 dígitos)
+    (re.compile(r"^(\d{2})[/-](\d{2})[/-](\d{2})$"), lambda m: f"20{m.group(3)}{m.group(2)}{m.group(1)}"),
 ]
 
 

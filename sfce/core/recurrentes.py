@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
 
+from sfce.core.nombres import _normalizar_fecha
+
 logger = logging.getLogger("sfce.recurrentes")
 
 # Umbral de desviacion estandar para considerar un patron recurrente
@@ -71,10 +73,16 @@ def _analizar_proveedor(
     if len(facturas_prov) < min_ocurrencias:
         return None
 
-    # Ordenar fechas cronologicamente
-    fechas = sorted(
-        date.fromisoformat(f["fecha"]) for f in facturas_prov
-    )
+    # Ordenar fechas cronologicamente (normalizar antes de parsear)
+    fechas_raw = []
+    for f in facturas_prov:
+        fecha_norm = _normalizar_fecha(f.get("fecha", ""))
+        if fecha_norm and fecha_norm != "SIN-FECHA" and len(fecha_norm) == 8:
+            try:
+                fechas_raw.append(date.fromisoformat(f"{fecha_norm[:4]}-{fecha_norm[4:6]}-{fecha_norm[6:]}"))
+            except ValueError:
+                pass
+    fechas = sorted(fechas_raw)
 
     # Calcular intervalos entre facturas consecutivas
     intervalos = [
