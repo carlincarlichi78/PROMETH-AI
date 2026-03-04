@@ -465,6 +465,47 @@ docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py
 
 ---
 
+## Estado actual (04/03/2026, sesión 64 — Conciliación Bancaria Inteligente: diseño + plan TDD)
+
+**Rama activa**: `main`
+**Último commit**: `7e213da`
+**Tests**: 2665 PASS (sin cambios de código esta sesión — solo diseño)
+
+### ✅ COMPLETADO en sesión 64
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Análisis profundo bancario | — | Motor existente: 2 pasadas, sin enlace a documentos pipeline |
+| Design doc aprobado | `0cc971d` | `docs/plans/2026-03-04-conciliacion-bancaria-inteligente-design.md` |
+| Plan TDD 13 tasks | `7e213da` | `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md` |
+
+### ⚡ PRÓXIMA SESIÓN — Ejecutar plan conciliación bancaria
+
+**Plan**: `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md`
+**Instrucción**: *"Ejecuta el plan `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md` usando superpowers:executing-plans"*
+
+**13 tasks TDD en orden:**
+
+| Task | Qué hace |
+|------|----------|
+| 1 | Migración 029 — 3 tablas nuevas + ALTER TABLE en 2 existentes |
+| 2 | `normalizar_bancario.py` — normalizar_concepto, limpiar_nif, rango_importe (21 tests) |
+| 3 | Motor Capa 1 — exacta + unívoca, modelos ORM nuevos |
+| 4 | Motor Capas 2-3 — NIF proveedor + referencia factura |
+| 5 | Motor Capas 4-5 — patrones aprendidos + aproximada |
+| 6 | `feedback_conciliacion.py` — aprendizaje bidireccional + gestión diferencias |
+| 7 | API: sugerencias, saldo-descuadre, ingestar mejorado |
+| 8 | API: confirmar-match, rechazar-match, confirmar-bulk, conciliacion-parcial N:1 |
+| 9 | Dashboard api.ts — 6 hooks nuevos |
+| 10 | Dashboard: PdfModal + MatchCard + PanelSugerencias |
+| 11 | Dashboard: conciliacion-page.tsx 5 pestañas |
+| 12 | Dashboard: PatronesTabla CRUD + endpoint GET/DELETE patrones |
+| 13 | Regresión final + migración producción |
+
+**Tests estimados: ~71 nuevos**
+
+---
+
 ## Estado actual (03/03/2026, sesión 63 — Cuentas IMAP por Asesor)
 
 **Rama activa**: `main`
