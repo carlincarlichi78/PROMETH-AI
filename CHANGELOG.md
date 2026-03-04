@@ -1295,3 +1295,59 @@ Actualizar el libro en cada cierre de sesión, con el mismo nivel de detalle con
 - `a95a713` fix: redirect cliente a /portal, unificar empresas en /me
 - `3aa24af` fix: seguridad roles — cliente bloqueado AppShell, rate limit invitacion
 - `e3fc088` fix: 4 bugs reales — url_descarga, portal auth guard, gestor invita cliente, usuarios-page
+
+---
+
+## Sesiones 55-65 — 03/03/2026 – 04/03/2026 (archivado desde CLAUDE.md)
+
+> Historial detallado de estas sesiones estaba en CLAUDE.md. Movido aquí para reducir contexto.
+
+### Sesion 55 — Pipeline Gerardo 8 bugs + crearFacturaProveedor 2 pasos
+- 8 bugs corregidos: gemini deprecado→2.5-flash, SmartParser fields (emisor_cif no proveedor_cif), CIF intracomunitario endswith, fecha inglesa, campos _*, fecha DD-MM-YYYY, FS url override
+- Bloqueado en crearFacturaProveedor multi-empresa → migrado a POST 2 pasos (sesion 58)
+
+### Sesion 57 — WebSocket tarjetas empresa tiempo real
+- Auth JWT en WebSocket: `verificar_token_ws()` codigo 4401/4403
+- Eventos desde worker_pipeline: `pipeline_progreso`, `documento_procesado`, `cuarentena_nuevo`
+- `use-empresa-websocket.ts` + EmpresaCard spinner + ultima actividad + alerta cuarentena
+
+### Sesion 58 — Pipeline 2 pasos + Auditoria completa
+- `registration.py` usa `_crear_factura_2pasos()` (ya existia, no conectada)
+- FE-1: localStorage → sessionStorage. API-3: crear_motor(_leer_config_bd()). VULN-1: log token → sha256[:12]
+- BUG-4: subprocess → asyncio.to_thread. VULN-4/5/6: verificar_acceso_empresa. FE-3: roles reales
+
+### Sesion 59 — Portal cliente operativo
+- Login Gerardo gerardo.gonzalez@gmail.com / Uralde2026! → /portal/2
+- Fix ejercicio_activo: str(date.today().year). Nginx no-cache SW.
+
+### Sesion 60 — Mejoras ingesta email + Inbox Watcher diseno
+- Forwarding entre asesores (reenvio.py). Atomicidad por email. Timeout IMAP 30s. N+1 → bulk query
+- Plan: docs/plans/2026-03-03-inbox-watcher.md
+
+### Sesion 61 — Inbox Watcher Tasks 1-5
+- sfce.empresa_id en 6 config.yaml. Variables .env watcher. TDD FileStabilizer, _cargar_empresa_id, _subir_pdf
+- 17 tests en test_watcher.py
+
+### Sesion 62 — Inbox Watcher completo (Tasks 6-9)
+- _procesar_archivo + startup_scan. InboxEventHandler + main() watchdog Observer
+- iniciar_dashboard.bat: 3a ventana "SFCE Watcher". 2661 tests PASS (+23)
+
+### Sesion 63 — Cuentas IMAP por asesor
+- Migracion 028: usuario_id INTEGER en cuentas_correo
+- _extraer_cif_pdf() + _resolver_empresa_por_cif() en ingesta_correo.py
+- Rama tipo='asesor': routing CIF → empresa asignada, fallback cuarentena
+- API: CrearCuentaAdminRequest.usuario_id + POST /admin/cuentas/{id}/test
+- Dashboard: seccion "Cuentas IMAP Asesores" con badge activa + boton Probar
+- Script seed: scripts/crear_cuentas_imap_asesores.py (App Passwords pendientes)
+- 2665 PASS (+4), 4 skipped
+
+### Sesion 64 — Fix pipeline email asesor E2E
+- Fix _construir_email_asesor: no asignaba _decision_encola → PDF nunca se encolaba
+- Fix extractor_adjuntos: adj.get("contenido") or adj.get("datos_bytes", b"")
+- E2E verificado: email → EmailProcesado CLASIFICADO → cola_procesamiento PENDIENTE
+
+### Sesion 65 — Panel documentos + asiento FS on-demand
+- GET /api/documentos/{empresa_id}/{doc_id}/asiento-fs: consulta FS lazy sin guardar en BD
+- Boton lazy DocumentoPanel: useQuery(enabled: buscarFs), TablaPartidas reutilizable
+- Design doc conciliacion bancaria: motor 5 capas + aprendizaje + UI panel sugerencias
+- Commit: c190f04 (asiento-fs) + 0cc971d (design doc conciliacion)
