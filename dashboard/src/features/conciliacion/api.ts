@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 const BASE = '/api/bancario'
 
+// ── Tipos existentes ──────────────────────────────────────────────────────────
+
 export interface CuentaBancaria {
   id: number
   empresa_id: number
@@ -21,8 +23,11 @@ export interface MovimientoBancario {
   concepto_propio: string
   nombre_contraparte: string
   tipo_clasificado: string | null
-  estado_conciliacion: 'pendiente' | 'conciliado' | 'revision' | 'manual'
+  estado_conciliacion: 'pendiente' | 'sugerido' | 'revision' | 'conciliado' | 'parcial' | 'manual'
   asiento_id: number | null
+  capa_match?: number
+  score_confianza?: number
+  documento_id?: number
 }
 
 export interface EstadoConciliacion {
@@ -46,9 +51,117 @@ export interface ResultadoIngesta {
   ya_procesado: boolean
 }
 
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
+// ── Tipos nuevos (conciliacion inteligente) ───────────────────────────────────
+
+export interface DocumentoResumen {
+  id: number
+  nombre_archivo: string
+  tipo_doc: string
+  importe_total?: number
+  nif_proveedor?: string
+  numero_factura?: string
+  fecha_documento?: string
+}
+
+export interface SugerenciaMatch {
+  id: number
+  movimiento_id: number
+  documento_id: number
+  score: number
+  capa_origen: number
+  movimiento: MovimientoBancario
+  documento?: DocumentoResumen
+}
+
+export interface SaldoDescuadre {
+  cuenta_id: number
+  iban: string
+  alias: string
+  saldo_bancario: number
+  saldo_contable: number
+  diferencia: number
+  alerta: boolean
+  mensaje_alerta?: string
+}
+
+export interface PatronConciliacion {
+  id: number
+  patron_texto: string
+  patron_limpio?: string
+  nif_proveedor?: string
+  cuenta_contable?: string
+  rango_importe_aprox: string
+  frecuencia_exito: number
+  ultima_confirmacion?: string
+}
+
+export interface ResultadoBulk {
+  confirmados: number
+  total_revisados: number
+}
+
+// ── Helpers internos ──────────────────────────────────────────────────────────
+
+async function fetchJson<T>(url: string, opciones?: RequestInit): Promise<T> {
+  const resp = await fetch(url, opciones)
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail ?? `Error HTTP ${resp.status}`)
+  }
+  return resp.json() as Promise<T>
+}
+
+function postJson<T>(url: string, cuerpo: unknown): Promise<T> {
+  return fetchJson<T>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cuerpo),
+  })
+}
+
+function deleteReq<T>(url: string): Promise<T> {
+  return fetchJson<T>(url, { method: 'DELETE' })
+}
+
+// ── API funcional (para componentes sin hooks) ────────────────────────────────
+
+export const conciliacionApi = {
+  listarMovimientos: (empresaId: number, estado?: string) =>
+    fetchJson<MovimientoBancario[]>(
+      `${BASE}/${empresaId}/movimientos${estado ? `?estado=${estado}` : ''}`
+    ),
+
+  listarSugerencias: (empresaId: number) =>
+    fetchJson<SugerenciaMatch[]>(`${BASE}/${empresaId}/sugerencias`),
+
+  confirmarMatch: (empresaId: number, movimientoId: number, documentoId: number) =>
+    postJson<{ ok: boolean }>(`${BASE}/${empresaId}/confirmar-match`, {
+      movimiento_id: movimientoId,
+      documento_id: documentoId,
+    }),
+
+  rechazarMatch: (empresaId: number, movimientoId: number, documentoId: number) =>
+    postJson<{ ok: boolean }>(`${BASE}/${empresaId}/rechazar-match`, {
+      movimiento_id: movimientoId,
+      documento_id: documentoId,
+    }),
+
+  confirmarBulk: (empresaId: number, scoreMinimo: number = 0.95) =>
+    postJson<ResultadoBulk>(`${BASE}/${empresaId}/confirmar-bulk`, {
+      score_minimo: scoreMinimo,
+    }),
+
+  saldoDescuadre: (empresaId: number) =>
+    fetchJson<SaldoDescuadre[]>(`${BASE}/${empresaId}/saldo-descuadre`),
+
+  listarPatrones: (empresaId: number) =>
+    fetchJson<PatronConciliacion[]>(`${BASE}/${empresaId}/patrones`),
+
+  eliminarPatron: (empresaId: number, patronId: number) =>
+    deleteReq<{ ok: boolean }>(`${BASE}/${empresaId}/patrones/${patronId}`),
+}
+
+// ── Hooks existentes (sin cambios de interfaz) ────────────────────────────────
 
 export function useCuentas(empresaId: number) {
   return useQuery<CuentaBancaria[]>({
@@ -86,10 +199,6 @@ export function useEstadoConciliacion(empresaId: number) {
     enabled: empresaId > 0,
   })
 }
-
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
 
 export function useIngestarExtracto(empresaId: number) {
   const qc = useQueryClient()

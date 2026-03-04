@@ -1,122 +1,192 @@
+/**
+ * Página principal de conciliación bancaria.
+ * Tabs: Pendientes | Sugeridos | Conciliados | Patrones | Descuadre
+ */
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { RefreshCw } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useQuery } from '@tanstack/react-query'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
-
-import {
-  useMovimientos,
-  useEstadoConciliacion,
-  useConciliar,
-} from '@/features/conciliacion/api'
-import { SubirExtracto } from '@/features/conciliacion/components/subir-extracto'
+import { PanelSugerencias } from '@/features/conciliacion/components/panel-sugerencias'
 import { TablaMovimientos } from '@/features/conciliacion/components/tabla-movimientos'
-
-type FiltroEstado = 'todos' | 'pendiente' | 'conciliado' | 'revision'
-
-const FILTROS: { valor: FiltroEstado; etiqueta: string }[] = [
-  { valor: 'todos', etiqueta: 'Todos' },
-  { valor: 'pendiente', etiqueta: 'Pendientes' },
-  { valor: 'conciliado', etiqueta: 'Conciliados' },
-  { valor: 'revision', etiqueta: 'Revisión' },
-]
+import { TablaPatrones } from '@/features/conciliacion/components/tabla-patrones'
+import { SubirExtracto } from '@/features/conciliacion/components/subir-extracto'
+import { conciliacionApi } from '@/features/conciliacion/api'
 
 export default function ConciliacionPage() {
   const { id } = useParams<{ id: string }>()
   const empresaId = Number(id)
-  const [filtro, setFiltro] = useState<FiltroEstado>('todos')
+  const [tab, setTab] = useState('sugeridos')
 
-  const estadoQuery = useMovimientos(
-    empresaId,
-    filtro === 'todos' ? undefined : filtro
-  )
-  const { data: kpis } = useEstadoConciliacion(empresaId)
-  const conciliar = useConciliar(empresaId)
+  const { data: movPendientes = [] } = useQuery({
+    queryKey: ['movimientos-bancarios', empresaId, 'pendiente'],
+    queryFn: () => conciliacionApi.listarMovimientos(empresaId, 'pendiente'),
+    enabled: empresaId > 0,
+  })
 
-  const kpiItems = kpis
-    ? [
-        { label: 'Total', valor: kpis.total, color: '' },
-        { label: 'Conciliados', valor: kpis.conciliados, color: 'text-green-600' },
-        { label: 'Pendientes', valor: kpis.pendientes, color: 'text-yellow-600' },
-        { label: '% Conciliado', valor: `${kpis.pct_conciliado}%`, color: 'text-blue-600' },
-      ]
-    : []
+  const { data: movSugeridos = [] } = useQuery({
+    queryKey: ['movimientos-bancarios', empresaId, 'sugerido'],
+    queryFn: () => conciliacionApi.listarMovimientos(empresaId, 'sugerido'),
+    enabled: empresaId > 0,
+  })
+
+  const { data: movRevision = [] } = useQuery({
+    queryKey: ['movimientos-bancarios', empresaId, 'revision'],
+    queryFn: () => conciliacionApi.listarMovimientos(empresaId, 'revision'),
+    enabled: empresaId > 0,
+  })
+
+  const { data: movConciliados = [] } = useQuery({
+    queryKey: ['movimientos-bancarios', empresaId, 'conciliado'],
+    queryFn: () => conciliacionApi.listarMovimientos(empresaId, 'conciliado'),
+    enabled: empresaId > 0,
+  })
+
+  const { data: descuadres = [] } = useQuery({
+    queryKey: ['descuadre', empresaId],
+    queryFn: () => conciliacionApi.saldoDescuadre(empresaId),
+    enabled: empresaId > 0,
+  })
+
+  const alertasDescuadre = descuadres.filter(d => d.alerta)
+  const totalSugeridos = movSugeridos.length + movRevision.length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         titulo="Conciliación Bancaria"
         descripcion="Empareja movimientos del extracto bancario con asientos contables"
       />
 
-      {/* Subir extracto */}
       <SubirExtracto empresaId={empresaId} />
 
-      {/* KPIs */}
-      {kpis && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {kpiItems.map(({ label, valor, color }) => (
-            <Card key={label}>
-              <CardHeader className="pb-1 pt-4 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-4">
-                <p className={`text-2xl font-bold tabular-nums ${color}`}>{valor}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {alertasDescuadre.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {alertasDescuadre.map(d => (
+              <div key={d.cuenta_id}>
+                {d.alias}: {d.mensaje_alerta}
+              </div>
+            ))}
+          </AlertDescription>
+        </Alert>
       )}
 
-      {/* Barra de acciones */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex gap-1">
-          {FILTROS.map(f => (
-            <Button
-              key={f.valor}
-              size="sm"
-              variant={filtro === f.valor ? 'default' : 'outline'}
-              onClick={() => setFiltro(f.valor)}
-            >
-              {f.etiqueta}
-            </Button>
-          ))}
-        </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="grid grid-cols-5 w-full">
+          <TabsTrigger value="pendientes">
+            Pendientes
+            {movPendientes.length > 0 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {movPendientes.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sugeridos">
+            Sugeridos
+            {totalSugeridos > 0 && (
+              <Badge className="ml-2 text-xs bg-blue-500 text-white">
+                {totalSugeridos}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="conciliados">Conciliados</TabsTrigger>
+          <TabsTrigger value="patrones">Patrones</TabsTrigger>
+          <TabsTrigger value="descuadre">
+            Descuadre
+            {alertasDescuadre.length > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs">
+                {alertasDescuadre.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={conciliar.isPending}
-          onClick={() => conciliar.mutate()}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${conciliar.isPending ? 'animate-spin' : ''}`} />
-          {conciliar.isPending ? 'Conciliando...' : 'Ejecutar conciliación'}
-        </Button>
-      </div>
+        <TabsContent value="pendientes" className="mt-4">
+          <TablaMovimientos
+            movimientos={movPendientes}
+            titulo="Movimientos sin match"
+          />
+        </TabsContent>
 
-      {/* Resultado de última conciliación */}
-      {conciliar.isSuccess && (
-        <p className="text-sm text-muted-foreground">
-          Última ejecución:{' '}
-          <span className="font-medium text-foreground">
-            {conciliar.data.matches_exactos} exactos
-          </span>
-          {' + '}
-          <span className="font-medium text-foreground">
-            {conciliar.data.matches_aproximados} aproximados
-          </span>
-        </p>
-      )}
+        <TabsContent value="sugeridos" className="mt-4">
+          <PanelSugerencias empresaId={empresaId} />
+        </TabsContent>
 
-      {/* Tabla */}
-      <TablaMovimientos
-        movimientos={estadoQuery.data ?? []}
-        isLoading={estadoQuery.isLoading}
-      />
+        <TabsContent value="conciliados" className="mt-4">
+          <TablaMovimientos
+            movimientos={movConciliados}
+            titulo="Movimientos conciliados"
+            mostrarDocumento
+          />
+        </TabsContent>
+
+        <TabsContent value="patrones" className="mt-4">
+          <TablaPatrones empresaId={empresaId} />
+        </TabsContent>
+
+        <TabsContent value="descuadre" className="mt-4">
+          <div className="space-y-4">
+            {descuadres.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">Sin datos de saldo.</p>
+            ) : (
+              descuadres.map(d => (
+                <div
+                  key={d.cuenta_id}
+                  className={`p-4 rounded-lg border ${
+                    d.alerta
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-green-300 bg-green-50'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold">{d.alias}</p>
+                      <p className="text-sm text-muted-foreground">{d.iban}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm">
+                        Saldo bancario:{' '}
+                        <span className="font-mono">
+                          {d.saldo_bancario.toLocaleString('es-ES', {
+                            style: 'currency',
+                            currency: 'EUR',
+                          })}
+                        </span>
+                      </p>
+                      <p className="text-sm">
+                        Saldo contable:{' '}
+                        <span className="font-mono">
+                          {d.saldo_contable.toLocaleString('es-ES', {
+                            style: 'currency',
+                            currency: 'EUR',
+                          })}
+                        </span>
+                      </p>
+                      {d.alerta && (
+                        <p className="text-red-600 text-sm font-semibold">
+                          Diferencia:{' '}
+                          {d.diferencia.toLocaleString('es-ES', {
+                            style: 'currency',
+                            currency: 'EUR',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {d.mensaje_alerta && (
+                    <p className="text-sm text-red-600 mt-2">{d.mensaje_alerta}</p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
