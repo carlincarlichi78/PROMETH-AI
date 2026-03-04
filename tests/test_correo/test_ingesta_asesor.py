@@ -98,7 +98,7 @@ class TestRoutingAsesor:
     def test_routing_por_cif_match(self, mock_dl, mock_cif, engine, datos_base):
         """Email con CIF que coincide → empresa_destino_id correcta."""
         mock_dl.return_value = [_email_con_adjunto()]
-        mock_cif.return_value = "B12345678"
+        mock_cif.return_value = ["B12345678"]
         ingesta = IngestaCorreo(engine)
         procesados = ingesta.procesar_cuenta(datos_base["cuenta_id"])
         assert procesados == 1
@@ -113,7 +113,7 @@ class TestRoutingAsesor:
     def test_routing_sin_cif_va_cuarentena(self, mock_dl, mock_cif, engine, datos_base):
         """Sin CIF en PDF → cuarentena."""
         mock_dl.return_value = [_email_con_adjunto()]
-        mock_cif.return_value = None
+        mock_cif.return_value = []
         ingesta = IngestaCorreo(engine)
         ingesta.procesar_cuenta(datos_base["cuenta_id"])
         from sqlalchemy.orm import Session
@@ -127,7 +127,7 @@ class TestRoutingAsesor:
     def test_cif_fuera_de_scope_va_cuarentena(self, mock_dl, mock_cif, engine, datos_base):
         """CIF de empresa no asignada al asesor → cuarentena."""
         mock_dl.return_value = [_email_con_adjunto()]
-        mock_cif.return_value = "76638663H"  # GERARDO, no asignado a francisco
+        mock_cif.return_value = ["76638663H"]  # GERARDO, no asignado a francisco
         ingesta = IngestaCorreo(engine)
         ingesta.procesar_cuenta(datos_base["cuenta_id"])
         from sqlalchemy.orm import Session

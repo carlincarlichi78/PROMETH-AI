@@ -19,20 +19,20 @@ class TestExtraerCifPdf:
 
     def test_extrae_cif_sociedad(self):
         pdf = self._pdf_con_texto("Emisor: PASTORINO COSTA CIF: B12345678")
-        assert _extraer_cif_pdf(pdf) == "B12345678"
+        assert "B12345678" in _extraer_cif_pdf(pdf)
 
     def test_extrae_nif_autonomo(self):
         pdf = self._pdf_con_texto("Proveedor: GERARDO GONZALEZ NIF 76638663H")
-        assert _extraer_cif_pdf(pdf) == "76638663H"
+        assert "76638663H" in _extraer_cif_pdf(pdf)
 
     def test_retorna_none_sin_cif(self):
         pdf = self._pdf_con_texto("Sin identificacion fiscal en este documento")
-        assert _extraer_cif_pdf(pdf) is None
+        assert _extraer_cif_pdf(pdf) == []
 
     def test_prefiere_primer_cif(self):
         pdf = self._pdf_con_texto("Emisor B12345678 Receptor A87654321")
-        cif = _extraer_cif_pdf(pdf)
-        assert cif in {"B12345678", "A87654321"}
+        cifs = _extraer_cif_pdf(pdf)
+        assert any(c in {"B12345678", "A87654321"} for c in cifs)
 
 
 class TestResolverEmpresaPorCif:
