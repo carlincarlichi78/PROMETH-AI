@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api-client'
 
 const BASE = '/api/bancario'
 
@@ -123,27 +124,18 @@ export interface ResultadoBulk {
   total_revisados: number
 }
 
-// ── Helpers internos ──────────────────────────────────────────────────────────
+// ── Helpers internos (usan api-client con Authorization automático) ───────────
 
-async function fetchJson<T>(url: string, opciones?: RequestInit): Promise<T> {
-  const resp = await fetch(url, opciones)
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}))
-    throw new Error((err as { detail?: string }).detail ?? `Error HTTP ${resp.status}`)
-  }
-  return resp.json() as Promise<T>
+function fetchJson<T>(url: string): Promise<T> {
+  return api.get<T>(url)
 }
 
 function postJson<T>(url: string, cuerpo: unknown): Promise<T> {
-  return fetchJson<T>(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(cuerpo),
-  })
+  return api.post<T>(url, cuerpo)
 }
 
 function deleteReq<T>(url: string): Promise<T> {
-  return fetchJson<T>(url, { method: 'DELETE' })
+  return api.delete<T>(url)
 }
 
 // ── API funcional (para componentes sin hooks) ────────────────────────────────
@@ -189,11 +181,7 @@ export const conciliacionApi = {
 export function useCuentas(empresaId: number) {
   return useQuery<CuentaBancaria[]>({
     queryKey: ['cuentas-bancarias', empresaId],
-    queryFn: () =>
-      fetch(`${BASE}/${empresaId}/cuentas`).then(r => {
-        if (!r.ok) throw new Error('Error al cargar cuentas')
-        return r.json()
-      }),
+    queryFn: () => api.get<CuentaBancaria[]>(`${BASE}/${empresaId}/cuentas`),
     enabled: empresaId > 0,
   })
 }
@@ -202,11 +190,7 @@ export function useMovimientos(empresaId: number, estado?: string) {
   const params = estado ? `?estado=${estado}` : ''
   return useQuery<MovimientoBancario[]>({
     queryKey: ['movimientos-bancarios', empresaId, estado],
-    queryFn: () =>
-      fetch(`${BASE}/${empresaId}/movimientos${params}`).then(r => {
-        if (!r.ok) throw new Error('Error al cargar movimientos')
-        return r.json()
-      }),
+    queryFn: () => api.get<MovimientoBancario[]>(`${BASE}/${empresaId}/movimientos${params}`),
     enabled: empresaId > 0,
   })
 }
@@ -214,11 +198,7 @@ export function useMovimientos(empresaId: number, estado?: string) {
 export function useEstadoConciliacion(empresaId: number) {
   return useQuery<EstadoConciliacion>({
     queryKey: ['estado-conciliacion', empresaId],
-    queryFn: () =>
-      fetch(`${BASE}/${empresaId}/estado_conciliacion`).then(r => {
-        if (!r.ok) throw new Error('Error al cargar estado')
-        return r.json()
-      }),
+    queryFn: () => api.get<EstadoConciliacion>(`${BASE}/${empresaId}/estado_conciliacion`),
     enabled: empresaId > 0,
   })
 }
@@ -229,16 +209,10 @@ export function useIngestarExtracto(empresaId: number) {
     mutationFn: ({ archivo, iban }) => {
       const form = new FormData()
       form.append('archivo', archivo)
-      return fetch(
+      return api.postForm<ResultadoIngesta>(
         `${BASE}/${empresaId}/ingestar?cuenta_iban=${encodeURIComponent(iban)}`,
-        { method: 'POST', body: form }
-      ).then(async r => {
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}))
-          throw new Error((err as { detail?: string }).detail ?? 'Error al ingestar')
-        }
-        return r.json()
-      })
+        form
+      )
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
@@ -250,11 +224,7 @@ export function useIngestarExtracto(empresaId: number) {
 export function useConciliar(empresaId: number) {
   const qc = useQueryClient()
   return useMutation<ResultadoConciliacion, Error>({
-    mutationFn: () =>
-      fetch(`${BASE}/${empresaId}/conciliar`, { method: 'POST' }).then(r => {
-        if (!r.ok) throw new Error('Error al conciliar')
-        return r.json()
-      }),
+    mutationFn: () => api.post<ResultadoConciliacion>(`${BASE}/${empresaId}/conciliar`, {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
       qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
