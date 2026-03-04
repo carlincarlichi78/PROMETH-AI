@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 69)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 70)
 
 ---
 
@@ -36,23 +36,23 @@
 ```bash
 # Verificar estado tests bancario
 python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 161 passed
+# Esperado: 166 passed
 
 # Commits recientes
 git log -5 --oneline
 
-# Ver tasks pendientes
-grep "^### Task" docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md
+# Abrir dashboard
+cd dashboard && npm run dev
 ```
 
 ---
 
-## Estado rápido (sesión 69)
+## Estado rápido (sesión 70)
 
-- **Plan activo:** ninguno (sesión de documentación y organización)
-- **Completado sesión 69:** PROTOCOLO DE CIERRE + LIBRO-GESTOR.md + LIBRO-CLIENTE.md + LIBRO-ACCESOS.md (gitignoreado)
-- **Tests:** 2714 PASS, 4 skipped
-- **Próximo paso:** App Passwords IMAP manuales (francisco/luis/gestor1/gestor2/javier) → seed cuentas IMAP en producción
+- **Plan activo:** ninguno
+- **Completado sesión 70:** POST /match-parcial (backend) + ConciliacionPage 5 tabs + VistaPendientes maestro-detalle + PanelConciliacion (3 secciones)
+- **Tests:** 2719 PASS, 4 skipped
+- **Próximo paso:** Conectar sugerencias reales en PanelConciliacion (reemplazar mock) + tabs Revisión/Conciliados
 
 ---
 

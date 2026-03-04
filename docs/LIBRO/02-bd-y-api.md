@@ -354,7 +354,8 @@ curl -X POST http://localhost:8000/api/auth/login \
 | GET | `/api/bancario/{empresa_id}/sugerencias` | Lista sugerencias activas (v2, pendientes de confirmación) |
 | POST | `/api/bancario/{empresa_id}/confirmar-match` | Confirmar match + aprender patrón |
 | POST | `/api/bancario/{empresa_id}/rechazar-match` | Rechazar sugerencia |
-| POST | `/api/bancario/{empresa_id}/match-bulk` | Confirmar/rechazar múltiples |
+| POST | `/api/bancario/{empresa_id}/confirmar-bulk` | Confirmar todas las sugerencias con score >= score_minimo |
+| POST | `/api/bancario/{empresa_id}/match-parcial` | Conciliación N:1 parcial. Body: `{movimiento_id, documentos:[{documento_id, importe_asignado}]}`. Tolerancia 0.05€. Crea `ConciliacionParcial` por doc |
 | GET | `/api/bancario/{empresa_id}/saldo-descuadre` | Diferencia saldo_bancario vs saldo contable |
 | GET | `/api/bancario/{empresa_id}/patrones` | Listar patrones aprendidos |
 | POST | `/api/bancario/{empresa_id}/patrones` | Crear patrón manual |

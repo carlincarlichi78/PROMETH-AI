@@ -234,19 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 69)
+## Estado actual (04/03/2026, sesion 70)
 
-**Rama**: `main` | **Ultimo commit**: `17a3397` (pusheado) | **Tests**: 2714 PASS
+**Rama**: `main` | **Ultimo commit**: `6a3040d` (pusheado) | **Tests**: 2719 PASS
 
-### Completado sesion 69
-- PROTOCOLO DE CIERRE definido en CLAUDE.md (9 fases automaticas)
-- LIBRO-GESTOR.md creado (manual dashboard completo para asesores, 15 modulos)
-- LIBRO-CLIENTE.md creado (guia envio documentos para clientes)
-- LIBRO-ACCESOS.md creado (credenciales SFCE, gitignoreado)
-- LIBRO-PERSONAL.md actualizado (indice nuevo con todos los manuales)
+### Completado sesion 70
+- `POST /api/bancario/{empresa_id}/match-parcial` — conciliacion N:1 con tolerancia 0.05€ + 5 tests
+- `ConciliacionPage` — 5 tabs (Pendientes/Sugerencias/Revision/Conciliados/Patrones), ruta `/conciliacion`, sidebar
+- `VistaPendientes` — layout maestro-detalle con `ScrollArea`, estado `selectedId`
+- `PanelConciliacion` — cabecera importe rojo/verde + sugerencias IA (mock) + asiento manual `Collapsible`
 
 ### Proxima sesion — pendientes
 1. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
 2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
-3. **Conciliacion N:1 parcial** — endpoint `POST /match-parcial` planificado, no implementado
-4. **Tests E2E dashboard** (Playwright, flujos criticos)
+3. **Sugerencias reales en PanelConciliacion** — reemplazar mock con query a `/sugerencias` filtrado por `movimiento_id`
+4. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+5. **Tests E2E dashboard** (Playwright, flujos criticos)

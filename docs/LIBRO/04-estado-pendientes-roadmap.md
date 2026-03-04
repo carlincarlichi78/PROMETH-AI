@@ -1,5 +1,35 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 69) | **Branch:** main | **Tests:** 2714 PASS
+> **Actualizado:** 2026-03-04 (sesión 70) | **Branch:** main | **Tests:** 2719 PASS
+
+---
+
+## Estado actual (cierre sesión 70)
+
+### Commits de la sesión 70
+
+| Commit | Descripción |
+|--------|-------------|
+| `4ad7d7f` | feat: endpoint POST /match-parcial — conciliacion parcial N:1 + 5 tests |
+| `c83c58e` | feat: ConciliacionPage con 5 tabs + ruta /conciliacion + entrada sidebar |
+| `f2aa593` | feat: VistaPendientes — layout maestro-detalle con scroll independiente |
+| `6a3040d` | feat: PanelConciliacion — cabecera movimiento + sugerencias IA (mock) + asiento manual colapsable |
+
+### Tasks completadas (sesión 70 — conciliación parcial + UI conciliación)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| POST /match-parcial | ✅ DONE | Endpoint N:1 en `bancario.py`: schema Pydantic, verifica empresa, tolerancia 0.05€, crea `ConciliacionParcial` por doc, actualiza estados. 5 tests en `test_api_bancario.py` |
+| ConciliacionPage (5 tabs) | ✅ DONE | `features/conciliacion/conciliacion-page.tsx`: Tabs shadcn/ui con Pendientes/Sugerencias/Revisión/Conciliados/Patrones. Ruta `/conciliacion` + entrada sidebar `ArrowLeftRight` |
+| VistaPendientes | ✅ DONE | Layout maestro-detalle con `ScrollArea`. Lista izquierda (38%) + panel derecho. Estado local `selectedId` |
+| PanelConciliacion | ✅ DONE | 3 secciones: cabecera importe grande rojo/verde, sugerencias IA (3 mocks con score/capa/botones), asiento manual colapsable (`Collapsible` + `Input` + `Label`) |
+
+### Pendientes para próxima sesión
+
+1. **App Passwords IMAP** (acción manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
+2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+3. **Sugerencias reales en PanelConciliacion** — reemplazar mock con `useQuery` a `/sugerencias` filtrado por `movimiento_id` (añadir param al endpoint o filtrar en frontend)
+4. **Tabs "Revisión" y "Conciliados"** — implementar con `TablaMovimientos` existente + filtro estado
+5. **Tests E2E dashboard** — Playwright flujos críticos (conciliación, documentos)
 
 ---
 
