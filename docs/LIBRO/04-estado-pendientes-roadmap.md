@@ -9,7 +9,7 @@
 
 | Hash | Descripción |
 |------|-------------|
-| *(pendiente commit cierre)* | fix intake/registration + scripts OCR gpt-mini |
+| `46dc0d63` | fix(ocr): GPT-4o-mini vision para PDFs escaneados + fixes pipeline MARIA ISABEL |
 
 ### Tasks completadas (sesión 93)
 

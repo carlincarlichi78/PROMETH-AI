@@ -236,7 +236,7 @@ Anotar resultado en el informe final.
 
 ## Estado actual (04/03/2026, sesion 93)
 
-**Rama**: `main` | **Ultimo commit**: pendiente push sesión 93 | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `46dc0d63` (pusheado) | **Tests**: ~2568 PASS
 
 ### Completado sesion 93
 - Borrado FS empresa 7: asientos 44-72 (87 partidas), facturas 28-56 (29 líneas) via MariaDB root ✓
