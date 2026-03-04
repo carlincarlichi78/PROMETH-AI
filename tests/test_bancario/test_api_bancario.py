@@ -323,3 +323,130 @@ class TestSugerencias:
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.delete("/api/bancario/999/patrones/99999", headers=hdrs)
         assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Fixture — datos para tests de match parcial
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="class")
+def datos_match_parcial(sesion_factory):
+    """Inserta movimientos y documentos en la BD compartida del módulo."""
+    from decimal import Decimal
+    from datetime import date
+    from sfce.db.modelos import MovimientoBancario, Documento
+
+    with sesion_factory() as s:
+        mov = MovimientoBancario(
+            empresa_id=10,
+            fecha=date(2025, 11, 30),
+            importe=Decimal("150.00"),
+            signo="D",
+            concepto_propio="PAGO PROVEEDOR PARCIAL TEST",
+            nombre_contraparte="PROVEEDOR TEST SA",
+            concepto_comun="",
+            estado_conciliacion="pendiente",
+            hash_unico="test_match_parcial_mov1",
+        )
+        # Segundo movimiento para el test de diferencia excedida
+        mov2 = MovimientoBancario(
+            empresa_id=10,
+            fecha=date(2025, 11, 30),
+            importe=Decimal("100.00"),
+            signo="D",
+            concepto_propio="PAGO OTRO PROVEEDOR PARCIAL",
+            nombre_contraparte="OTRO PROV SA",
+            concepto_comun="",
+            estado_conciliacion="pendiente",
+            hash_unico="test_match_parcial_mov2",
+        )
+        s.add_all([mov, mov2])
+        s.flush()
+
+        doc1 = Documento(empresa_id=10, tipo_doc="FV", estado="pendiente",
+                         importe_total=Decimal("100.00"))
+        doc2 = Documento(empresa_id=10, tipo_doc="FV", estado="pendiente",
+                         importe_total=Decimal("50.00"))
+        # Documento de empresa distinta para verificar que el endpoint lo rechaza
+        doc_otra_empresa = Documento(empresa_id=999, tipo_doc="FV", estado="pendiente",
+                                     importe_total=Decimal("50.00"))
+        s.add_all([doc1, doc2, doc_otra_empresa])
+        s.flush()
+
+        ids = {
+            "mov_id": mov.id,
+            "mov2_id": mov2.id,
+            "doc1_id": doc1.id,
+            "doc2_id": doc2.id,
+            "doc_otra_id": doc_otra_empresa.id,
+        }
+        s.commit()
+    return ids
+
+
+# ---------------------------------------------------------------------------
+# Tests — Conciliación parcial N:1
+# ---------------------------------------------------------------------------
+
+class TestMatchParcial:
+    def test_match_parcial_ok(self, client, token_superadmin, datos_match_parcial):
+        """2 documentos cubren exactamente el importe del movimiento."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/match-parcial", json={
+            "movimiento_id": datos_match_parcial["mov_id"],
+            "documentos": [
+                {"documento_id": datos_match_parcial["doc1_id"], "importe_asignado": 100.00},
+                {"documento_id": datos_match_parcial["doc2_id"], "importe_asignado": 50.00},
+            ],
+        }, headers=hdrs)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["registros"] == 2
+        assert data["diferencia"] == 0.0
+
+    def test_match_parcial_tolerancia_ok(self, client, token_superadmin, datos_match_parcial):
+        """Diferencia de 0.03€ (≤ 0.05) debe aceptarse."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/match-parcial", json={
+            "movimiento_id": datos_match_parcial["mov2_id"],
+            "documentos": [
+                {"documento_id": datos_match_parcial["doc1_id"], "importe_asignado": 99.97},
+            ],
+        }, headers=hdrs)
+        # 100.00 - 99.97 = 0.03 → dentro de tolerancia
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_match_parcial_diferencia_excedida_400(self, client, token_superadmin, datos_match_parcial):
+        """Suma difiere > 0.05€ del movimiento → 400."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/match-parcial", json={
+            "movimiento_id": datos_match_parcial["mov_id"],
+            "documentos": [
+                {"documento_id": datos_match_parcial["doc1_id"], "importe_asignado": 200.00},
+            ],
+        }, headers=hdrs)
+        assert resp.status_code == 400
+        assert "0.05" in resp.json()["detail"]
+
+    def test_match_parcial_movimiento_no_encontrado_404(self, client, token_superadmin, datos_match_parcial):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/match-parcial", json={
+            "movimiento_id": 99999,
+            "documentos": [
+                {"documento_id": datos_match_parcial["doc1_id"], "importe_asignado": 100.00},
+            ],
+        }, headers=hdrs)
+        assert resp.status_code == 404
+
+    def test_match_parcial_documento_otra_empresa_404(self, client, token_superadmin, datos_match_parcial):
+        """Documento de empresa diferente a la URL → 404."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/10/match-parcial", json={
+            "movimiento_id": datos_match_parcial["mov_id"],
+            "documentos": [
+                {"documento_id": datos_match_parcial["doc_otra_id"], "importe_asignado": 150.00},
+            ],
+        }, headers=hdrs)
+        assert resp.status_code == 404

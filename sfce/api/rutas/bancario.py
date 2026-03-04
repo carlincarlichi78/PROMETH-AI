@@ -23,7 +23,7 @@ from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes
 from sfce.core.motor_conciliacion import MotorConciliacion
 from sfce.db.modelos import (
     CuentaBancaria, MovimientoBancario, SugerenciaMatch,
-    PatronConciliacion, Documento,
+    PatronConciliacion, Documento, ConciliacionParcial,
 )
 
 router = APIRouter(prefix="/api/bancario", tags=["bancario"])
@@ -282,6 +282,16 @@ class ConfirmarBulkIn(BaseModel):
     score_minimo: float = 0.95
 
 
+class DocumentoAsignado(BaseModel):
+    documento_id: int
+    importe_asignado: float
+
+
+class MatchParcialIn(BaseModel):
+    movimiento_id: int
+    documentos: List[DocumentoAsignado]
+
+
 # ---------------------------------------------------------------------------
 # Endpoints — Sugerencias (Task 7)
 # ---------------------------------------------------------------------------
@@ -502,6 +512,59 @@ def confirmar_bulk(
             confirmados += 1
         session.commit()
         return {"ok": True, "confirmados": confirmados}
+
+
+# ---------------------------------------------------------------------------
+# Endpoints — Conciliación parcial N:1 (Task 8)
+# ---------------------------------------------------------------------------
+
+@router.post("/{empresa_id}/match-parcial")
+def match_parcial(
+    empresa_id: int,
+    body: MatchParcialIn,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """
+    Conciliación parcial N:1 — un movimiento cubre múltiples documentos.
+    Crea un ConciliacionParcial por cada documento y marca ambos lados
+    como 'conciliado_parcial'.
+    """
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
+
+        mov = session.get(MovimientoBancario, body.movimiento_id)
+        if not mov or mov.empresa_id != empresa_id:
+            raise HTTPException(404, "Movimiento no encontrado")
+
+        docs_y_asignacion = []
+        for item in body.documentos:
+            doc = session.get(Documento, item.documento_id)
+            if not doc or doc.empresa_id != empresa_id:
+                raise HTTPException(404, f"Documento {item.documento_id} no encontrado")
+            docs_y_asignacion.append((doc, item.importe_asignado))
+
+        suma = sum(item.importe_asignado for item in body.documentos)
+        diferencia = abs(float(mov.importe) - suma)
+        if diferencia > 0.05:
+            raise HTTPException(
+                400,
+                f"Suma asignada ({suma:.2f}€) difiere del movimiento "
+                f"({float(mov.importe):.2f}€) en {diferencia:.2f}€ (máximo 0.05€)",
+            )
+
+        for doc, importe_asignado in docs_y_asignacion:
+            session.add(ConciliacionParcial(
+                movimiento_id=mov.id,
+                documento_id=doc.id,
+                importe_asignado=importe_asignado,
+            ))
+            doc.estado = "conciliado_parcial"
+
+        mov.estado_conciliacion = "conciliado_parcial"
+        session.commit()
+        return {"ok": True, "registros": len(docs_y_asignacion), "diferencia": round(diferencia, 4)}
 
 
 # ---------------------------------------------------------------------------
