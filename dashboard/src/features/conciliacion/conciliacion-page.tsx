@@ -40,6 +40,7 @@ export default function ConciliacionPage() {
           <TabsTrigger value="sugerencias">Sugerencias</TabsTrigger>
           <TabsTrigger value="revision">Revisión</TabsTrigger>
           <TabsTrigger value="conciliados">Conciliados</TabsTrigger>
+          <TabsTrigger value="manuales">Asiento Directo</TabsTrigger>
           <TabsTrigger value="patrones">Patrones</TabsTrigger>
         </TabsList>
 
@@ -62,6 +63,14 @@ export default function ConciliacionPage() {
           <TabMovimientos
             empresaId={empresaId}
             estado="conciliado"
+            mostrarDocumento
+          />
+        </TabsContent>
+
+        <TabsContent value="manuales" className="mt-4">
+          <TabMovimientos
+            empresaId={empresaId}
+            estado="manual"
             mostrarDocumento
           />
         </TabsContent>

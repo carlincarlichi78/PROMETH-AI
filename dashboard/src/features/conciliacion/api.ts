@@ -321,3 +321,18 @@ export function useRechazarMatch(empresaId: number) {
     },
   })
 }
+
+export function useConciliarDirecto(empresaId: number) {
+  const qc = useQueryClient()
+  return useMutation<{ ok: boolean; asiento_id: number | null }, Error, {
+    movimiento_id: number
+    cuenta_contable: string
+    concepto: string
+  }>({
+    mutationFn: (body) => postJson(`${BASE}/${empresaId}/conciliar-directo`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
+      qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
+    },
+  })
+}

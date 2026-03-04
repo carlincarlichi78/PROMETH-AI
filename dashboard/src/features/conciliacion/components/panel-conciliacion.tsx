@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { useEmpresaStore } from '@/stores/empresa-store'
 import type { MovimientoBancario, SugerenciaOut } from '../api'
-import { useSugerencias, useConfirmarMatch, useRechazarMatch } from '../api'
+import { useSugerencias, useConfirmarMatch, useRechazarMatch, useConciliarDirecto } from '../api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -195,13 +195,18 @@ function SeccionSugerencias({ empresaId, movId }: { empresaId: number; movId: nu
 
 // ── Sección 3: Acción manual ──────────────────────────────────────────────────
 
-function SeccionManual({ mov }: { mov: MovimientoBancario }) {
+function SeccionManual({ mov, empresaId }: { mov: MovimientoBancario; empresaId: number }) {
   const [abierto, setAbierto] = useState(false)
   const [cuenta, setCuenta] = useState('')
   const [concepto, setConcepto] = useState(mov.concepto_propio ?? '')
+  const conciliarDirecto = useConciliarDirecto(empresaId)
 
   const handleCrear = () => {
-    // TODO: conectar a endpoint de creación de asiento directo
+    conciliarDirecto.mutate({
+      movimiento_id: mov.id,
+      cuenta_contable: cuenta,
+      concepto,
+    })
   }
 
   return (
@@ -252,13 +257,23 @@ function SeccionManual({ mov }: { mov: MovimientoBancario }) {
               />
             </div>
 
+            {conciliarDirecto.isSuccess && (
+              <p className="text-xs text-green-700 font-medium">
+                Asiento creado correctamente.
+              </p>
+            )}
+            {conciliarDirecto.isError && (
+              <p className="text-xs text-destructive">
+                Error: {conciliarDirecto.error?.message ?? 'No se pudo crear el asiento'}
+              </p>
+            )}
             <Button
               size="sm"
               className="w-full mt-1"
-              disabled={!cuenta.trim() || !concepto.trim()}
+              disabled={!cuenta.trim() || !concepto.trim() || conciliarDirecto.isPending}
               onClick={handleCrear}
             >
-              Crear asiento directo
+              {conciliarDirecto.isPending ? 'Creando…' : 'Crear asiento directo'}
             </Button>
           </div>
         </CollapsibleContent>
@@ -289,7 +304,7 @@ export function PanelConciliacion({
     <div className="space-y-3">
       <CabeceraMov mov={movimientoSeleccionado} />
       <SeccionSugerencias empresaId={empresaId} movId={movimientoSeleccionado.id} />
-      <SeccionManual mov={movimientoSeleccionado} />
+      <SeccionManual mov={movimientoSeleccionado} empresaId={empresaId} />
     </div>
   )
 }
