@@ -196,6 +196,7 @@
 | 021-024 | Multi-tenant, gestorias, fs_url/fs_token_enc |
 | 025-028 | Correo avanzado (tipo_cuenta, gestoria_id), directorio, certificados |
 | **029** | **Tablas conciliación inteligente** (sugerencias_match, patrones_conciliacion, conciliaciones_parciales) + columnas cuentas_bancarias (saldo_bancario_ultimo, fecha_saldo_ultimo) + columnas movimientos_bancarios (documento_id, score_confianza, metadata_match, capa_match) + columnas documentos (nif_proveedor, numero_factura, fecha_documento, importe_total) |
+| **030** | Columna `confirmada` (BOOLEAN DEFAULT FALSE) en `sugerencias_match` — distingue sugerencia confirmada de alternativas desactivadas por colisión |
 
 **Notas migraciones:**
 - `PRAGMA` → solo SQLite. Usar `information_schema.columns` para compatibilidad dual. Detectar con `engine.dialect.name`

@@ -1,5 +1,55 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 71) | **Branch:** main | **Tests:** 2719 PASS
+> **Actualizado:** 2026-03-04 (sesión 73) | **Branch:** main | **Tests:** 171 bancario PASS (171+)
+
+---
+
+## Estado actual (cierre sesión 73)
+
+### Commits de la sesión 73
+
+| Commit | Descripción |
+|--------|-------------|
+| `ce80ca2` | feat: PanelConciliacion datos reales + 3 hooks TanStack Query |
+
+### Tasks completadas (sesión 73 — Frontend PanelConciliacion)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Interfaces TypeScript | ✅ DONE | `SugerenciaOut`, `MovimientoResumen` mirroran schemas Pydantic. `DocumentoResumen` actualizado con `tipo`/`fecha` del backend |
+| `useSugerencias` | ✅ DONE | Hook TanStack Query: GET `/sugerencias?movimiento_id=`. Solo activa cuando `movimientoId != null` |
+| `useConfirmarMatch` | ✅ DONE | Mutación POST `/confirmar-match` con `{movimiento_id, sugerencia_id}`. Invalida 3 queries |
+| `useRechazarMatch` | ✅ DONE | Mutación POST `/rechazar-match` con `{sugerencia_id}`. Invalida 3 queries |
+| PanelConciliacion datos reales | ✅ DONE | Eliminados mocks. `SeccionSugerencias` usa hooks reales + `empresaId` de Zustand store |
+| Empty state integrado | ✅ DONE | `movimientoSeleccionado: null` muestra "Selecciona un movimiento para ver sus sugerencias" |
+| VistaPendientes simplificada | ✅ DONE | Siempre renderiza `<PanelConciliacion movimientoSeleccionado={...} />` sin ternario |
+
+### Pendientes para próxima sesión
+
+1. **Tabs "Revisión" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+2. **Tests E2E dashboard** — Playwright flujos críticos conciliación
+3. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+4. **Migración 030 en producción** — ejecutar manualmente vía psql
+
+---
+
+## Estado actual (cierre sesión 72)
+
+### Commits de la sesión 72
+
+| Commit | Descripción |
+|--------|-------------|
+| `61b3538` | feat: endpoints confirmar-match + rechazar-match + migración 030 |
+
+### Tasks completadas (sesión 72 — Backend conciliación atómica)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Migración 030 | ✅ DONE | Columna `confirmada` (BOOLEAN) en `sugerencias_match`. Compatible PG + SQLite |
+| Schemas Pydantic | ✅ DONE | `SugerenciaOut`, `MovimientoResumen`, `DocumentoResumen`, `ConfirmarMatchIn`, `RechazarMatchIn` |
+| POST `/confirmar-match` | ✅ DONE | Vincula sugerencia → movimiento. Genera asiento contable. Invalida alternativas. Audita |
+| POST `/rechazar-match` | ✅ DONE | Desactiva sugerencia. Reactiva movimiento como pendiente. Audita |
+| GET `/sugerencias` filtro | ✅ DONE | Parámetro opcional `?movimiento_id=` para consulta desde panel maestro-detalle |
+| Tests | ✅ DONE | 6 tests nuevos en `test_api_bancario.py` — 171 tests bancario pasan |
 
 ---
 

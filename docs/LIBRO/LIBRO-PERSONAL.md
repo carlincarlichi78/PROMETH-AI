@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 71)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 73)
 
 ---
 
@@ -41,18 +41,22 @@ python -m pytest tests/test_bancario/ --tb=no -q
 # Commits recientes
 git log -5 --oneline
 
+# Test bancario para verificar base
+python -m pytest tests/test_bancario/ --tb=no -q
+# Esperado: 171 passed
+
 # Abrir dashboard
 cd dashboard && npm run dev
 ```
 
 ---
 
-## Estado rápido (sesión 71)
+## Estado rápido (sesión 73)
 
 - **Plan activo:** ninguno
-- **Completado sesión 71:** App Passwords Google Workspace para 6 usuarios (francisco/maria/luis/gestor1/gestor2/javier) + admin. Procedimiento documentado en LIBRO-ACCESOS.md. Contraseñas individuales: francisco=`Uralde2027!`, javier=`Uralde2028!`
-- **Tests:** 2719 PASS, 4 skipped
-- **Próximo paso:** Script seed IMAP en prod + sugerencias reales PanelConciliacion
+- **Completado sesiones 72+73:** Backend endpoints confirmar/rechazar match + migración 030 + schemas Pydantic. Frontend PanelConciliacion con datos reales (3 hooks TanStack Query). TypeScript 0 errores.
+- **Tests:** 171 bancario PASS
+- **Próximo paso:** Tabs "Revisión"+"Conciliados" + migración 030 en producción
 
 ---
 

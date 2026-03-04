@@ -161,13 +161,27 @@ Al confirmar un match manualmente:
 2. Solo si FS responde OK → actualizar BD local
 3. Si FS falla → no actualizar BD local (rollback implícito)
 
-### Dashboard conciliación (implementado en sesión 66)
+### Endpoints atómicos (sesión 72)
+
+| Endpoint | Body | Descripción |
+|----------|------|-------------|
+| `POST /{empresa_id}/confirmar-match` | `{movimiento_id, sugerencia_id}` | Vincula sugerencia → movimiento. Genera asiento FS. Marca `confirmada=True`. Desactiva alternativas. Actualiza patrón. |
+| `POST /{empresa_id}/rechazar-match` | `{sugerencia_id}` | Desactiva sugerencia. Reactiva movimiento como `pendiente`. Audita. |
+| `GET /{empresa_id}/sugerencias` | `?movimiento_id=` (opcional) | Lista sugerencias activas. Con filtro: solo las del movimiento seleccionado. Devuelve `SugerenciaOut[]`. |
+
+**Schemas Pydantic clave:**
+- `SugerenciaOut`: `{id, movimiento_id, documento_id, score, capa_origen, movimiento: MovimientoResumen, documento: DocumentoResumen?}`
+- `ConfirmarMatchIn`: `{movimiento_id: int, sugerencia_id: int}`
+- `RechazarMatchIn`: `{sugerencia_id: int}`
+
+### Dashboard conciliación (sesiones 66, 70, 73)
 
 **Archivos frontend:**
-- `dashboard/src/features/conciliacion/api.ts` — TanStack Query hooks
-- `dashboard/src/features/conciliacion/components/match-card.tsx` — Tarjeta de sugerencia
-- `dashboard/src/features/conciliacion/components/panel-sugerencias.tsx` — Panel principal
-- `dashboard/src/features/conciliacion/components/patrones-crud.tsx` — CRUD patrones
+- `dashboard/src/features/conciliacion/api.ts` — interfaces TypeScript + TanStack Query hooks (incl. `useSugerencias`, `useConfirmarMatch`, `useRechazarMatch`)
+- `dashboard/src/features/conciliacion/components/panel-conciliacion.tsx` — Panel maestro-detalle con datos reales (sesión 73)
+- `dashboard/src/features/conciliacion/components/match-card.tsx` — Tarjeta de sugerencia (tab Sugerencias)
+- `dashboard/src/features/conciliacion/components/panel-sugerencias.tsx` — Panel bulk (tab Sugerencias)
+- `dashboard/src/features/conciliacion/components/vista-pendientes.tsx` — Layout maestro-detalle
 
 ---
 

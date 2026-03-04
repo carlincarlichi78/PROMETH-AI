@@ -234,18 +234,16 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 71)
+## Estado actual (04/03/2026, sesion 73)
 
-**Rama**: `main` | **Ultimo commit**: `ffa81c0` (pusheado) | **Tests**: 2719 PASS
+**Rama**: `main` | **Ultimo commit**: `ce80ca2` (pendiente push) | **Tests**: 171 bancario PASS
 
-### Completado sesion 71
-- App Passwords Google Workspace generadas para 6 asesores + admin (LIBRO-ACCESOS.md actualizado, gitignoreado)
-- Procedimiento 2FA documentado en LIBRO-ACCESOS.md (politica Admin Console + flujo usuario)
-- Contrasenas individuales anotadas: francisco=`Uralde2027!`, javier=`Uralde2028!`
-- App Password Maria recuperada desde BD local (Fernet decrypt)
+### Completado sesiones 72+73
+- Sesion 72 — backend: `confirmar-match`, `rechazar-match`, GET `/sugerencias?movimiento_id=`, schemas Pydantic `SugerenciaOut`/`MovimientoResumen`/`DocumentoResumen`, migracion 030 (`confirmada` en `sugerencias_match`)
+- Sesion 73 — frontend: interfaces TS `SugerenciaOut`/`MovimientoResumen`, hooks `useSugerencias`/`useConfirmarMatch`/`useRechazarMatch`, `PanelConciliacion` con datos reales (elimina mocks), `VistaPendientes` simplificada
 
 ### Proxima sesion — pendientes
-1. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py` — cargar App Passwords en BD prod
-2. **Sugerencias reales en PanelConciliacion** — reemplazar mock con query a `/sugerencias` filtrado por `movimiento_id`
-3. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
-4. **Tests E2E dashboard** (Playwright, flujos criticos)
+1. **Migracion 030 en produccion** — ejecutar manualmente via psql en servidor
+2. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+3. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+4. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
