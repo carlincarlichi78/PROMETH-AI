@@ -50,6 +50,10 @@ ACCESOS.md
 LIBRO-ACCESOS.md
 *.env
 
+# Scripts de debug temporales (quedan en local, no en repo)
+scripts/debug_*.py
+scripts/test_imap_*.py
+
 # Binarios y documentos de clientes (no trackear en git)
 clientes/*/inbox/
 clientes/*/inbox_prueba/
