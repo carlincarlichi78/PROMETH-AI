@@ -1,5 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 86) | **Branch:** main | **Tests:** 2773 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 87) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 87 — Pipeline Sala de Control + Conciliacion Fase 4 frontend)
+
+### Commits sesión 87
+
+| Hash | Descripción |
+|------|-------------|
+| `4f70a253` | feat(pipeline): sala de control — layout 4 cols full-height gestoría + pipeline global |
+| `8a423c83` | feat(conciliacion): Fase 4 frontend — useConciliarDirecto, SeccionManual, tab Asiento Directo |
+| `f33d6438` | feat(pipeline): PipelineFlowDiagramVertical — flujo global columna derecha |
+| `abd5a6c3` | feat(pipeline): GestoriaColumn — header gestoría + cards distribuidas |
+
+### Tasks completadas (sesión 87)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Pipeline Sala de Control | ✅ DONE | Layout 4 columnas full-height: GestoriaColumn × 3 + PipelineFlowDiagramVertical |
+| GestoriaColumn | ✅ DONE | Header gestoria + EmpresaCard distribuidas |
+| PipelineFlowDiagramVertical | ✅ DONE | 189 líneas, flujo 6 nodos animado |
+| Conciliacion Fase 4 frontend | ✅ DONE | useConciliarDirecto hook, SeccionManual conectada a POST /conciliar-directo, tab Asiento Directo |
+| Fix pipeline dry-run | ✅ DONE | ResultadoFase import, fechas español OCR, recurrentes robusto — verificado 2568 tests PASS |
+
+### Pendientes para sesión 88
+
+1. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). Investigar pre_validacion → registration
+2. **Tests E2E dashboard** — Playwright flujos críticos: confirmar match, rechazar, FilterBar (q/fecha), conciliar-directo, bulk, upload C43
+3. **Confirmar matches en producción** — probar flujo completo + conciliar-directo desde dashboard prod
+4. **Capa C VClNegocios** — bajó de 8 a 0 matches. Verificar si faltan PDFs VClNegocios en inbox prod
+5. **Verificación visual sala de control** — arrancar `npm run dev` y navegar `/pipeline/live`, comprobar animaciones con datos reales WS
 
 ---
 

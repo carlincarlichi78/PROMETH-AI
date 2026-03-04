@@ -234,19 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 86)
+## Estado actual (04/03/2026, sesion 87)
 
-**Rama**: `main` | **Ultimo commit**: ver git log | **Tests**: 2773 PASS | **Prod**: sfce_api healthy
+**Rama**: `main` | **Ultimo commit**: `4f70a253` (pusheado) | **Tests**: 2568 PASS
 
-### Completado sesiones 83-86 (resumen)
-- Pipeline Operations Center — frontend + backend, deploy prod ✓
-- Motor bancario Gerardo prod — 125 sugerencias en dashboard ✓
-- Bancario Fase 1+2 — saldo ingesta C43, filtros mov, doc hydration, rollback estricto FS (commit `6bfd7d88`) ✓
-- Diseño Pipeline Live "Sala de Control" — design doc + plan 9 tasks listo para ejecutar ✓
+### Completado sesion 87
+- Pipeline "Sala de Control" — layout 4 cols full-height gestoría + pipeline global (`4f70a253`) ✓
+- Conciliacion Fase 4 frontend — `useConciliarDirecto`, `SeccionManual` conectada, tab "Asiento Directo" (`8a423c83`) ✓
+- `PipelineFlowDiagramVertical` — flujo global columna derecha (`f33d6438`) ✓
+- `GestoriaColumn` — header gestoria + cards distribuidas (`abd5a6c3`) ✓
+- Fix pipeline dry-run: `ResultadoFase` import, fechas español OCR (`jun. 2025`, `31/12/25`), recurrentes robusto ✓
 
-### Proxima sesion — pendientes (sesion 87)
-1. **Bancario Fase 3** — FilterBar debounce (q/fecha_desde/fecha_hasta/tipo) + panel conciliacion manual en VistaPendientes
-2. **Bancario Fase 4** — `POST /conciliar-directo` (asiento directo sin factura) + tab "Asiento Directo" en PanelConciliacion
-3. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00)
-4. **Tests E2E dashboard** (Playwright, flujos criticos: confirmar match, rechazar, bulk)
+### Proxima sesion — pendientes (sesion 88)
+1. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). Investigar
+2. **Bancario Fase 3** — FilterBar debounce (q/fecha_desde/fecha_hasta/tipo) en VistaPendientes
+3. **Tests E2E dashboard** — Playwright, flujos criticos: confirmar match, rechazar, bulk, upload C43
 4. **Capa C VClNegocios** — bajó de 8 a 0 matches (faltan PDFs en inbox prod?)

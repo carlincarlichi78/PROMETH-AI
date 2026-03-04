@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 86)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 87)
 
 ---
 
@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: 2773 passed, 4 skipped
+# Esperado: ~2568 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,14 +47,13 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 86)
+## Estado rápido (sesión 87)
 
-- **Completado sesiones 83-86:** Pipeline Operations Center, motor bancario prod (125 sugerencias), diseño Pipeline Live Sala de Control (plan 9 tasks listo)
-- **Bancario Fase 1+2 OK:** saldo ingesta C43, filtros movimientos, doc hydration, rollback estricto FS (commit `6bfd7d88`)
-- **Push:** todo en origin/main ✓ | **Tests:** 2773 PASS | **Prod:** sfce_api healthy
-- **PRIORIDAD 1:** Bancario Fase 3 — FilterBar + panel conciliación manual en frontend React
-- **PRIORIDAD 2:** Bancario Fase 4 — `POST /conciliar-directo` + tab "Asiento Directo"
-- **PRIORIDAD 3:** Pipeline FS registration fix (total FS=0.00 → rollback)
+- **Completado sesión 87:** Pipeline Sala de Control (4 cols full-height), Conciliacion Fase 4 frontend (useConciliarDirecto + SeccionManual + tab Asiento Directo)
+- **Push:** todo en origin/main ✓ | **Tests:** 2568 PASS | **Prod:** sfce_api healthy
+- **PRIORIDAD 1:** Pipeline FS registration fix — Fase 2 rollback todas las facturas (FS total=0.00)
+- **PRIORIDAD 2:** Bancario Fase 3 — FilterBar debounce en VistaPendientes
+- **PRIORIDAD 3:** Tests E2E Playwright dashboard
 
 ---
 
