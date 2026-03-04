@@ -1,5 +1,31 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 90) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 91) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** pendiente
+
+---
+
+## Estado actual (sesión 91 — Onboarding MARIA ISABEL NAVARRO LOPEZ + fix key validated_batch)
+
+### Commits sesión 91
+
+| Hash | Descripción |
+|------|-------------|
+| *(pendiente commit)* | fix(registration): leer ambas claves validated_batch + registered.json vacío si 0 docs |
+
+### Tasks completadas (sesión 91)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Onboarding MARIA ISABEL NAVARRO LOPEZ | ✅ DONE | idempresa=7 (FS Uralde), empresa_id=14 (SFCE BD), config.yaml completo con 25+ proveedores |
+| Bug F8 raíz — validated_batch key mismatch | ✅ DONE | Pipeline paralelo escribe `"validados"` pero `registration.py` leía `"documentos"` → 0 docs → no se creaba `registered.json`. Fix: leer ambas claves con `or`; escribir `registered.json` vacío si 0 docs |
+| Pipeline fase 2 MARIA ISABEL | ✅ DONE | 29 facturas registradas en FS (IDs 28-56), 0 fallidos |
+
+### Pendientes para sesión 92
+
+1. **Fase 3 asientos MARIA ISABEL** — 29 facturas sin asiento. El método 2-step (`facturaproveedores` + `lineasfacturaproveedores`) bypassa el event observer de FS que genera los asientos automáticamente. Opciones: (a) usar `crearFacturaProveedor` con `codejercicio=0007` y ver si funciona; (b) borrar las 29 facturas y recrear via `crearFacturaProveedor`; (c) llamar a la UI controller de FS via HTTP para contabilizar en batch
+2. **Completar pipeline MARIA ISABEL** — fases 4-6 tras resolver asientos
+3. **Comparar vs modelos fiscales** — confrontar asientos SFCE con M130/M303 presentados por la cliente
+4. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`
+5. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
 
 ---
 

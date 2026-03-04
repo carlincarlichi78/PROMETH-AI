@@ -234,17 +234,17 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 90)
+## Estado actual (04/03/2026, sesion 91)
 
-**Rama**: `main` | **Ultimo commit**: `fb8f9ced` (pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `9744447b` (sesión 90 pusheado) | **Tests**: ~2568 PASS
 
-### Completado sesion 90
-- F8 fix: `pvpsindto = pvpunitario * cantidad` explícito en cada línea + PUT cabecera tras líneas para totales ✓
-- FS ya no devuelve `total=0.00` en factura registrada ✓
+### Completado sesion 91
+- Onboarding MARIA ISABEL NAVARRO LOPEZ: FS idempresa=7, SFCE empresa_id=14, config.yaml 25+ proveedores ✓
+- Fix bug F8 raíz: `validated_batch.json` clave `"validados"` (pipeline paralelo) ≠ `"documentos"` que leía `registration.py` → sin `registered.json`. Fix en [registration.py](sfce/phases/registration.py#L1011) ✓
+- Pipeline fase 2 MARIA ISABEL: 29 facturas registradas (IDs 28-56), 0 fallidos ✓
 
-### Proxima sesion — pendientes (sesion 91)
-1. **Verificar F8 producción** — pipeline completo con factura real empresa 2 (Gerardo), comprobar `total != 0` en FS
-2. **Verificar confirmar-match** — re-confirmar mov 132 y comprobar asiento FS con importe correcto
-3. **F6 — Ruta inbox email→pipeline** — alinear rutas worker correo ↔ pipeline
+### Proxima sesion — pendientes (sesion 92)
+1. **Fase 3 asientos MARIA ISABEL** — 29 facturas sin asiento. Método 2-step bypassa el observer FS. Probar `crearFacturaProveedor` con `codejercicio=0007` o buscar endpoint contabilizar
+2. **Completar pipeline MARIA ISABEL** — fases 4-6 + comparar vs M130/M303 presentados
+3. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`
 4. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
-5. **Capa C VClNegocios** — bajó de 8 a 0 matches

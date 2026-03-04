@@ -1003,10 +1003,23 @@ def ejecutar_registro(
     with open(ruta_validados, "r", encoding="utf-8") as f:
         batch_data = json.load(f)
 
-    documentos = batch_data.get("documentos", [])
+    # Soportar ambas claves: "documentos" (pre_validation.py) y "validados" (pipeline paralelo)
+    documentos = batch_data.get("documentos") or batch_data.get("validados", [])
     if not documentos:
         resultado.aviso("No hay documentos validados para registrar")
         resultado.datos["registrados"] = []
+        resultado.datos["fallidos"] = []
+        # Escribir registered.json vacío para que fases posteriores no fallen
+        ruta_registrados = ruta_cliente / "registered.json"
+        with open(ruta_registrados, "w", encoding="utf-8") as f:
+            json.dump({
+                "fecha_registro": datetime.now().isoformat(),
+                "total_entrada": 0,
+                "total_registrados": 0,
+                "total_fallidos": 0,
+                "registrados": [],
+                "fallidos": [],
+            }, f, ensure_ascii=False, indent=2)
         return resultado
 
     # Inicializar motor de aprendizaje
