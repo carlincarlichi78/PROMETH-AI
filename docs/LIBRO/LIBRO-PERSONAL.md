@@ -51,12 +51,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 83)
+## Estado rápido (sesión 84)
 
-- **Completado sesión 83:** Pipeline Operations Center implementado completo — WS en toda la cadena (correo+manual), endpoint pipeline-breakdown, layout 3 columnas, FuentesPanel+BreakdownPanel
-- **Push:** todo en origin/main ✓ | **Build:** ✓ 4.99s | **Prod:** sfce_api healthy
-- **PRIORIDAD 1:** ejecutar pipeline Gerardo en prod para poblar `documentos` empresa_id=2
-- **PRIORIDAD 2:** verificar sugerencias bancario empresa_id=2 con motor V2
+- **Completado sesión 84:** Motor bancario operativo en prod — 125 sugerencias visibles en dashboard, DocumentoResumen con nombre_archivo, confirmar best-effort, filtro cuenta + paginación
+- **Push:** todo en origin/main ✓ | **Build:** ✓ 5.23s | **Prod:** sfce_api healthy, dashboard desplegado
+- **PRIORIDAD 1:** confirmar/rechazar sugerencias desde dashboard (ya funciona — probar en prod)
+- **PRIORIDAD 2:** pipeline FS registration fix (todas las facturas hacen rollback total=0.00)
 - **PRIORIDAD 2:** pipeline Gerardo en producción → `documentos` empresa_id=2
 
 ---

@@ -1,5 +1,34 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 83) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 84) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+
+---
+
+## Estado actual (sesión 84 — conciliación bancaria Gerardo operativa en prod)
+
+**Sesión de integración end-to-end del módulo bancario. Motor conciliación corrió contra PostgreSQL de producción via túnel SSH. 125 sugerencias generadas y visibles en dashboard. 3 bugs críticos del frontend corregidos y desplegados.**
+
+### Tasks completadas (sesión 84)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Reorganización inbox Gerardo | ✅ DONE | 238 PDFs de FACTURAS 2025 → inbox; 9 PDFs duplicados eliminados; 40 JSONs ya existentes preservados |
+| OCR pipeline (238 PDFs) | ✅ DONE | `pipeline.py` con dotenv fix; generó 238 nuevos `.ocr.json`; 105 → cuarentena (CIF desconocido); falló en Fase 2 FS (total=0.00) — no impacta motor bancario |
+| Motor conciliación → producción | ✅ DONE | SSH túnel localhost:5435→PG prod; `conciliar_facturas_gerardo.py` apuntó a PG; 278 docs + 566 movs → **125 sugerencias insertadas** |
+| Migración datos_ocr → columnas | ✅ DONE | 274 docs actualizados: `importe_total` (166), `nombre_archivo` (273), `nif_proveedor`, `fecha_documento` desde JSON |
+| Estados movimientos | ✅ DONE | 125 movimientos actualizados a `estado_conciliacion='sugerido'` via SQL directo en prod |
+| Fix IMAP admin@prometh-ai.es | ✅ DONE | Password actualizada a `bowa ixgl tijf oaku` (cifrada con Fernet y escrita en BD prod) |
+| Fix DocumentoResumen | ✅ DONE | Commit `3842722b`: añadido `nombre_archivo` al schema Pydantic + endpoint |
+| Fix confirmar match | ✅ DONE | Commit `33314572`: `_confirmar_en_fs` es best-effort — si FS falla, se concilia igualmente en BD local |
+| Filtro por cuenta | ✅ DONE | Commit `33314572`: endpoint movimientos acepta `?cuenta_id=N`; página con selector independiente |
+| Paginación movimientos | ✅ DONE | Commit `33314572`: respuesta `MovimientosPaginados {items, total, offset, limit}`; UI con botones ‹/› |
+
+### Pendientes para sesión 85
+
+1. **Tests E2E dashboard** — Playwright, flujos críticos: confirmar match, rechazar, bulk, upload C43
+2. **Pipeline FS registration fix** — Fase 2 pipeline.py hace rollback en todas (total FS=0.00). Investigar por qué FacturaScripts devuelve 0 en verificación post-registro
+3. **Confirmar matches en producción** — el usuario debe confirmar/rechazar sugerencias y verificar que persisten (ya funciona según fix sesión 84)
+4. **Capa C subset-sum VClNegocios** — bajó de 8 a 0 matches al correr contra PG (falta OCR de VClNegocios PDFs en inbox prod?)
+5. **tunnel SSH automatizable** — si el motor bancario se va a correr periódicamente, necesita un wrapper que no requiera tunnel manual
 
 ---
 

@@ -234,19 +234,23 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 83)
+## Estado actual (04/03/2026, sesion 84)
 
-**Rama**: `main` | **Ultimo commit**: `261652a5` (pusheado) | **Build**: OK 4.99s | **Prod**: sfce_api healthy
+**Rama**: `main` | **Ultimo commit**: `33314572` (pusheado) | **Build**: OK 5.23s | **Prod**: sfce_api healthy, frontend desplegado
 
-### Completado sesion 83
-- WS emitido desde `worker_catchall._encolar_archivo` (fuente=correo) y `gate0.ingestar_documento` (fuente=manual) ✓
-- Endpoint `GET /api/dashboard/pipeline-breakdown` — breakdown tipo_doc + empresa + fuentes ✓
-- Hooks: `ParticulaActiva.fuente` + `contadores_fuente` WS + `BreakdownStatus` + URLs relativas ✓
-- Componentes: `FuentesPanel`, `BreakdownPanel`, `PipelineNode` mejorado, `GlobalStatsStrip` rediseñado ✓
-- `pipeline-live-page.tsx` reescrita: layout 3 columnas Operations Center ✓
+### Completado sesion 84
+- OCR 238 PDFs Gerardo (inbox reorganizado: FACTURAS 2025 → inbox, duplicados eliminados) ✓
+- Motor conciliacion contra PG prod via tunel SSH: **125 sugerencias** en prod ✓
+- Migracion datos_ocr → columnas documentos prod (importe_total 166, nombre_archivo 273) ✓
+- 125 movimientos actualizados a estado='sugerido' en prod ✓
+- Fix IMAP admin@prometh-ai.es → password actualizada a `bowa ixgl tijf oaku` ✓
+- Fix DocumentoResumen: añadido `nombre_archivo` (commit `3842722b`) ✓
+- Fix confirmar match: `_confirmar_en_fs` best-effort, no bloquea BD local (commit `33314572`) ✓
+- Filtro por cuenta: `?cuenta_id=N` en endpoint movimientos + selector UI (commit `33314572`) ✓
+- Paginacion: `MovimientosPaginados {items, total, offset, limit}` + UI botones ‹/› (commit `33314572`) ✓
 
-### Proxima sesion — pendientes (sesion 84)
-1. **Pipeline Gerardo en produccion** — `python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo`
-2. **Verificar sugerencias** — `GET /api/bancario/2/sugerencias` tras pipeline
-3. **Tests E2E dashboard** (Playwright, flujos criticos)
-4. **Fix IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED, revisar App Password Google Workspace
+### Proxima sesion — pendientes (sesion 85)
+1. **Confirmar matches en prod** — probar confirmar/rechazar desde dashboard, verificar persistencia
+2. **Pipeline FS registration fix** — todas las facturas hacen rollback (FS devuelve total=0.00). Investigar
+3. **Tests E2E dashboard** (Playwright, flujos criticos: upload, confirmar match, bulk)
+4. **Capa C VClNegocios** — bajó de 8 a 0 matches contra PG prod (faltan PDFs VClNegocios en inbox?)
