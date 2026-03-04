@@ -460,3 +460,27 @@ header[class*="border-b"] {
 .pipeline-node-active  { animation: node-active 1.2s ease-in-out infinite; }
 .pipeline-flow-dash    { animation: flow-dash 1.5s linear infinite; }
 .pipeline-burst        { animation: burst 0.6s ease-out forwards; }
+
+/* Ring pulse — borde expansivo cuando llega evento a tarjeta empresa */
+@keyframes empresa-ring-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--empresa-ring-color, oklch(0.75 0.18 145 / 0.7)); }
+  70%  { box-shadow: 0 0 0 8px var(--empresa-ring-color, oklch(0.75 0.18 145 / 0)); }
+  100% { box-shadow: 0 0 0 0 var(--empresa-ring-color, oklch(0.75 0.18 145 / 0)); }
+}
+
+/* Indicador pulsante (punto verde) */
+@keyframes dot-ping {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.7; }
+}
+
+/* Glow de borde para tarjeta activa */
+@keyframes empresa-border-glow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* Clases utilitarias */
+.empresa-ring-pulse   { animation: empresa-ring-pulse 0.6s ease-out; }
+.empresa-dot-ping     { animation: dot-ping 1.2s ease-in-out infinite; }
+.empresa-border-glow  { animation: empresa-border-glow 2s ease-in-out infinite; }
