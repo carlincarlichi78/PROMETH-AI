@@ -8,6 +8,7 @@ import { GlobalStatsStrip } from './components/GlobalStatsStrip'
 import { EmpresaBadges } from './components/EmpresaBadges'
 import { PipelineFlowDiagram } from './components/PipelineFlowDiagram'
 import { LiveEventFeed } from './components/LiveEventFeed'
+import { SubirDocumentos } from './components/SubirDocumentos'
 
 interface Empresa { id: number; nombre: string }
 
@@ -25,8 +26,7 @@ export default function PipelineLivePage() {
   const { data: empresas = [] } = useQuery<Empresa[]>({
     queryKey: ['empresas-lista'],
     queryFn: async () => {
-      const base = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
-      const r = await fetch(`${base}/api/empresas`, {
+      const r = await fetch(`/api/empresas`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!r.ok) return []
@@ -70,6 +70,9 @@ export default function PipelineLivePage() {
           empresaSeleccionada={empresaSeleccionada}
         />
       </div>
+
+      {/* Zona de upload manual */}
+      <SubirDocumentos empresaId={empresaSeleccionada} empresas={empresas} />
 
       {/* Live feed */}
       <LiveEventFeed eventos={eventos} empresaSeleccionada={empresaSeleccionada} />

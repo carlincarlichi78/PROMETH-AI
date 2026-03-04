@@ -144,8 +144,12 @@ export function usePipelineWebSocket(empresaId?: number) {
   useEffect(() => {
     if (!token) return
 
-    const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
-    const wsBase = apiBase.replace(/^http/, 'ws')
+    // En producción usamos same-origin para que nginx proxy /api/ws correctamente.
+    // VITE_API_URL solo aplica en dev con servidor externo explícito.
+    const apiBase = import.meta.env.VITE_API_URL
+    const wsBase = apiBase
+      ? apiBase.replace(/^http/, 'ws')
+      : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
     const url = empresaId
       ? `${wsBase}/api/ws/${empresaId}?token=${token}`
       : `${wsBase}/api/ws?token=${token}`
