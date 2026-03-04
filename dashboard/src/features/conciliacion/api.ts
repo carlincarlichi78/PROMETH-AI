@@ -43,6 +43,10 @@ export interface ResultadoConciliacion {
   matches_exactos: number
   matches_aproximados: number
   total: number
+  conciliados_auto?: number
+  sugeridos?: number
+  revision?: number
+  pendientes?: number
 }
 
 export interface DetalleCuenta {

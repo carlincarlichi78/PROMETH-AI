@@ -233,11 +233,13 @@ def ejecutar_conciliacion(
     with sesion_factory() as session:
         verificar_acceso_empresa(usuario, empresa_id, session)
         motor = MotorConciliacion(session, empresa_id=empresa_id)
-        matches = motor.conciliar()
+        stats = motor.conciliar_inteligente()
+        session.commit()
         return {
-            "matches_exactos": sum(1 for m in matches if m.tipo == "exacto"),
-            "matches_aproximados": sum(1 for m in matches if m.tipo == "aproximado"),
-            "total": len(matches),
+            "matches_exactos": stats["conciliados_auto"],
+            "matches_aproximados": stats["sugeridos"],
+            "total": stats["conciliados_auto"] + stats["sugeridos"],
+            **stats,
         }
 
 
