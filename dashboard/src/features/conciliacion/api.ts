@@ -214,16 +214,29 @@ export function useCuentas(empresaId: number) {
 
 export function useMovimientos(
   empresaId: number,
-  options: { estado?: string; cuentaId?: number; offset?: number; limit?: number } = {}
+  options: {
+    estado?: string
+    cuentaId?: number
+    q?: string
+    fechaDesde?: string
+    fechaHasta?: string
+    tipo?: string
+    offset?: number
+    limit?: number
+  } = {}
 ) {
-  const { estado, cuentaId, offset = 0, limit = 100 } = options
+  const { estado, cuentaId, q, fechaDesde, fechaHasta, tipo, offset = 0, limit = 100 } = options
   const params = new URLSearchParams()
   if (estado) params.set('estado', estado)
   if (cuentaId) params.set('cuenta_id', String(cuentaId))
+  if (q) params.set('q', q)
+  if (fechaDesde) params.set('fecha_desde', fechaDesde)
+  if (fechaHasta) params.set('fecha_hasta', fechaHasta)
+  if (tipo) params.set('tipo', tipo)
   params.set('offset', String(offset))
   params.set('limit', String(limit))
   return useQuery<MovimientosPaginados>({
-    queryKey: ['movimientos-bancarios', empresaId, estado, cuentaId, offset, limit],
+    queryKey: ['movimientos-bancarios', empresaId, estado, cuentaId, q, fechaDesde, fechaHasta, tipo, offset, limit],
     queryFn: () => api.get<MovimientosPaginados>(`${BASE}/${empresaId}/movimientos?${params}`),
     enabled: empresaId > 0,
   })

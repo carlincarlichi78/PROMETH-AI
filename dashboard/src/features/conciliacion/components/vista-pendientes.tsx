@@ -2,7 +2,7 @@
  * Vista maestro-detalle de movimientos pendientes de conciliación.
  * Columna izquierda: lista de movimientos | Columna derecha: detalle del seleccionado.
  */
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useEmpresaStore } from '@/stores/empresa-store'
 import { useMovimientos } from '../api'
 import type { MovimientoBancario } from '../api'
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PanelConciliacion } from './panel-conciliacion'
+import { FilterBar, type FiltrosMovimientos } from './filter-bar'
 
 function formatImporte(importe: number, signo: 'D' | 'H'): string {
   const valor = importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -78,13 +79,25 @@ function MovimientoItem({
   )
 }
 
+// ── Filtros vacíos por defecto ────────────────────────────────────────────────
+
+const FILTROS_VACIOS: FiltrosMovimientos = { q: '', fechaDesde: '', fechaHasta: '' }
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function VistaPendientes() {
   const empresaId = useEmpresaStore((s) => s.empresaActiva?.id ?? 0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [filtros, setFiltros] = useState<FiltrosMovimientos>(FILTROS_VACIOS)
 
-  const { data: paginados, isLoading, isError } = useMovimientos(empresaId, { estado: 'pendiente' })
+  const onFiltrosChange = useCallback((f: FiltrosMovimientos) => setFiltros(f), [])
+
+  const { data: paginados, isLoading, isError } = useMovimientos(empresaId, {
+    estado: 'pendiente',
+    q: filtros.q || undefined,
+    fechaDesde: filtros.fechaDesde || undefined,
+    fechaHasta: filtros.fechaHasta || undefined,
+  })
   const movimientos = paginados?.items ?? []
 
   const movSeleccionado = movimientos.find((m) => m.id === selectedId) ?? null
@@ -93,10 +106,11 @@ export function VistaPendientes() {
     <div className="flex h-[calc(100vh-14rem)] overflow-hidden rounded-lg border">
       {/* ── Columna izquierda — lista maestro ── */}
       <div className="flex w-[38%] shrink-0 flex-col border-r">
-        <div className="border-b px-4 py-2.5">
+        <div className="border-b px-4 py-2.5 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {isLoading ? '…' : `${movimientos.length} movimientos`}
           </p>
+          <FilterBar onChange={onFiltrosChange} />
         </div>
 
         <ScrollArea className="flex-1">
