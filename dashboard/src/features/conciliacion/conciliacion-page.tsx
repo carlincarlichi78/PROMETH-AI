@@ -16,10 +16,10 @@ function TabMovimientos({
   estado: string
   mostrarDocumento?: boolean
 }) {
-  const { data: movimientos = [], isLoading } = useMovimientos(empresaId, estado)
+  const { data: paginados, isLoading } = useMovimientos(empresaId, { estado })
   return (
     <TablaMovimientos
-      movimientos={movimientos}
+      movimientos={paginados?.items ?? []}
       isLoading={isLoading}
       mostrarDocumento={mostrarDocumento}
     />

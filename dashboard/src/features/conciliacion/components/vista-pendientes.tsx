@@ -84,7 +84,8 @@ export function VistaPendientes() {
   const empresaId = useEmpresaStore((s) => s.empresaActiva?.id ?? 0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  const { data: movimientos = [], isLoading, isError } = useMovimientos(empresaId, 'pendiente')
+  const { data: paginados, isLoading, isError } = useMovimientos(empresaId, { estado: 'pendiente' })
+  const movimientos = paginados?.items ?? []
 
   const movSeleccionado = movimientos.find((m) => m.id === selectedId) ?? null
 

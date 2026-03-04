@@ -26,9 +26,17 @@ export interface MovimientoBancario {
   tipo_clasificado: string | null
   estado_conciliacion: 'pendiente' | 'sugerido' | 'revision' | 'conciliado' | 'parcial' | 'manual'
   asiento_id: number | null
+  cuenta_id?: number | null
   capa_match?: number
   score_confianza?: number
   documento_id?: number
+}
+
+export interface MovimientosPaginados {
+  items: MovimientoBancario[]
+  total: number
+  offset: number
+  limit: number
 }
 
 export interface EstadoConciliacion {
@@ -204,11 +212,19 @@ export function useCuentas(empresaId: number) {
   })
 }
 
-export function useMovimientos(empresaId: number, estado?: string) {
-  const params = estado ? `?estado=${estado}` : ''
-  return useQuery<MovimientoBancario[]>({
-    queryKey: ['movimientos-bancarios', empresaId, estado],
-    queryFn: () => api.get<MovimientoBancario[]>(`${BASE}/${empresaId}/movimientos${params}`),
+export function useMovimientos(
+  empresaId: number,
+  options: { estado?: string; cuentaId?: number; offset?: number; limit?: number } = {}
+) {
+  const { estado, cuentaId, offset = 0, limit = 100 } = options
+  const params = new URLSearchParams()
+  if (estado) params.set('estado', estado)
+  if (cuentaId) params.set('cuenta_id', String(cuentaId))
+  params.set('offset', String(offset))
+  params.set('limit', String(limit))
+  return useQuery<MovimientosPaginados>({
+    queryKey: ['movimientos-bancarios', empresaId, estado, cuentaId, offset, limit],
+    queryFn: () => api.get<MovimientosPaginados>(`${BASE}/${empresaId}/movimientos?${params}`),
     enabled: empresaId > 0,
   })
 }

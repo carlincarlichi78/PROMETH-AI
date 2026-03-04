@@ -68,6 +68,14 @@ class MovimientoOut(BaseModel):
     tipo_clasificado: Optional[str]
     estado_conciliacion: str
     asiento_id: Optional[int]
+    cuenta_id: Optional[int] = None
+
+
+class MovimientosPaginados(BaseModel):
+    items: List[MovimientoOut]
+    total: int
+    offset: int
+    limit: int
 
 
 # ---------------------------------------------------------------------------
@@ -187,12 +195,13 @@ def ingestar_extracto(
 # Endpoints — Movimientos
 # ---------------------------------------------------------------------------
 
-@router.get("/{empresa_id}/movimientos", response_model=List[MovimientoOut])
+@router.get("/{empresa_id}/movimientos", response_model=MovimientosPaginados)
 def listar_movimientos(
     empresa_id: int,
     request: Request,
     estado: Optional[str] = None,
-    limit: int = 500,
+    cuenta_id: Optional[int] = None,
+    limit: int = 100,
     offset: int = 0,
     sesion_factory=Depends(get_sesion_factory),
 ):
@@ -202,8 +211,11 @@ def listar_movimientos(
         q = session.query(MovimientoBancario).filter_by(empresa_id=empresa_id)
         if estado:
             q = q.filter_by(estado_conciliacion=estado)
+        if cuenta_id:
+            q = q.filter(MovimientoBancario.cuenta_id == cuenta_id)
+        total = q.count()
         movs = q.order_by(MovimientoBancario.fecha.desc()).offset(offset).limit(limit).all()
-        return [
+        items = [
             MovimientoOut(
                 id=m.id,
                 fecha=m.fecha.isoformat(),
@@ -214,9 +226,11 @@ def listar_movimientos(
                 tipo_clasificado=m.tipo_clasificado,
                 estado_conciliacion=m.estado_conciliacion,
                 asiento_id=m.asiento_id,
+                cuenta_id=m.cuenta_id,
             )
             for m in movs
         ]
+        return MovimientosPaginados(items=items, total=total, offset=offset, limit=limit)
 
 
 # ---------------------------------------------------------------------------
@@ -540,8 +554,11 @@ def confirmar_match(
 
         empresa = session.get(Empresa, empresa_id)
 
-        # --- Paso 1: FS primero (confirmación atómica) ---
-        asiento_id = _confirmar_en_fs(empresa, doc, mov)
+        # --- Paso 1: FS (best-effort — fallo no bloquea conciliación local) ---
+        try:
+            asiento_id = _confirmar_en_fs(empresa, doc, mov)
+        except HTTPException:
+            asiento_id = doc.asiento_id  # sin asiento FS → conciliar solo en BD local
 
         # --- Paso 2: BD local (solo si FS no lanzó excepción) ---
         diferencia_info = gestionar_diferencia(mov.importe, doc.importe_total or mov.importe)
