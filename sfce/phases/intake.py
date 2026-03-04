@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -795,6 +796,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     cache_datos = obtener_cache_ocr(str(ruta_pdf))
     if cache_datos is not None:
         logger.info(f"  [{nombre_archivo}] Cache OCR hit — reutilizando datos")
+        cache_datos["telemetria"] = {"duracion_ocr_s": 0.0, "cache_hit": True}
         return {
             "doc": cache_datos,
             "hash": hash_pdf,
@@ -813,7 +815,9 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
 
     # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
+    _t_ocr = time.time()
     datos_gpt = _extraer_datos_ocr(ruta_pdf)
+    _duracion_ocr = round(time.time() - _t_ocr, 3)
     ocr_tier = 0
     tier_motivo = "SmartOCR"
     motores_usados = ["smart_ocr"]
@@ -906,6 +910,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_carpeta_origen": carpeta_origen,
         "_ruta_completa": str(ruta_pdf),
         "_nombre_estandar": nombre_estandar,
+        "telemetria": {"duracion_ocr_s": _duracion_ocr, "cache_hit": False},
     }
 
     if info_trabajador:

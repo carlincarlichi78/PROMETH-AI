@@ -134,6 +134,36 @@ def _generar_informe_auditoria(ruta_cliente: Path, ejercicio: str,
         lineas.append(f"  Nivel: {confianza.get('nivel', 'N/A')}")
         lineas.append("")
 
+    # Telemetria: tiempos medios por documento
+    docs_intake = resultado_pipeline.get("intake", {}).get("documentos", [])
+    tiempos_ocr = [
+        d["telemetria"]["duracion_ocr_s"]
+        for d in docs_intake
+        if isinstance(d, dict) and d.get("telemetria") and not d["telemetria"].get("cache_hit")
+    ]
+    cache_hits = sum(
+        1 for d in docs_intake
+        if isinstance(d, dict) and d.get("telemetria", {}).get("cache_hit")
+    )
+    docs_registro = resultado_pipeline.get("registro", {}).get("registrados", [])
+    tiempos_reg = [
+        d["telemetria"]["duracion_registro_s"]
+        for d in docs_registro
+        if isinstance(d, dict) and d.get("telemetria", {}).get("duracion_registro_s") is not None
+    ]
+    if tiempos_ocr or tiempos_reg:
+        lineas.append("--- TELEMETRÍA ---")
+        if tiempos_ocr:
+            avg_ocr = sum(tiempos_ocr) / len(tiempos_ocr)
+            lineas.append(f"  OCR (llamadas API): {len(tiempos_ocr)} docs, "
+                          f"media {avg_ocr:.2f}s/doc, total {sum(tiempos_ocr):.1f}s"
+                          + (f" ({cache_hits} de caché)" if cache_hits else ""))
+        if tiempos_reg:
+            avg_reg = sum(tiempos_reg) / len(tiempos_reg)
+            lineas.append(f"  Registro FS (POST): {len(tiempos_reg)} facturas, "
+                          f"media {avg_reg:.2f}s/factura, total {sum(tiempos_reg):.1f}s")
+        lineas.append("")
+
     lineas.append("=" * 70)
 
     with open(ruta_informe, "w", encoding="utf-8") as f:

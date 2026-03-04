@@ -187,6 +187,14 @@ class Documento(Base):
     fecha_proceso = Column(DateTime, default=datetime.now)
     ejercicio = Column(String(4))
 
+    # Campos añadidos en migración 029 (conciliación inteligente)
+    gestoria_id     = Column(Integer, nullable=True)
+    nombre_archivo  = Column(String(300), nullable=True)
+    importe_total   = Column(Numeric(12, 2), nullable=True)
+    nif_proveedor   = Column(String(20), nullable=True)
+    numero_factura  = Column(String(50), nullable=True)
+    fecha_documento = Column(Date, nullable=True)
+
     empresa = relationship("Empresa", back_populates="documentos")
     asiento = relationship("Asiento", back_populates="documento")
 
@@ -303,6 +311,10 @@ class CuentaBancaria(Base):
     activa = Column(Boolean, nullable=False, default=True)
     email_c43 = Column(String(200), nullable=True)  # email para recepcion automatica futura
 
+    # Campos añadidos en migración 029
+    saldo_bancario_ultimo = Column(Numeric(12, 2), nullable=True)
+    fecha_saldo_ultimo    = Column(Date, nullable=True)
+
     __table_args__ = (
         UniqueConstraint("empresa_id", "iban", name="uq_cuenta_empresa_iban"),
     )
@@ -346,6 +358,12 @@ class MovimientoBancario(Base):
 
     # Deduplicacion: SHA256(iban + fecha + importe + referencia + num_orden)
     hash_unico = Column(String(64), nullable=False, unique=True)
+
+    # Campos añadidos en migración 029 (conciliación inteligente)
+    documento_id    = Column(Integer, ForeignKey("documentos.id"), nullable=True)
+    score_confianza = Column(Float, nullable=True)
+    metadata_match  = Column(Text, nullable=True)  # JSON
+    capa_match      = Column(Integer, nullable=True)
 
     __table_args__ = (
         Index("ix_movbanco_empresa_fecha", "empresa_id", "fecha"),
@@ -915,6 +933,60 @@ class PushToken(Base):
     activo = Column(Boolean, nullable=False, default=True)
     fecha_registro = Column(DateTime, nullable=False, default=datetime.utcnow)
     fecha_ultimo_uso = Column(DateTime, nullable=True)
+
+
+class SugerenciaMatch(Base):
+    """Candidato de conciliación sugerido por el motor inteligente."""
+    __tablename__ = "sugerencias_match"
+
+    id = Column(Integer, primary_key=True)
+    movimiento_id = Column(Integer, ForeignKey("movimientos_bancarios.id"), nullable=False)
+    documento_id = Column(Integer, ForeignKey("documentos.id"), nullable=False)
+    score = Column(Float, nullable=False)
+    capa_origen = Column(Integer, nullable=False)
+    activa = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    movimiento = relationship("MovimientoBancario", foreign_keys=[movimiento_id])
+    documento = relationship("Documento", foreign_keys=[documento_id])
+
+    __table_args__ = (
+        UniqueConstraint("movimiento_id", "documento_id"),
+    )
+
+
+class PatronConciliacion(Base):
+    """Patrón aprendido de confirmaciones manuales."""
+    __tablename__ = "patrones_conciliacion"
+
+    id = Column(Integer, primary_key=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    patron_texto = Column(String(500), nullable=False)
+    patron_limpio = Column(String(500))
+    nif_proveedor = Column(String(20))
+    cuenta_contable = Column(String(10))
+    rango_importe_aprox = Column(String(20), nullable=False)
+    frecuencia_exito = Column(Integer, default=1, nullable=False)
+    ultima_confirmacion = Column(Date)
+
+    __table_args__ = (
+        UniqueConstraint("empresa_id", "patron_texto", "rango_importe_aprox"),
+    )
+
+
+class ConciliacionParcial(Base):
+    """Conciliación N:1 — una transferencia cubre múltiples facturas."""
+    __tablename__ = "conciliaciones_parciales"
+
+    id = Column(Integer, primary_key=True)
+    movimiento_id = Column(Integer, ForeignKey("movimientos_bancarios.id"), nullable=False)
+    documento_id = Column(Integer, ForeignKey("documentos.id"), nullable=False)
+    importe_asignado = Column(Numeric(12, 2), nullable=False)
+    confirmado_en = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("movimiento_id", "documento_id"),
+    )
 
 
 # Registro automático de modelos auxiliares en Base.metadata

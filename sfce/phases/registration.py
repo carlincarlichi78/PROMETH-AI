@@ -13,6 +13,7 @@ Entrada: validated_batch.json + config.yaml
 Salida: registered.json (IDs facturas en FS)
 """
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -1018,13 +1019,16 @@ def ejecutar_registro(
         # para instancias multi-empresa: codalmacen, codpago, fecha YYYY-MM-DD
         es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
         idfactura = None
+        _t_registro = 0.0
 
         for intento in range(resolutor.max_reintentos):
             try:
                 # Filtrar campos internos (_*) antes de enviar a FS
                 form_enviado = {k: v for k, v in form_data.items() if not k.startswith("_")}
                 logger.debug(f"  POST 2pasos ({'prov' if es_proveedor else 'cli'}) payload: {form_enviado}")
+                _t0 = time.time()
                 idfactura = _crear_factura_2pasos(es_proveedor, form_enviado)
+                _t_registro = round(time.time() - _t0, 3)
                 logger.info(f"  Factura creada: ID {idfactura}")
                 break
             except Exception as e:
@@ -1084,6 +1088,7 @@ def ejecutar_registro(
             "idfactura": idfactura,
             "pagada": pagada_ok,
             "verificacion_ok": True,
+            "telemetria": {**doc.get("telemetria", {}), "duracion_registro_s": _t_registro},
         }
         registrados.append(registro)
 

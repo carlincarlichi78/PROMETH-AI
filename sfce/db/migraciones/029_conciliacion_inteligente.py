@@ -15,6 +15,14 @@ def aplicar(engine):
     with engine.connect() as conn:
         dialect = engine.dialect.name
 
+        # --- documentos (campos conciliación) ---
+        _add_column_if_missing(conn, dialect, "documentos", "gestoria_id", "INTEGER")
+        _add_column_if_missing(conn, dialect, "documentos", "nombre_archivo", "VARCHAR(300)")
+        _add_column_if_missing(conn, dialect, "documentos", "importe_total", "NUMERIC(12,2)")
+        _add_column_if_missing(conn, dialect, "documentos", "nif_proveedor", "VARCHAR(20)")
+        _add_column_if_missing(conn, dialect, "documentos", "numero_factura", "VARCHAR(50)")
+        _add_column_if_missing(conn, dialect, "documentos", "fecha_documento", "DATE")
+
         # --- cuentas_bancarias ---
         _add_column_if_missing(conn, dialect, "cuentas_bancarias", "saldo_bancario_ultimo", "NUMERIC(12,2)")
         _add_column_if_missing(conn, dialect, "cuentas_bancarias", "fecha_saldo_ultimo", "DATE")
