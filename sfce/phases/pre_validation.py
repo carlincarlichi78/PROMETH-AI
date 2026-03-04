@@ -405,6 +405,213 @@ def _check_rlc_cuota(datos: dict) -> Optional[str]:
     return None
 
 
+# === Funcion por documento (para ejecucion paralela) ===
+
+def validar_documento_individual(
+    doc: dict,
+    config: ConfigCliente,
+    hashes_fs: set,
+    tolerancia: float = 0.02,
+) -> tuple[list, list]:
+    """Valida un unico documento (checks 1-7, 9, A1-A7, F1, F7-F10, tipo-especificos).
+
+    Disenada para ejecucion concurrente en ThreadPoolExecutor.
+    El check 8 (duplicados en batch) esta excluido intencionalmente — debe
+    ejecutarse post-collect en el hilo principal sobre la lista completa.
+
+    Args:
+        doc: Documento procesado por intake (dict con datos_extraidos, tipo, etc.)
+        config: Configuracion del cliente.
+        hashes_fs: Set de hashes ya registrados en FS (para check 8 de hashes).
+        tolerancia: Tolerancia para check 7 (cuadre aritmetico).
+
+    Returns:
+        (errores, avisos) — listas de strings. errores bloquea el documento.
+    """
+    tipo_doc = doc.get("tipo", "OTRO")
+    datos = doc.get("datos_extraidos", {})
+    errores_doc: list = []
+    avisos_doc: list = []
+
+    # Determinar entidad y CIF relevante segun tipo
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
+    if tipo_doc in ("FC", "NC", "ANT", "SUM"):
+        cif_entidad = datos.get("emisor_cif") or ""
+        entidad = config.buscar_proveedor_por_cif(cif_entidad) if cif_entidad else None
+    elif tipo_doc in ("FV", "REC"):
+        cif_entidad = datos.get("receptor_cif") or ""
+        entidad = config.buscar_cliente_por_cif(cif_entidad) if cif_entidad else None
+    elif tipo_doc in ("NOM", "RLC"):
+        cif_entidad = datos.get("emisor_cif") or config.empresa.get("cif", "")
+        entidad = None
+    elif tipo_doc in ("BAN", "IMP"):
+        cif_entidad = datos.get("emisor_cif") or datos.get("receptor_cif") or ""
+        entidad = None
+    else:
+        cif_entidad = datos.get("emisor_cif") or ""
+        entidad = config.buscar_proveedor_por_cif(cif_entidad) if cif_entidad else None
+
+    pais_entidad = entidad.get("pais", "ESP") if entidad else "ESP"
+
+    # Check 1: CIF formato
+    tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
+    err = _validar_cif_formato(cif_entidad, pais_entidad)
+    if err:
+        if tipo_doc in tipos_cif_opcional:
+            avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
+        else:
+            errores_doc.append(f"[CHECK 1] {err}")
+
+    # Check 2: Entidad existe
+    err = _validar_entidad_existe(doc, tipo_doc, config)
+    if err:
+        errores_doc.append(f"[CHECK 2] {err}")
+
+    # Check 3: Divisa
+    err = _validar_divisa(doc, tipo_doc, config)
+    if err:
+        avisos_doc.append(f"[CHECK 3] {err}")
+
+    # Check 4: Tipo IVA
+    err = _validar_tipo_iva(doc, tipo_doc, config)
+    if err:
+        avisos_doc.append(f"[CHECK 4] {err}")
+
+    # Check 5: Fecha en ejercicio
+    err = _validar_fecha_ejercicio(doc, config)
+    if err:
+        if tipo_doc in ("RLC", "BAN"):
+            avisos_doc.append(f"[CHECK 5] {err} (no bloqueante para {tipo_doc})")
+        else:
+            errores_doc.append(f"[CHECK 5] {err}")
+
+    # Check 6: Importe positivo
+    err = _validar_importe_positivo(doc, tipo_doc)
+    if err:
+        errores_doc.append(f"[CHECK 6] {err}")
+
+    # Check 7: Cuadre base+IVA=total
+    if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+        err = _validar_cuadre_base_iva_total(doc, tolerancia)
+        if err:
+            avisos_doc.append(f"[CHECK 7] {err}")
+
+    # Check 9: No existe en FS (I/O bound — principal beneficio de paralelizar)
+    if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+        err = _validar_no_existe_en_fs(doc, tipo_doc, config)
+        if err:
+            errores_doc.append(f"[CHECK 9] {err}")
+
+    # A1-A7: Aritmetica pura
+    for aviso in ejecutar_checks_aritmeticos(doc):
+        avisos_doc.append(aviso)
+
+    # F1: Coherencia CIF -> pais -> regimen -> IVA
+    cif_emisor = datos.get("emisor_cif", "")
+    iva_pct = float(datos.get("iva_porcentaje", 0) or 0)
+    if cif_emisor and iva_pct > 0:
+        err_f1 = validar_coherencia_cif_iva(cif_emisor, iva_pct)
+        if err_f1:
+            avisos_doc.append(f"[F1] {err_f1}")
+
+    # F7: Divisa extranjera sin tipo de cambio
+    divisa_doc = (datos.get("divisa") or "EUR").upper()
+    if divisa_doc != "EUR":
+        tc_key = f"{divisa_doc}_EUR"
+        if not config.tipos_cambio.get(tc_key):
+            avisos_doc.append(
+                f"[F7] Factura en {divisa_doc} sin tipo de cambio "
+                f"configurado ({tc_key} no existe en config.yaml)"
+            )
+
+    # F8: Intracomunitaria sin mencion de ISP
+    if es_proveedor and entidad:
+        regimen_prov = entidad.get("regimen", "general")
+        if regimen_prov == "intracomunitario":
+            iva_factura = float(datos.get("iva_porcentaje", 0) or 0)
+            if iva_factura > 0:
+                avisos_doc.append(
+                    f"[F8] Proveedor intracomunitario "
+                    f"({entidad.get('_nombre_corto', cif_entidad)}) "
+                    f"con IVA {iva_factura}% en factura (esperado 0% + ISP)"
+                )
+            lineas = datos.get("lineas", [])
+            texto_lineas = " ".join(
+                l.get("descripcion", "") for l in lineas
+            ).lower()
+            texto_completo = (
+                datos.get("notas", "") or ""
+            ).lower() + " " + texto_lineas
+            tiene_isp = any(
+                t in texto_completo
+                for t in [
+                    "inversion sujeto pasivo", "inversión sujeto pasivo",
+                    "isp", "reverse charge", "art. 84",
+                    "articulo 84", "artículo 84",
+                ]
+            )
+            if not tiene_isp and not entidad.get("autoliquidacion"):
+                avisos_doc.append(
+                    "[F8] Proveedor intracomunitario sin mencion de ISP "
+                    "ni autoliquidacion configurada"
+                )
+
+    # F9: IRPF anomalo
+    irpf_pct = datos.get("irpf_porcentaje")
+    irpf_imp = float(datos.get("irpf_importe", 0) or 0)
+    if irpf_pct is not None:
+        irpf_pct = float(irpf_pct)
+        if irpf_pct < 0:
+            avisos_doc.append(f"[F9] IRPF negativo ({irpf_pct}%) — posible error de signo")
+        elif irpf_pct > 0:
+            tasas_legales = {1, 2, 7, 15, 19, 24, 35}
+            if irpf_pct not in tasas_legales:
+                avisos_doc.append(
+                    f"[F9] IRPF {irpf_pct}% no es una tasa legal "
+                    f"(validas: {sorted(tasas_legales)})"
+                )
+    if irpf_imp < 0:
+        avisos_doc.append(
+            f"[F9] Cuota IRPF negativa ({irpf_imp}€) — retencion no puede ser negativa"
+        )
+
+    # F10: Fecha coherente
+    fecha_str = datos.get("fecha", "")
+    if fecha_str:
+        try:
+            fecha_doc = datetime.strptime(fecha_str, "%Y-%m-%d")
+            if fecha_doc > datetime.now():
+                avisos_doc.append(f"[F10] Fecha factura {fecha_str} es futura")
+            dias_antiguedad = (datetime.now() - fecha_doc).days
+            if dias_antiguedad > 365:
+                avisos_doc.append(
+                    f"[F10] Factura con {dias_antiguedad} dias de antiguedad (>1 ano)"
+                )
+        except ValueError:
+            pass
+
+    # Checks especificos por tipo
+    if tipo_doc == "NOM":
+        for check_fn in [_check_nomina_cuadre, _check_nomina_irpf, _check_nomina_ss]:
+            aviso = check_fn(datos)
+            if aviso:
+                avisos_doc.append(aviso)
+    elif tipo_doc == "SUM":
+        aviso = _check_suministro_cuadre(datos)
+        if aviso:
+            avisos_doc.append(aviso)
+    elif tipo_doc == "BAN":
+        aviso = _check_bancario_importe(datos)
+        if aviso:
+            avisos_doc.append(aviso)
+    elif tipo_doc == "RLC":
+        aviso = _check_rlc_cuota(datos)
+        if aviso:
+            avisos_doc.append(aviso)
+
+    return errores_doc, avisos_doc
+
+
 # === Funcion principal ===
 
 def ejecutar_pre_validacion(

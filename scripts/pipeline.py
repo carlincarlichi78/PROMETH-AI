@@ -285,6 +285,345 @@ def _sincronizar_cuarentena_bd(sesion_factory, empresa_bd_id, ruta_cuarentena, r
         logger.warning(f"  No se pudo sincronizar cuarentena con BD: {exc}")
 
 
+def _ordenar_por_fecha(documentos: list) -> list:
+    """Ordena documentos por datos_extraidos.fecha ASC. Docs sin fecha van al final.
+
+    Critico para FacturaScripts: las FV deben registrarse en orden cronologico
+    para evitar error 422 por numero de factura no correlativo.
+    """
+    def _clave(doc: dict):
+        fecha = (doc.get("datos_extraidos") or {}).get("fecha") or ""
+        try:
+            return datetime.strptime(fecha[:10], "%Y-%m-%d")
+        except (ValueError, TypeError):
+            return datetime.max
+
+    return sorted(documentos, key=_clave)
+
+
+def _ejecutar_fases_01_paralelo(
+    config,
+    ruta_cliente: Path,
+    args,
+    auditoria,
+    sesion_factory=None,
+    max_workers: int = 5,
+) -> tuple:
+    """Ejecuta Fases 0 (OCR) y 1 (pre-validacion) en paralelo por documento.
+
+    Patron Map->Reduce:
+    - MAP: ThreadPoolExecutor(5) — cada worker procesa 1 PDF completo
+      (OCR + checks 1-7 + check 9 en paralelo, I/O bound)
+    - REDUCE: hilo principal — check 8 batch, sort ASC por fecha,
+      escritura de intake_results.json y validated_batch.json
+
+    Guardrails:
+    1. SQLite: cada worker instancia su propia sesion (sesion_factory() propio)
+    2. Exception isolation: try/except en worker — jamas mata el pool
+    3. Gemini bloqueado si len(pdfs) > 20 (rate limit 20 req/dia)
+
+    Returns:
+        (resultado_intake: ResultadoFase, resultado_pre_val: ResultadoFase)
+    """
+    import concurrent.futures as _cf
+    import os as _os
+
+    from sfce.phases.intake import (
+        _calcular_hash,
+        _cargar_estado_pipeline,
+        _guardar_estado_pipeline,
+        procesar_un_pdf,
+    )
+    from sfce.phases.pre_validation import (
+        validar_documento_individual,
+        _validar_no_duplicado,
+    )
+
+    resultado_intake = ResultadoFase("intake")
+    resultado_pre_val = ResultadoFase("pre_validacion")
+    carpeta_inbox = getattr(args, "inbox", "inbox")
+    ruta_inbox = ruta_cliente / carpeta_inbox
+    ruta_cuarentena = ruta_cliente / "cuarentena"
+
+    if not ruta_inbox.exists():
+        resultado_intake.error("No existe carpeta inbox/", {"ruta": str(ruta_inbox)})
+        return resultado_intake, resultado_pre_val
+
+    # Buscar PDFs (replica filtrado de ejecutar_intake)
+    _carpetas_excluidas = {"CARPETA REFERENCIA", "procesado", "cuarentena"}
+
+    def _filtrar_pdfs(patron):
+        return sorted([
+            p for p in ruta_inbox.rglob(patron)
+            if not any(excl in p.parts for excl in _carpetas_excluidas)
+        ])
+
+    pdfs = _filtrar_pdfs("*.pdf") or _filtrar_pdfs("*.PDF")
+    if not pdfs:
+        resultado_intake.aviso("No hay PDFs en inbox/")
+        resultado_intake.datos["documentos"] = []
+        resultado_pre_val.datos["validados"] = []
+        resultado_pre_val.datos["excluidos"] = []
+        return resultado_intake, resultado_pre_val
+
+    # Pre-filtrar duplicados por hash (secuencial, O(n))
+    estado_pipeline = _cargar_estado_pipeline(ruta_cliente)
+    hashes_previos = set(estado_pipeline.get("hashes_procesados", []))
+    hashes_fs = set(estado_pipeline.get("hashes_registrados_fs", []))
+
+    pdfs_a_procesar = []
+    for ruta_pdf in pdfs:
+        h = _calcular_hash(ruta_pdf)
+        if h in hashes_previos:
+            logger.info(f"  Duplicado, saltando: {ruta_pdf.name}")
+            resultado_intake.aviso(f"PDF duplicado: {ruta_pdf.name}", {"hash": h})
+        else:
+            pdfs_a_procesar.append((ruta_pdf, h))
+
+    if not pdfs_a_procesar:
+        resultado_intake.aviso("No hay PDFs nuevos por procesar")
+        resultado_intake.datos["documentos"] = []
+        resultado_pre_val.datos["validados"] = []
+        resultado_pre_val.datos["excluidos"] = []
+        return resultado_intake, resultado_pre_val
+
+    n_docs = len(pdfs_a_procesar)
+    logger.info(f"Encontrados {n_docs} PDFs nuevos")
+
+    # Determinar motores OCR
+    mistral_disponible = bool(_os.environ.get("MISTRAL_API_KEY"))
+    openai_disponible = bool(_os.environ.get("OPENAI_API_KEY"))
+    if not mistral_disponible and not openai_disponible:
+        resultado_intake.error("Ninguna API key OCR configurada")
+        return resultado_intake, resultado_pre_val
+
+    try:
+        from openai import OpenAI as _OpenAI
+        client = _OpenAI(api_key=_os.environ["OPENAI_API_KEY"]) if openai_disponible else None
+    except Exception:
+        client = None
+    motor_primario = "mistral" if mistral_disponible else "openai"
+
+    # GUARDRAIL: Gemini deshabilitado si >20 docs (rate limit: 20 req/dia)
+    try:
+        from sfce.core.ocr_gemini import extraer_factura_gemini as _gf  # noqa
+        _gemini_lib_ok = True
+    except ImportError:
+        _gemini_lib_ok = False
+    gemini_disponible = (
+        _gemini_lib_ok
+        and bool(_os.environ.get("GEMINI_API_KEY"))
+        and n_docs <= 20
+    )
+    if _gemini_lib_ok and n_docs > 20:
+        logger.info(f"Gemini deshabilitado: {n_docs} docs > limite 20 req/dia")
+
+    interactivo = not getattr(args, "no_interactivo", False)
+    tolerancia = config.tolerancias.get("comparacion_importes", 0.02)
+
+    # ── WORKER COMBINADO: Fase 0 (OCR) + Fase 1 (validacion individual) ──
+    def _worker_fase_01(item: tuple) -> dict:
+        ruta_pdf, hash_pdf = item
+
+        # GUARDRAIL SQLite: instanciar sesion propia por hilo
+        # Fases 0-1 no usan BD actualmente; el patron garantiza
+        # seguridad si en el futuro se anade acceso a SQLite aqui.
+        _db_ctx = None
+        if sesion_factory:
+            try:
+                _db_ctx = sesion_factory()
+                _db_ctx.__enter__()
+            except Exception:
+                _db_ctx = None
+
+        try:
+            # Fase 0: OCR
+            res_ocr = procesar_un_pdf(
+                ruta_pdf, hash_pdf, config, client, motor_primario,
+                gemini_disponible, ruta_cuarentena, interactivo,
+                ruta_inbox=ruta_inbox,
+            )
+
+            if not res_ocr.get("doc"):
+                return {**res_ocr, "errores_val": [], "avisos_val": []}
+
+            # Fase 1: validacion individual (checks 1-7, 9, F-checks)
+            errores_val, avisos_val = validar_documento_individual(
+                res_ocr["doc"], config, hashes_fs, tolerancia=tolerancia
+            )
+            return {**res_ocr, "errores_val": errores_val, "avisos_val": avisos_val}
+
+        except Exception as exc:
+            # GUARDRAIL: excepcion aislada — nunca mata el ThreadPoolExecutor
+            logger.error(f"[worker_fase01] Error inesperado en {ruta_pdf.name}: {exc}")
+            import traceback as _tb
+            logger.debug(_tb.format_exc())
+            return {
+                "doc": None,
+                "hash": hash_pdf,
+                "avisos": [(f"Error inesperado: {ruta_pdf.name}",
+                            {"error": str(exc), "archivo": ruta_pdf.name})],
+                "tier": -1,
+                "errores_val": [f"[ERROR_WORKER] {exc}"],
+                "avisos_val": [],
+            }
+        finally:
+            if _db_ctx is not None:
+                try:
+                    _db_ctx.__exit__(None, None, None)
+                except Exception:
+                    pass
+
+    # ── MAP: ejecucion paralela ───────────────────────────────────────────
+    usar_paralelo = not interactivo and max_workers > 1 and n_docs > 1
+    workers_efectivos = min(max_workers, n_docs) if usar_paralelo else 1
+    logger.info(
+        f"Motor OCR: {motor_primario} | Workers: {workers_efectivos}"
+        f"{' | Gemini: ON' if gemini_disponible else ' | Gemini: OFF'}"
+        f" | Modo: {'paralelo' if usar_paralelo else 'secuencial'}"
+    )
+
+    resultados_raw = []
+    tier_stats: dict = {}
+
+    if usar_paralelo:
+        with _cf.ThreadPoolExecutor(max_workers=workers_efectivos) as executor:
+            futuros = {executor.submit(_worker_fase_01, item): item
+                       for item in pdfs_a_procesar}
+            for futuro in _cf.as_completed(futuros):
+                ruta_pdf_f, _ = futuros[futuro]
+                try:
+                    res = futuro.result()
+                except Exception as exc:
+                    logger.error(f"Future sin capturar para {ruta_pdf_f.name}: {exc}")
+                    res = {
+                        "doc": None,
+                        "hash": futuros[futuro][1],
+                        "avisos": [],
+                        "tier": -1,
+                        "errores_val": [str(exc)],
+                        "avisos_val": [],
+                    }
+                resultados_raw.append(res)
+    else:
+        for item in pdfs_a_procesar:
+            resultados_raw.append(_worker_fase_01(item))
+
+    # ── REDUCE ───────────────────────────────────────────────────────────
+
+    # 1. Recoger docs extraidos y hashes nuevos
+    docs_extraidos = []
+    hashes_nuevos = []
+    for res in resultados_raw:
+        for msg, datos_av in res.get("avisos", []):
+            resultado_intake.aviso(msg, datos_av)
+        if res.get("doc"):
+            docs_extraidos.append(res["doc"])
+            hashes_nuevos.append(res["hash"])
+            tier = res.get("tier", 0)
+            tier_stats[tier] = tier_stats.get(tier, 0) + 1
+            if auditoria:
+                d = res["doc"]
+                auditoria.registrar("intake", "info",
+                    f"Extraido: {d['archivo']} -> {d['tipo']} "
+                    f"(conf={d['confianza_global']}%, tier={tier})",
+                    {"entidad": d.get("entidad"), "ocr_tier": tier})
+
+    # Actualizar hashes procesados en estado
+    estado_pipeline["hashes_procesados"] = list(hashes_previos | set(hashes_nuevos))
+    _guardar_estado_pipeline(ruta_cliente, estado_pipeline)
+
+    # 2. Check 8: duplicados en batch (requiere lista completa)
+    docs_procesados_ch8 = []
+    validados = []
+    excluidos = []
+
+    for res in resultados_raw:
+        doc = res.get("doc")
+        if not doc:
+            continue
+        errores_val = list(res.get("errores_val", []))
+        avisos_val = list(res.get("avisos_val", []))
+        tipo_doc = doc.get("tipo", "OTRO")
+
+        if tipo_doc not in ("NOM", "BAN", "RLC", "IMP"):
+            err_ch8 = _validar_no_duplicado(doc, docs_procesados_ch8, hashes_fs)
+            if err_ch8:
+                errores_val.append(f"[CHECK 8] {err_ch8}")
+
+        docs_procesados_ch8.append(doc)
+
+        if errores_val:
+            excluidos.append({
+                **doc,
+                "errores_validacion": errores_val,
+                "avisos_validacion": avisos_val,
+            })
+            resultado_pre_val.aviso(
+                f"Documento excluido: {doc['archivo']}",
+                {"errores": errores_val},
+            )
+        else:
+            validados.append({**doc, "avisos_validacion": avisos_val})
+
+        if auditoria:
+            estado_doc = "validado" if not errores_val else "excluido"
+            auditoria.registrar(
+                "pre_validacion", "verificacion",
+                f"{doc['archivo']}: {estado_doc}",
+                {"errores": errores_val, "avisos": avisos_val},
+            )
+
+    # 3. Sort ASC por fecha (critico para orden cronologico en FS)
+    validados = _ordenar_por_fecha(validados)
+    primer_fecha = (
+        validados[0].get("datos_extraidos", {}).get("fecha", "?")
+        if validados else "n/a"
+    )
+
+    # 4. Escribir intake_results.json
+    ruta_intake_json = ruta_cliente / "intake_results.json"
+    with open(ruta_intake_json, "w", encoding="utf-8") as f:
+        json.dump({
+            "fecha_ejecucion": datetime.now().isoformat(),
+            "total_pdfs_encontrados": len(pdfs),
+            "total_procesados": len(docs_extraidos),
+            "total_duplicados": len(pdfs) - len(pdfs_a_procesar),
+            "ocr_tier_stats": tier_stats,
+            "documentos": docs_extraidos,
+        }, f, ensure_ascii=False, indent=2)
+
+    # 5. Escribir validated_batch.json (ya ordenado por fecha ASC)
+    ruta_validados_json = ruta_cliente / "validated_batch.json"
+    with open(ruta_validados_json, "w", encoding="utf-8") as f:
+        json.dump({
+            "fecha_ejecucion": datetime.now().isoformat(),
+            "total_validados": len(validados),
+            "total_excluidos": len(excluidos),
+            "validados": validados,
+            "excluidos": excluidos,
+        }, f, ensure_ascii=False, indent=2)
+
+    logger.info(
+        f"OCR Tiers: T0={tier_stats.get(0,0)}, "
+        f"T1={tier_stats.get(1,0)}, T2={tier_stats.get(2,0)}"
+    )
+    logger.info(f"Pre-validacion: {len(validados)} OK, {len(excluidos)} excluidos")
+    logger.info(f"Orden cronologico aplicado — primer doc: {primer_fecha}")
+
+    # Poblar ResultadoFase para quality gates del pipeline
+    resultado_intake.datos["documentos"] = docs_extraidos
+    resultado_intake.datos["ruta_resultados"] = str(ruta_intake_json)
+    resultado_intake.datos["ocr_tier_stats"] = tier_stats
+    resultado_intake.datos["duplicados_negocio"] = {"seguros": 0, "posibles": 0}
+
+    resultado_pre_val.datos["validados"] = validados
+    resultado_pre_val.datos["excluidos"] = excluidos
+    resultado_pre_val.datos["ruta_validados"] = str(ruta_validados_json)
+
+    return resultado_intake, resultado_pre_val
+
+
 def main():
     args = parsear_argumentos()
 
@@ -450,15 +789,78 @@ def main():
         },
     ]
 
-    # Filtrar fases
+    # sesion_factory puede no estar definida si _BD_DISPONIBLE es False
+    if not _BD_DISPONIBLE:
+        sesion_factory = None
+
+    # Filtrar fases si se especifico --fase N
     if args.fase is not None:
         FASES = [f for f in FASES if f["indice"] == args.fase]
 
-    # Ejecutar pipeline
+    # ── Ejecucion combinada fases 0+1 (paralela) ─────────────────────────
+    # Se activa cuando se van a ejecutar AMBAS fases (no --fase standalone)
+    # y ninguna esta ya completada por --resume.
+    # En modo --fase 0 o --fase 1 standalone, se usan las funciones originales.
+    fases_01_ejecutadas = False
+    _ejecutar_solo_fase = args.fase is not None
+    _fase0_pendiente = not (args.resume and estado.fase_completada("intake"))
+    _fase1_pendiente = not (args.resume and estado.fase_completada("pre_validacion"))
+
+    if not _ejecutar_solo_fase and _fase0_pendiente and _fase1_pendiente:
+        logger.info("")
+        logger.info("=" * 60)
+        logger.info("  Fases 0+1: OCR + Pre-validacion (paralelo, 5 workers)")
+        logger.info("=" * 60)
+        try:
+            res_intake, res_preval = _ejecutar_fases_01_paralelo(
+                config, ruta_cliente, args, auditoria,
+                sesion_factory=sesion_factory,
+            )
+        except Exception as exc:
+            import traceback
+            logger.error(f"Error en fases combinadas 0+1: {exc}")
+            logger.debug(traceback.format_exc())
+            auditoria.guardar()
+            if not args.force:
+                return 1
+            res_intake = ResultadoFase("intake")
+            res_preval = ResultadoFase("pre_validacion")
+
+        # Quality gates y persistencia para ambas fases
+        for _nombre_f, _res_f in [("intake", res_intake), ("pre_validacion", res_preval)]:
+            if not _res_f.exitoso:
+                logger.error(f"QUALITY GATE FALLIDO: {_nombre_f}")
+                for err in _res_f.errores:
+                    logger.error(f"  - {err['mensaje']}")
+                if not args.force:
+                    estado.guardar()
+                    auditoria.guardar()
+                    return 1
+            estado.completar_fase(_nombre_f, _res_f.datos)
+            auditoria.registrar(_nombre_f, "fase_completada", _res_f.resumen())
+            logger.info(f"  {_res_f.resumen()}")
+            if _res_f.avisos:
+                logger.info(f"  Avisos: {len(_res_f.avisos)}")
+
+        # Post-intake: sincronizar cuarentena con BD
+        if _BD_DISPONIBLE and sesion_factory and empresa_bd_id:
+            _sincronizar_cuarentena_bd(
+                sesion_factory, empresa_bd_id,
+                ruta_cliente / "cuarentena",
+                res_intake, logger,
+            )
+
+        fases_01_ejecutadas = True
+
+    # ── Loop fases 2-6 (o fase especifica standalone) ─────────────────────
     for fase_def in FASES:
         nombre = fase_def["nombre"]
         indice = fase_def["indice"]
         descripcion = fase_def["descripcion"]
+
+        # Saltar fases 0 y 1 si ya se ejecutaron en modo combinado
+        if fases_01_ejecutadas and nombre in ("intake", "pre_validacion"):
+            continue
 
         # Skip si ya completada (resume)
         if args.resume and estado.fase_completada(nombre):
@@ -494,10 +896,10 @@ def main():
                 logger.error(f"  - {err['mensaje']}")
 
             if args.force:
-                logger.warning(f"--force activo, continuando...")
+                logger.warning("--force activo, continuando...")
             else:
                 logger.error(f"Pipeline BLOQUEADO en fase {nombre}")
-                logger.error(f"Usar --force para ignorar o --resume tras corregir")
+                logger.error("Usar --force para ignorar o --resume tras corregir")
                 estado.guardar()
                 auditoria.guardar()
                 return 1
@@ -513,13 +915,12 @@ def main():
         if resultado.avisos:
             logger.info(f"  Avisos: {len(resultado.avisos)}")
 
-        # Post-intake: sincronizar cuarentena con BD y generar notificaciones auto
-        if nombre == "intake" and sesion_factory and empresa_bd_id:
+        # Post-intake standalone (cuando se usa --fase 0)
+        if nombre == "intake" and _BD_DISPONIBLE and sesion_factory and empresa_bd_id:
             _sincronizar_cuarentena_bd(
                 sesion_factory, empresa_bd_id,
                 ruta_cliente / "cuarentena",
-                resultado,
-                logger,
+                resultado, logger,
             )
 
     # Calcular score global

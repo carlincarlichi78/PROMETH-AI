@@ -1214,3 +1214,7 @@ def detectar_trabajador(datos_ocr: dict, config: ConfigCliente) -> Optional[dict
             "default": 14,
         },
     }
+
+
+# --- Alias publico para uso en pipeline paralelo ---
+procesar_un_pdf = _procesar_un_pdf
