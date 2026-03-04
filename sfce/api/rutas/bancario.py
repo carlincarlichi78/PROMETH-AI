@@ -400,6 +400,12 @@ class RechazarMatchIn(BaseModel):
     sugerencia_id: int
 
 
+class ConciliarDirectoIn(BaseModel):
+    movimiento_id: int
+    cuenta_contable: str  # Ej: "6220000" o "6220000 — Suministros"
+    concepto: str         # Descripción del asiento
+
+
 class ConfirmarBulkIn(BaseModel):
     score_minimo: float = 0.95
 
@@ -571,6 +577,66 @@ def _confirmar_en_fs(empresa: Empresa, doc: Documento, mov: MovimientoBancario) 
         raise HTTPException(502, f"FacturaScripts no pudo crear asiento: {exc}")
 
 
+def _crear_asiento_directo_en_fs(
+    empresa: Empresa,
+    mov: MovimientoBancario,
+    cuenta_contable: str,
+    concepto: str,
+) -> Optional[int]:
+    """
+    Crea un asiento de 2 líneas en FacturaScripts para un movimiento bancario
+    sin documento asociado (conciliación manual directa).
+
+      - Si mov.signo == 'D' (débito/pago):
+          Debe:  cuenta_contable (importe)
+          Haber: 5720000000 (banco) (importe)
+      - Si mov.signo == 'H' (crédito/cobro):
+          Debe:  5720000000 (banco) (importe)
+          Haber: cuenta_contable (importe)
+
+    Devuelve el idasiento creado.
+    Raises: HTTPException(502) si FS falla o no está disponible.
+    """
+    import requests as _requests
+    from sfce.core.fs_api import api_post, obtener_credenciales_gestoria
+
+    if not empresa.idempresa_fs or not empresa.codejercicio_fs:
+        return None
+
+    _url, token = obtener_credenciales_gestoria(empresa.gestoria)
+
+    # Subcuenta bancaria genérica PGC
+    cuenta_bancaria = "5720000000"
+    importe = float(mov.importe)
+
+    # Extraer solo el código numérico antes del espacio o guión
+    codigo_contable = cuenta_contable.strip().split()[0].split("—")[0].strip()
+
+    if mov.signo == "D":  # pago: gasto/deuda en debe, banco en haber
+        lineas = [
+            {"codsubcuenta": codigo_contable, "debe": importe, "haber": 0.0, "concepto": concepto},
+            {"codsubcuenta": cuenta_bancaria,  "debe": 0.0,    "haber": importe, "concepto": concepto},
+        ]
+    else:  # cobro: banco en debe, ingreso en haber
+        lineas = [
+            {"codsubcuenta": cuenta_bancaria,  "debe": importe, "haber": 0.0,    "concepto": concepto},
+            {"codsubcuenta": codigo_contable,  "debe": 0.0,     "haber": importe, "concepto": concepto},
+        ]
+
+    try:
+        resp = api_post("asientos", {
+            "idempresa": empresa.idempresa_fs,
+            "codejercicio": empresa.codejercicio_fs,
+            "concepto": concepto,
+            "lineas": lineas,
+        }, token=token)
+        datos = resp.get("data", {}) if isinstance(resp, dict) else {}
+        idasiento = datos.get("idasiento")
+        return int(idasiento) if idasiento else None
+    except (_requests.HTTPError, _requests.ConnectionError) as exc:
+        raise HTTPException(502, f"FacturaScripts no pudo crear asiento directo: {exc}")
+
+
 @router.post("/{empresa_id}/confirmar-match")
 def confirmar_match(
     empresa_id: int,
@@ -719,6 +785,71 @@ def rechazar_match(
 
         session.commit()
         return {"ok": True}
+
+
+@router.post("/{empresa_id}/conciliar-directo")
+def conciliar_directo(
+    empresa_id: int,
+    body: ConciliarDirectoIn,
+    request: Request,
+    sesion_factory=Depends(get_sesion_factory),
+):
+    """
+    Crea un asiento contable directamente en FacturaScripts para un movimiento
+    bancario, sin requerir un documento previo (factura OCR).
+
+    Útil para conciliar manualmente cargos bancarios indicando la cuenta
+    contable de destino (ej: gastos de suministros, comisiones, etc.).
+    """
+    usuario = obtener_usuario_actual(request)
+    with sesion_factory() as session:
+        verificar_acceso_empresa(usuario, empresa_id, session)
+
+        mov = session.get(MovimientoBancario, body.movimiento_id)
+        if not mov or mov.empresa_id != empresa_id:
+            raise HTTPException(404, "Movimiento no encontrado")
+
+        if mov.estado_conciliacion == "conciliado":
+            raise HTTPException(409, "El movimiento ya está conciliado")
+
+        empresa = session.get(Empresa, empresa_id)
+
+        # Crear asiento en FS (best-effort: si no hay FS configurado devuelve None)
+        asiento_id = None
+        if empresa and empresa.idempresa_fs:
+            asiento_id = _crear_asiento_directo_en_fs(empresa, mov, body.cuenta_contable, body.concepto)
+
+        # Actualizar movimiento
+        mov.estado_conciliacion = "manual"
+        mov.asiento_id = asiento_id
+        mov.score_confianza = 1.0
+        mov.capa_match = 0
+
+        # Desactivar sugerencias activas pendientes para este movimiento
+        session.query(SugerenciaMatch).filter(
+            SugerenciaMatch.movimiento_id == mov.id,
+            SugerenciaMatch.activa == True,
+        ).update({"activa": False})
+
+        # Auditoría RGPD
+        auditar(
+            session, AuditAccion.CONCILIAR, "movimiento",
+            email_usuario=usuario.email,
+            usuario_id=usuario.id,
+            rol=usuario.rol,
+            gestoria_id=usuario.gestoria_id,
+            recurso_id=str(mov.id),
+            ip_origen=ip_desde_request(request),
+            detalles={
+                "accion": "conciliar_directo",
+                "cuenta_contable": body.cuenta_contable,
+                "concepto": body.concepto,
+                "asiento_id": asiento_id,
+            },
+        )
+
+        session.commit()
+        return {"ok": True, "asiento_id": asiento_id}
 
 
 @router.post("/{empresa_id}/confirmar-bulk")
