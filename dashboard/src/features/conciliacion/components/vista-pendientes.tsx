@@ -8,7 +8,7 @@ import { useMovimientos } from '../api'
 import type { MovimientoBancario } from '../api'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowDownLeft, ArrowUpRight, MousePointerClick } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PanelConciliacion } from './panel-conciliacion'
 
@@ -124,15 +124,7 @@ export function VistaPendientes() {
 
       {/* ── Columna derecha — detalle ── */}
       <div className="flex flex-1 flex-col overflow-y-auto p-4">
-        {movSeleccionado ? (
-          <PanelConciliacion mov={movSeleccionado} />
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <MousePointerClick className="h-10 w-10 opacity-25" />
-            <p className="text-sm font-medium">Selecciona un movimiento</p>
-            <p className="text-xs">para ver sus detalles y sugerencias</p>
-          </div>
-        )}
+        <PanelConciliacion movimientoSeleccionado={movSeleccionado} />
       </div>
     </div>
   )

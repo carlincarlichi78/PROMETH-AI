@@ -1,17 +1,20 @@
 /**
  * Panel de conciliación para la columna derecha de VistaPendientes.
  * Sección 1: Cabecera del movimiento
- * Sección 2: Sugerencias de la IA (mockeadas hasta conectar endpoint)
+ * Sección 2: Sugerencias reales de la IA (endpoint /sugerencias?movimiento_id=)
  * Sección 3: Acción manual (asiento directo, Collapsible)
  */
 import { useState } from 'react'
-import type { MovimientoBancario } from '../api'
+import { useEmpresaStore } from '@/stores/empresa-store'
+import type { MovimientoBancario, SugerenciaOut } from '../api'
+import { useSugerencias, useConfirmarMatch, useRechazarMatch } from '../api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -25,21 +28,9 @@ import {
   PenLine,
   ArrowDownLeft,
   ArrowUpRight,
+  MousePointerClick,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-// ── Tipos de mock ─────────────────────────────────────────────────────────────
-
-interface SugerenciaMock {
-  id: number
-  score: number
-  capa: number
-  capaLabel: string
-  numeroDocumento: string
-  nombreProveedor: string
-  importeDocumento: number
-  fechaDocumento: string
-}
 
 const CAPA_LABEL: Record<number, string> = {
   1: 'Importe exacto',
@@ -47,43 +38,6 @@ const CAPA_LABEL: Record<number, string> = {
   3: 'Nº factura',
   4: 'Patrón aprendido',
   5: 'Importe aproximado',
-}
-
-// Genera sugerencias mock realistas a partir del importe del movimiento
-function generarSugerenciasMock(mov: MovimientoBancario): SugerenciaMock[] {
-  const base = Math.abs(mov.importe)
-  return [
-    {
-      id: 1,
-      score: 0.97,
-      capa: 1,
-      capaLabel: CAPA_LABEL[1] ?? 'Capa 1',
-      numeroDocumento: `FV-2025-${String(mov.id + 80).padStart(3, '0')}`,
-      nombreProveedor: mov.nombre_contraparte || 'Proveedor desconocido',
-      importeDocumento: base,
-      fechaDocumento: mov.fecha,
-    },
-    {
-      id: 2,
-      score: 0.82,
-      capa: 2,
-      capaLabel: CAPA_LABEL[2] ?? 'Capa 2',
-      numeroDocumento: `FV-2025-${String(mov.id + 55).padStart(3, '0')}`,
-      nombreProveedor: mov.nombre_contraparte || 'Proveedor desconocido',
-      importeDocumento: base - 0.01,
-      fechaDocumento: mov.fecha,
-    },
-    {
-      id: 3,
-      score: 0.68,
-      capa: 4,
-      capaLabel: CAPA_LABEL[4] ?? 'Capa 4',
-      numeroDocumento: 'Regla automática',
-      nombreProveedor: 'Patrón: ' + (mov.concepto_propio?.slice(0, 20) || 'Sin patrón'),
-      importeDocumento: base,
-      fechaDocumento: mov.fecha,
-    },
-  ]
 }
 
 function scoreVariant(score: number): string {
@@ -150,32 +104,35 @@ function FilaSugerencia({
   s,
   onConfirmar,
   onRechazar,
+  isPending,
 }: {
-  s: SugerenciaMock
-  onConfirmar: (id: number) => void
-  onRechazar: (id: number) => void
+  s: SugerenciaOut
+  onConfirmar: () => void
+  onRechazar: () => void
+  isPending: boolean
 }) {
   return (
     <div className="rounded-md border p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <Badge className={cn('text-xs font-semibold', scoreVariant(s.score))}>
-          {Math.round(s.score * 100)}% — {s.capaLabel}
+          {Math.round(s.score * 100)}% — {CAPA_LABEL[s.capa_origen] ?? `Capa ${s.capa_origen}`}
         </Badge>
         <span className="text-xs text-muted-foreground tabular-nums font-medium">
-          {formatEur(s.importeDocumento)}
+          {s.documento?.importe_total != null ? formatEur(s.documento.importe_total) : '—'}
         </span>
       </div>
 
       <div className="text-sm">
-        <p className="font-medium truncate">{s.numeroDocumento}</p>
-        <p className="text-xs text-muted-foreground truncate">{s.nombreProveedor}</p>
+        <p className="font-medium truncate">{s.documento?.numero_factura ?? '—'}</p>
+        <p className="text-xs text-muted-foreground truncate">{s.documento?.nif_proveedor ?? '—'}</p>
       </div>
 
       <div className="flex gap-2 pt-1">
         <Button
           size="sm"
           className="flex-1 h-7 bg-green-600 hover:bg-green-700 text-xs"
-          onClick={() => onConfirmar(s.id)}
+          disabled={isPending}
+          onClick={onConfirmar}
         >
           <CheckCircle className="h-3.5 w-3.5 mr-1" />
           Confirmar
@@ -184,7 +141,8 @@ function FilaSugerencia({
           size="sm"
           variant="outline"
           className="flex-1 h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
-          onClick={() => onRechazar(s.id)}
+          disabled={isPending}
+          onClick={onRechazar}
         >
           <XCircle className="h-3.5 w-3.5 mr-1" />
           Rechazar
@@ -194,17 +152,11 @@ function FilaSugerencia({
   )
 }
 
-function SeccionSugerencias({ mov }: { mov: MovimientoBancario }) {
-  const sugerencias = generarSugerenciasMock(mov)
-  const [descartadas, setDescartadas] = useState<number[]>([])
-  const visibles = sugerencias.filter((s) => !descartadas.includes(s.id))
-
-  const handleConfirmar = (_id: number) => {
-    // TODO: conectar a conciliacionApi.confirmarMatch cuando se integre con API real
-  }
-  const handleRechazar = (id: number) => {
-    setDescartadas((prev) => [...prev, id])
-  }
+function SeccionSugerencias({ empresaId, movId }: { empresaId: number; movId: number }) {
+  const { data: sugerencias = [], isLoading } = useSugerencias(empresaId, movId)
+  const confirmar = useConfirmarMatch(empresaId)
+  const rechazar = useRechazarMatch(empresaId)
+  const isPending = confirmar.isPending || rechazar.isPending
 
   return (
     <Card>
@@ -212,21 +164,27 @@ function SeccionSugerencias({ mov }: { mov: MovimientoBancario }) {
         <CardTitle className="text-sm flex items-center gap-1.5">
           <Sparkles className="h-4 w-4 text-yellow-500" />
           Sugerencias de la IA
-          <Badge variant="secondary" className="ml-auto text-xs">{visibles.length}</Badge>
+          <Badge variant="secondary" className="ml-auto text-xs">{sugerencias.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-2">
-        {visibles.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : sugerencias.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-3">
-            Todas las sugerencias han sido descartadas.
+            No hay sugerencias para este movimiento.
           </p>
         ) : (
-          visibles.map((s) => (
+          sugerencias.map((s) => (
             <FilaSugerencia
               key={s.id}
               s={s}
-              onConfirmar={handleConfirmar}
-              onRechazar={handleRechazar}
+              onConfirmar={() => confirmar.mutate({ movimiento_id: s.movimiento_id, sugerencia_id: s.id })}
+              onRechazar={() => rechazar.mutate({ sugerencia_id: s.id })}
+              isPending={isPending}
             />
           ))
         )}
@@ -311,12 +269,27 @@ function SeccionManual({ mov }: { mov: MovimientoBancario }) {
 
 // ── Componente público ────────────────────────────────────────────────────────
 
-export function PanelConciliacion({ mov }: { mov: MovimientoBancario }) {
+export function PanelConciliacion({
+  movimientoSeleccionado,
+}: {
+  movimientoSeleccionado: MovimientoBancario | null
+}) {
+  const empresaId = useEmpresaStore((s) => s.empresaActiva?.id ?? 0)
+
+  if (!movimientoSeleccionado) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
+        <MousePointerClick className="h-10 w-10 opacity-25" />
+        <p className="text-sm font-medium">Selecciona un movimiento para ver sus sugerencias</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-3">
-      <CabeceraMov mov={mov} />
-      <SeccionSugerencias mov={mov} />
-      <SeccionManual mov={mov} />
+      <CabeceraMov mov={movimientoSeleccionado} />
+      <SeccionSugerencias empresaId={empresaId} movId={movimientoSeleccionado.id} />
+      <SeccionManual mov={movimientoSeleccionado} />
     </div>
   )
 }

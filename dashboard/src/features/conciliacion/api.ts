@@ -55,12 +55,35 @@ export interface ResultadoIngesta {
 
 export interface DocumentoResumen {
   id: number
-  nombre_archivo: string
-  tipo_doc: string
-  importe_total?: number
+  // Campos del schema Pydantic DocumentoResumen (backend)
+  tipo?: string | null
+  fecha?: string | null
   nif_proveedor?: string
   numero_factura?: string
+  importe_total?: number
+  // Campos legacy usados por match-card.tsx
+  nombre_archivo?: string
+  tipo_doc?: string
   fecha_documento?: string
+}
+
+export interface MovimientoResumen {
+  id: number
+  fecha: string
+  importe: number
+  concepto_propio: string
+  nombre_contraparte: string
+}
+
+/** Refleja exactamente el schema Pydantic SugerenciaOut del endpoint /sugerencias */
+export interface SugerenciaOut {
+  id: number
+  movimiento_id: number
+  documento_id: number
+  score: number
+  capa_origen: number
+  movimiento: MovimientoResumen
+  documento: DocumentoResumen | null
 }
 
 export interface SugerenciaMatch {
@@ -233,6 +256,40 @@ export function useConciliar(empresaId: number) {
         return r.json()
       }),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
+      qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
+    },
+  })
+}
+
+/** Sugerencias filtradas por movimiento_id. Solo activa la query cuando movimientoId no es null. */
+export function useSugerencias(empresaId: number, movimientoId: number | null) {
+  const params = movimientoId != null ? `?movimiento_id=${movimientoId}` : ''
+  return useQuery<SugerenciaOut[]>({
+    queryKey: ['sugerencias', empresaId, movimientoId],
+    queryFn: () => fetchJson<SugerenciaOut[]>(`${BASE}/${empresaId}/sugerencias${params}`),
+    enabled: empresaId > 0 && movimientoId != null,
+  })
+}
+
+export function useConfirmarMatch(empresaId: number) {
+  const qc = useQueryClient()
+  return useMutation<{ ok: boolean }, Error, { movimiento_id: number; sugerencia_id: number }>({
+    mutationFn: (body) => postJson(`${BASE}/${empresaId}/confirmar-match`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sugerencias', empresaId] })
+      qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
+      qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
+    },
+  })
+}
+
+export function useRechazarMatch(empresaId: number) {
+  const qc = useQueryClient()
+  return useMutation<{ ok: boolean }, Error, { sugerencia_id: number }>({
+    mutationFn: (body) => postJson(`${BASE}/${empresaId}/rechazar-match`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sugerencias', empresaId] })
       qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
       qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
     },
