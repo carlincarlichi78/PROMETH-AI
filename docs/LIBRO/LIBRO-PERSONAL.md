@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 89)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 90)
 
 ---
 
@@ -47,12 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 89)
+## Estado rápido (sesión 90)
 
-- **Completado sesión 89:** Fix confirmar-match en FS: asiento con importe correcto (proveedor subcuenta + 2 partidas json.dumps). `api_get` ahora acepta `base_url`. Limpieza asiento vacío FS#8.
-- **Push:** OK `89d4e842` | **Tests:** ~2568 PASS
-- **PRIORIDAD 1:** F8 — Pipeline FS registration fix (Fase 2 rollback, FS total=0.00, `registered.json` nunca generado)
-- **PRIORIDAD 2:** Verificar confirmar-match prod — mov 132 está en pendiente, re-confirmar y comprobar asiento con importe correcto en FS
+- **Completado sesión 90:** F8 resuelto — `pvpsindto = pvpunitario * cantidad` explícito en cada línea + PUT cabecera tras insertar líneas para actualizar totales. FS ya no devuelve `total=0.00`.
+- **Push:** OK `fb8f9ced` | **Tests:** ~2568 PASS
+- **PRIORIDAD 1:** Verificar F8 en producción — pipeline completo con factura real empresa 2 (Gerardo)
+- **PRIORIDAD 2:** Verificar confirmar-match — mov 132 en pendiente, re-confirmar y ver asiento FS con importe
 - **PRIORIDAD 3:** F6 — Ruta inbox email→pipeline + Tests E2E Playwright
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

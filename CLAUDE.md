@@ -234,20 +234,17 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 89)
+## Estado actual (04/03/2026, sesion 90)
 
-**Rama**: `main` | **Ultimo commit**: `89d4e842` (pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `fb8f9ced` (pusheado) | **Tests**: ~2568 PASS
 
-### Completado sesion 89
-- Fix 500 post-deploy: bancario.py con `session` param no había sobrevivido restart — re-deployed ✓
-- `_confirmar_en_fs`: busca subcuenta proveedor en FS por NIF (fallback 4000000000) + crea 2 partidas con `json.dumps(lineas)` ✓
-- `_crear_asiento_directo_en_fs`: mismo fix `json.dumps(lineas)` ✓
-- `api_get` en `fs_api.py`: añadido `base_url` param — ahora todas las funciones lo soportan ✓
-- Limpieza: asiento FS#8 vacío eliminado, mov 132 reseteado a pendiente ✓
+### Completado sesion 90
+- F8 fix: `pvpsindto = pvpunitario * cantidad` explícito en cada línea + PUT cabecera tras líneas para totales ✓
+- FS ya no devuelve `total=0.00` en factura registrada ✓
 
-### Proxima sesion — pendientes (sesion 90)
-1. **Verificar confirmar-match prod** — mov 132 en pendiente, re-confirmar y comprobar asiento con importe correcto en FS
-2. **F8 — Pipeline FS registration fix** — Fase 2 rollback (FS total=0.00, `registered.json` nunca generado)
+### Proxima sesion — pendientes (sesion 91)
+1. **Verificar F8 producción** — pipeline completo con factura real empresa 2 (Gerardo), comprobar `total != 0` en FS
+2. **Verificar confirmar-match** — re-confirmar mov 132 y comprobar asiento FS con importe correcto
 3. **F6 — Ruta inbox email→pipeline** — alinear rutas worker correo ↔ pipeline
 4. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
 5. **Capa C VClNegocios** — bajó de 8 a 0 matches

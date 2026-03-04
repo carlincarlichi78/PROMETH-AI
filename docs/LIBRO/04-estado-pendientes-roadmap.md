@@ -1,5 +1,29 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 89) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 90) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 90 — F8: registro FS total correcto)
+
+### Commits sesión 90
+
+| Hash | Descripción |
+|------|-------------|
+| `fb8f9ced` | fix(f8): pvpsindto/pvptotal explícitos + PUT totales cabecera — resuelve total=0 en registro FS |
+
+### Tasks completadas (sesión 90)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| F8 — Pipeline FS total=0.00 | ✅ DONE | FS no auto-calcula `pvpsindto`/`pvptotal` desde `pvpunitario`. Fix: pasar `pvpsindto = pvpunitario * cantidad` en cada línea POST. Tras todas las líneas, acumular neto/iva/irpf y hacer PUT a cabecera para actualizar totales. Logs detallados → DEBUG. |
+
+### Pendientes para sesión 91
+
+1. **Verificar F8 en producción** — pipeline completo con factura real, comprobar `total != 0` en FS (empresa 2, Gerardo)
+2. **Verificar confirmar-match** — re-confirmar mov 132 y comprobar asiento con importe correcto en FS
+3. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`
+4. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
+5. **Capa C VClNegocios** — 0 matches (bajó de 8)
 
 ---
 
