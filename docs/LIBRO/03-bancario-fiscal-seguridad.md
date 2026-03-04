@@ -1,5 +1,5 @@
 # SFCE — Bancario, Fiscal, Correo y Seguridad
-> **Actualizado:** 2026-03-04 (sesión 66) | Tests bancario: 161 PASS
+> **Actualizado:** 2026-03-04 (sesión 75) | Tests bancario: 161 PASS
 
 ---
 
@@ -173,6 +173,16 @@ Al confirmar un match manualmente:
 - `SugerenciaOut`: `{id, movimiento_id, documento_id, score, capa_origen, movimiento: MovimientoResumen, documento: DocumentoResumen?}`
 - `ConfirmarMatchIn`: `{movimiento_id: int, sugerencia_id: int}`
 - `RechazarMatchIn`: `{sugerencia_id: int}`
+
+### Onboarding cuentas bancarias — formato IBAN interno (sesión 75)
+
+El parser `parser_c43.py:106` almacena `iban = banco(4)+oficina(4)+cuenta(10)` (sin prefijo ES, sin espacios). Ej: `"210038890200255608"`. Al dar de alta `CuentaBancaria` manualmente, usar **este formato exacto**, no IBAN estándar, para que la búsqueda por IBAN al ingestar C43 encuentre la cuenta.
+
+Extracción de R11 de archivo C43:
+- Banco: `linea[2:6]`
+- Oficina: `linea[6:10]`
+- Cuenta: `linea[10:20]`
+- IBAN interno: concatenar los tres campos sin separación
 
 ### Dashboard conciliación (sesiones 66, 70, 73)
 

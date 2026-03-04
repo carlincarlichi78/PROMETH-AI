@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 74)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 75)
 
 ---
 
@@ -51,14 +51,22 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 74)
+## Estado rápido (sesión 75)
 
 - **Plan activo:** ninguno
-- **Completado sesiones 72+73+74:** UI conciliación completa (5 pestañas con datos reales). Tabs Revisión/Conciliados con `TablaMovimientos`. `PanelSugerencias` y `MatchCard` migrados a `SugerenciaOut` + hooks atómicos. TypeScript 0 errores. 2724 tests PASS.
+- **Completado sesión 75:** Onboarding bancario Gerardo (3 cuentas CaixaBank prod). Seed IMAP 6 asesores + 2 dedicadas prod. Fix `es_respuesta_ack` INTEGER→BOOLEAN en PG prod.
+- **Completado sesiones 72+73+74:** UI conciliación completa 5 pestañas. TypeScript 0 errores. 2724 tests PASS.
 - **Tests:** 2724 PASS, 4 skipped
-- **Pendiente manual:** `git push origin main` + migración 030 en prod (script en Task 13 del 04-roadmap)
+- **Próximo paso:** subir TT280226.423.txt en Dashboard para validar ingesta C43 E2E
 
 ---
+
+## Notas operacionales producción
+
+- **Seed IMAP ejecutado** (sesión 75). `scripts/crear_cuentas_imap_asesores.py` en git tiene passwords vacíos — no ejecutar directamente. Usar temp script vía `docker cp + docker exec`.
+- **`es_respuesta_ack` corregido** a `boolean` en prod. Fix: drop default → type change → restore default.
+- **IBAN interno C43**: formato `banco(4)+oficina(4)+cuenta(10)` sin prefijo ES (ver 03-bancario).
+- **`_leer_config_bd`**: está en `sfce.api.app`, NO en `sfce.db.base`.
 
 ## Regla de uso
 

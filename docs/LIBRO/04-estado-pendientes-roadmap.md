@@ -1,5 +1,28 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 74) | **Branch:** main | **Tests:** 2724 PASS, 4 skipped
+> **Actualizado:** 2026-03-04 (sesión 75) | **Branch:** main | **Tests:** 2724 PASS, 4 skipped
+
+---
+
+## Estado actual (sesión 75 — onboarding bancario + IMAP prod)
+
+**Onboarding completo de empresa_id=2 (Gerardo González) y activación global IMAP en producción.**
+
+### Tasks completadas (sesión 75)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Script seed IMAP | ✅ DONE | 6 cuentas `tipo=asesor` + 2 `tipo=dedicada` creadas en prod con App Passwords cifradas (Fernet). Worker IMAP arrancó automáticamente |
+| Fix tipo BD `es_respuesta_ack` | ✅ DONE | `ALTER TABLE emails_procesados ALTER COLUMN es_respuesta_ack TYPE boolean` — corregido INTEGER→BOOLEAN en producción |
+| Cuentas bancarias empresa_id=2 | ✅ DONE | 3 cuentas CaixaBank extraídas de TT280226.423.txt (R11) dadas de alta: IBANs `210038890200255608`, `210068480200053517`, `210068480200254001` — formato `banco+oficina+cuenta` exacto del parser |
+| Bloqueo UI conciliación empresa_id=2 | ✅ RESUELTO | Selector de cuentas ahora muestra las 3 CaixaBank. Botón "Subir extracto" habilitado |
+
+### Pendientes para próxima sesión
+
+1. **Subir TT280226.423.txt** desde Dashboard → conciliación empresa Gerardo González para validar ingesta E2E
+2. **Tests E2E dashboard** — Playwright flujos críticos conciliación
+3. **Migración 030 en producción** — ver script en sección Task 13 abajo
+4. **Error IMAP cuenta 1** (admin@prometh-ai.es): `AUTHENTICATIONFAILED` — revisar credenciales de esa cuenta
+5. **Investigar `javier@prometh-ai.es`** — usuario_id=20 en prod pero no aparece en tabla Usuarios SFCE (verificar si tiene rol correcto)
 
 ---
 
@@ -34,9 +57,9 @@
 - Migración 030 en producción: pendiente (script abajo)
 - Deploy CI/CD: pendiente push
 
-### Pendientes para próxima sesión
+### Pendientes para próxima sesión (sesión 74 — originales)
 
-1. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+1. ~~**Script seed IMAP**~~ ✅ COMPLETADO sesión 75
 2. **Tests E2E dashboard** — Playwright flujos críticos conciliación
 3. **Migración 030 en producción** — ejecutar script abajo (Fase 8 del deploy)
 

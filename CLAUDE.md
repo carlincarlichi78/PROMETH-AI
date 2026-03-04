@@ -234,17 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 74)
+## Estado actual (04/03/2026, sesion 75)
 
 **Rama**: `main` | **Ultimo commit**: `69b3611` (pendiente push) | **Tests**: 2724 PASS, 4 skipped
 
-### Completado sesiones 72+73+74
+### Completado sesiones 72+73+74+75
 - Sesion 72 — backend: `confirmar-match`, `rechazar-match`, GET `/sugerencias?movimiento_id=`, schemas Pydantic, migracion 030
 - Sesion 73 — frontend: `PanelConciliacion` datos reales, 3 hooks TanStack Query, `VistaPendientes` simplificada
 - Sesion 74 — frontend: tabs Revision+Conciliados con `TablaMovimientos`, `PanelSugerencias` datos reales, `MatchCard` migrado a `SugerenciaOut`, `useSugerencias` permite `null`
+- Sesion 75 — produccion: seed IMAP (6 asesor + 2 dedicadas), fix `es_respuesta_ack` INTEGER→BOOLEAN, 3 cuentas bancarias CaixaBank empresa_id=2
 
 ### Proxima sesion — pendientes
-1. **Push + deploy**: `git push origin main` → CI/CD automatico
-2. **Migracion 030 en produccion** — script en Task 13 de 04-estado-pendientes-roadmap.md
-3. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+1. **Subir TT280226.423.txt** desde Dashboard para validar ingesta C43 E2E
+2. **Push + deploy pendiente**: `git push origin main` → CI/CD automatico
+3. **Migracion 030 en produccion** — script en Task 13 de 04-estado-pendientes-roadmap.md
 4. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+5. **Error IMAP cuenta 1** (admin@prometh-ai.es AUTHENTICATIONFAILED) — revisar credenciales
