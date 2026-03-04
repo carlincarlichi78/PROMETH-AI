@@ -1,13 +1,14 @@
 /**
- * Panel de sugerencias pendientes de revisión.
- * Agrupa por movimiento bancario y muestra tarjetas de match.
+ * Panel global de sugerencias pendientes de revisión.
+ * Usa useSugerencias(empresaId, null) para obtener todas las sugerencias activas.
+ * Agrupa en tarjetas con acciones de confirmar / rechazar.
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Zap } from 'lucide-react'
 import { MatchCard } from './match-card'
-import { conciliacionApi } from '../api'
+import { useSugerencias, useConfirmarMatch, useRechazarMatch, conciliacionApi } from '../api'
 
 interface PanelSugerenciasProps {
   empresaId: number
@@ -16,30 +17,14 @@ interface PanelSugerenciasProps {
 export function PanelSugerencias({ empresaId }: PanelSugerenciasProps) {
   const qc = useQueryClient()
 
-  const { data: sugerencias = [], isLoading } = useQuery({
-    queryKey: ['sugerencias', empresaId],
-    queryFn: () => conciliacionApi.listarSugerencias(empresaId),
-    enabled: empresaId > 0,
-  })
+  // Todas las sugerencias activas de la empresa (sin filtro de movimiento)
+  const { data: sugerencias = [], isLoading } = useSugerencias(empresaId, null)
 
-  const confirmar = useMutation({
-    mutationFn: ({ movId, docId }: { movId: number; docId: number }) =>
-      conciliacionApi.confirmarMatch(empresaId, movId, docId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['sugerencias', empresaId] })
-      qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
-      qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
-    },
-  })
+  // Mutaciones atómicas (misma firma que en PanelConciliacion)
+  const confirmar = useConfirmarMatch(empresaId)
+  const rechazar = useRechazarMatch(empresaId)
 
-  const rechazar = useMutation({
-    mutationFn: ({ movId, docId }: { movId: number; docId: number }) =>
-      conciliacionApi.rechazarMatch(empresaId, movId, docId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['sugerencias', empresaId] })
-    },
-  })
-
+  // Confirmación en bloque para sugerencias de alta confianza
   const bulk = useMutation({
     mutationFn: () => conciliacionApi.confirmarBulk(empresaId, 0.95),
     onSuccess: () => {
@@ -98,8 +83,10 @@ export function PanelSugerencias({ empresaId }: PanelSugerenciasProps) {
           <MatchCard
             key={s.id}
             sugerencia={s}
-            onConfirmar={(movId, docId) => confirmar.mutate({ movId, docId })}
-            onRechazar={(movId, docId) => rechazar.mutate({ movId, docId })}
+            onConfirmar={(movId, sugId) =>
+              confirmar.mutate({ movimiento_id: movId, sugerencia_id: sugId })
+            }
+            onRechazar={(sugId) => rechazar.mutate({ sugerencia_id: sugId })}
             cargando={confirmar.isPending || rechazar.isPending}
           />
         ))}

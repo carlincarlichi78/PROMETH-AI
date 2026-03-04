@@ -2,7 +2,29 @@ import { useEmpresaStore } from '@/stores/empresa-store'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { PanelSugerencias } from './components/panel-sugerencias'
 import { TablaPatrones } from './components/tabla-patrones'
+import { TablaMovimientos } from './components/tabla-movimientos'
 import { VistaPendientes } from './components/vista-pendientes'
+import { useMovimientos } from './api'
+
+/** Wrapper que carga y renderiza movimientos filtrados por estado */
+function TabMovimientos({
+  empresaId,
+  estado,
+  mostrarDocumento = false,
+}: {
+  empresaId: number
+  estado: string
+  mostrarDocumento?: boolean
+}) {
+  const { data: movimientos = [], isLoading } = useMovimientos(empresaId, estado)
+  return (
+    <TablaMovimientos
+      movimientos={movimientos}
+      isLoading={isLoading}
+      mostrarDocumento={mostrarDocumento}
+    />
+  )
+}
 
 export default function ConciliacionPage() {
   const empresaActiva = useEmpresaStore((s) => s.empresaActiva)
@@ -30,15 +52,18 @@ export default function ConciliacionPage() {
         </TabsContent>
 
         <TabsContent value="revision" className="mt-4">
-          <div className="py-12 text-center text-muted-foreground border rounded-lg">
-            Movimientos marcados para revisión manual — próxima iteración.
-          </div>
+          <TabMovimientos
+            empresaId={empresaId}
+            estado="revision"
+          />
         </TabsContent>
 
         <TabsContent value="conciliados" className="mt-4">
-          <div className="py-12 text-center text-muted-foreground border rounded-lg">
-            Historial de movimientos conciliados — próxima iteración.
-          </div>
+          <TabMovimientos
+            empresaId={empresaId}
+            estado="conciliado"
+            mostrarDocumento
+          />
         </TabsContent>
 
         <TabsContent value="patrones" className="mt-4">

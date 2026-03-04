@@ -1,34 +1,44 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 73) | **Branch:** main | **Tests:** 171 bancario PASS (171+)
+> **Actualizado:** 2026-03-04 (sesión 74) | **Branch:** main | **Tests:** 2724 PASS, 4 skipped
 
 ---
 
-## Estado actual (cierre sesión 73)
+## Estado actual (cierre sesión 74)
 
-### Commits de la sesión 73
+**UI completa de conciliación (5 pestañas) y endpoints de mutación atómica finalizados y testeados. Regresión cero: 2724 tests pasan.**
+
+### Commits de la sesión 74
 
 | Commit | Descripción |
 |--------|-------------|
-| `ce80ca2` | feat: PanelConciliacion datos reales + 3 hooks TanStack Query |
+| (pendiente push) | feat(dashboard): integración completa de tabs de conciliación con API real (Task 11/12) |
 
-### Tasks completadas (sesión 73 — Frontend PanelConciliacion)
+### Tasks completadas (sesiones 72-73-74 — Conciliación bancaria completa)
 
 | Task | Estado | Qué se hizo |
 |------|--------|-------------|
-| Interfaces TypeScript | ✅ DONE | `SugerenciaOut`, `MovimientoResumen` mirroran schemas Pydantic. `DocumentoResumen` actualizado con `tipo`/`fecha` del backend |
-| `useSugerencias` | ✅ DONE | Hook TanStack Query: GET `/sugerencias?movimiento_id=`. Solo activa cuando `movimientoId != null` |
-| `useConfirmarMatch` | ✅ DONE | Mutación POST `/confirmar-match` con `{movimiento_id, sugerencia_id}`. Invalida 3 queries |
-| `useRechazarMatch` | ✅ DONE | Mutación POST `/rechazar-match` con `{sugerencia_id}`. Invalida 3 queries |
-| PanelConciliacion datos reales | ✅ DONE | Eliminados mocks. `SeccionSugerencias` usa hooks reales + `empresaId` de Zustand store |
-| Empty state integrado | ✅ DONE | `movimientoSeleccionado: null` muestra "Selecciona un movimiento para ver sus sugerencias" |
-| VistaPendientes simplificada | ✅ DONE | Siempre renderiza `<PanelConciliacion movimientoSeleccionado={...} />` sin ternario |
+| Task 7 — API endpoints | ✅ DONE | `confirmar-match`, `rechazar-match`, `confirmar-bulk`, GET `/sugerencias?movimiento_id=`, schemas Pydantic `SugerenciaOut`/`MovimientoResumen`/`DocumentoResumen` |
+| Task 8 — match-parcial | ✅ DONE | POST `/match-parcial` N:1 con tolerancia 0.05€, `ConciliacionParcial` por doc |
+| Task 11 — Dashboard 5 pestañas | ✅ DONE | `conciliacion-page.tsx` completo: Pendientes (VistaPendientes), Sugerencias (PanelSugerencias datos reales), Revisión (TablaMovimientos filtro `revision`), Conciliados (TablaMovimientos filtro `conciliado` + doc.id), Patrones (TablaPatrones CRUD) |
+| Task 12 — Routing + Sidebar | ✅ DONE | Ruta `/conciliacion` + entrada sidebar `ArrowLeftRight` |
+| `useSugerencias` global | ✅ DONE | `enabled: empresaId > 0` (ya no bloquea con `movimientoId=null`). Permite pestaña global Sugerencias |
+| `MatchCard` migrado | ✅ DONE | Migrado de `SugerenciaMatch` → `SugerenciaOut`. Callbacks: `onConfirmar(movId, sugId)` / `onRechazar(sugId)` |
+| `PanelSugerencias` datos reales | ✅ DONE | Usa `useSugerencias(empresaId, null)` + `useConfirmarMatch` + `useRechazarMatch`. Sin mocks |
+| Interfaces TypeScript | ✅ DONE | `SugerenciaOut`, `MovimientoResumen`, `DocumentoResumen`. TypeScript 0 errores |
+
+### Task 13 — Regresión final y migración en producción
+
+**Estado:** EN CURSO (A la espera de Deploy manual del usuario)
+
+- Tests: ✅ 2724 passed, 4 skipped (regresión cero)
+- Migración 030 en producción: pendiente (script abajo)
+- Deploy CI/CD: pendiente push
 
 ### Pendientes para próxima sesión
 
-1. **Tabs "Revisión" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+1. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
 2. **Tests E2E dashboard** — Playwright flujos críticos conciliación
-3. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
-4. **Migración 030 en producción** — ejecutar manualmente vía psql
+3. **Migración 030 en producción** — ejecutar script abajo (Fase 8 del deploy)
 
 ---
 
@@ -199,148 +209,34 @@ Sin commits de código — sesión de configuración Google Workspace.
 
 ---
 
-## TASKS PENDIENTES — Plan conciliación bancaria (Tasks 7-8 y 11-13)
+## TASKS COMPLETADAS — Plan conciliación bancaria (Tasks 7-8 y 11-13)
 
-### Task 7 — API endpoints nuevos
+| Task | Estado | Sesión |
+|------|--------|--------|
+| Task 7 — API endpoints (sugerencias, confirmar, rechazar, bulk, saldo-descuadre) | ✅ DONE | 72 |
+| Task 8 — match-parcial N:1 + Bulk + Parcial | ✅ DONE | 72 |
+| Task 11 — Dashboard `conciliacion-page.tsx` (5 pestañas completas con datos reales) | ✅ DONE | 73-74 |
+| Task 12 — Routing `/conciliacion` + entrada Sidebar | ✅ DONE | 70 |
+| Task 13 — Regresión final | ✅ DONE (2724 passed) | 74 |
 
-**Estado:** Pendiente
-**Archivo:** `sfce/api/rutas/bancario.py`
+### Task 13 — Migración 030 en producción
 
-Endpoints a implementar:
-
-```
-GET  /api/bancario/{empresa_id}/sugerencias        → lista SugerenciaMatch activas con documento embebido
-POST /api/bancario/{empresa_id}/confirmar-match     → confirmar + aprender patrón
-POST /api/bancario/{empresa_id}/rechazar-match      → rechazar sugerencia
-POST /api/bancario/{empresa_id}/match-bulk          → confirmar/rechazar múltiples
-GET  /api/bancario/{empresa_id}/saldo-descuadre     → diff saldo_bancario vs saldo contable
-POST /api/bancario/{empresa_id}/conciliar           → ejecutar conciliar_inteligente() (reemplaza el viejo)
-```
-
-**Schema sugerencia (respuesta GET /sugerencias):**
-```python
-class SugerenciaOut(BaseModel):
-    id: int
-    movimiento_id: int
-    documento_id: int
-    score: float
-    capa_origen: int
-    documento: DocumentoResumen  # tipo, nif_proveedor, numero_factura, importe_total, fecha
-    movimiento: MovimientoResumen  # fecha, importe, concepto_propio, nombre_contraparte
-```
-
-**Confirmar match — flujo:**
-1. Verificar que `SugerenciaMatch` y `MovimientoBancario` pertenecen a `empresa_id`
-2. Si `mov.asiento_id` es None: crear asiento en FS (si aplica)
-3. Actualizar `mov.documento_id`, `mov.asiento_id`, `mov.estado_conciliacion = "conciliado"`
-4. `SugerenciaMatch.confirmada = True`, desactivar otras sugerencias del mismo movimiento
-5. `PatronConciliacion.frecuencia_exito += 1`
-6. Guardar en `audit_log_seguridad` acción `"conciliar"`
-
-**Rechazar match — flujo:**
-1. `SugerenciaMatch.activa = False`
-2. Si era la única sugerencia activa: `mov.estado_conciliacion = "pendiente"`
-
----
-
-### Task 8 — Confirmar/Rechazar + Bulk + Parcial N:1
-
-**Estado:** Pendiente
-**Extensión de Task 7**
-
-```
-POST /api/bancario/{empresa_id}/match-parcial    → N documentos → 1 movimiento
-```
-
-**Schema match-parcial (body):**
-```python
-{
-  "movimiento_id": int,
-  "documentos": [
-    {"documento_id": int, "importe_asignado": float},
-    ...
-  ]
-}
-```
-
-Flujo parcial:
-1. Validar suma(importe_asignado) ≈ mov.importe (tolerancia ≤0.05€)
-2. Crear `ConciliacionParcial` por cada documento
-3. `mov.estado_conciliacion = "conciliado_parcial"`
-4. Cada documento: `doc.estado = "conciliado_parcial"`
-
----
-
-### Task 11 — Dashboard `conciliacion-page.tsx` (5 pestañas)
-
-**Estado:** Pendiente
-**Archivo:** `dashboard/src/features/conciliacion/conciliacion-page.tsx`
-
-**Estructura de 5 pestañas:**
-
-| Pestaña | Contenido |
-|---------|-----------|
-| 1. Pendientes | Movimientos sin conciliar. Vista dividida: lista izquierda + detalles derecha |
-| 2. Sugerencias | `PanelSugerencias` — tarjetas con score, botones Confirmar/Rechazar |
-| 3. Revisión | Matches aproximados (capa 5) que necesitan validación manual |
-| 4. Conciliados | Histórico de matches confirmados, filtros por fecha |
-| 5. Patrones | `PatronesCrud` — gestión de patrones aprendidos |
-
-**Componentes ya implementados (disponibles):**
-- `match-card.tsx` — tarjeta de sugerencia con score visual
-- `panel-sugerencias.tsx` — panel con lista de sugerencias
-- `patrones-crud.tsx` — tabla CRUD patrones
-
-**Vista dividida (pestaña 1):**
-```
-┌─────────────────────┬──────────────────────────────┐
-│ Lista movimientos   │ Detalle movimiento seleccionado│
-│ pendientes          │ + Sugerencias IA               │
-│                     │ + PDF modal (si tiene doc)     │
-│ • [fecha] importe   │                                │
-│ • [fecha] importe   │ [Confirmar] [Rechazar] [Parcial]│
-└─────────────────────┴──────────────────────────────┘
-```
-
----
-
-### Task 12 — Routing + Sidebar
-
-**Estado:** Pendiente
-**Archivos:** `dashboard/src/App.tsx`, `dashboard/src/components/sidebar.tsx`
-
-- Añadir ruta `/conciliacion` en React Router
-- Añadir entrada "Conciliación" en sidebar (icono: `Banknote` o `ArrowLeftRight`)
-- Lazy import de `conciliacion-page.tsx`
-- Badge con contador de sugerencias pendientes
-
----
-
-### Task 13 — Regresión final y migración en producción
-
-**Estado:** Pendiente
+**Estado:** EN CURSO — A la espera de Deploy manual del usuario
 
 ```bash
-# 1. Tests completos
-python -m pytest --tb=no -q
-# Objetivo: todos los tests pasan (>2500)
-
-# 2. Migración 029 en producción
+# Script de migración 030 en producción (ejecutar manualmente)
 ssh carli@65.108.60.69
 cd /opt/apps/sfce
 docker exec sfce_api python -c "
 import importlib.util
-spec = importlib.util.spec_from_file_location('m029', 'sfce/db/migraciones/029_conciliacion_inteligente.py')
+spec = importlib.util.spec_from_file_location('m030', 'sfce/db/migraciones/030_sugerencia_confirmada.py')
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 from sfce.db.base import crear_motor, _leer_config_bd
 engine = crear_motor(_leer_config_bd())
 mod.aplicar(engine)
-print('Migración 029 aplicada en producción')
+print('Migración 030 aplicada en producción')
 "
-
-# 3. Deploy
-git push origin main  # → dispara CI/CD automático
 ```
 
 ---

@@ -262,13 +262,17 @@ export function useConciliar(empresaId: number) {
   })
 }
 
-/** Sugerencias filtradas por movimiento_id. Solo activa la query cuando movimientoId no es null. */
+/**
+ * Sugerencias de conciliación.
+ * - movimientoId = número → filtra por ese movimiento (pestaña Pendientes)
+ * - movimientoId = null   → devuelve todas las sugerencias activas (pestaña Sugerencias global)
+ */
 export function useSugerencias(empresaId: number, movimientoId: number | null) {
   const params = movimientoId != null ? `?movimiento_id=${movimientoId}` : ''
   return useQuery<SugerenciaOut[]>({
     queryKey: ['sugerencias', empresaId, movimientoId],
     queryFn: () => fetchJson<SugerenciaOut[]>(`${BASE}/${empresaId}/sugerencias${params}`),
-    enabled: empresaId > 0 && movimientoId != null,
+    enabled: empresaId > 0,
   })
 }
 

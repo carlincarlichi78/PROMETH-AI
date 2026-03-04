@@ -1,17 +1,18 @@
 /**
  * Tarjeta de sugerencia de match para revisión humana.
  * Muestra movimiento bancario vs documento pipeline con score visual.
+ * Usa SugerenciaOut (tipo canónico con MovimientoResumen).
  */
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { CheckCircle, XCircle, FileText } from 'lucide-react'
-import type { SugerenciaMatch } from '../api'
+import type { SugerenciaOut } from '../api'
 
 interface MatchCardProps {
-  sugerencia: SugerenciaMatch
-  onConfirmar: (movimientoId: number, documentoId: number) => void
-  onRechazar: (movimientoId: number, documentoId: number) => void
+  sugerencia: SugerenciaOut
+  onConfirmar: (movimientoId: number, sugerenciaId: number) => void
+  onRechazar: (sugerenciaId: number) => void
   onVerPdf?: (documentoId: number) => void
   cargando?: boolean
 }
@@ -57,7 +58,6 @@ export function MatchCard({
         <div className="space-y-1">
           <p className="font-semibold text-blue-700 uppercase text-xs tracking-wide">Banco</p>
           <p className="font-mono text-lg font-bold">
-            {movimiento.signo === 'H' ? '+' : '-'}
             {movimiento.importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
           </p>
           <p className="text-muted-foreground truncate">{movimiento.concepto_propio}</p>
@@ -95,7 +95,7 @@ export function MatchCard({
           variant="default"
           className="flex-1 bg-green-600 hover:bg-green-700"
           disabled={cargando}
-          onClick={() => onConfirmar(sugerencia.movimiento_id, sugerencia.documento_id)}
+          onClick={() => onConfirmar(sugerencia.movimiento_id, sugerencia.id)}
         >
           <CheckCircle className="w-4 h-4 mr-1" />
           Confirmar
@@ -105,7 +105,7 @@ export function MatchCard({
           variant="outline"
           className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
           disabled={cargando}
-          onClick={() => onRechazar(sugerencia.movimiento_id, sugerencia.documento_id)}
+          onClick={() => onRechazar(sugerencia.id)}
         >
           <XCircle className="w-4 h-4 mr-1" />
           Rechazar
