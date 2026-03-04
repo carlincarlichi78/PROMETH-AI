@@ -1,5 +1,29 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 80) | **Branch:** main | **Tests:** 188 PASS bancario | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 81) | **Branch:** main | **Tests:** N/A (solo frontend) | **Push:** OK
+
+---
+
+## Estado actual (sesión 81 — fix Pipeline en Vivo: WebSocket + upload + diagrama)
+
+**Sesión de diagnóstico y fix del módulo Pipeline en Vivo del dashboard. 1 commit frontend.**
+
+### Tasks completadas (sesión 81)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Diagnóstico WebSocket DESCONECTADO | ✅ DONE | Causa: `VITE_API_URL ?? 'localhost:8000'` no definida en CI build → conectaba al PC del usuario |
+| Fix WebSocket URL producción | ✅ DONE | `usePipelineWebSocket.ts` usa `window.location` en prod, `VITE_API_URL` solo en dev |
+| Zona upload en Pipeline en Vivo | ✅ DONE | `SubirDocumentos.tsx` — drag & drop PDF/ZIP, llama a `/api/gate0/ingestar` con JWT |
+| Fix fetch `/api/empresas` localhost | ✅ DONE | URL relativa en lugar de `VITE_API_URL ?? localhost` |
+| Diagrama flujo — fuentes de entrada | ✅ DONE | Chips "Correo / Watcher / Manual" sobre nodo Inbox en `PipelineFlowDiagram.tsx` |
+
+### Pendientes para sesión 82
+
+1. **Pipeline Gerardo en producción** — ejecutar pipeline OCR para poblar `documentos` empresa_id=2
+2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros
+3. **Tests E2E dashboard** — Playwright, flujos críticos conciliación
+4. **Error IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED, revisar App Password Google Workspace
+5. **scripts/pipeline.py modificado** — hay cambios sin commitear (`git status` muestra `M scripts/pipeline.py`), revisar y commitear si corresponde
 
 ---
 

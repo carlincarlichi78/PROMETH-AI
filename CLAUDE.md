@@ -234,20 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 80)
+## Estado actual (04/03/2026, sesion 81)
 
-**Rama**: `main` | **Ultimo commit**: `2a709359` (pusheado) | **Tests**: 188 PASS bancario
+**Rama**: `main` | **Ultimo commit**: `b42002cd` (pusheado) | **Tests**: 188 PASS bancario
 
-### Completado sesion 80
-- Migración 030 en producción: columna `confirmada` (boolean) en `sugerencias_match` ✓
-- Ingesta C43 Gerardo verificada: 1064 movimientos, hash_unico OK, 0 duplicados ✓
-- Cuentas duplicadas limpiadas: IDs 1-3 (IBAN corto) → `activa=False` en prod ✓
-- Fix interceptor Axios: ya estaba correcto en `api-client.ts`, sin cambios ✓
-- Motor /conciliar → V2: deployado manualmente (docker cp), commit `f4074dd7` ya en prod ✓
-- Diagnóstico: 0 sugerencias porque `documentos` solo tiene 1 registro sin importe para empresa_id=2
+### Completado sesion 81
+- Fix WebSocket DESCONECTADO en produccion: `usePipelineWebSocket.ts` usa `window.location` en prod ✓
+- Zona upload PDF/ZIP en Pipeline en Vivo: `SubirDocumentos.tsx` con drag&drop, llama `/api/gate0/ingestar` ✓
+- Fix fetch `/api/empresas` a URL relativa (antes usaba localhost en prod) ✓
+- Chips fuentes de entrada en diagrama: Correo/Watcher/Manual sobre nodo Inbox ✓
 
-### Proxima sesion — pendientes (sesion 81)
+### Proxima sesion — pendientes (sesion 82)
 1. **Pipeline Gerardo en produccion** — ejecutar pipeline OCR para poblar tabla `documentos` empresa_id=2
 2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros
-3. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
-4. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace
+3. **scripts/pipeline.py** — hay cambios sin commitear, revisar y commitear si corresponde
+4. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+5. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace

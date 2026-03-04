@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 80)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 81)
 
 ---
 
@@ -51,15 +51,14 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 80)
+## Estado rápido (sesión 81)
 
 - **Plan activo:** ninguno
-- **Completado sesión 80:** migración 030 prod, ingesta C43 verificada, cuentas duplicadas limpiadas (IDs 1-3 inactivas), motor /conciliar → V2 deployado manualmente
-- **Completado sesión 79:** fix dotenv GEMINI_API_KEY + dedup BD fallback
-- **Completado sesión 78:** endpoint `/conciliar` + extracción 3 tiers (pdfplumber→pymupdf→Gemini Flash)
-- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario
-- **Bloqueante:** tabla `documentos` solo tiene 1 doc para empresa_id=2 (sin importe). Motor V2 sin datos para conciliar.
-- **Próximo paso:** ejecutar pipeline Gerardo en producción para poblar `documentos` → verificar sugerencias
+- **Completado sesión 81:** fix WebSocket Pipeline en Vivo (DESCONECTADO en prod), zona upload PDF/ZIP en pipeline page, chips fuentes en diagrama
+- **Completado sesión 80:** migración 030 prod, ingesta C43 verificada, cuentas duplicadas limpiadas, motor /conciliar → V2 deployado
+- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario (sin cambiar)
+- **Pendiente crítico:** ejecutar pipeline Gerardo en producción para poblar `documentos` empresa_id=2 → verificar sugerencias motor V2
+- **Nota:** `scripts/pipeline.py` tiene cambios sin commitear — revisar en próxima sesión
 
 ---
 
