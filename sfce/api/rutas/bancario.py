@@ -300,6 +300,7 @@ class DocumentoResumen(BaseModel):
     numero_factura: Optional[str]
     importe_total: Optional[float]
     fecha: Optional[str]
+    nombre_archivo: Optional[str] = None
 
 
 class MovimientoResumen(BaseModel):
@@ -400,6 +401,7 @@ def listar_sugerencias(
                     numero_factura=doc.numero_factura,
                     importe_total=float(doc.importe_total) if doc.importe_total else None,
                     fecha=doc.fecha_documento.isoformat() if doc.fecha_documento else None,
+                    nombre_archivo=doc.nombre_archivo,
                 ) if doc else None,
             ))
         return resultado
