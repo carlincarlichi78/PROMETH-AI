@@ -236,27 +236,18 @@ Anotar resultado en el informe final.
 
 ## Estado actual (04/03/2026, sesion 68)
 
-**Rama**: `main` | **Ultimo commit**: `49c27cf` (pusheado) | **Tests**: 2708 PASS
+**Rama**: `main` | **Ultimo commit**: `ebd1a6c` (pusheado) | **Tests**: 2714 PASS
 
 ### Completado sesion 68
-- Push de todos los commits a origin/main
-- Migracion 028 aplicada en produccion (OK)
-- Migracion 029 aplicada en produccion (OK — fix AUTOINCREMENT→SERIAL para PG)
-- Tablas en prod: `sugerencias_match`, `patrones_conciliacion`, `conciliaciones_parciales`
-- Columnas en prod: `movimientos_bancarios.(documento_id, score_confianza, capa_match)`
-
-### Motor conciliacion — 5 capas (implementado y en produccion)
-- **Capa 1**: Importe exacto + fecha ±2d → auto si unívoco, sugerido si ambiguo
-- **Capa 2**: NIF proveedor en concepto bancario → score 0.90, ventana 5d
-- **Capa 3**: Nº factura normalizado en concepto → score 0.90, ventana 5d
-- **Capa 4**: Patrón aprendido (patron_limpio ⊂ concepto) → score 0.55-0.95
-- **Capa 5**: Importe ±1% → estado "revision"
-- **Endpoints**: `POST /conciliar-inteligente`, `GET /sugerencias`, `GET /saldo-descuadre`
-- **Acciones**: `POST /confirmar-match`, `/rechazar-match`, `/confirmar-bulk`, `/patrones` CRUD
+- **TAREA 1**: Telemetria OCR — `duracion_ocr_s` por llamada API, `cache_hit`, `duracion_registro_s`; seccion TELEMETRIA en informe auditoria
+- **TAREA 2**: Shift-left correcciones — `_pre_aplicar_correcciones_conocidas()` en `registration.py`: inyecta IVA0+4709 (suplidos), subcuenta destino (`reclasificar_linea`), subcuenta global proveedor — antes del POST a FS. Fase 4 sigue como red de seguridad.
+- **Fix**: tests `test_cif_pdf.py` y `test_ingesta_asesor.py` adaptados a interfaz lista de `_extraer_cif_pdf`
+- **Fix**: migracion 029 compatible con PostgreSQL (`SERIAL PRIMARY KEY`, `DEFAULT TRUE`)
+- **CI/CD**: deploy OK — 2714 PASS, imagen Docker en GHCR, produccion actualizada
 
 ### Proxima sesion — pendientes
 1. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
 2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
 3. **Conciliacion N:1 parcial** (endpoint planificado, no implementado)
-4. **Tests E2E dashboard** (Playwright)
-5. Actualizar `docs/LIBRO/_temas/` (19-bancario.md, 11-api-endpoints.md)
+4. **Migrar 029 en produccion**: tablas `sugerencias_match`, `patrones_conciliacion`, `conciliaciones_parciales` (si no se aplicaron aun)
+5. **Tests E2E dashboard** (Playwright)
