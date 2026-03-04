@@ -11,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 
 from sfce.db.base import Base
+import sfce.db.modelos_auth  # noqa: F401 — necesario para registrar Gestoria en el mapper antes de resolver relationships
 
 
 class EstadoOnboarding(str, enum.Enum):
@@ -371,6 +372,7 @@ class MovimientoBancario(Base):
     )
 
     cuenta = relationship("CuentaBancaria", back_populates="movimientos")
+    documento = relationship("Documento", foreign_keys=[documento_id], lazy="select")
 
 
 class ArchivoIngestado(Base):

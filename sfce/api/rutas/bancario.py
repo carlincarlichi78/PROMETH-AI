@@ -8,14 +8,15 @@ API bancaria:
   - Patrones aprendidos CRUD
   - Saldo descuadre bancario vs contable
 """
+from datetime import date
 from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.params import Query
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import func, case
-from sqlalchemy.orm import Session
+from sqlalchemy import func, case, or_
+from sqlalchemy.orm import Session, joinedload
 
 from sfce.api.app import get_sesion_factory
 from sfce.api.audit import AuditAccion, auditar, ip_desde_request
@@ -56,6 +57,27 @@ class CuentaBancariaOut(BaseModel):
     activa: bool
 
 
+class DocumentoEnMovimiento(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    numero_factura: Optional[str] = None
+    nif_proveedor: Optional[str] = None
+    nombre_emisor: Optional[str] = None   # de datos_ocr; fallback a nif_proveedor
+
+
+def _nombre_emisor_desde_ocr(doc) -> Optional[str]:
+    """Extrae nombre_emisor del JSON datos_ocr. Fallback: nif_proveedor."""
+    if doc is None:
+        return None
+    datos = doc.datos_ocr or {}
+    nombre = (
+        datos.get("emisor_nombre")
+        or datos.get("nombre_emisor")
+        or (datos.get("emisor") or {}).get("nombre")
+    )
+    return nombre or doc.nif_proveedor
+
+
 class MovimientoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,6 +91,7 @@ class MovimientoOut(BaseModel):
     estado_conciliacion: str
     asiento_id: Optional[int]
     cuenta_id: Optional[int] = None
+    documento: Optional[DocumentoEnMovimiento] = None  # backward-compat: Optional
 
 
 class MovimientosPaginados(BaseModel):
@@ -201,6 +224,10 @@ def listar_movimientos(
     request: Request,
     estado: Optional[str] = None,
     cuenta_id: Optional[int] = None,
+    q: Optional[str] = None,
+    fecha_desde: Optional[date] = None,
+    fecha_hasta: Optional[date] = None,
+    tipo: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
     sesion_factory=Depends(get_sesion_factory),
@@ -208,15 +235,43 @@ def listar_movimientos(
     usuario = obtener_usuario_actual(request)
     with sesion_factory() as session:
         verificar_acceso_empresa(usuario, empresa_id, session)
-        q = session.query(MovimientoBancario).filter_by(empresa_id=empresa_id)
+        qry = (
+            session.query(MovimientoBancario)
+            .options(joinedload(MovimientoBancario.documento))
+            .filter(MovimientoBancario.empresa_id == empresa_id)
+        )
         if estado:
-            q = q.filter_by(estado_conciliacion=estado)
+            qry = qry.filter(MovimientoBancario.estado_conciliacion == estado)
         if cuenta_id:
-            q = q.filter(MovimientoBancario.cuenta_id == cuenta_id)
-        total = q.count()
-        movs = q.order_by(MovimientoBancario.fecha.desc()).offset(offset).limit(limit).all()
-        items = [
-            MovimientoOut(
+            qry = qry.filter(MovimientoBancario.cuenta_id == cuenta_id)
+        if q:
+            patron = f"%{q}%"
+            qry = qry.filter(
+                or_(
+                    MovimientoBancario.concepto_propio.ilike(patron),
+                    MovimientoBancario.nombre_contraparte.ilike(patron),
+                )
+            )
+        if fecha_desde:
+            qry = qry.filter(MovimientoBancario.fecha >= fecha_desde)
+        if fecha_hasta:
+            qry = qry.filter(MovimientoBancario.fecha <= fecha_hasta)
+        if tipo:
+            qry = qry.filter(MovimientoBancario.tipo_clasificado == tipo)
+
+        total = qry.count()
+        movs = qry.order_by(MovimientoBancario.fecha.desc()).offset(offset).limit(limit).all()
+
+        items = []
+        for m in movs:
+            doc_out = None
+            if m.documento is not None:
+                doc_out = DocumentoEnMovimiento(
+                    numero_factura=m.documento.numero_factura,
+                    nif_proveedor=m.documento.nif_proveedor,
+                    nombre_emisor=_nombre_emisor_desde_ocr(m.documento),
+                )
+            items.append(MovimientoOut(
                 id=m.id,
                 fecha=m.fecha.isoformat(),
                 importe=float(m.importe),
@@ -227,9 +282,8 @@ def listar_movimientos(
                 estado_conciliacion=m.estado_conciliacion,
                 asiento_id=m.asiento_id,
                 cuenta_id=m.cuenta_id,
-            )
-            for m in movs
-        ]
+                documento=doc_out,
+            ))
         return MovimientosPaginados(items=items, total=total, offset=offset, limit=limit)
 
 
@@ -554,11 +608,10 @@ def confirmar_match(
 
         empresa = session.get(Empresa, empresa_id)
 
-        # --- Paso 1: FS (best-effort — fallo no bloquea conciliación local) ---
-        try:
-            asiento_id = _confirmar_en_fs(empresa, doc, mov)
-        except HTTPException:
-            asiento_id = doc.asiento_id  # sin asiento FS → conciliar solo en BD local
+        # --- Paso 1: FS (rollback estricto) ---
+        # Si _confirmar_en_fs lanza HTTPException(502), la excepción se propaga
+        # hacia arriba y session.commit() nunca se ejecuta → BD local sin cambios.
+        asiento_id = _confirmar_en_fs(empresa, doc, mov)
 
         # --- Paso 2: BD local (solo si FS no lanzó excepción) ---
         diferencia_info = gestionar_diferencia(mov.importe, doc.importe_total or mov.importe)

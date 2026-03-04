@@ -244,6 +244,15 @@ def ingestar_c43_multicuenta(
         )
         totales_cuenta = len(datos_cuenta["movimientos"])
 
+        # Actualizar saldo bancario con el valor del R33 del extracto
+        saldo_final = datos_cuenta.get("saldo_final")
+        if saldo_final is not None:
+            cuenta.saldo_bancario_ultimo = saldo_final
+            movs_lista = datos_cuenta.get("movimientos", [])
+            cuenta.fecha_saldo_ultimo = (
+                movs_lista[-1].fecha_operacion if movs_lista else date.today()
+            )
+
         total_nuevos += nuevos
         total_duplicados += duplicados
         total_movimientos += totales_cuenta

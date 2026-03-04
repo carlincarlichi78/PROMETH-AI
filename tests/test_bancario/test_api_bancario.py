@@ -191,28 +191,31 @@ class TestMovimientos:
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.get("/api/bancario/999/movimientos", headers=hdrs)
         assert resp.status_code == 200
-        assert resp.json() == []
+        data = resp.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     def test_listar_movimientos_con_datos(self, client, token_superadmin):
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
-        # Empresa 30 debería tener movimientos si el test de ingesta corrió
         resp = client.get("/api/bancario/30/movimientos", headers=hdrs)
         assert resp.status_code == 200
-        assert isinstance(resp.json(), list)
+        data = resp.json()
+        assert "items" in data
+        assert isinstance(data["items"], list)
 
     def test_listar_movimientos_filtro_estado(self, client, token_superadmin):
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.get("/api/bancario/30/movimientos?estado=pendiente", headers=hdrs)
         assert resp.status_code == 200
-        movs = resp.json()
-        for mov in movs:
+        items = resp.json()["items"]
+        for mov in items:
             assert mov["estado_conciliacion"] == "pendiente"
 
     def test_listar_movimientos_paginacion(self, client, token_superadmin):
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.get("/api/bancario/30/movimientos?limit=1&offset=0", headers=hdrs)
         assert resp.status_code == 200
-        assert len(resp.json()) <= 1
+        assert len(resp.json()["items"]) <= 1
 
 
 # ---------------------------------------------------------------------------
