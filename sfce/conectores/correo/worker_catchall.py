@@ -4,6 +4,7 @@ Flujo:
   email_data → parsear destinatario → resolver empresa →
   extraer hints asunto → validar adjuntos PDF → guardar en disk → encolar Gate 0
 """
+import asyncio
 import hashlib
 import json
 import logging
@@ -26,6 +27,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 DIRECTORIO_DOCS = Path("docs")
+
+
+def _emitir_ws_nuevo_pdf(empresa_id: int, nombre: str, fuente: str = "correo") -> None:
+    """Emite evento WS watcher_nuevo_pdf desde contexto síncrono. No bloquea si falla."""
+    try:
+        from sfce.api.websocket import gestor_ws, EVENTO_WATCHER_NUEVO_PDF
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(gestor_ws.emitir_a_empresa(empresa_id, EVENTO_WATCHER_NUEVO_PDF, {
+                "empresa_id": empresa_id,
+                "nombre_archivo": nombre,
+                "fuente": fuente,
+            }))
+    except Exception:
+        pass
 
 
 def _encolar_archivo(
@@ -91,6 +107,7 @@ def _encolar_archivo(
     sesion.add(item)
     sesion.flush()
     logger.info("Encolado '%s' para empresa %d", nombre, empresa_id)
+    _emitir_ws_nuevo_pdf(empresa_id, nombre, fuente="correo")
     return True
 
 
