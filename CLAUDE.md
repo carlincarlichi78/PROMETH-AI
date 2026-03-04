@@ -236,7 +236,7 @@ Anotar resultado en el informe final.
 
 ## Estado actual (04/03/2026, sesion 88)
 
-**Rama**: `main` | **Ultimo commit**: *(ver git log)* (pusheado) | **Build**: OK | **Tests**: 2568 PASS
+**Rama**: `main` | **Ultimo commit**: `369d8829` (pusheado) | **Build**: OK | **Tests**: 2568 PASS
 
 ### Completado sesion 88
 - Fix bug: confirmar sugerido no hacía nada (error silencioso 502 FS) — `SeccionSugerencias` + `PanelSugerencias` muestran mensaje de error ✓
