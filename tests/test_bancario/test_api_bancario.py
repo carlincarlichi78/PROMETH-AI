@@ -246,3 +246,80 @@ class TestConciliacion:
         assert "pendientes" in data
         assert "revision" in data
         assert "pct_conciliado" in data
+
+
+# ---------------------------------------------------------------------------
+# Tests — Sugerencias y Patrones (Tasks 7-8)
+# ---------------------------------------------------------------------------
+
+class TestSugerencias:
+    def test_listar_sugerencias_vacio(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/bancario/999/sugerencias", headers=hdrs)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_listar_patrones_vacio(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/bancario/999/patrones", headers=hdrs)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_saldo_descuadre_sin_cuentas(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/bancario/999/saldo-descuadre", headers=hdrs)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_saldo_descuadre_estructura(self, client, token_superadmin):
+        """Empresa 10 tiene una cuenta creada — verifica estructura de respuesta."""
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.get("/api/bancario/10/saldo-descuadre", headers=hdrs)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list)
+        if data:
+            item = data[0]
+            assert "saldo_bancario" in item
+            assert "saldo_contable" in item
+            assert "diferencia" in item
+            assert "alerta" in item
+
+    def test_conciliar_inteligente_sin_datos(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/conciliar-inteligente", headers=hdrs)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "conciliados_auto" in data
+        assert "pendientes" in data
+
+    def test_confirmar_match_no_encontrado(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/confirmar-match", json={
+            "movimiento_id": 99999,
+            "documento_id": 99999,
+        }, headers=hdrs)
+        assert resp.status_code == 404
+
+    def test_rechazar_match_no_encontrado(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/rechazar-match", json={
+            "movimiento_id": 99999,
+            "documento_id": 99999,
+        }, headers=hdrs)
+        assert resp.status_code == 404
+
+    def test_confirmar_bulk_sin_sugerencias(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.post("/api/bancario/999/confirmar-bulk", json={
+            "score_minimo": 0.95,
+        }, headers=hdrs)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["confirmados"] == 0
+
+    def test_eliminar_patron_no_encontrado(self, client, token_superadmin):
+        hdrs = {"Authorization": f"Bearer {token_superadmin}"}
+        resp = client.delete("/api/bancario/999/patrones/99999", headers=hdrs)
+        assert resp.status_code == 404
