@@ -384,6 +384,42 @@ Plan: `docs/plans/2026-03-03-inbox-watcher.md`
 
 ---
 
+## Estado actual (04/03/2026, sesión 65 — Panel documentos enriquecido con asiento FS on-demand)
+
+**Rama activa**: `main`
+**Último commit**: `c190f04`
+**Tests**: 2665 PASS (sin cambios), 0 FAILED
+
+### ✅ COMPLETADO en sesión 65
+
+| Tarea | Commit | Detalle |
+|-------|--------|---------|
+| Endpoint `GET /api/documentos/{empresa_id}/{doc_id}/asiento-fs` | `c190f04` | Consulta FS API on-demand: factura → idasiento → partidas. Usa `obtener_credenciales_gestoria()` |
+| Botón lazy en DocumentoPanel | `c190f04` | Cuando `asiento_id=NULL` y hay `factura_id_fs`: botón "Consultar asiento en FS" + `useQuery(enabled: buscarFs)` |
+| `TablaPartidas` extraído | `c190f04` | Componente reutilizable para casos local y FS on-demand |
+
+**Flujo**: panel documento → sin asiento local pero con `factura_id_fs` → botón "Consultar asiento en FS" → `GET /api/documentos/{id}/asiento-fs` → muestra idasiento_fs + fecha + concepto + partidas debe/haber
+
+### ⚡ PRÓXIMA SESIÓN — Pendientes
+
+**1. Migración 028 en producción** (del sesión 64 — pendiente)
+```bash
+ssh carli@65.108.60.69
+docker exec sfce_api python -c "
+import sys, importlib.util
+spec = importlib.util.spec_from_file_location('m028', 'sfce/db/migraciones/028_cuenta_correo_asesor.py')
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+from sqlalchemy import create_engine; import os
+mod.aplicar(create_engine(os.environ['DATABASE_URL']))
+"
+```
+
+**2. Design doc conciliación bancaria** (`0cc971d`) — implementar motor 5 capas
+
+**3. Push de los 4 commits locales al remoto** (actualmente `ahead by 4`)
+
+---
+
 ## Estado actual (03/03/2026, sesión 64 — Fix pipeline email asesor completo)
 
 **Rama activa**: `main`
