@@ -24,7 +24,7 @@ from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
 from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes, ingestar_c43_multicuenta
 from sfce.core.motor_conciliacion import MotorConciliacion
 from sfce.db.modelos import (
-    CuentaBancaria, MovimientoBancario, SugerenciaMatch,
+    Asiento, CuentaBancaria, MovimientoBancario, SugerenciaMatch,
     PatronConciliacion, Documento, ConciliacionParcial, Empresa,
 )
 
@@ -526,55 +526,65 @@ def saldo_descuadre(
 # Endpoints — Confirmar / Rechazar / Bulk (Task 8)
 # ---------------------------------------------------------------------------
 
-def _confirmar_en_fs(empresa: Empresa, doc: Documento, mov: MovimientoBancario) -> Optional[int]:
+def _confirmar_en_fs(
+    empresa: Empresa,
+    doc: Documento,
+    mov: MovimientoBancario,
+    session: Session,
+) -> Optional[int]:
     """
     Vincula o crea el asiento en FacturaScripts de forma atómica.
 
     Lógica:
-      - Si el movimiento ya tiene asiento_id → nada que hacer en FS.
-      - Si la empresa no tiene idempresa_fs → modo local (sin FS).
-      - Si el doc tiene asiento_id → verificar que existe en FS.
-      - Si ninguno tiene asiento → crear asiento nuevo en FS (requiere codejercicio_fs).
+      - Si el movimiento ya tiene asiento_id local → nada que hacer.
+      - Si el doc ya tiene asiento_id local → reusar ese registro.
+      - Si la empresa no tiene idempresa_fs → modo local sin asiento.
+      - Si ninguno tiene asiento → crear en FS + registro local (satisface FK).
 
-    Returns: asiento_id a usar en BD local (None si modo local sin asiento).
-    Raises: HTTPException 502 si FS falla o no está disponible.
+    Returns: asientos.id (PK local) a usar en movimiento. None si sin asiento.
+    Raises: HTTPException 502 si FS falla.
     """
     import requests as _requests
-    from sfce.core.fs_api import api_get_one, api_post, obtener_credenciales_gestoria
+    from sfce.core.fs_api import api_post, obtener_credenciales_gestoria
 
     if mov.asiento_id:
         return mov.asiento_id
 
-    if not empresa.idempresa_fs:
+    if doc.asiento_id:
         return doc.asiento_id
 
-    fs_url, token = obtener_credenciales_gestoria(empresa.gestoria)
-
-    if doc.asiento_id:
-        try:
-            resultado = api_get_one(f"asientos/{doc.asiento_id}", token=token, base_url=fs_url)
-            if resultado is None:
-                raise HTTPException(404, f"Asiento {doc.asiento_id} no encontrado en FacturaScripts")
-            return doc.asiento_id
-        except _requests.HTTPError as exc:
-            raise HTTPException(502, f"Error FacturaScripts al verificar asiento: {exc}")
-        except _requests.ConnectionError:
-            raise HTTPException(502, "FacturaScripts no disponible")
-
-    codejercicio = empresa.codejercicio_fs
-    if not codejercicio:
+    if not empresa.idempresa_fs or not empresa.codejercicio_fs:
         return None
+
+    fs_url, token = obtener_credenciales_gestoria(empresa.gestoria)
 
     try:
         resp = api_post("asientos", {
             "idempresa": empresa.idempresa_fs,
-            "codejercicio": codejercicio,
+            "codejercicio": empresa.codejercicio_fs,
             "concepto": f"Conciliación bancaria movimiento #{mov.id}",
         }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
-        return datos.get("idasiento")
+        idasiento_fs = datos.get("idasiento")
     except (_requests.HTTPError, _requests.ConnectionError) as exc:
         raise HTTPException(502, f"FacturaScripts no pudo crear asiento: {exc}")
+
+    if not idasiento_fs:
+        return None
+
+    # Crear registro local para satisfacer FK movimientos_bancarios.asiento_id
+    asiento_local = Asiento(
+        empresa_id=empresa.id,
+        idasiento_fs=int(idasiento_fs),
+        fecha=mov.fecha,
+        concepto=f"Conciliación bancaria movimiento #{mov.id}",
+        ejercicio=empresa.codejercicio_fs,
+        origen="conciliacion",
+        sincronizado_fs=True,
+    )
+    session.add(asiento_local)
+    session.flush()
+    return asiento_local.id
 
 
 def _crear_asiento_directo_en_fs(
@@ -582,6 +592,7 @@ def _crear_asiento_directo_en_fs(
     mov: MovimientoBancario,
     cuenta_contable: str,
     concepto: str,
+    session: Session,
 ) -> Optional[int]:
     """
     Crea un asiento de 2 líneas en FacturaScripts para un movimiento bancario
@@ -594,7 +605,7 @@ def _crear_asiento_directo_en_fs(
           Debe:  5720000000 (banco) (importe)
           Haber: cuenta_contable (importe)
 
-    Devuelve el idasiento creado.
+    Devuelve asientos.id (PK local) del asiento creado.
     Raises: HTTPException(502) si FS falla o no está disponible.
     """
     import requests as _requests
@@ -631,10 +642,26 @@ def _crear_asiento_directo_en_fs(
             "lineas": lineas,
         }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
-        idasiento = datos.get("idasiento")
-        return int(idasiento) if idasiento else None
+        idasiento_fs = datos.get("idasiento")
     except (_requests.HTTPError, _requests.ConnectionError) as exc:
         raise HTTPException(502, f"FacturaScripts no pudo crear asiento directo: {exc}")
+
+    if not idasiento_fs:
+        return None
+
+    # Crear registro local para satisfacer FK movimientos_bancarios.asiento_id
+    asiento_local = Asiento(
+        empresa_id=empresa.id,
+        idasiento_fs=int(idasiento_fs),
+        fecha=mov.fecha,
+        concepto=concepto,
+        ejercicio=empresa.codejercicio_fs,
+        origen="conciliacion_directa",
+        sincronizado_fs=True,
+    )
+    session.add(asiento_local)
+    session.flush()
+    return asiento_local.id
 
 
 @router.post("/{empresa_id}/confirmar-match")
@@ -677,7 +704,7 @@ def confirmar_match(
         # --- Paso 1: FS (rollback estricto) ---
         # Si _confirmar_en_fs lanza HTTPException(502), la excepción se propaga
         # hacia arriba y session.commit() nunca se ejecuta → BD local sin cambios.
-        asiento_id = _confirmar_en_fs(empresa, doc, mov)
+        asiento_id = _confirmar_en_fs(empresa, doc, mov, session)
 
         # --- Paso 2: BD local (solo si FS no lanzó excepción) ---
         diferencia_info = gestionar_diferencia(mov.importe, doc.importe_total or mov.importe)
@@ -817,7 +844,7 @@ def conciliar_directo(
         # Crear asiento en FS (best-effort: si no hay FS configurado devuelve None)
         asiento_id = None
         if empresa and empresa.idempresa_fs:
-            asiento_id = _crear_asiento_directo_en_fs(empresa, mov, body.cuenta_contable, body.concepto)
+            asiento_id = _crear_asiento_directo_en_fs(empresa, mov, body.cuenta_contable, body.concepto, session)
 
         # Actualizar movimiento
         mov.estado_conciliacion = "manual"
