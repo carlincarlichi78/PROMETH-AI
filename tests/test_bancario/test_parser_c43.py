@@ -5,7 +5,20 @@ from decimal import Decimal
 
 import pytest
 
+from sfce.conectores.bancario.iban_utils import construir_iban_es
 from sfce.conectores.bancario.parser_c43 import MovimientoC43, parsear_c43
+
+
+# ---------------------------------------------------------------------------
+# Helper: primera cuenta de un extracto de una sola cuenta
+# ---------------------------------------------------------------------------
+
+def _p1(contenido: str) -> dict:
+    """Parsea y devuelve la primera (y normalmente única) cuenta del extracto."""
+    cuentas = parsear_c43(contenido)
+    assert cuentas, "El extracto no produjo ninguna cuenta"
+    return cuentas[0]
+
 
 # ---------------------------------------------------------------------------
 # Constructores de fixtures — formato estándar AEB
@@ -137,41 +150,38 @@ C43_SALDO_NEGATIVO = "\n".join([_r11(saldo="000000000000050000", signo="D"), R22
 
 class TestCabecera:
     def test_banco_codigo(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["banco_codigo"] == "2100"
+        assert _p1(C43_MINIMO)["banco_codigo"] == "2100"
 
-    def test_iban(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["iban"] == "210038890200229053"
+    def test_iban_es_completo(self):
+        """IBAN debe ser el completo de 24 chars calculado con Módulo 11 + 97."""
+        iban = _p1(C43_MINIMO)["iban"]
+        assert iban.startswith("ES")
+        assert len(iban) == 24
+        # Debe coincidir con la utilidad de cálculo
+        assert iban == construir_iban_es("2100", "3889", "0200229053")
 
     def test_divisa(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["divisa"] == "EUR"
+        assert _p1(C43_MINIMO)["divisa"] == "EUR"
 
     def test_saldo_inicial_positivo(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["saldo_inicial"] == Decimal("100.00")
+        assert _p1(C43_MINIMO)["saldo_inicial"] == Decimal("100.00")
 
     def test_saldo_inicial_negativo(self):
-        r = parsear_c43(C43_SALDO_NEGATIVO)
-        assert r["saldo_inicial"] == Decimal("-500.00")
+        assert _p1(C43_SALDO_NEGATIVO)["saldo_inicial"] == Decimal("-500.00")
 
     def test_saldo_final(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["saldo_final"] == Decimal("850.00")
+        assert _p1(C43_MINIMO)["saldo_final"] == Decimal("850.00")
 
 
 class TestMovimientos:
     def test_num_movimientos(self):
-        r = parsear_c43(C43_MINIMO)
-        assert len(r["movimientos"]) == 2
+        assert len(_p1(C43_MINIMO)["movimientos"]) == 2
 
     def test_extracto_vacio(self):
-        r = parsear_c43(C43_VACIO)
-        assert len(r["movimientos"]) == 0
+        assert len(_p1(C43_VACIO)["movimientos"]) == 0
 
     def test_cargo(self):
-        mov = parsear_c43(C43_MINIMO)["movimientos"][0]
+        mov = _p1(C43_MINIMO)["movimientos"][0]
         assert mov.fecha_operacion == date(2025, 11, 30)
         assert mov.fecha_valor == date(2025, 11, 30)
         assert mov.importe == Decimal("15.00")
@@ -180,7 +190,7 @@ class TestMovimientos:
         assert "COMPRA SUPERMERCADO" in mov.concepto_propio
 
     def test_abono(self):
-        mov = parsear_c43(C43_MINIMO)["movimientos"][1]
+        mov = _p1(C43_MINIMO)["movimientos"][1]
         assert mov.fecha_operacion == date(2025, 12, 2)
         assert mov.importe == Decimal("20.00")
         assert mov.signo == "H"
@@ -188,50 +198,77 @@ class TestMovimientos:
         assert "TRANSFERENCIA RECIBIDA" in mov.concepto_propio
 
     def test_referencias(self):
-        mov = parsear_c43(C43_MINIMO)["movimientos"][0]
+        mov = _p1(C43_MINIMO)["movimientos"][0]
         assert mov.referencia_1 == "REF001"
         assert mov.referencia_2 == "REF002"
 
     def test_num_orden_secuencial(self):
-        movs = parsear_c43(C43_MINIMO)["movimientos"]
+        movs = _p1(C43_MINIMO)["movimientos"]
         assert movs[0].num_orden == 1
         assert movs[1].num_orden == 2
 
     def test_movimiento_es_dataclass(self):
-        mov = parsear_c43(C43_MINIMO)["movimientos"][0]
+        mov = _p1(C43_MINIMO)["movimientos"][0]
         assert isinstance(mov, MovimientoC43)
 
 
 class TestNorma43Extendida:
     def test_concepto_complementario_concatenado(self):
-        r = parsear_c43(C43_EXTENDIDO)
-        mov = r["movimientos"][0]
+        mov = _p1(C43_EXTENDIDO)["movimientos"][0]
         assert "COMPRA SUPERMERCADO" in mov.concepto_propio
         assert "TEXTO ADICIONAL CONCEPTO" in mov.concepto_propio
 
     def test_reg23_no_afecta_movimiento_siguiente(self):
-        r = parsear_c43(C43_EXTENDIDO)
-        mov2 = r["movimientos"][1]
+        mov2 = _p1(C43_EXTENDIDO)["movimientos"][1]
         assert "TEXTO ADICIONAL CONCEPTO" not in mov2.concepto_propio
 
     def test_num_movimientos_con_reg23(self):
-        r = parsear_c43(C43_EXTENDIDO)
-        assert len(r["movimientos"]) == 2
+        assert len(_p1(C43_EXTENDIDO)["movimientos"]) == 2
 
 
 class TestCasosEdge:
     def test_archivo_vacio_no_crashea(self):
-        r = parsear_c43("")
-        assert r["movimientos"] == []
+        cuentas = parsear_c43("")
+        assert cuentas == []
 
     def test_lineas_cortas_ignoradas(self):
         contenido = "\n".join([_r11(), "22", R22_CARGO, _r33(), "88"])
-        r = parsear_c43(contenido)
-        assert len(r["movimientos"]) == 1
+        assert len(_p1(contenido)["movimientos"]) == 1
 
-    def test_multiples_reg11_usa_primero(self):
-        r = parsear_c43(C43_MINIMO)
-        assert r["banco_codigo"] == "2100"
+    def test_cuenta_unica_retorna_lista_un_elemento(self):
+        cuentas = parsear_c43(C43_MINIMO)
+        assert len(cuentas) == 1
+        assert cuentas[0]["banco_codigo"] == "2100"
+
+
+class TestMultiCuenta:
+    """Verifica el soporte de múltiples registros R11 en un solo archivo."""
+
+    def _dos_cuentas(self) -> str:
+        c1 = "\n".join([_r11(cuenta="0200229053"), R22_CARGO, _r33(cuenta="0200229053"), ""])
+        c2 = "\n".join([_r11(banco="2100", oficina="6848", cuenta="0200053517"), R22_ABONO, _r33(banco="2100", oficina="6848", cuenta="0200053517"), "88"])
+        return c1 + c2
+
+    def test_detecta_dos_cuentas(self):
+        cuentas = parsear_c43(self._dos_cuentas())
+        assert len(cuentas) == 2
+
+    def test_ibans_distintos(self):
+        cuentas = parsear_c43(self._dos_cuentas())
+        ibans = [c["iban"] for c in cuentas]
+        assert ibans[0] != ibans[1]
+        assert all(i.startswith("ES") and len(i) == 24 for i in ibans)
+
+    def test_movimientos_separados_por_cuenta(self):
+        cuentas = parsear_c43(self._dos_cuentas())
+        assert len(cuentas[0]["movimientos"]) == 1
+        assert len(cuentas[1]["movimientos"]) == 1
+
+    def test_num_orden_reinicia_por_cuenta(self):
+        """num_orden se reinicia a 1 para cada cuenta (necesario para hash correcto)."""
+        cuentas = parsear_c43(self._dos_cuentas())
+        assert cuentas[0]["movimientos"][0].num_orden == 1
+        assert cuentas[1]["movimientos"][0].num_orden == 1
 
 
 # ---------------------------------------------------------------------------
@@ -246,62 +283,61 @@ class TestCaixaBankFormato:
 
     def test_detecta_formato_caixabank(self):
         r22 = _r22_caixabank("250115", "250115", "03", "00000000001500")
-        r = parsear_c43(_extracto_caixabank(r22))
-        assert len(r["movimientos"]) == 1
+        assert len(_p1(_extracto_caixabank(r22))["movimientos"]) == 1
 
     def test_fecha_operacion_caixabank(self):
         r22 = _r22_caixabank("250115", "250117", "03", "00000000001500")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.fecha_operacion == date(2025, 1, 15)
 
     def test_fecha_valor_caixabank(self):
         r22 = _r22_caixabank("250115", "250117", "03", "00000000001500")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.fecha_valor == date(2025, 1, 17)
 
     def test_importe_caixabank(self):
         r22 = _r22_caixabank("250115", "250115", "03", "00000000002599")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.importe == Decimal("25.99")
 
     def test_importe_entero_caixabank(self):
         r22 = _r22_caixabank("250115", "250115", "03", "00000000010000")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.importe == Decimal("100.00")
 
     def test_signo_adeudo_concepto_03(self):
         """Concepto 03 (adeudo genérico) → signo 'D'."""
         r22 = _r22_caixabank("250115", "250115", "03", "00000000001500")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.signo == "D"
 
     def test_signo_abono_concepto_02(self):
         """Concepto 02 (abono genérico) → signo 'H'."""
         r22 = _r22_caixabank("250115", "250115", "02", "00000000005000")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.signo == "H"
 
     def test_signo_abono_concepto_06(self):
         """Concepto 06 (nómina/abono) → signo 'H'."""
         r22 = _r22_caixabank("250115", "250115", "06", "00000000120000")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.signo == "H"
 
     def test_signo_adeudo_concepto_07(self):
         """Concepto 07 (comisiones bancarias) → signo 'D'."""
         r22 = _r22_caixabank("250115", "250115", "07", "00000000001200")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.signo == "D"
 
     def test_signo_adeudo_concepto_12(self):
         """Concepto 12 (tarjeta/domiciliación) → signo 'D'."""
         r22 = _r22_caixabank("250115", "250115", "12", "00000000001000")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.signo == "D"
 
     def test_concepto_comun_caixabank(self):
         r22 = _r22_caixabank("250115", "250115", "03", "00000000001500")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.concepto_comun == "03"
 
     def test_concepto_propio_desde_r23(self):
@@ -309,24 +345,25 @@ class TestCaixaBankFormato:
         r22 = _r22_caixabank("250115", "250115", "03", "00000000001000")
         r23 = "2304" + "AMAZON PAYMENTS EUROPE             ".ljust(72)[:72]
         extracto = "\n".join([_r11_caixabank(), r22, r23, "88"])
-        mov = parsear_c43(extracto)["movimientos"][0]
+        mov = _p1(extracto)["movimientos"][0]
         assert "AMAZON PAYMENTS EUROPE" in mov.concepto_propio
 
     def test_banco_codigo_caixabank(self):
         r22 = _r22_caixabank("250115", "250115", "02", "00000000001000")
-        r = parsear_c43(_extracto_caixabank(r22))
-        assert r["banco_codigo"] == "2100"
+        assert _p1(_extracto_caixabank(r22))["banco_codigo"] == "2100"
 
-    def test_iban_caixabank(self):
+    def test_iban_caixabank_es_completo(self):
+        """El IBAN generado para CaixaBank debe tener 24 chars con prefijo ES."""
         r22 = _r22_caixabank("250115", "250115", "02", "00000000001000")
-        r = parsear_c43(_extracto_caixabank(r22))
-        assert r["iban"] == "210038890200255608"
+        iban = _p1(_extracto_caixabank(r22))["iban"]
+        assert iban.startswith("ES")
+        assert len(iban) == 24
+        assert iban == construir_iban_es("2100", "3889", "0200255608")
 
     def test_divisa_por_defecto_eur_caixabank(self):
         """CaixaBank no tiene campo divisa ISO en R11 → debe retornar 'EUR'."""
         r22 = _r22_caixabank("250115", "250115", "02", "00000000001000")
-        r = parsear_c43(_extracto_caixabank(r22))
-        assert r["divisa"] == "EUR"
+        assert _p1(_extracto_caixabank(r22))["divisa"] == "EUR"
 
     def test_multiples_movimientos_caixabank(self):
         movs = [
@@ -334,7 +371,7 @@ class TestCaixaBankFormato:
             _r22_caixabank("250115", "250115", "02", "00000000150000"),
             _r22_caixabank("250131", "250131", "07", "00000000001200"),
         ]
-        r = parsear_c43(_extracto_caixabank(*movs))
+        r = _p1(_extracto_caixabank(*movs))
         assert len(r["movimientos"]) == 3
         assert r["movimientos"][0].signo == "D"
         assert r["movimientos"][1].signo == "H"
@@ -345,14 +382,14 @@ class TestCaixaBankFormato:
             _r22_caixabank("250101", "250101", "03", "00000000001000"),
             _r22_caixabank("250115", "250115", "02", "00000000002000"),
         ]
-        r = parsear_c43(_extracto_caixabank(*movs))
+        r = _p1(_extracto_caixabank(*movs))
         assert r["movimientos"][0].num_orden == 1
         assert r["movimientos"][1].num_orden == 2
 
     def test_fecha_diciembre_caixabank(self):
         """Verifica parsing de fecha de diciembre (mes 12) en CaixaBank."""
         r22 = _r22_caixabank("251218", "251220", "02", "00000000300000")
-        mov = parsear_c43(_extracto_caixabank(r22))["movimientos"][0]
+        mov = _p1(_extracto_caixabank(r22))["movimientos"][0]
         assert mov.fecha_operacion == date(2025, 12, 18)
         assert mov.fecha_valor == date(2025, 12, 20)
 
@@ -372,36 +409,44 @@ class TestArchivoRealCaixaBank:
         with open(_REAL_C43, encoding="latin-1") as f:
             return parsear_c43(f.read())
 
+    def test_parsea_al_menos_una_cuenta(self):
+        cuentas = self._parsear()
+        assert len(cuentas) >= 1
+
     def test_parsea_todos_los_movimientos(self):
         """TT191225.208.txt tiene 505 registros R22."""
-        r = self._parsear()
-        assert len(r["movimientos"]) >= 500
+        cuentas = self._parsear()
+        total = sum(len(c["movimientos"]) for c in cuentas)
+        assert total >= 500
 
     def test_banco_caixabank(self):
-        r = self._parsear()
-        assert r["banco_codigo"] == "2100"
+        assert self._parsear()[0]["banco_codigo"] == "2100"
 
     def test_divisa_eur(self):
-        r = self._parsear()
-        assert r["divisa"] == "EUR"
+        assert self._parsear()[0]["divisa"] == "EUR"
+
+    def test_ibans_completos(self):
+        for cuenta in self._parsear():
+            assert cuenta["iban"].startswith("ES")
+            assert len(cuenta["iban"]) == 24
 
     def test_todas_las_fechas_validas(self):
-        r = self._parsear()
-        for mov in r["movimientos"]:
-            assert 2024 <= mov.fecha_operacion.year <= 2026
+        for cuenta in self._parsear():
+            for mov in cuenta["movimientos"]:
+                assert 2024 <= mov.fecha_operacion.year <= 2026
 
     def test_todos_los_importes_positivos(self):
-        r = self._parsear()
-        for mov in r["movimientos"]:
-            assert mov.importe > 0
+        for cuenta in self._parsear():
+            for mov in cuenta["movimientos"]:
+                assert mov.importe > 0
 
     def test_todos_los_signos_validos(self):
-        r = self._parsear()
-        for mov in r["movimientos"]:
-            assert mov.signo in ("D", "H")
+        for cuenta in self._parsear():
+            for mov in cuenta["movimientos"]:
+                assert mov.signo in ("D", "H")
 
-    def test_num_orden_secuencial(self):
-        r = self._parsear()
-        movs = r["movimientos"]
-        for i, mov in enumerate(movs, 1):
-            assert mov.num_orden == i
+    def test_num_orden_secuencial_por_cuenta(self):
+        for cuenta in self._parsear():
+            movs = cuenta["movimientos"]
+            for i, mov in enumerate(movs, 1):
+                assert mov.num_orden == i

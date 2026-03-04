@@ -25,6 +25,8 @@ from decimal import Decimal
 from datetime import date
 from typing import List, Optional
 
+from sfce.conectores.bancario.iban_utils import construir_iban_es
+
 
 @dataclass
 class MovimientoC43:
@@ -37,7 +39,7 @@ class MovimientoC43:
     concepto_propio: str       # texto libre (R22 concepto + R23 concatenados)
     referencia_1: str
     referencia_2: str
-    num_orden: int             # posición en el archivo, para hash de deduplicación
+    num_orden: int             # posición dentro de su cuenta, para hash de deduplicación
 
 
 # Códigos concepto_común que indican abono (H) en formato CaixaBank.
@@ -63,34 +65,45 @@ def _es_formato_caixabank(lineas: list) -> bool:
     return False
 
 
-def parsear_c43(contenido: str) -> dict:
+def parsear_c43(contenido: str) -> list:
     """
-    Parsea un extracto Norma 43 en texto plano (encoding latin-1).
+    Parsea un extracto Norma 43. Soporta múltiples cuentas (múltiples R11).
 
     Detecta automáticamente formato estándar AEB vs CaixaBank extendido.
 
-    Devuelve:
-    {
-        'banco_codigo': str,       # "2100"
-        'iban': str,               # banco+oficina+cuenta sin espacios
-        'saldo_inicial': Decimal,
-        'saldo_final': Decimal,
-        'divisa': str,             # "EUR"
-        'movimientos': List[MovimientoC43],
-    }
+    Devuelve lista de dicts, uno por cuenta detectada:
+    [
+        {
+            'banco_codigo': str,       # "2100"
+            'iban': str,               # IBAN completo 24 chars (ES + check + CCC)
+            'saldo_inicial': Decimal,
+            'saldo_final': Decimal,
+            'divisa': str,             # "EUR"
+            'movimientos': List[MovimientoC43],
+        },
+        ...
+    ]
     """
     lineas = contenido.splitlines()
-    resultado: dict = {
-        "banco_codigo": "",
-        "iban": "",
-        "saldo_inicial": Decimal("0"),
-        "saldo_final": Decimal("0"),
-        "divisa": "EUR",
-        "movimientos": [],
-    }
-    movimiento_actual: Optional[MovimientoC43] = None
-    num_orden = 0
     es_caixabank = _es_formato_caixabank(lineas)
+
+    cuentas: list = []
+    cuenta_actual: Optional[dict] = None
+    movimiento_actual: Optional[MovimientoC43] = None
+    num_orden = 0  # se reinicia por cada cuenta
+
+    def _cerrar_movimiento() -> None:
+        nonlocal movimiento_actual
+        if movimiento_actual is not None and cuenta_actual is not None:
+            cuenta_actual["movimientos"].append(movimiento_actual)
+            movimiento_actual = None
+
+    def _cerrar_cuenta() -> None:
+        nonlocal cuenta_actual
+        _cerrar_movimiento()
+        if cuenta_actual is not None:
+            cuentas.append(cuenta_actual)
+            cuenta_actual = None
 
     for linea in lineas:
         if len(linea) < 2:
@@ -98,30 +111,42 @@ def parsear_c43(contenido: str) -> dict:
         tipo = linea[:2]
 
         if tipo == "11":
-            # Cabecera de cuenta
-            resultado["banco_codigo"] = linea[2:6]
+            # Nueva cabecera de cuenta: cerrar la anterior si existe
+            _cerrar_cuenta()
+            num_orden = 0  # reiniciar contador de movimientos para esta cuenta
+
             banco   = linea[2:6]
             oficina = linea[6:10]
-            cuenta  = linea[10:20] if len(linea) > 20 else ""
-            resultado["iban"] = f"{banco}{oficina}{cuenta}"
+            num_cuenta = linea[10:20] if len(linea) > 20 else ""
+
+            iban = construir_iban_es(banco, oficina, num_cuenta)
+
+            cuenta_actual = {
+                "banco_codigo": banco,
+                "iban": iban,
+                "saldo_inicial": Decimal("0"),
+                "saldo_final": Decimal("0"),
+                "divisa": "EUR",
+                "movimientos": [],
+            }
+
             # Divisa: campo de 3 letras ISO solo en formato estándar.
             # CaixaBank no tiene divisa en R11 — [20:23] son dígitos de fecha_ini.
             divisa_candidate = linea[20:23] if len(linea) > 23 else ""
             if divisa_candidate.isalpha():
-                resultado["divisa"] = divisa_candidate
+                cuenta_actual["divisa"] = divisa_candidate
+
             # Saldo inicial solo en formato estándar (CaixaBank: offsets distintos)
             if not es_caixabank and len(linea) >= 48:
                 try:
                     saldo = Decimal(linea[29:47].strip() or "0") / 100
                     signo_sal = linea[47:48]
-                    resultado["saldo_inicial"] = saldo if signo_sal != "D" else -saldo
+                    cuenta_actual["saldo_inicial"] = saldo if signo_sal != "D" else -saldo
                 except Exception:
                     pass
 
-        elif tipo == "22":
-            # Movimiento — cerrar el anterior si estaba abierto
-            if movimiento_actual:
-                resultado["movimientos"].append(movimiento_actual)
+        elif tipo == "22" and cuenta_actual is not None:
+            _cerrar_movimiento()
             num_orden += 1
             try:
                 if es_caixabank:
@@ -173,24 +198,22 @@ def parsear_c43(contenido: str) -> dict:
                     movimiento_actual.concepto_propio + " " + texto_adicional
                 ).strip()
 
-        elif tipo == "33":
-            # Totales — cerrar el último movimiento abierto
-            if movimiento_actual:
-                resultado["movimientos"].append(movimiento_actual)
-                movimiento_actual = None
-            # Saldo final en [55:73] (18 chars), signo en [73] — posición estándar
+        elif tipo == "33" and cuenta_actual is not None:
+            # Totales — cerrar el último movimiento abierto, fijar saldo final
+            _cerrar_movimiento()
             if len(linea) >= 74:
                 try:
                     saldo = Decimal(linea[55:73].strip() or "0") / 100
                     signo_sal = linea[73:74]
-                    resultado["saldo_final"] = saldo if signo_sal != "D" else -saldo
+                    cuenta_actual["saldo_final"] = saldo if signo_sal != "D" else -saldo
                 except Exception:
                     pass
 
-    if movimiento_actual:
-        resultado["movimientos"].append(movimiento_actual)
+        elif tipo == "88":
+            break
 
-    return resultado
+    _cerrar_cuenta()
+    return cuentas
 
 
 def _parsear_fecha(s: str) -> date:

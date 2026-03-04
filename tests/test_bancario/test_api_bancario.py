@@ -170,12 +170,13 @@ class TestIngesta:
         assert "movimientos_nuevos" in data
         assert data["movimientos_nuevos"] >= 0
 
-    def test_ingestar_cuenta_no_encontrada_404(self, client, token_superadmin):
+    def test_ingestar_xls_sin_cuenta_404(self, client, token_superadmin):
+        """XLS requiere cuenta_iban existente → 404 si no existe."""
         hdrs = {"Authorization": f"Bearer {token_superadmin}"}
         resp = client.post(
             "/api/bancario/30/ingestar",
             params={"cuenta_iban": "ES00000000000000000000"},
-            files={"archivo": ("x.txt", b"11\n88\n", "text/plain")},
+            files={"archivo": ("x.xlsx", b"fake_xls", "application/vnd.ms-excel")},
             headers=hdrs,
         )
         assert resp.status_code == 404

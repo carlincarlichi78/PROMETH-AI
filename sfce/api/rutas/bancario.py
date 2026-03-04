@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from sfce.api.app import get_sesion_factory
 from sfce.api.audit import AuditAccion, auditar, ip_desde_request
 from sfce.api.auth import obtener_usuario_actual, verificar_acceso_empresa
-from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes
+from sfce.conectores.bancario.ingesta import ingestar_archivo_bytes, ingestar_c43_multicuenta
 from sfce.core.motor_conciliacion import MotorConciliacion
 from sfce.db.modelos import (
     CuentaBancaria, MovimientoBancario, SugerenciaMatch,
@@ -131,36 +131,56 @@ def listar_cuentas(
 def ingestar_extracto(
     empresa_id: int,
     request: Request,
-    cuenta_iban: str = Query(..., description="IBAN de la cuenta destino"),
+    cuenta_iban: Optional[str] = Query(None, description="IBAN de la cuenta destino (requerido para XLS, opcional para C43)"),
     archivo: UploadFile = File(..., description="Archivo C43 (TXT) o XLS (CaixaBank)"),
     sesion_factory=Depends(get_sesion_factory),
 ):
     """
     Ingesta un extracto bancario. Detecta el formato automáticamente:
-      - .xls / .xlsx → Parser CaixaBank XLS
-      - .txt / .c43  → Parser Norma 43 AEB
+      - .xls / .xlsx → Parser CaixaBank XLS (requiere cuenta_iban)
+      - .txt / .c43  → Parser Norma 43 AEB multi-cuenta con JIT onboarding:
+                        crea CuentaBancaria automáticamente si no existe.
     """
     usuario = obtener_usuario_actual(request)
     contenido = archivo.file.read()
     nombre = archivo.filename or "archivo"
+    ext = nombre.rsplit(".", 1)[-1].lower() if "." in nombre else ""
+
     with sesion_factory() as session:
-        verificar_acceso_empresa(usuario, empresa_id, session)
-        iban_limpio = cuenta_iban.replace(" ", "")
-        cuenta = session.query(CuentaBancaria).filter_by(
-            empresa_id=empresa_id, iban=iban_limpio
-        ).first()
-        if not cuenta:
-            raise HTTPException(
-                404, f"Cuenta IBAN {cuenta_iban} no encontrada para empresa {empresa_id}"
+        empresa = verificar_acceso_empresa(usuario, empresa_id, session)
+
+        if ext in ("xls", "xlsx"):
+            # XLS: flujo single-account — cuenta_iban obligatorio
+            if not cuenta_iban:
+                raise HTTPException(
+                    422, "cuenta_iban es requerido para archivos XLS"
+                )
+            iban_limpio = cuenta_iban.replace(" ", "")
+            cuenta = session.query(CuentaBancaria).filter_by(
+                empresa_id=empresa_id, iban=iban_limpio
+            ).first()
+            if not cuenta:
+                raise HTTPException(
+                    404, f"Cuenta IBAN {cuenta_iban} no encontrada para empresa {empresa_id}"
+                )
+            return ingestar_archivo_bytes(
+                contenido_bytes=contenido,
+                nombre_archivo=nombre,
+                cuenta=cuenta,
+                empresa_id=empresa_id,
+                gestoria_id=cuenta.gestoria_id,
+                session=session,
             )
-        return ingestar_archivo_bytes(
-            contenido_bytes=contenido,
-            nombre_archivo=nombre,
-            cuenta=cuenta,
-            empresa_id=empresa_id,
-            gestoria_id=cuenta.gestoria_id,
-            session=session,
-        )
+        else:
+            # C43 / TXT: flujo multi-cuenta con JIT onboarding
+            gestoria_id = empresa.gestoria_id or getattr(usuario, "gestoria_id", None) or 0
+            return ingestar_c43_multicuenta(
+                contenido_bytes=contenido,
+                nombre_archivo=nombre,
+                empresa_id=empresa_id,
+                gestoria_id=gestoria_id,
+                session=session,
+            )
 
 
 # ---------------------------------------------------------------------------

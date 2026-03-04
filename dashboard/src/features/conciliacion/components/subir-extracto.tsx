@@ -21,11 +21,17 @@ export function SubirExtracto({ empresaId }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [ibanSeleccionado, setIbanSeleccionado] = useState('')
 
+  const esXls = (nombre: string) => /\.(xls|xlsx)$/i.test(nombre)
+
   const handleArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0]
-    if (!archivo || !ibanSeleccionado) return
-    ingestar.mutate({ archivo, iban: ibanSeleccionado })
-    // Reset input para permitir subir el mismo archivo otra vez si es necesario
+    if (!archivo) return
+    // XLS requiere IBAN; C43/TXT usa JIT onboarding (no requiere IBAN)
+    if (esXls(archivo.name) && !ibanSeleccionado) return
+    ingestar.mutate({
+      archivo,
+      iban: esXls(archivo.name) ? ibanSeleccionado : undefined,
+    })
     e.target.value = ''
   }
 
@@ -50,18 +56,19 @@ export function SubirExtracto({ empresaId }: Props) {
 
       <Button
         variant="outline"
-        disabled={!ibanSeleccionado || ingestar.isPending}
+        disabled={ingestar.isPending}
         onClick={() => inputRef.current?.click()}
       >
         <Upload className="w-4 h-4 mr-2" />
         {ingestar.isPending ? 'Procesando...' : 'Subir extracto'}
       </Button>
 
-      {/* Acepta C43 TXT y XLS CaixaBank */}
+      {/* Acepta C43 TXT y XLS CaixaBank — oculto, activado por el botón */}
       <input
         ref={inputRef}
         type="file"
         accept=".txt,.c43,.xls,.xlsx"
+        aria-label="Seleccionar extracto bancario"
         className="hidden"
         onChange={handleArchivo}
       />
@@ -69,6 +76,9 @@ export function SubirExtracto({ empresaId }: Props) {
       {ingestar.isSuccess && (
         <span className="flex items-center gap-1 text-sm text-green-600">
           <CheckCircle className="w-4 h-4" />
+          {ingestar.data.cuentas_creadas
+            ? `${ingestar.data.cuentas_creadas} cuenta(s) creadas · `
+            : ''}
           {ingestar.data.movimientos_nuevos} nuevos
           {ingestar.data.movimientos_duplicados > 0
             ? ` / ${ingestar.data.movimientos_duplicados} duplicados`

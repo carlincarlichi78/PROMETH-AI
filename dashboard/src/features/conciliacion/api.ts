@@ -45,11 +45,25 @@ export interface ResultadoConciliacion {
   total: number
 }
 
+export interface DetalleCuenta {
+  iban: string
+  alias: string
+  creada: boolean
+  movimientos_totales: number
+  movimientos_nuevos: number
+  movimientos_duplicados: number
+  ya_procesado: boolean
+}
+
 export interface ResultadoIngesta {
   movimientos_totales: number
   movimientos_nuevos: number
   movimientos_duplicados: number
   ya_procesado: boolean
+  // Campos adicionales para C43 multi-cuenta
+  cuentas_procesadas?: number
+  cuentas_creadas?: number
+  detalle?: DetalleCuenta[]
 }
 
 // ── Tipos nuevos (conciliacion inteligente) ───────────────────────────────────
@@ -205,18 +219,23 @@ export function useEstadoConciliacion(empresaId: number) {
 
 export function useIngestarExtracto(empresaId: number) {
   const qc = useQueryClient()
-  return useMutation<ResultadoIngesta, Error, { archivo: File; iban: string }>({
+  return useMutation<ResultadoIngesta, Error, { archivo: File; iban?: string }>({
     mutationFn: ({ archivo, iban }) => {
       const form = new FormData()
       form.append('archivo', archivo)
+      const ibanParam = iban ? `?cuenta_iban=${encodeURIComponent(iban)}` : ''
       return api.postForm<ResultadoIngesta>(
-        `${BASE}/${empresaId}/ingestar?cuenta_iban=${encodeURIComponent(iban)}`,
+        `${BASE}/${empresaId}/ingestar${ibanParam}`,
         form
       )
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['movimientos-bancarios', empresaId] })
       qc.invalidateQueries({ queryKey: ['estado-conciliacion', empresaId] })
+      // Si se crearon cuentas nuevas, refrescar la lista de cuentas
+      if (data.cuentas_creadas && data.cuentas_creadas > 0) {
+        qc.invalidateQueries({ queryKey: ['cuentas-bancarias', empresaId] })
+      }
     },
   })
 }
