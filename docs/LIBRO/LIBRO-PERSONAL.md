@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 73)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 74)
 
 ---
 
@@ -43,7 +43,7 @@ git log -5 --oneline
 
 # Test bancario para verificar base
 python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 171 passed
+# Esperado: 171 passed (suite completa: 2724)
 
 # Abrir dashboard
 cd dashboard && npm run dev
@@ -51,12 +51,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 73)
+## Estado rápido (sesión 74)
 
 - **Plan activo:** ninguno
-- **Completado sesiones 72+73:** Backend endpoints confirmar/rechazar match + migración 030 + schemas Pydantic. Frontend PanelConciliacion con datos reales (3 hooks TanStack Query). TypeScript 0 errores.
-- **Tests:** 171 bancario PASS
-- **Próximo paso:** Tabs "Revisión"+"Conciliados" + migración 030 en producción
+- **Completado sesiones 72+73+74:** UI conciliación completa (5 pestañas con datos reales). Tabs Revisión/Conciliados con `TablaMovimientos`. `PanelSugerencias` y `MatchCard` migrados a `SugerenciaOut` + hooks atómicos. TypeScript 0 errores. 2724 tests PASS.
+- **Tests:** 2724 PASS, 4 skipped
+- **Pendiente manual:** `git push origin main` + migración 030 en prod (script en Task 13 del 04-roadmap)
 
 ---
 

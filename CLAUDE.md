@@ -234,16 +234,17 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 73)
+## Estado actual (04/03/2026, sesion 74)
 
-**Rama**: `main` | **Ultimo commit**: `ce80ca2` (pendiente push) | **Tests**: 171 bancario PASS
+**Rama**: `main` | **Ultimo commit**: `69b3611` (pendiente push) | **Tests**: 2724 PASS, 4 skipped
 
-### Completado sesiones 72+73
-- Sesion 72 — backend: `confirmar-match`, `rechazar-match`, GET `/sugerencias?movimiento_id=`, schemas Pydantic `SugerenciaOut`/`MovimientoResumen`/`DocumentoResumen`, migracion 030 (`confirmada` en `sugerencias_match`)
-- Sesion 73 — frontend: interfaces TS `SugerenciaOut`/`MovimientoResumen`, hooks `useSugerencias`/`useConfirmarMatch`/`useRechazarMatch`, `PanelConciliacion` con datos reales (elimina mocks), `VistaPendientes` simplificada
+### Completado sesiones 72+73+74
+- Sesion 72 — backend: `confirmar-match`, `rechazar-match`, GET `/sugerencias?movimiento_id=`, schemas Pydantic, migracion 030
+- Sesion 73 — frontend: `PanelConciliacion` datos reales, 3 hooks TanStack Query, `VistaPendientes` simplificada
+- Sesion 74 — frontend: tabs Revision+Conciliados con `TablaMovimientos`, `PanelSugerencias` datos reales, `MatchCard` migrado a `SugerenciaOut`, `useSugerencias` permite `null`
 
 ### Proxima sesion — pendientes
-1. **Migracion 030 en produccion** — ejecutar manualmente via psql en servidor
-2. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+1. **Push + deploy**: `git push origin main` → CI/CD automatico
+2. **Migracion 030 en produccion** — script en Task 13 de 04-estado-pendientes-roadmap.md
 3. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
 4. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
