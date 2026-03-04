@@ -1,5 +1,37 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 93) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 94) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 94 — FV Ingresos MARIA ISABEL registrados + asientos cuadrados)
+
+### Commits sesión 94
+
+| Hash | Descripción |
+|------|-------------|
+| *(en proceso)* | fix(fs_api): normalizar_fecha soporta DD/MM/YYYY + calcular_trimestre con try/except |
+
+### Tasks completadas (sesión 94)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Debug 400 en facturaclientes | ✅ DONE | Root cause: 7 facturaclientes previas de sesión 92 (IDs 2-8) con fechas hasta dic-2025 bloqueaban inserción cronológica. Eliminadas. |
+| Registrar 5 FV Ingresos | ✅ DONE | Manual via API: facturas 10-14 (Blanco Abogados, ene-sep 2025). Asientos 91-95 generados vía PHP CLI `InvoiceToAccounting::generate()`. |
+| Fix partidas FV descuadradas | ✅ DONE | FS generate() crea 4 partidas correctas (430x+477x+7000x+4730x). Script corregir las duplicó por error → fix_partidas_duplicadas_fv.py. Todos cuadrados. |
+| Fix `normalizar_fecha` + `calcular_trimestre` | ✅ DONE | `sfce/core/fs_api.py`: soporta DD/MM/YYYY (slash) + try/except para fechas texto |
+
+### Pendientes sesión 95 — CONTINUAR MARIA ISABEL
+
+**Estado FS empresa 7 (codejercicio=0007):**
+- FC: 5 facturas (58-62) + asientos (86-90) ✓
+- FV: 5 facturas (10-14) + asientos (91-95) ✓
+- En cuarentena: ~218 PDFs (CIF de proveedor desconocido en config.yaml)
+
+1. **Ampliar config.yaml** — añadir proveedores de los 218 PDFs en cuarentena. Inspeccionar `cuarentena/` para ver qué CIFs hay.
+2. **Re-procesar cuarentena** — mover PDFs de vuelta a inbox/ y ejecutar pipeline de nuevo para los documentos antes en cuarentena.
+3. **Verificar cuenta 7000x vs 7050x** — FS usa 7000000000 (ventas mercaderías) para FV de servicios. Debería ser 7050x (prestaciones servicios). Evaluar si es necesario corregir o es aceptable.
+4. **F6** — Ruta inbox email→pipeline
+5. **Tests E2E dashboard** — Playwright
 
 ---
 

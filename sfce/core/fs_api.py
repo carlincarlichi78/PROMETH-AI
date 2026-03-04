@@ -175,13 +175,15 @@ def verificar_factura(idfactura: int, tipo: str = "proveedor",
 # === Funciones de utilidad de datos ===
 
 def normalizar_fecha(fecha_str: str) -> str:
-    """Convierte DD-MM-YYYY a YYYY-MM-DD para comparacion."""
+    """Convierte DD-MM-YYYY o DD/MM/YYYY a YYYY-MM-DD para comparacion."""
     if not fecha_str:
         return ""
-    partes = fecha_str.strip().split("-")
+    s = fecha_str.strip()
+    sep = "/" if "/" in s and "-" not in s else "-"
+    partes = s.split(sep)
     if len(partes) == 3 and len(partes[0]) == 2:
         return f"{partes[2]}-{partes[1]}-{partes[0]}"
-    return fecha_str
+    return s
 
 
 def convertir_a_eur(importe: float, tasaconv: float, divisa: str) -> float:
@@ -201,13 +203,19 @@ def convertir_a_eur(importe: float, tasaconv: float, divisa: str) -> float:
 
 
 def calcular_trimestre(fecha_str: str) -> str:
-    """Determina trimestre de una fecha DD-MM-YYYY o YYYY-MM-DD."""
-    fecha_norm = normalizar_fecha(fecha_str)
-    mes = int(fecha_norm.split("-")[1])
-    if mes <= 3:
-        return "T1"
-    elif mes <= 6:
-        return "T2"
-    elif mes <= 9:
-        return "T3"
-    return "T4"
+    """Determina trimestre de una fecha DD-MM-YYYY, DD/MM/YYYY o YYYY-MM-DD."""
+    try:
+        fecha_norm = normalizar_fecha(fecha_str)
+        partes = fecha_norm.split("-")
+        if len(partes) >= 2:
+            mes = int(partes[1])
+            if mes <= 3:
+                return "T1"
+            elif mes <= 6:
+                return "T2"
+            elif mes <= 9:
+                return "T3"
+            return "T4"
+    except (ValueError, IndexError):
+        pass
+    return "T1"

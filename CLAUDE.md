@@ -234,20 +234,23 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 93)
+## Estado actual (04/03/2026, sesion 94)
 
-**Rama**: `main` | **Ultimo commit**: `46dc0d63` (pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: *(en proceso)* | **Tests**: ~2568 PASS
 
-### Completado sesion 93
-- Borrado FS empresa 7: asientos 44-72 (87 partidas), facturas 28-56 (29 líneas) via MariaDB root ✓
-- Fix IVA21 recargo=0 permanente en instancia Uralde ✓
-- OCR GPT-4o-mini: 260 PDFs cuarentena → inbox/ con cache .ocr.json (0 errores, PyMuPDF+detail:low) ✓
-- Fixes intake.py: cache hit no retorna raw dict, FV type hint para ingresos/, fallback cliente ✓
-- Fixes registration.py: sort cronológico FV, cifnif/nombrecliente explícitos en POST ✓
+### Completado sesion 94
+- Debug 400 facturaclientes: 7 facturas previas (IDs 2-8, fechas dic-2025) bloqueaban orden cronológico. Eliminadas. ✓
+- 5 FV Ingresos registradas manualmente: facturas 10-14 (BLANCO ABOGADOS, ene-sep 2025) ✓
+- Asientos FV 91-95 generados vía PHP CLI `InvoiceToAccounting::generate()` para FacturaCliente ✓
+- Fix partidas duplicadas (generate() ya crea las 4 correctas: 430x+477x+7000x+4730x) ✓
+- Fix `sfce/core/fs_api.py`: `normalizar_fecha` soporta DD/MM/YYYY + `calcular_trimestre` con try/except ✓
 
-### Proxima sesion — pendientes (sesion 94)
+### Proxima sesion — pendientes (sesion 95)
 
-1. **⚠️ Auditar inbox/** — 223 PDFs actuales vs ~282 esperados. Verificar si faltan meses. Posible pérdida por shutil.move sobrescribiendo duplicados `_1`
-2. **Pipeline completo**: `python scripts/pipeline.py --cliente maria-isabel-navarro-lopez --ejercicio 2025 --inbox inbox --no-interactivo`
-3. **F6** — Ruta inbox email→pipeline
-4. **Tests E2E dashboard** — Playwright
+**Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
+
+1. **Ampliar config.yaml** — identificar proveedores de los 218 PDFs en cuarentena y añadir al config.yaml
+2. **Re-procesar cuarentena** — mover PDFs a inbox/ y pipeline --no-interactivo
+3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel. Evaluar corrección.
+4. **F6** — Ruta inbox email→pipeline
+5. **Tests E2E dashboard** — Playwright
