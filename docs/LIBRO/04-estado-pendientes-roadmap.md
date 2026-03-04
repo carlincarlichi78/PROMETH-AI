@@ -13,6 +13,11 @@
 | `8a423c83` | feat(conciliacion): Fase 4 frontend — useConciliarDirecto, SeccionManual, tab Asiento Directo |
 | `f33d6438` | feat(pipeline): PipelineFlowDiagramVertical — flujo global columna derecha |
 | `abd5a6c3` | feat(pipeline): GestoriaColumn — header gestoría + cards distribuidas |
+| `6179ac69` | feat(pipeline): EmpresaCard — indicador estado, mini-pipeline, ring pulse |
+| `f20d09ad` | feat(pipeline): MiniPipelineVertical — 6 nodos + partícula animada |
+| `6bee872a` | feat(pipeline): animaciones CSS tarjetas empresa — ring pulse, dot ping, border glow |
+| `4da81846` | feat(pipeline): exponer eventosActivos por empresa en hook WS |
+| `5762d167` | feat(pipeline): tipos y constantes gestorías — mapping 13 empresas + colores |
 
 ### Tasks completadas (sesión 87)
 
@@ -21,7 +26,8 @@
 | Pipeline Sala de Control | ✅ DONE | Layout 4 columnas full-height: GestoriaColumn × 3 + PipelineFlowDiagramVertical |
 | GestoriaColumn | ✅ DONE | Header gestoria + EmpresaCard distribuidas |
 | PipelineFlowDiagramVertical | ✅ DONE | 189 líneas, flujo 6 nodos animado |
-| Conciliacion Fase 4 frontend | ✅ DONE | useConciliarDirecto hook, SeccionManual conectada a POST /conciliar-directo, tab Asiento Directo |
+| Conciliación Fase 3 frontend | ✅ DONE | FilterBar con debounce 400ms + date pickers en VistaPendientes; `useMovimientos` ampliado con q/fechaDesde/fechaHasta/tipo |
+| Conciliacion Fase 4 frontend | ✅ DONE | `useConciliarDirecto` hook, `SeccionManual` conectada a POST /conciliar-directo, tab "Asiento Directo" |
 | Fix pipeline dry-run | ✅ DONE | ResultadoFase import, fechas español OCR, recurrentes robusto — verificado 2568 tests PASS |
 
 ### Pendientes para sesión 88

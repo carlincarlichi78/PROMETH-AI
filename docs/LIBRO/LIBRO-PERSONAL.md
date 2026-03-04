@@ -49,11 +49,11 @@ cd dashboard && npm run dev
 
 ## Estado rápido (sesión 87)
 
-- **Completado sesión 87:** Pipeline Sala de Control (4 cols full-height), Conciliacion Fase 4 frontend (useConciliarDirecto + SeccionManual + tab Asiento Directo)
-- **Push:** todo en origin/main ✓ | **Tests:** 2568 PASS | **Prod:** sfce_api healthy
+- **Completado sesión 87:** Pipeline Sala de Control (4 cols full-height: 3 gestorías + flujo global), Conciliación Bancaria Fase 3 (FilterBar debounce + date pickers) + Fase 4 (POST /conciliar-directo + tab Asiento Directo)
+- **Push:** todo en origin/main ✓ | **Tests:** 2568 PASS | **Build:** 5.54s OK | **Prod:** sfce_api healthy
 - **PRIORIDAD 1:** Pipeline FS registration fix — Fase 2 rollback todas las facturas (FS total=0.00)
-- **PRIORIDAD 2:** Bancario Fase 3 — FilterBar debounce en VistaPendientes
-- **PRIORIDAD 3:** Tests E2E Playwright dashboard
+- **PRIORIDAD 2:** Tests E2E Playwright dashboard (confirmar match, FilterBar, conciliar-directo)
+- **PRIORIDAD 3:** Verificación visual sala de control prod + VClNegocios capa C
 
 ---
 
