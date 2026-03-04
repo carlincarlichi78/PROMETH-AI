@@ -539,13 +539,14 @@ def _confirmar_en_fs(
       - Si el movimiento ya tiene asiento_id local → nada que hacer.
       - Si el doc ya tiene asiento_id local → reusar ese registro.
       - Si la empresa no tiene idempresa_fs → modo local sin asiento.
-      - Si ninguno tiene asiento → crear en FS + registro local (satisface FK).
+      - Si ninguno tiene asiento → crear en FS con 2 partidas + registro local.
 
     Returns: asientos.id (PK local) a usar en movimiento. None si sin asiento.
     Raises: HTTPException 502 si FS falla.
     """
+    import json
     import requests as _requests
-    from sfce.core.fs_api import api_post, obtener_credenciales_gestoria
+    from sfce.core.fs_api import api_get, api_post, obtener_credenciales_gestoria
 
     if mov.asiento_id:
         return mov.asiento_id
@@ -558,11 +559,38 @@ def _confirmar_en_fs(
 
     fs_url, token = obtener_credenciales_gestoria(empresa.gestoria)
 
+    # Buscar subcuenta contable del proveedor/cliente en FS por NIF
+    cuenta_contraparte = "4000000000"  # fallback genérico proveedores
+    if doc.nif_proveedor:
+        try:
+            provs = api_get("proveedores", token=token, base_url=fs_url, limit=500)
+            prov = next((p for p in provs if p.get("nif") == doc.nif_proveedor), None)
+            if prov and prov.get("codsubcuenta"):
+                cuenta_contraparte = prov["codsubcuenta"]
+        except Exception:
+            pass  # usar fallback
+
+    importe = float(mov.importe)
+    concepto = f"Conciliación bancaria movimiento #{mov.id}"
+    cuenta_bancaria = "5720000000"
+
+    if mov.signo == "D":  # pago: cancela proveedor (debe) + sale banco (haber)
+        lineas = [
+            {"codsubcuenta": cuenta_contraparte, "debe": importe, "haber": 0.0, "concepto": concepto},
+            {"codsubcuenta": cuenta_bancaria,    "debe": 0.0,    "haber": importe, "concepto": concepto},
+        ]
+    else:  # cobro: entra banco (debe) + ingresa cliente (haber)
+        lineas = [
+            {"codsubcuenta": cuenta_bancaria,    "debe": importe, "haber": 0.0,    "concepto": concepto},
+            {"codsubcuenta": cuenta_contraparte, "debe": 0.0,     "haber": importe, "concepto": concepto},
+        ]
+
     try:
         resp = api_post("asientos", {
             "idempresa": empresa.idempresa_fs,
             "codejercicio": empresa.codejercicio_fs,
-            "concepto": f"Conciliación bancaria movimiento #{mov.id}",
+            "concepto": concepto,
+            "lineas": json.dumps(lineas),
         }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
         idasiento_fs = datos.get("idasiento")
@@ -577,7 +605,7 @@ def _confirmar_en_fs(
         empresa_id=empresa.id,
         idasiento_fs=int(idasiento_fs),
         fecha=mov.fecha,
-        concepto=f"Conciliación bancaria movimiento #{mov.id}",
+        concepto=concepto,
         ejercicio=empresa.codejercicio_fs,
         origen="conciliacion",
         sincronizado_fs=True,
@@ -608,6 +636,7 @@ def _crear_asiento_directo_en_fs(
     Devuelve asientos.id (PK local) del asiento creado.
     Raises: HTTPException(502) si FS falla o no está disponible.
     """
+    import json
     import requests as _requests
     from sfce.core.fs_api import api_post, obtener_credenciales_gestoria
 
@@ -639,7 +668,7 @@ def _crear_asiento_directo_en_fs(
             "idempresa": empresa.idempresa_fs,
             "codejercicio": empresa.codejercicio_fs,
             "concepto": concepto,
-            "lineas": lineas,
+            "lineas": json.dumps(lineas),
         }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
         idasiento_fs = datos.get("idasiento")

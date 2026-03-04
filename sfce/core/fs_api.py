@@ -41,7 +41,7 @@ def obtener_credenciales_gestoria(gestoria: "Gestoria | None") -> tuple[str, str
 
 
 def api_get(endpoint: str, params: dict = None, token: str = None,
-            limit: int = 200) -> list:
+            limit: int = 200, base_url: str = None) -> list:
     """GET con paginacion automatica.
 
     Args:
@@ -49,6 +49,7 @@ def api_get(endpoint: str, params: dict = None, token: str = None,
         params: parametros adicionales (idempresa, codejercicio, etc.)
         token: token de autenticacion (si None, usa obtener_token())
         limit: tamano de pagina
+        base_url: URL base de la instancia FS (si None usa API_BASE global)
 
     Returns:
         Lista completa de registros (paginados automaticamente)
@@ -59,9 +60,10 @@ def api_get(endpoint: str, params: dict = None, token: str = None,
     p = dict(params or {})
     p["limit"] = limit
     p["offset"] = 0
+    _base = (base_url or API_BASE).rstrip("/")
 
     while True:
-        url = f"{API_BASE}/{endpoint}"
+        url = f"{_base}/{endpoint}"
         resp = requests.get(url, headers=headers, params=p, timeout=30)
         resp.raise_for_status()
         lote = resp.json()
