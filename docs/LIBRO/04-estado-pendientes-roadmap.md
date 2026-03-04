@@ -12,6 +12,9 @@
 | `55471aa` | docs: protocolo de cierre automático en CLAUDE.md — 9 fases |
 | `cfebfb8` | docs: LIBRO-GESTOR.md (dashboard completo) + LIBRO-CLIENTE.md |
 | `768192a` | docs: LIBRO-ACCESOS.md gitignoreado + .gitignore + protocolo fase 2 |
+| `3d4accd` | docs: cierre sesion 69 (primer protocolo) |
+| `c361805` | chore: scripts debug IMAP útiles + gitignore debug_*.py |
+| `17a3397` | chore: eliminar worktree mcf + ClasificadorFiscal anotado en roadmap |
 
 ### Tasks completadas (sesión 69 — documentación y organización)
 
