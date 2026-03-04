@@ -3,7 +3,9 @@
 
 ---
 
-## Los 5 archivos del libro
+## Archivos del libro
+
+### Libro Técnico (programador)
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -11,7 +13,14 @@
 | `01-arquitectura-pipeline-ocr.md` | Arquitectura general, módulos implementados, multi-tenant, dual backend, pipeline 7 fases, Gate 0, OCR por tiers, motor de reglas (6 niveles), aprendizaje, cuarentena |
 | `02-bd-y-api.md` | 45+ tablas (con detalle campos críticos incluyendo migración 029), ORM, migraciones, todos los endpoints API (~140 endpoints organizados por dominio) |
 | `03-bancario-fiscal-seguridad.md` | Módulo bancario completo (parser C43/XLS + motor conciliación 5 capas), modelos fiscales (28 modelos + MotorBOE), correo IMAP, seguridad JWT/2FA/RGPD/multi-tenant, ADRs |
-| `04-estado-pendientes-roadmap.md` | Estado sesión 66, tasks pendientes conciliación (7-8 y 11-13), pendientes previos, roadmap, deuda técnica, notas para retomar |
+| `04-estado-pendientes-roadmap.md` | Estado actual, tasks pendientes, roadmap, deuda técnica, notas para retomar |
+
+### Manuales de usuario
+
+| Archivo | Audiencia | Contenido |
+|---------|-----------|-----------|
+| `LIBRO-GESTOR.md` | admin_gestoria · asesor | Dashboard completo: documentos, pipeline, conciliación, fiscal, facturación, contabilidad, RRHH, administración |
+| `LIBRO-CLIENTE.md` | Clientes / empresarios | Cómo enviar documentos, estado del procesamiento, FAQ, calendario de envío |
 
 ---
 

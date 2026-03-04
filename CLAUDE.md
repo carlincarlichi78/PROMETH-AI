@@ -144,6 +144,8 @@ Determinar: nº sesión = última sesión en CLAUDE.md + 1. Identificar commits,
 - `docs/LIBRO/01-arquitectura-pipeline-ocr.md` → pipeline, OCR, motor reglas, cuarentena, módulos nuevos
 - `docs/LIBRO/02-bd-y-api.md` → nuevas tablas, migraciones, endpoints API nuevos o modificados
 - `docs/LIBRO/03-bancario-fiscal-seguridad.md` → bancario, conciliación, fiscal, correo IMAP, seguridad/JWT
+- `docs/LIBRO/LIBRO-GESTOR.md` → cambios en UI del dashboard, flujos de usuario, nuevos módulos accesibles
+- `docs/LIBRO/LIBRO-CLIENTE.md` → cambios en portal de cliente, nuevas formas de enviar documentos
 
 Regla: si el cambio es una corrección de bug sin impacto arquitectural, no actualizar el libro técnico (solo el 04).
 
