@@ -35,12 +35,14 @@ export interface ParticulaActiva {
   nodo_origen: string  // 'inbox' | 'ocr' | 'validacion' | 'fs' | 'asiento'
   nodo_destino: string
   iniciado_en: number
+  fuente: 'correo' | 'manual' | 'watcher' | 'pipeline'
 }
 
 interface Estado {
   eventos: EventoWS[]
   particulas: ParticulaActiva[]
   conectado: boolean
+  contadores_fuente: { correo: number; manual: number; watcher: number }
 }
 
 const MAX_EVENTOS = 15
@@ -66,6 +68,7 @@ export function usePipelineWebSocket(empresaId?: number) {
     eventos: [],
     particulas: [],
     conectado: false,
+    contadores_fuente: { correo: 0, manual: 0, watcher: 0 },
   })
 
   const limpiarEventosViejos = useCallback(() => {
@@ -108,6 +111,7 @@ export function usePipelineWebSocket(empresaId?: number) {
           nodo_origen: nodoActual,
           nodo_destino: nodoDestino ?? 'done',
           iniciado_en: Date.now(),
+          fuente: 'pipeline',
         })
       }
 
@@ -119,10 +123,12 @@ export function usePipelineWebSocket(empresaId?: number) {
           nodo_origen: 'asiento',
           nodo_destino: 'done',
           iniciado_en: Date.now(),
+          fuente: 'pipeline',
         })
       }
 
       if (msg.evento === 'watcher_nuevo_pdf') {
+        const fuente = (msg.datos as { fuente?: string }).fuente as ParticulaActiva['fuente'] ?? 'manual'
         nuevasParticulas.push({
           id: generarId(),
           tipo_doc: msg.datos.tipo_doc ?? 'FV',
@@ -130,7 +136,19 @@ export function usePipelineWebSocket(empresaId?: number) {
           nodo_origen: 'inbox',
           nodo_destino: 'ocr',
           iniciado_en: Date.now(),
+          fuente,
         })
+        // Acumular contador de fuente
+        const nuevosContadores = { ...prev.contadores_fuente }
+        if (fuente === 'correo') nuevosContadores.correo++
+        else if (fuente === 'watcher') nuevosContadores.watcher++
+        else nuevosContadores.manual++
+
+        // Limpiar partículas > 4s (tiempo de animación)
+        const ahora2 = Date.now()
+        nuevasParticulas = nuevasParticulas.filter(p => ahora2 - p.iniciado_en < 4000)
+
+        return { ...prev, eventos: nuevosEventos, particulas: nuevasParticulas, contadores_fuente: nuevosContadores }
       }
 
       // Limpiar partículas > 4s (tiempo de animación)
@@ -181,6 +199,7 @@ export function usePipelineWebSocket(empresaId?: number) {
     eventos: estado.eventos,
     particulas: estado.particulas,
     conectado: estado.conectado,
+    contadores_fuente: estado.contadores_fuente,
     eliminarParticula,
   }
 }

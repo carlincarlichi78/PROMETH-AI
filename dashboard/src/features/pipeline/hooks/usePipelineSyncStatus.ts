@@ -18,9 +18,20 @@ export interface FaseStatus {
   actualizado_en: string
 }
 
+export interface BreakdownStatus {
+  tipo_doc: Record<string, number>        // { FC: 12, FV: 8, SUM: 4 }
+  por_empresa: Array<{ empresa_id: number; nombre: string; total: number }>
+  fuentes: { correo: number; manual: number; watcher: number }
+  actualizado_en: string
+}
+
 const STATUS_VACIO: FaseStatus = {
   inbox: 0, procesando: 0, cuarentena: 0, error: 0, done_hoy: 0,
   por_empresa: {}, actualizado_en: '',
+}
+
+const BREAKDOWN_VACIO: BreakdownStatus = {
+  tipo_doc: {}, por_empresa: [], fuentes: { correo: 0, manual: 0, watcher: 0 }, actualizado_en: '',
 }
 
 export function usePipelineSyncStatus(empresaId?: number) {
@@ -29,20 +40,32 @@ export function usePipelineSyncStatus(empresaId?: number) {
   const { data, isLoading } = useQuery<FaseStatus>({
     queryKey: ['pipeline-status', empresaId],
     queryFn: async () => {
-      const base = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
       const url = empresaId
-        ? `${base}/api/dashboard/pipeline-status?empresa_id=${empresaId}`
-        : `${base}/api/dashboard/pipeline-status`
-      const r = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+        ? `/api/dashboard/pipeline-status?empresa_id=${empresaId}`
+        : `/api/dashboard/pipeline-status`
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       if (!r.ok) return STATUS_VACIO
       return r.json()
     },
-    refetchInterval: 30_000,  // cada 30s
+    refetchInterval: 30_000,
     enabled: !!token,
     placeholderData: STATUS_VACIO,
   })
 
-  return { status: data ?? STATUS_VACIO, isLoading }
+  const { data: breakdown } = useQuery<BreakdownStatus>({
+    queryKey: ['pipeline-breakdown', empresaId],
+    queryFn: async () => {
+      const url = empresaId
+        ? `/api/dashboard/pipeline-breakdown?empresa_id=${empresaId}`
+        : `/api/dashboard/pipeline-breakdown`
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) return BREAKDOWN_VACIO
+      return r.json()
+    },
+    refetchInterval: 60_000,
+    enabled: !!token,
+    placeholderData: BREAKDOWN_VACIO,
+  })
+
+  return { status: data ?? STATUS_VACIO, breakdown: breakdown ?? BREAKDOWN_VACIO, isLoading }
 }
