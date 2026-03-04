@@ -188,6 +188,16 @@ function SeccionSugerencias({ empresaId, movId }: { empresaId: number; movId: nu
             />
           ))
         )}
+        {confirmar.isError && (
+          <p className="text-xs text-destructive pt-1">
+            Error al confirmar: {confirmar.error?.message}
+          </p>
+        )}
+        {rechazar.isError && (
+          <p className="text-xs text-destructive pt-1">
+            Error al rechazar: {rechazar.error?.message}
+          </p>
+        )}
       </CardContent>
     </Card>
   )

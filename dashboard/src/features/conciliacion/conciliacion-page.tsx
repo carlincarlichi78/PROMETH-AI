@@ -1,12 +1,16 @@
+import { useState, useCallback } from 'react'
 import { useEmpresaStore } from '@/stores/empresa-store'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { PanelSugerencias } from './components/panel-sugerencias'
 import { TablaPatrones } from './components/tabla-patrones'
 import { TablaMovimientos } from './components/tabla-movimientos'
 import { VistaPendientes } from './components/vista-pendientes'
+import { FilterBar, type FiltrosMovimientos } from './components/filter-bar'
 import { useMovimientos } from './api'
 
-/** Wrapper que carga y renderiza movimientos filtrados por estado */
+const FILTROS_VACIOS: FiltrosMovimientos = { q: '', fechaDesde: '', fechaHasta: '' }
+
+/** Wrapper que carga y renderiza movimientos filtrados por estado, con FilterBar */
 function TabMovimientos({
   empresaId,
   estado,
@@ -16,13 +20,24 @@ function TabMovimientos({
   estado: string
   mostrarDocumento?: boolean
 }) {
-  const { data: paginados, isLoading } = useMovimientos(empresaId, { estado })
+  const [filtros, setFiltros] = useState<FiltrosMovimientos>(FILTROS_VACIOS)
+  const onFiltrosChange = useCallback((f: FiltrosMovimientos) => setFiltros(f), [])
+
+  const { data: paginados, isLoading } = useMovimientos(empresaId, {
+    estado,
+    q: filtros.q || undefined,
+    fechaDesde: filtros.fechaDesde || undefined,
+    fechaHasta: filtros.fechaHasta || undefined,
+  })
   return (
-    <TablaMovimientos
-      movimientos={paginados?.items ?? []}
-      isLoading={isLoading}
-      mostrarDocumento={mostrarDocumento}
-    />
+    <div className="space-y-3">
+      <FilterBar onChange={onFiltrosChange} />
+      <TablaMovimientos
+        movimientos={paginados?.items ?? []}
+        isLoading={isLoading}
+        mostrarDocumento={mostrarDocumento}
+      />
+    </div>
   )
 }
 

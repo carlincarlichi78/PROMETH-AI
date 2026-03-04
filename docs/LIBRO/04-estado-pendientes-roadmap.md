@@ -1,5 +1,31 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 87) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 88) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 88 — Conciliación: error feedback + filtrado documentos)
+
+### Commits sesión 88
+
+| Hash | Descripción |
+|------|-------------|
+| *(ver git log)* | fix(conciliacion): error feedback confirmar/rechazar + filtrado documentos sugerencias |
+
+### Tasks completadas (sesión 88)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Bug: confirmar sugerido no hace nada | ✅ DONE | `SeccionSugerencias` y `PanelSugerencias` muestran el mensaje de error del backend (ej: 502 FS) cuando la mutación falla |
+| Filtrado documentos en tab Sugerencias | ✅ DONE | Añadido filtro de texto en `PanelSugerencias` — filtra por NIF proveedor, nº factura, concepto, contraparte; con contador N de M |
+| FilterBar en tabs Conciliados/Revisión/Asiento Directo | ✅ DONE | `TabMovimientos` en `conciliacion-page.tsx` ahora incluye `FilterBar` (q + fecha_desde + fecha_hasta) |
+
+### Pendientes para sesión 89
+
+1. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). Investigar pre_validacion → registration
+2. **Tests E2E dashboard** — Playwright flujos críticos: confirmar match, rechazar, FilterBar (q/fecha), conciliar-directo, bulk, upload C43
+3. **Confirmar matches en producción** — probar flujo completo post-fix (error feedback + filtros)
+4. **Capa C VClNegocios** — bajó de 8 a 0 matches. Verificar si faltan PDFs VClNegocios en inbox prod
+5. **Verificación visual sala de control** — arrancar `npm run dev` y navegar `/pipeline/live`, comprobar animaciones con datos reales WS
 
 ---
 

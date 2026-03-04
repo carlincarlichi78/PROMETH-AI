@@ -234,19 +234,16 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 87)
+## Estado actual (04/03/2026, sesion 88)
 
-**Rama**: `main` | **Ultimo commit**: `4f70a253` (pusheado) | **Build**: OK 5.54s | **Tests**: 2568 PASS
+**Rama**: `main` | **Ultimo commit**: *(ver git log)* (pusheado) | **Build**: OK | **Tests**: 2568 PASS
 
-### Completado sesion 87
-- Pipeline "Sala de Control" completo — layout 4 cols full-height (3 gestorías + flujo global) (`4f70a253`) ✓
-- Conciliación Fase 3 — FilterBar debounce 400ms + date pickers + `useMovimientos` ampliado (`6ac63c94`) ✓
-- Conciliación Fase 4 backend — `POST /conciliar-directo` con asiento FS 2 partidas (`67dcfdbd`) ✓
-- Conciliación Fase 4 frontend — `useConciliarDirecto`, `SeccionManual` conectada, tab "Asiento Directo" (`8a423c83`) ✓
-- `PipelineFlowDiagramVertical` — flujo global columna derecha (`f33d6438`) ✓
-- `GestoriaColumn` — header gestoria + cards distribuidas (`abd5a6c3`) ✓
+### Completado sesion 88
+- Fix bug: confirmar sugerido no hacía nada (error silencioso 502 FS) — `SeccionSugerencias` + `PanelSugerencias` muestran mensaje de error ✓
+- Filtrado documentos en tab "Sugerencias" — campo de búsqueda por NIF/factura/concepto con contador ✓
+- FilterBar añadido a `TabMovimientos` (tabs "Revisión", "Conciliados", "Asiento Directo") ✓
 
-### Proxima sesion — pendientes (sesion 88)
+### Proxima sesion — pendientes (sesion 89)
 1. **Pipeline FS registration fix** — Fase 2 rollback en todas (FS devuelve total=0.00). Investigar
 2. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar (q/fecha), conciliar-directo, bulk
 3. **Verificacion visual sala de control** — arrancar `npm run dev`, navegar `/pipeline/live`, comprobar animaciones WS
