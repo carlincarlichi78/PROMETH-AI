@@ -51,14 +51,13 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 81)
+## Estado rápido (sesión 82)
 
-- **Plan activo:** ninguno
-- **Completado sesión 81:** fix WebSocket Pipeline en Vivo (DESCONECTADO en prod), zona upload PDF/ZIP en pipeline page, chips fuentes en diagrama
-- **Completado sesión 80:** migración 030 prod, ingesta C43 verificada, cuentas duplicadas limpiadas, motor /conciliar → V2 deployado
-- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario (sin cambiar)
-- **Pendiente crítico:** ejecutar pipeline Gerardo en producción para poblar `documentos` empresa_id=2 → verificar sugerencias motor V2
-- **Nota:** `scripts/pipeline.py` tiene cambios sin commitear — revisar en próxima sesión
+- **Plan activo:** `docs/plans/2026-03-04-pipeline-operations-center.md` — listo para ejecutar con `superpowers:executing-plans`
+- **Completado sesión 82:** diagnóstico WS emails (ausente), diseño+plan Operations Center, fix bancario limit 100→500
+- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario
+- **PRIORIDAD 1:** ejecutar plan Operations Center (11 tasks, código completo en el plan)
+- **PRIORIDAD 2:** pipeline Gerardo en producción → `documentos` empresa_id=2
 
 ---
 

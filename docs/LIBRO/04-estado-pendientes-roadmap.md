@@ -1,5 +1,32 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 81) | **Branch:** main | **Tests:** N/A (solo frontend) | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 82) | **Branch:** main | **Tests:** N/A | **Push:** OK
+
+---
+
+## Estado actual (sesión 82 — diseño Operations Center + fix bancario)
+
+**Sesión de análisis y planificación: diagnóstico flujo emails (WS ausente), diseño Operations Center completo, plan de implementación escrito. Fix bancario por el usuario.**
+
+### Tasks completadas (sesión 82)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Diagnóstico emails en pipeline | ✅ DONE | Confirmado: `ingesta_correo` / `worker_catchall` NO emiten WS. `EVENTO_WATCHER_NUEVO_PDF` definido pero nunca emitido. |
+| Diseño Operations Center | ✅ DONE | Layout 3 columnas: FuentesPanel + FlowDiagram + BreakdownPanel. Brainstorming completo. |
+| Plan implementación | ✅ DONE | `docs/plans/2026-03-04-pipeline-operations-center.md` — 11 tasks, código completo |
+| Fix bancario (usuario) | ✅ DONE | `limit movimientos 100→500` + `dotenv en pipeline` (commit 686e66c1) |
+
+### Pendientes para sesión 83
+
+1. **EJECUTAR PLAN** `docs/plans/2026-03-04-pipeline-operations-center.md` usando `superpowers:executing-plans`
+   - Task 1+2: WS desde worker_catchall (correo) + gate0 (manual)
+   - Task 3: endpoint `/api/dashboard/pipeline-breakdown`
+   - Task 4: hooks actualizados (fuente + breakdown)
+   - Task 5+6+7+8: FuentesPanel + BreakdownPanel + nodos mejorados + GlobalStatsStrip
+   - Task 9+10+11: layout 3 cols + TS verify + deploy
+2. Pipeline Gerardo en producción → poblar `documentos` empresa_id=2
+3. Tests E2E dashboard
+4. Fix IMAP admin@prometh-ai.es
 
 ---
 

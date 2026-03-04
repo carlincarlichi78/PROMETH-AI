@@ -234,19 +234,18 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 81)
+## Estado actual (04/03/2026, sesion 82)
 
-**Rama**: `main` | **Ultimo commit**: `b42002cd` (pusheado) | **Tests**: 188 PASS bancario
+**Rama**: `main` | **Ultimo commit**: `686e66c1` (pusheado) | **Tests**: 188 PASS bancario
 
-### Completado sesion 81
-- Fix WebSocket DESCONECTADO en produccion: `usePipelineWebSocket.ts` usa `window.location` en prod ✓
-- Zona upload PDF/ZIP en Pipeline en Vivo: `SubirDocumentos.tsx` con drag&drop, llama `/api/gate0/ingestar` ✓
-- Fix fetch `/api/empresas` a URL relativa (antes usaba localhost en prod) ✓
-- Chips fuentes de entrada en diagrama: Correo/Watcher/Manual sobre nodo Inbox ✓
+### Completado sesion 82
+- Diagnostico: `worker_catchall` y `ingesta_correo` NO emiten WS — emails invisibles en dashboard ✓
+- Plan Operations Center escrito: `docs/plans/2026-03-04-pipeline-operations-center.md` (11 tasks, codigo completo) ✓
+- Fix bancario (usuario): limit movimientos 100→500 + dotenv en pipeline ✓
 
-### Proxima sesion — pendientes (sesion 82)
-1. **Pipeline Gerardo en produccion** — ejecutar pipeline OCR para poblar tabla `documentos` empresa_id=2
-2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros
-3. **scripts/pipeline.py** — hay cambios sin commitear, revisar y commitear si corresponde
-4. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+### Proxima sesion — pendientes (sesion 83)
+1. **EJECUTAR PLAN** `docs/plans/2026-03-04-pipeline-operations-center.md` con `superpowers:executing-plans`
+2. **Pipeline Gerardo en produccion** — poblar tabla `documentos` empresa_id=2
+3. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+4. **Fix IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED
 5. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace
