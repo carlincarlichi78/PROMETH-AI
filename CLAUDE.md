@@ -146,6 +146,7 @@ Determinar: nº sesión = última sesión en CLAUDE.md + 1. Identificar commits,
 - `docs/LIBRO/03-bancario-fiscal-seguridad.md` → bancario, conciliación, fiscal, correo IMAP, seguridad/JWT
 - `docs/LIBRO/LIBRO-GESTOR.md` → cambios en UI del dashboard, flujos de usuario, nuevos módulos accesibles
 - `docs/LIBRO/LIBRO-CLIENTE.md` → cambios en portal de cliente, nuevas formas de enviar documentos
+- `docs/LIBRO/LIBRO-ACCESOS.md` → nuevos usuarios, tokens API rotados, App Passwords IMAP, nuevas instancias FS, nuevos GitHub secrets (**archivo local gitignoreado — NUNCA en git**)
 
 Regla: si el cambio es una corrección de bug sin impacto arquitectural, no actualizar el libro técnico (solo el 04).
 

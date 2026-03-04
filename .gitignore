@@ -47,6 +47,7 @@ tests/datos_prueba/generador/salida/
 
 # Datos sensibles
 ACCESOS.md
+LIBRO-ACCESOS.md
 *.env
 
 # Binarios y documentos de clientes (no trackear en git)

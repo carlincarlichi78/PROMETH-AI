@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 archivos) | **Actualizado:** 2026-03-04 (sesión 66)
+> **Versión:** Consolidada (5 archivos) | **Actualizado:** 2026-03-04 (sesión 68)
 
 ---
 
@@ -22,6 +22,13 @@
 | `LIBRO-GESTOR.md` | admin_gestoria · asesor | Dashboard completo: documentos, pipeline, conciliación, fiscal, facturación, contabilidad, RRHH, administración |
 | `LIBRO-CLIENTE.md` | Clientes / empresarios | Cómo enviar documentos, estado del procesamiento, FAQ, calendario de envío |
 
+### Accesos (local únicamente — gitignoreado)
+
+| Archivo | Contenido |
+|---------|-----------|
+| `LIBRO-ACCESOS.md` | **Solo local, nunca en git.** SSH, PostgreSQL, 4 instancias FS + tokens, usuarios SFCE, API keys IA, Google Workspace, GitHub secrets, Restic backups, tabla clientes |
+| `c:\Users\carli\PROYECTOS\ACCESOS.md` | Fuente maestra global (todos los proyectos, 27 secciones) |
+
 ---
 
 ## Comandos de inicio de sesión
@@ -40,12 +47,12 @@ grep "^### Task" docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md
 
 ---
 
-## Estado rápido (sesión 66)
+## Estado rápido (sesión 68)
 
-- **Plan activo:** `docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md`
-- **Completado:** Tasks 1-6 (motor 5 capas + feedback loop) + Tasks 9-10 (api.ts + componentes dashboard)
-- **Pendiente:** Tasks 7-8 (API endpoints confirmar/rechazar/bulk/parcial) + Task 11 (conciliacion-page.tsx 5 pestañas) + Task 13 (regresión + producción)
-- **Próximo paso:** Task 7 — endpoints API en `sfce/api/rutas/bancario.py`
+- **Plan activo:** ninguno (sesión de optimización ad-hoc)
+- **Completado sesión 68:** TAREA 1 telemetría OCR+registro + TAREA 2 shift-left correcciones + fix tests `_extraer_cif_pdf` + fix migración 029 PG-compat
+- **Tests:** 2714 PASS, 0 FAILED
+- **Próximo paso:** App Passwords IMAP manuales → seed cuentas IMAP asesores en producción
 
 ---
 
