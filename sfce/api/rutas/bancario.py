@@ -192,7 +192,7 @@ def listar_movimientos(
     empresa_id: int,
     request: Request,
     estado: Optional[str] = None,
-    limit: int = 100,
+    limit: int = 500,
     offset: int = 0,
     sesion_factory=Depends(get_sesion_factory),
 ):

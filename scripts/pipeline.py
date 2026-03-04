@@ -23,6 +23,13 @@ RAIZ = Path(__file__).parent.parent
 # Agregar raiz al path para imports relativos
 sys.path.insert(0, str(RAIZ))
 
+# Cargar .env con dotenv (evita truncado de SFCE_FERNET_KEY con xargs)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(RAIZ / ".env", override=False)
+except ImportError:
+    pass
+
 from scripts.core.config import cargar_config
 from sfce.core.confidence import calcular_nivel
 from sfce.core.errors import CatalogoErrores
