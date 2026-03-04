@@ -236,7 +236,7 @@ Anotar resultado en el informe final.
 
 ## Estado actual (04/03/2026, sesion 94)
 
-**Rama**: `main` | **Ultimo commit**: *(en proceso)* | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `fe55d2d3` (pusheado) | **Tests**: ~2568 PASS
 
 ### Completado sesion 94
 - Debug 400 facturaclientes: 7 facturas previas (IDs 2-8, fechas dic-2025) bloqueaban orden cronológico. Eliminadas. ✓
