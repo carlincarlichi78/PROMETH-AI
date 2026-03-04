@@ -2,22 +2,19 @@
 
 ## Libro de Instrucciones (LEER PRIMERO)
 
-**Antes de explorar código, leer el tema relevante del libro:**
+**Antes de explorar código, leer el archivo del libro correspondiente:**
 
-- `docs/LIBRO/LIBRO-PERSONAL.md` — índice completo con comandos rápidos y variables de entorno
-- `docs/LIBRO/_temas/` — 28 archivos técnicos por dominio (pipeline, BD, API, seguridad, FS, etc.)
+- `docs/LIBRO/LIBRO-PERSONAL.md` — índice + estado actual + comandos de inicio de sesión
 
-**Regla:** si necesito contexto sobre cualquier parte del sistema, leer el archivo del libro correspondiente en lugar de explorar el código desde cero.
+| Necesito saber sobre... | Archivo |
+|-------------------------|---------|
+| Infraestructura / Docker / FS / Stack / Credenciales | `docs/LIBRO/00-indice-infra-stack.md` |
+| Arquitectura / Pipeline / OCR / Motor Reglas / Cuarentena | `docs/LIBRO/01-arquitectura-pipeline-ocr.md` |
+| Base de datos (45+ tablas) / API (140 endpoints) | `docs/LIBRO/02-bd-y-api.md` |
+| Bancario / Conciliación / Fiscal / Correo / Seguridad / JWT | `docs/LIBRO/03-bancario-fiscal-seguridad.md` |
+| Estado actual / Tasks pendientes / Roadmap / Próxima sesión | `docs/LIBRO/04-estado-pendientes-roadmap.md` |
 
-**OBLIGACIÓN al cerrar sesión:** actualizar `docs/LIBRO/_temas/` con los cambios de la sesión.
-
-| Necesito saber sobre... | Leer primero |
-|-------------------------|--------------|
-| Infraestructura / Docker / Backups | `01-infraestructura.md`, `26-infra-docker-backups.md` |
-| Arquitectura general | `02-sfce-arquitectura.md` |
-| Pipeline y fases | `03-pipeline-fases.md` |
-| Gate 0 / cola | `04-gate0-cola.md` |
-| OCR y tiers | `05-ocr-ia-tiers.md` |
+**OBLIGACIÓN al cerrar sesión:** actualizar `docs/LIBRO/04-estado-pendientes-roadmap.md` con el estado actual y próximos pasos.
 | Motor de reglas / YAMLs | `06-motor-reglas.md`, `07-sistema-reglas-yaml.md` |
 | Base de datos (45 tablas) | `17-base-de-datos.md` |
 | API endpoints (106) | `11-api-endpoints.md` |
@@ -122,42 +119,141 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (04/03/2026, sesion 67)
+## PROTOCOLO DE CIERRE
 
-**Rama**: `main` | **Ultimo commit**: `66c13f7` | **Tests**: 2708 PASS (6 fallos preexistentes en test_correo)
+> **Disparador**: las palabras exactas **"PROTOCOLO DE CIERRE"** en cualquier mensaje del usuario.
+> **Autonomía total**: ejecutar sin pedir confirmación. Solo reportar bloqueos reales.
 
-### Completado sesion 67 — Motor Conciliacion Bancaria Inteligente (Tasks 4-13)
-| Task | Commit | Detalle |
-|------|--------|---------|
-| 4+5: Capas 2-5 | `0b89e42` | NIF proveedor, referencia factura, patrones aprendidos, aproximada ±1% |
-| 6: Feedback loop | `e91e74b` | `sfce/core/feedback_conciliacion.py`: feedback_positivo/negativo, gestionar_diferencia |
-| 7+8: API endpoints | `66c13f7` | sugerencias, saldo-descuadre, confirmar/rechazar/bulk, patrones CRUD |
-| 9-12: Frontend | `ce04387` | api.ts, match-card, panel-sugerencias, conciliacion-page 5 tabs, tabla-patrones |
+### FASE 1 — Recopilar estado de la sesión
+```bash
+git log --oneline $(git merge-base HEAD origin/main 2>/dev/null || echo "HEAD~10")..HEAD
+git status --short
+python -m pytest --tb=no -q 2>/dev/null | tail -3
+```
+Determinar: nº sesión = última sesión en CLAUDE.md + 1. Identificar commits, tests, qué se implementó.
 
-### Motor conciliacion — 5 capas
+### FASE 2 — Actualizar los 5 LIBROS
+
+**SIEMPRE** → `docs/LIBRO/04-estado-pendientes-roadmap.md`:
+- Insertar nuevo bloque "## Estado actual (cierre sesión N)" AL PRINCIPIO del archivo (después del título).
+- Incluir: tabla de commits, tabla de tasks completadas con qué se hizo, pendientes para la próxima sesión.
+- Mantener los bloques de sesiones anteriores (histórico valioso).
+
+**Solo si hubo cambios en esa área** (leer git diff para decidir):
+- `docs/LIBRO/00-indice-infra-stack.md` → infra, Docker, nginx, credenciales, stack, API FS lecciones críticas
+- `docs/LIBRO/01-arquitectura-pipeline-ocr.md` → pipeline, OCR, motor reglas, cuarentena, módulos nuevos
+- `docs/LIBRO/02-bd-y-api.md` → nuevas tablas, migraciones, endpoints API nuevos o modificados
+- `docs/LIBRO/03-bancario-fiscal-seguridad.md` → bancario, conciliación, fiscal, correo IMAP, seguridad/JWT
+
+Regla: si el cambio es una corrección de bug sin impacto arquitectural, no actualizar el libro técnico (solo el 04).
+
+### FASE 3 — Actualizar LIBRO-PERSONAL.md
+En `docs/LIBRO/LIBRO-PERSONAL.md`, sección "Estado rápido":
+- Cambiar número de sesión y lo que está completado/pendiente.
+- Actualizar "Comandos de inicio de sesión" si cambió el punto de entrada (test file, plan activo, etc.).
+- Actualizar la versión/fecha del encabezado del archivo.
+
+### FASE 4 — Actualizar CLAUDE.md del proyecto
+Reemplazar la sección `## Estado actual (...)` con el estado nuevo:
+```
+## Estado actual (DD/MM/YYYY, sesion N)
+**Rama**: main | **Ultimo commit**: [hash] (pusheado) | **Tests**: N PASS
+
+### Completado sesion N
+- [bullet conciso por cada cosa completada]
+
+### Proxima sesion — pendientes
+1. [pendiente 1 — descripción breve]
+2. [pendiente 2]
+...
+```
+
+### FASE 5 — Actualizar MEMORY.md
+En `~/.claude/projects/c--Users-carli-PROYECTOS-CONTABILIDAD/memory/MEMORY.md`:
+- Añadir o actualizar entradas con lecciones nuevas que evitan errores recurrentes.
+- Eliminar entradas obsoletas (problemas ya resueltos definitivamente).
+- No duplicar lo que ya está documentado en el libro.
+
+### FASE 6 — Commit de documentación
+```bash
+git add docs/LIBRO/ CLAUDE.md
+git diff --staged --stat  # verificar qué se va a commitear
+git commit -m "docs: cierre sesion N — [resumen de 1 linea de lo completado]"
+```
+
+### FASE 7 — Push
+```bash
+git push origin main
+```
+Verificar que el push fue exitoso. Si hay conflictos, resolverlos (no force-push).
+
+### FASE 8 — Deploy a producción
+Solo ejecutar si hubo commits de código (no solo docs) en esta sesión:
+```bash
+# CI/CD se dispara automáticamente con el push a main
+# Verificar estado del contenedor en prod:
+ssh carli@65.108.60.69 "cd /opt/apps/sfce && docker compose ps sfce_api | tail -2"
+```
+Si hay migraciones nuevas en esta sesión: ejecutarlas manualmente:
+```bash
+ssh carli@65.108.60.69 "cd /opt/apps/sfce && docker exec sfce_api python -c \"
+import importlib.util, glob
+for f in sorted(glob.glob('sfce/db/migraciones/0[23][0-9]_*.py')):
+    spec = importlib.util.spec_from_file_location('m', f)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    if hasattr(mod, 'aplicar'):
+        from sfce.db.base import crear_motor, _leer_config_bd
+        mod.aplicar(crear_motor(_leer_config_bd()))
+        print(f'OK: {f}')
+\""
+```
+Anotar resultado en el informe final.
+
+### FASE 9 — Informe de cierre (mostrar al usuario)
+```
+╔══════════════════════════════════════════════╗
+║  CIERRE SESIÓN N — DD/MM/YYYY               ║
+╠══════════════════════════════════════════════╣
+║  Commits: [hash] descripcion                 ║
+║           [hash] descripcion                 ║
+║  Tests:   N PASS                             ║
+║  Libros:  04 ✓ | 00 - | 01 - | 02 ✓ | 03 - ║
+║  Git:     push OK                            ║
+║  Prod:    CI/CD desplegado / migración N OK  ║
+╠══════════════════════════════════════════════╣
+║  PRÓXIMA SESIÓN:                             ║
+║  1. [pendiente 1]                            ║
+║  2. [pendiente 2]                            ║
+╚══════════════════════════════════════════════╝
+  → Abrir nueva sesión para continuar limpio.
+```
+
+---
+
+## Estado actual (04/03/2026, sesion 68)
+
+**Rama**: `main` | **Ultimo commit**: `49c27cf` (pusheado) | **Tests**: 2708 PASS
+
+### Completado sesion 68
+- Push de todos los commits a origin/main
+- Migracion 028 aplicada en produccion (OK)
+- Migracion 029 aplicada en produccion (OK — fix AUTOINCREMENT→SERIAL para PG)
+- Tablas en prod: `sugerencias_match`, `patrones_conciliacion`, `conciliaciones_parciales`
+- Columnas en prod: `movimientos_bancarios.(documento_id, score_confianza, capa_match)`
+
+### Motor conciliacion — 5 capas (implementado y en produccion)
 - **Capa 1**: Importe exacto + fecha ±2d → auto si unívoco, sugerido si ambiguo
 - **Capa 2**: NIF proveedor en concepto bancario → score 0.90, ventana 5d
 - **Capa 3**: Nº factura normalizado en concepto → score 0.90, ventana 5d
 - **Capa 4**: Patrón aprendido (patron_limpio ⊂ concepto) → score 0.55-0.95
 - **Capa 5**: Importe ±1% → estado "revision"
-- **Feedback**: confirmar → incrementa patrón; rechazar capa4 → penaliza (elimina si →0)
+- **Endpoints**: `POST /conciliar-inteligente`, `GET /sugerencias`, `GET /saldo-descuadre`
+- **Acciones**: `POST /confirmar-match`, `/rechazar-match`, `/confirmar-bulk`, `/patrones` CRUD
 
-### Proxima sesion
-1. **Push** (`main` ahead by 9): `git push origin main`
-2. **Migracion 029 en produccion**:
-```bash
-ssh carli@65.108.60.69 "docker exec sfce_api python -c \"
-import importlib.util, os; from sqlalchemy import create_engine
-spec = importlib.util.spec_from_file_location('m029', 'sfce/db/migraciones/029_conciliacion_inteligente.py')
-mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-mod.aplicar(create_engine(os.environ['DATABASE_URL']))
-\""
-```
-3. **Migracion 028 en produccion** (pendiente sesion 64) — mismo patron con m028
-4. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier
-5. **Script seed**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
-
-### Pendientes baja prioridad
-- Conciliacion N:1 parcial (endpoint planificado, no implementado)
-- Tests E2E dashboard (Playwright)
-- Actualizar `docs/LIBRO/_temas/` (19-bancario.md, 11-api-endpoints.md)
+### Proxima sesion — pendientes
+1. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
+2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+3. **Conciliacion N:1 parcial** (endpoint planificado, no implementado)
+4. **Tests E2E dashboard** (Playwright)
+5. Actualizar `docs/LIBRO/_temas/` (19-bancario.md, 11-api-endpoints.md)
