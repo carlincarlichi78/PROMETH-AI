@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from sfce.conectores.correo.extractor_adjuntos import ArchivoExtraido
 
 logger = logging.getLogger(__name__)
-DIRECTORIO_DOCS = Path("docs")
+DIRECTORIO_DOCS = Path("docs/uploads")
 RAIZ_CLIENTES = Path("clientes")
 
 

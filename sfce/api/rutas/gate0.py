@@ -15,7 +15,7 @@ from sfce.core.gate0 import (
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/gate0", tags=["gate0"])
 
-DIRECTORIO_DOCS = Path("docs")
+DIRECTORIO_DOCS = Path("docs/uploads")
 RAIZ_CLIENTES = Path("clientes")
 
 
