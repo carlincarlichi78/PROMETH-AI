@@ -234,22 +234,20 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 77)
+## Estado actual (04/03/2026, sesion 79)
 
-**Rama**: `main` | **Ultimo commit**: `3f91e352` (pendiente push) | **Tests**: 188 PASS bancario, 2 skipped
+**Rama**: `main` | **Ultimo commit**: `ff8406d7` (pendiente push) | **Tests**: 188 PASS bancario
 
-### Completado sesion 77
-- `parser_tpv_xls.py` (nuevo): parsea TP*.XLS datafono CaixaBank (27 cols), fix `int(float())` codigo_comercio
-- `parser_tarjeta_pdf.py` (nuevo): parsea extractos PDF MyCard + VClNegocios, extrae fecha_cargo individual
-- `triangulacion_gerardo.py` (nuevo): orquesta C43 + match TPV-MCC + match tarjeta-TCR; fix offset +1 dia CaixaBank
-- `conciliar_facturas_gerardo.py` (nuevo): motor matching 4 capas sin LLM; 278 PDFs, 107 sugerencias, 24.8% cobertura
-- Motor conciliacion: Capa A exacto (48), Capa B fuzzy triangulacion (50), Capa C subset-sum VClNegocios (8), Capa D patron mensual (1)
-- Sesion analisis: mapa flujo documental completo, critica arquitectura, plan ejecucion modulo bancario sesion 78
+### Completado sesiones 78+79
+- Sesion 78: endpoint `/conciliar` usa `MotorConciliacion.conciliar_inteligente()` + tipos frontend
+- Sesion 78: extraccion PDF 3 tiers — pdfplumber → pymupdf (fitz) → Gemini Flash (20 req/dia gratis)
+- Sesion 79: fix `load_dotenv` en `conciliar_facturas_gerardo.py` (GEMINI_API_KEY no cargaba con xargs)
+- Sesion 79: dedup BD fallback — al encontrar doc existente por hash_pdf, recupera importe/emisor/nif de datos_ocr
 
-### Proxima sesion — pendientes (sesion 78)
-1. **PUSH pendiente** — 3 commits sin push: `6750f00d`, `3f91e352` + docs sesion 77
-2. **Migracion 030 en produccion** — columna `confirmada` en `sugerencias_match` (script en 04-roadmap Task 13)
-3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real (Gerardo Gonzalez)
-4. **Fix interceptor Axios 422** en `dashboard/src/features/conciliacion/api.ts` (ya en plan sesion 78)
+### Proxima sesion — pendientes (sesion 80)
+1. **PUSH pendiente** — commits `f4074dd7`, `b6a60b72`, `ff8406d7` sin push
+2. **Migracion 030 en produccion** — columna `confirmada` en `sugerencias_match`
+3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real
+4. **Fix interceptor Axios 422** — `detail` array → `detail.map(d => d.msg).join(", ")`
 5. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
-6. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar credenciales
+6. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED

@@ -1,5 +1,49 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 77) | **Branch:** main | **Tests:** 188 PASS bancario | **Push pendiente**
+> **Actualizado:** 2026-03-04 (sesión 79) | **Branch:** main | **Tests:** 188 PASS bancario | **Push pendiente**
+
+---
+
+## Estado actual (sesión 79 — fix dotenv GEMINI + dedup BD fallback)
+
+**Sesión de corrección: GEMINI_API_KEY no cargaba con xargs (SFCE_FERNET_KEY con caracteres especiales). Fix dedup: cuando un doc ya existe en BD, recuperar importe/emisor/nif de datos_ocr si el extractor local no los obtuvo. Un commit.**
+
+### Commits de la sesión 79
+
+| Commit | Descripción |
+|--------|-------------|
+| `ff8406d7` | fix(conciliacion): dotenv fix SFCE_FERNET_KEY + dedup fallback importes desde BD |
+
+### Tasks completadas (sesión 79)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| dotenv fix | ✅ DONE | `load_dotenv(RAIZ/.env)` en `conciliar_facturas_gerardo.py` — evita xargs truncando SFCE_FERNET_KEY |
+| dedup BD fallback | ✅ DONE | Al hacer dedup por hash_pdf: cargar `importe_total`, `nombre_emisor`, `nif_emisor` de `datos_ocr` si el extractor local los obtuvo como None |
+| Diagnóstico sesión 78 | ✅ DONE | Confirmado: sesión 78 ya commitió `pdfplumber+pymupdf+Gemini T3` y endpoint `/conciliar` pero no cerró formalmente |
+
+### Pendientes para sesión 80
+
+1. **PUSH pendiente** — `git push origin main` (commits `f4074dd7`, `b6a60b72`, `ff8406d7`)
+2. **Migración 030 en producción** — columna `confirmada` en `sugerencias_match`
+3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real
+4. **Fix interceptor Axios 422** — `detail` array → `detail.map(d => d.msg).join(", ")`
+5. **Test `test_caixabank_extendido`** — verificar con `TT280226.423.txt`
+6. **Motor conciliación API en producción** — `POST /api/bancario/2/conciliar`
+7. **Tests E2E dashboard** — Playwright flujos críticos conciliación
+8. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED
+
+---
+
+## Estado actual (sesión 78 — endpoint /conciliar + extracción PDF 2/3 capas)
+
+**Sin cierre formal. Dos commits: endpoint `/conciliar` usa `MotorConciliacion.conciliar_inteligente()` + tipos frontend; extracción PDF pdfplumber → pymupdf → Gemini Flash (Tier 1/2/3). 17 PDFs escaneados/sin-importe → Gemini.**
+
+### Commits de la sesión 78
+
+| Commit | Descripción |
+|--------|-------------|
+| `f4074dd7` | feat(bancario): endpoint /conciliar usa MotorConciliacion.conciliar_inteligente() + tipos frontend |
+| `b6a60b72` | feat(conciliacion): extraccion PDF 2 capas — pdfplumber + pymupdf fallback |
 
 ---
 

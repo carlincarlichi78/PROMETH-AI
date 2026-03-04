@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 76)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 79)
 
 ---
 
@@ -51,12 +51,14 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 76)
+## Estado rápido (sesión 79)
 
 - **Plan activo:** ninguno
-- **Completado sesión 76:** Zero-Touch multi-cuenta: `iban_utils.py` + `parser_c43` refactor list + `ingestar_c43_multicuenta` JIT. Fix `[object Object]` FormData. 11 tests nuevos. 2741 PASS.
-- **Completado sesión 75:** Onboarding bancario Gerardo (3 cuentas CaixaBank prod). Seed IMAP prod.
-- **Tests:** 2741 PASS, 4 skipped
+- **Completado sesión 79:** fix dotenv GEMINI_API_KEY + dedup BD fallback en `conciliar_facturas_gerardo.py`
+- **Completado sesión 78:** endpoint `/conciliar` + extracción 3 tiers (pdfplumber→pymupdf→Gemini Flash)
+- **Completado sesión 77:** motor conciliación 4 capas sin LLM, 278 PDFs, 107 sugerencias, 24.8% cobertura
+- **Push pendiente:** `f4074dd7`, `b6a60b72`, `ff8406d7`
+- **Tests:** 188 PASS bancario (suite completa pendiente verificar)
 - **Próximo paso:** migración 030 prod + subir TT280226.423.txt Dashboard para validar E2E
 
 ---
