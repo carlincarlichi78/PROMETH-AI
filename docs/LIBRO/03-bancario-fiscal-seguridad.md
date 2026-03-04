@@ -1,5 +1,5 @@
 # SFCE — Bancario, Fiscal, Correo y Seguridad
-> **Actualizado:** 2026-03-04 (sesión 75) | Tests bancario: 161 PASS
+> **Actualizado:** 2026-03-04 (sesión 76) | Tests bancario: 182 PASS
 
 ---
 
@@ -19,11 +19,59 @@ Auto-detección de formato en ambos parsers.
 
 | Registro | Long. | Descripción |
 |----------|-------|-------------|
-| `11` | variable | Cabecera: banco(4)+oficina(4)+cuenta(10)+divisa(3)+saldo_inicial(18)+signo(1) |
+| `11` | variable | Cabecera: banco(4)+oficina(4)+cuenta(10)+divisa(3)+saldo_inicial(18)+signo(1). Un archivo puede tener **múltiples R11** (multi-cuenta). |
 | `22` | 105 (std) / 80 (CaixaBank) | Movimiento: fecha_op(6)+fecha_val(6)+concepto_común(2)+concepto_propio(2)+importe(14)+signo(1)+num_doc(6)+ref1(12)+ref2(16)+concepto(38) |
 | `23` | 76 | Concepto adicional: se concatena al R22 anterior |
 | `33` | 74+ | Totales de cuenta |
-| `88` | 2 | Fin de fichero |
+| `88` | 2 | Fin de fichero — **solo al final, NO entre cuentas** |
+
+### Multi-cuenta: R11 parser + JIT onboarding
+
+`parsear_c43(contenido: str) -> list[dict]` devuelve **un dict por R11**:
+```python
+[
+    {"banco_codigo": "2100", "iban": "ES5221003889...", "saldo_inicial": ..., "movimientos": [...]},
+    {"banco_codigo": "2100", "iban": "ES4621006848...", ...},
+    ...
+]
+```
+- `num_orden` se reinicia a 0 por cada nueva cuenta.
+- IBAN calculado con `iban_utils.construir_iban_es(entidad, oficina, cuenta)`.
+- Cuentas separadas por R11 (NO por R88 intermedio).
+
+### IBAN Cálculo — `sfce/conectores/bancario/iban_utils.py`
+
+R11 de Norma 43 provee **18 dígitos**: banco(4) + oficina(4) + cuenta(10). Sin DC.
+
+```python
+# DC con Módulo 11 AEB (pesos potencias de 2 mod 11: 1,2,4,8,5,10,9,7,3,6)
+def calcular_dc_ccc(entidad, oficina, cuenta) -> tuple[int, int]:
+    d1 = _dc_mod11("0" + entidad + oficina, 9)   # D1 para bloque banco+oficina
+    d2 = _dc_mod11(cuenta, 10)                    # D2 para número de cuenta
+
+# Check digits IBAN con Módulo 97 (ISO 13616)
+def construir_iban_es(entidad, oficina, cuenta) -> str:
+    # CCC = entidad + oficina + DC + cuenta  (20 dígitos)
+    # Reordenar: CCC + "ES00", convertir letras a números, check = 98 - (N % 97)
+    return f"ES{check_iban:02d}{ccc}"  # 24 chars total
+```
+
+**CRÍTICO**: NO hardcodear `"ES00"` — el check digit es calculado.
+
+### Endpoint ingesta — ramas por extensión
+
+```
+POST /api/bancario/{empresa_id}/ingestar
+  ?cuenta_iban=...   (opcional para TXT/C43, obligatorio para XLS)
+  archivo: UploadFile
+```
+
+| Extensión | Flujo | JIT | 404 posible |
+|-----------|-------|-----|-------------|
+| `.xls/.xlsx` | `ingestar_archivo_bytes()` single-account | No | Sí (cuenta_iban no existe) |
+| `.txt/.c43` | `ingestar_c43_multicuenta()` multi-cuenta | Sí | No |
+
+`gestoria_id` para TXT: `empresa.gestoria_id or usuario.gestoria_id or 0`.
 
 ### Auto-detección CaixaBank
 

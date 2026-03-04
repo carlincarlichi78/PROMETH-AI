@@ -1,5 +1,39 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 75) | **Branch:** main | **Tests:** 2724 PASS, 4 skipped
+> **Actualizado:** 2026-03-04 (sesión 76) | **Branch:** main | **Tests:** 2741 PASS, 4 skipped
+
+---
+
+## Estado actual (sesión 76 — Zero-Touch multi-cuenta + IBAN Módulo11/97)
+
+**Ingesta C43 multi-cuenta completamente autónoma: JIT onboarding, IBAN calculado correctamente con Módulo 11 AEB + Módulo 97 ISO 13616, 11 tests nuevos. Suite 2741 PASS.**
+
+### Commits de la sesión 76
+
+| Commit | Descripción |
+|--------|-------------|
+| `cbb02fa` | fix(api-client): no sobreescribir Content-Type en FormData + manejar detail array de FastAPI |
+| `cc3dcd3` | feat(bancario): ingesta Zero-Touch multi-cuenta — JIT onboarding + IBAN Modulo11/97 |
+
+### Tasks completadas (sesión 76)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Fix `[object Object]` en UI | ✅ DONE | `api-client.ts`: detecta FormData y omite `Content-Type`; parsea `detail` array de FastAPI 422 |
+| `iban_utils.py` (nuevo) | ✅ DONE | `construir_iban_es(entidad, oficina, cuenta)` — Módulo 11 AEB para DC + Módulo 97 ISO 13616 para check digits. IBAN 24 chars `ES__BBBBOOOODDNNNNNNNNNN` |
+| `parser_c43.py` refactor | ✅ DONE | `parsear_c43()` devuelve `list[dict]` (un dict por R11). `num_orden` se reinicia por cuenta. IBAN completo calculado con `iban_utils` |
+| `ingesta.py` multi-cuenta | ✅ DONE | `ingestar_c43_multicuenta()`: SHA256 file-level dedup, JIT `CuentaBancaria` por IBAN, dedup movimientos, respuesta con `cuentas_procesadas/creadas/detalle` |
+| Endpoint `bancario.py` | ✅ DONE | `cuenta_iban` opcional; TXT→JIT multicuenta (gestoria_id fallback a 0), XLS→single-account con cuenta_iban obligatorio |
+| `test_zero_touch_multicuenta.py` (nuevo) | ✅ DONE | 11 tests: JIT onboarding (4), movimientos por cuenta (3), idempotencia (3), archivo real skipif (1) |
+| `test_parser_c43.py` adaptado | ✅ DONE | Helper `_p1()` para nueva signatura lista; `TestMultiCuenta` con 4 tests |
+| Frontend TypeScript | ✅ DONE | `api.ts`: `DetalleCuenta` + `ResultadoIngesta` multi-cuenta. `subir-extracto.tsx`: botón sin requerir IBAN para TXT; muestra `cuentas_creadas` |
+
+### Pendientes para próxima sesión
+
+1. **Migración 030 en producción** — script en sección Task 13 abajo. `confirmada` column en `sugerencias_match`.
+2. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E con JIT onboarding real (3 cuentas Gerardo González)
+3. **Tests E2E dashboard** — Playwright flujos críticos conciliación
+4. **Error IMAP cuenta 1** (admin@prometh-ai.es): `AUTHENTICATIONFAILED` — revisar credenciales
+5. **Investigar `javier@prometh-ai.es`** — usuario_id=20 en prod sin rol correcto
 
 ---
 

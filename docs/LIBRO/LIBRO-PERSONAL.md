@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 75)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 76)
 
 ---
 
@@ -43,7 +43,7 @@ git log -5 --oneline
 
 # Test bancario para verificar base
 python -m pytest tests/test_bancario/ --tb=no -q
-# Esperado: 171 passed (suite completa: 2724)
+# Esperado: 182 passed (suite completa: 2741)
 
 # Abrir dashboard
 cd dashboard && npm run dev
@@ -51,13 +51,13 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 75)
+## Estado rápido (sesión 76)
 
 - **Plan activo:** ninguno
-- **Completado sesión 75:** Onboarding bancario Gerardo (3 cuentas CaixaBank prod). Seed IMAP 6 asesores + 2 dedicadas prod. Fix `es_respuesta_ack` INTEGER→BOOLEAN en PG prod.
-- **Completado sesiones 72+73+74:** UI conciliación completa 5 pestañas. TypeScript 0 errores. 2724 tests PASS.
-- **Tests:** 2724 PASS, 4 skipped
-- **Próximo paso:** subir TT280226.423.txt en Dashboard para validar ingesta C43 E2E
+- **Completado sesión 76:** Zero-Touch multi-cuenta: `iban_utils.py` + `parser_c43` refactor list + `ingestar_c43_multicuenta` JIT. Fix `[object Object]` FormData. 11 tests nuevos. 2741 PASS.
+- **Completado sesión 75:** Onboarding bancario Gerardo (3 cuentas CaixaBank prod). Seed IMAP prod.
+- **Tests:** 2741 PASS, 4 skipped
+- **Próximo paso:** migración 030 prod + subir TT280226.423.txt Dashboard para validar E2E
 
 ---
 
