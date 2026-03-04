@@ -1,5 +1,29 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 82) | **Branch:** main | **Tests:** N/A | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 83) | **Branch:** main | **Tests:** build ✓ | **Push:** OK
+
+---
+
+## Estado actual (sesión 83 — Pipeline Operations Center implementado)
+
+**Implementación completa del plan `docs/plans/2026-03-04-pipeline-operations-center.md`. 6 commits frontend+backend. Deploy en producción OK.**
+
+### Tasks completadas (sesión 83)
+
+| Task | Commit | Qué se hizo |
+|------|--------|-------------|
+| WS desde correo (worker_catchall) | `32f64b4a` | `_emitir_ws_nuevo_pdf()` helper en `_encolar_archivo` |
+| WS desde manual (gate0) | `f5fc0d84` | Emite `watcher_nuevo_pdf` con `fuente="manual"` tras commit |
+| Endpoint pipeline-breakdown | `a59ef123` | `GET /api/dashboard/pipeline-breakdown` — breakdown tipo_doc + empresa + fuentes |
+| Hooks frontend | `9cd9c48f` | `ParticulaActiva.fuente` + `contadores_fuente` WS + `BreakdownStatus` + URLs relativas |
+| Componentes Operations Center | `0884b809` | FuentesPanel, BreakdownPanel, PipelineNode mejorado, GlobalStatsStrip rediseñado |
+| Layout 3 columnas | `261652a5` | pipeline-live-page.tsx reescrita: FuentesPanel ↔ FlowDiagram ↔ BreakdownPanel |
+
+### Pendientes para sesión 84
+
+1. **Pipeline Gerardo en producción** — `python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo` → poblar `documentos` empresa_id=2
+2. **Verificar sugerencias** — tras pipeline, `GET /api/bancario/2/sugerencias` debe devolver registros con motor V2
+3. **Tests E2E dashboard** (Playwright, flujos críticos: upload manual, conciliación, pipeline live)
+4. **Fix IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED, revisar App Password Google Workspace
 
 ---
 

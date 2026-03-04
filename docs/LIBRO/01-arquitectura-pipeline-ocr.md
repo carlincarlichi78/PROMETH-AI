@@ -33,7 +33,8 @@ Sistema de Fiabilidad Contable España. Plataforma SaaS para gestorías que auto
 | Motor Conciliación v2 (5 capas) | ✅ | incl. | `sfce/core/motor_conciliacion.py` |
 | normalizar_bancario.py | ✅ | 23 | `sfce/core/normalizar_bancario.py` |
 | ORM Conciliación (migración 029) | ✅ | 4 | `sfce/db/migraciones/029_*.py` |
-| Dashboard React (20 módulos) | ✅ | Build OK | `dashboard/src/features/` |
+| Dashboard React (20 módulos) + Operations Center | ✅ | Build OK | `dashboard/src/features/` |
+| Pipeline Operations Center (WS completo) | ✅ | — | layout 3 cols: FuentesPanel/FlowDiagram/BreakdownPanel |
 | Correo IMAP | ✅ | — | `sfce/conectores/correo/` |
 | Multi-tenant | ✅ | 4 E2E | migracion 004 |
 | Dual Backend FS+BD | ✅ | integrado | `sfce/core/backend.py` |

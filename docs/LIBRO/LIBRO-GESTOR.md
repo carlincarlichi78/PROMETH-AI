@@ -38,9 +38,13 @@ Al entrar verás el **Centro de Operaciones**: tarjetas por empresa con estado d
 
 También puedes subir un lote en ZIP: `Documentos → Subir ZIP`.
 
-### Ver el pipeline
+### Ver el pipeline (Operations Center)
 
-`Documentos → Pipeline (Live)` — muestra el estado en tiempo real de cada documento:
+`Documentos → Pipeline (Live)` — vista en tiempo real con **layout 3 columnas**:
+
+- **Columna izquierda (Fuentes):** actividad por canal de entrada (Correo IMAP, Watcher local, Subida manual) + ranking de empresas con docs procesados hoy. Click en una empresa para filtrar toda la vista.
+- **Columna central (Diagrama de flujo):** nodos Inbox → OCR → Validación → FS → Asiento → Completado con partículas animadas mostrando el flujo. Zona de subida manual en la parte inferior.
+- **Columna derecha (Breakdown):** distribución por tipo_doc (FC/FV/NC/SUM…) hoy + feed de actividad en tiempo real.
 
 | Estado | Significado |
 |--------|-------------|

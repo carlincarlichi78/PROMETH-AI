@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 81)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 83)
 
 ---
 
@@ -51,12 +51,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 82)
+## Estado rápido (sesión 83)
 
-- **Plan activo:** `docs/plans/2026-03-04-pipeline-operations-center.md` — listo para ejecutar con `superpowers:executing-plans`
-- **Completado sesión 82:** diagnóstico WS emails (ausente), diseño+plan Operations Center, fix bancario limit 100→500
-- **Push:** todo en origin/main ✓ | **Tests:** 188 PASS bancario
-- **PRIORIDAD 1:** ejecutar plan Operations Center (11 tasks, código completo en el plan)
+- **Completado sesión 83:** Pipeline Operations Center implementado completo — WS en toda la cadena (correo+manual), endpoint pipeline-breakdown, layout 3 columnas, FuentesPanel+BreakdownPanel
+- **Push:** todo en origin/main ✓ | **Build:** ✓ 4.99s | **Prod:** sfce_api healthy
+- **PRIORIDAD 1:** ejecutar pipeline Gerardo en prod para poblar `documentos` empresa_id=2
+- **PRIORIDAD 2:** verificar sugerencias bancario empresa_id=2 con motor V2
 - **PRIORIDAD 2:** pipeline Gerardo en producción → `documentos` empresa_id=2
 
 ---

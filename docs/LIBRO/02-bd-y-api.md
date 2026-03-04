@@ -394,6 +394,13 @@ curl -X POST http://localhost:8000/api/auth/login \
 | GET | `/api/pipeline/{empresa_id}/estado` | Estado del pipeline activo |
 | GET | `/api/pipeline/{empresa_id}/historial` | Historial de ejecuciones |
 
+### Dashboard Pipeline — `/api/dashboard`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/dashboard/pipeline-status` | Counts por fase: inbox/procesando/cuarentena/error/done_hoy (por empresa si `?empresa_id=N`) |
+| GET | `/api/dashboard/pipeline-breakdown` | Breakdown hoy: tipo_doc + por empresa (con nombre) + fuentes (correo/manual/watcher) |
+
 ### WebSocket — `/ws`
 
 | Canal | Descripción |

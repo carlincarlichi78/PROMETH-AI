@@ -234,18 +234,19 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 82)
+## Estado actual (04/03/2026, sesion 83)
 
-**Rama**: `main` | **Ultimo commit**: `686e66c1` (pusheado) | **Tests**: 188 PASS bancario
+**Rama**: `main` | **Ultimo commit**: `261652a5` (pusheado) | **Build**: OK 4.99s | **Prod**: sfce_api healthy
 
-### Completado sesion 82
-- Diagnostico: `worker_catchall` y `ingesta_correo` NO emiten WS — emails invisibles en dashboard ✓
-- Plan Operations Center escrito: `docs/plans/2026-03-04-pipeline-operations-center.md` (11 tasks, codigo completo) ✓
-- Fix bancario (usuario): limit movimientos 100→500 + dotenv en pipeline ✓
+### Completado sesion 83
+- WS emitido desde `worker_catchall._encolar_archivo` (fuente=correo) y `gate0.ingestar_documento` (fuente=manual) ✓
+- Endpoint `GET /api/dashboard/pipeline-breakdown` — breakdown tipo_doc + empresa + fuentes ✓
+- Hooks: `ParticulaActiva.fuente` + `contadores_fuente` WS + `BreakdownStatus` + URLs relativas ✓
+- Componentes: `FuentesPanel`, `BreakdownPanel`, `PipelineNode` mejorado, `GlobalStatsStrip` rediseñado ✓
+- `pipeline-live-page.tsx` reescrita: layout 3 columnas Operations Center ✓
 
-### Proxima sesion — pendientes (sesion 83)
-1. **EJECUTAR PLAN** `docs/plans/2026-03-04-pipeline-operations-center.md` con `superpowers:executing-plans`
-2. **Pipeline Gerardo en produccion** — poblar tabla `documentos` empresa_id=2
-3. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
-4. **Fix IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED
-5. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar App Password Google Workspace
+### Proxima sesion — pendientes (sesion 84)
+1. **Pipeline Gerardo en produccion** — `python scripts/pipeline.py --cliente gerardo-gonzalez-callejon --ejercicio 2025 --inbox inbox_gerardo --no-interactivo`
+2. **Verificar sugerencias** — `GET /api/bancario/2/sugerencias` tras pipeline
+3. **Tests E2E dashboard** (Playwright, flujos criticos)
+4. **Fix IMAP admin@prometh-ai.es** — AUTHENTICATIONFAILED, revisar App Password Google Workspace
