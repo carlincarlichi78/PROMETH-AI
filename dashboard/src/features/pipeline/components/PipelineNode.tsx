@@ -104,7 +104,7 @@ export function PipelineNode({ id, label, sublabel, count, icono, color, activo,
       className={cn(
         // Base glassmorphism
         'relative flex flex-col items-center justify-center gap-1',
-        'w-28 min-h-[100px] rounded-xl px-3 py-4',
+        'w-32 min-h-[110px] rounded-2xl px-3 py-4',
         'backdrop-blur-sm border',
         'transition-all duration-500',
         c.bg, c.border,
@@ -112,11 +112,23 @@ export function PipelineNode({ id, label, sublabel, count, icono, color, activo,
         tieneActividad && !atenuado && (activo ? 'pipeline-node-active' : c.glow),
         // Aurora border wrapper via outline
         activo && !atenuado && 'outline outline-2 outline-offset-2 outline-amber-400/60',
+        // Shadow cuando activo
+        activo && !atenuado && 'shadow-amber-500/20 shadow-lg',
         // Atenuado (otro empresa seleccionada)
         atenuado ? 'opacity-30 scale-95' : 'opacity-100 scale-100',
         className,
       )}
     >
+      {/* Glow ring exterior cuando hay actividad */}
+      {tieneActividad && !atenuado && (
+        <div className={cn(
+          'absolute inset-0 rounded-2xl opacity-20 pointer-events-none',
+          color === 'amber' && 'ring-2 ring-amber-400 animate-pulse',
+          color === 'blue'  && 'ring-2 ring-blue-400',
+          color === 'green' && 'ring-2 ring-emerald-400',
+        )} />
+      )}
+
       {/* Icono */}
       <span className="text-xl select-none">{icono}</span>
 
@@ -126,7 +138,11 @@ export function PipelineNode({ id, label, sublabel, count, icono, color, activo,
       </span>
 
       {/* Count */}
-      <div className={cn('rounded-full px-2 py-0.5 min-w-[32px] text-center', c.badge)}>
+      <div className={cn(
+        'rounded-full px-2 py-0.5 min-w-[36px] text-center mt-1 transition-transform duration-200',
+        c.badge,
+        count > 0 && 'scale-110',
+      )}>
         <AnimatedCount value={count} />
       </div>
 

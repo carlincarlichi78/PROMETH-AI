@@ -3,6 +3,13 @@ import { useEffect, useRef } from 'react'
 import type { ParticulaActiva } from '../hooks/usePipelineWebSocket'
 import { obtenerPathConector } from './FlowConnector'
 
+const ICONO_FUENTE: Record<string, string> = {
+  correo: '📧',
+  manual: '💻',
+  watcher: '📁',
+  pipeline: '',
+}
+
 const COLOR_TIPO: Record<string, string> = {
   FC: 'oklch(0.75 0.18 145)',    // green — factura cliente
   FV: 'oklch(0.65 0.20 250)',    // blue — factura proveedor
@@ -25,6 +32,7 @@ export function DocumentParticle({ particula, onCompleta }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const connectorId = `${particula.nodo_origen}-${particula.nodo_destino}`
   const color = COLOR_TIPO[particula.tipo_doc] ?? COLOR_TIPO.default
+  const iconoFuente = ICONO_FUENTE[particula.fuente] ?? ''
 
   useEffect(() => {
     const el = ref.current
@@ -58,6 +66,15 @@ export function DocumentParticle({ particula, onCompleta }: Props) {
         boxShadow: `0 0 8px 3px ${color}`,
         transform: 'translate(-50%, -50%)',
       }}
-    />
+    >
+      {iconoFuente && (
+        <span
+          className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] opacity-80 pointer-events-none"
+          style={{ textShadow: `0 0 4px ${color}` }}
+        >
+          {iconoFuente}
+        </span>
+      )}
+    </div>
   )
 }

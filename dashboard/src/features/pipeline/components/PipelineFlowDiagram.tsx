@@ -74,29 +74,6 @@ export function PipelineFlowDiagram({ status, particulas, onParticulaCompleta, e
 
   return (
     <div ref={containerRef} className="relative w-full" style={{ minHeight: 200 }}>
-      {/* Fuentes de entrada — indicadores sobre el nodo Inbox */}
-      <div className="flex items-start justify-between px-4 pt-2 pb-0">
-        <div className="flex flex-col items-center gap-1 w-28">
-          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider">Fuentes</p>
-          <div className="flex flex-wrap justify-center gap-1">
-            {[
-              { icono: '📧', label: 'Correo' },
-              { icono: '📁', label: 'Watcher' },
-              { icono: '💻', label: 'Manual' },
-            ].map(f => (
-              <span
-                key={f.label}
-                title={f.label}
-                className="inline-flex items-center gap-0.5 text-[9px] bg-slate-700/40 border border-slate-600/30 rounded px-1 py-0.5 text-slate-400"
-              >
-                {f.icono} {f.label}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="flex-1" /> {/* spacer */}
-      </div>
-
       {/* Fila principal de nodos */}
       <div className="flex items-center justify-between gap-2 px-4 py-8">
         {NODOS_PRINCIPALES.map(nodo => (
