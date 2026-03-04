@@ -1,5 +1,5 @@
 # SFCE — Arquitectura, Pipeline, OCR y Motor de Reglas
-> **Actualizado:** 2026-03-04 (sesión 66)
+> **Actualizado:** 2026-03-04 (sesión 68)
 
 ---
 
@@ -15,7 +15,7 @@ Sistema de Fiabilidad Contable España. Plataforma SaaS para gestorías que auto
 
 | Módulo | Estado | Tests | Ubicación |
 |--------|--------|-------|-----------|
-| Pipeline 7 Fases | ✅ | 18 tasks E2E | `sfce/phases/` |
+| Pipeline 7 Fases + Telemetría | ✅ | 18 tasks E2E | `sfce/phases/` |
 | Motor OCR Tiers (T0/T1/T2) | ✅ | 21 | `sfce/core/ocr_*.py` |
 | Worker OCR Gate0 + Recovery | ✅ | 13 | `sfce/core/worker_ocr_gate0.py` |
 | Coherencia Fiscal | ✅ | 13 | `sfce/core/coherencia_fiscal.py` |
@@ -140,13 +140,28 @@ Superadmin (nivel 4)
 | CHECK 8 | Bloqueante | No duplicado en lote |
 | CHECK 9 | Bloqueante | No existe ya en FacturaScripts |
 
+### Fase 0 — Telemetría OCR (sesión 68)
+
+`intake.py` mide `duracion_ocr_s` por llamada API (Mistral/GPT/Gemini). Si el doc viene de caché `.ocr.json`, se marca `cache_hit=True, duracion_ocr_s=0.0`. La telemetría viaja en `doc["telemetria"]` hacia las fases siguientes.
+
 ### Fase 2 — Registro: puntos críticos
 
 - `_asegurar_entidades_fs()`: si proveedor no existe en FS, lo crea. NO pasar `codsubcuenta` del config.yaml — FS auto-asigna 400x
 - Loop de aprendizaje (3 intentos) con Resolutor
 - FC: crear en **orden cronológico estricto** (FS valida secuencia)
+- **Shift-left correcciones** `_pre_aplicar_correcciones_conocidas()` (sesión 68): inyecta `codimpuesto=IVA0` + `codsubcuenta=4709` para suplidos, `codsubcuenta` destino para reglas `reclasificar_linea`, y subcuenta global del proveedor — antes del primer POST. Fase 4 sigue activa como red de seguridad.
+- **Telemetría registro**: mide `duracion_registro_s` por factura creada; fusiona con telemetría OCR.
 - Después: `_corregir_asientos_proveedores()` + `_corregir_divisas_asientos()`
 - Último: `_sincronizar_asientos_factura_a_bd()` con `solo_local=True`
+
+### Fase 6 — Informe auditoría: sección TELEMETRÍA
+
+El `.log` de auditoría incluye:
+```
+--- TELEMETRÍA ---
+  OCR (llamadas API): N docs, media X.XXs/doc, total Y.Ys (Z de caché)
+  Registro FS (POST): N facturas, media X.XXs/factura, total Y.Ys
+```
 
 ---
 

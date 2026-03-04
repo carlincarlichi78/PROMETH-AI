@@ -1,5 +1,34 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 68) | **Branch:** main | **Tests:** 2708+ PASS
+> **Actualizado:** 2026-03-04 (sesión 69) | **Branch:** main | **Tests:** 2714 PASS
+
+---
+
+## Estado actual (cierre sesión 69)
+
+### Commits de la sesión 69
+
+| Commit | Descripción |
+|--------|-------------|
+| `55471aa` | docs: protocolo de cierre automático en CLAUDE.md — 9 fases |
+| `cfebfb8` | docs: LIBRO-GESTOR.md (dashboard completo) + LIBRO-CLIENTE.md |
+| `768192a` | docs: LIBRO-ACCESOS.md gitignoreado + .gitignore + protocolo fase 2 |
+
+### Tasks completadas (sesión 69 — documentación y organización)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| PROTOCOLO DE CIERRE | ✅ DONE | Definido en CLAUDE.md (9 fases): recopilar estado, actualizar libros, commit, push, deploy, informe |
+| LIBRO-GESTOR.md | ✅ DONE | Manual completo del dashboard para asesores: 15 módulos, flujos, atajos |
+| LIBRO-CLIENTE.md | ✅ DONE | Guía cliente: envío documentos, estados, FAQ, calendario de envío |
+| LIBRO-ACCESOS.md | ✅ DONE | Credenciales SFCE (gitignoreado): SSH, PG, 4 instancias FS, usuarios, API keys, GWS, GitHub, Restic |
+| Reorganización LIBRO-PERSONAL.md | ✅ DONE | Índice actualizado: Libro Técnico + Manuales de usuario + Accesos |
+
+### Pendientes para próxima sesión
+
+1. **App Passwords IMAP** (acción manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
+2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
+3. **Conciliación N:1 parcial** — endpoint `POST /match-parcial` planificado, no implementado
+4. **Tests E2E dashboard** — Playwright flujos críticos (conciliación, documentos)
 
 ---
 

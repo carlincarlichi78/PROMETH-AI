@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 archivos) | **Actualizado:** 2026-03-04 (sesión 68)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 69)
 
 ---
 
@@ -47,12 +47,12 @@ grep "^### Task" docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md
 
 ---
 
-## Estado rápido (sesión 68)
+## Estado rápido (sesión 69)
 
-- **Plan activo:** ninguno (sesión de optimización ad-hoc)
-- **Completado sesión 68:** TAREA 1 telemetría OCR+registro + TAREA 2 shift-left correcciones + fix tests `_extraer_cif_pdf` + fix migración 029 PG-compat
-- **Tests:** 2714 PASS, 0 FAILED
-- **Próximo paso:** App Passwords IMAP manuales → seed cuentas IMAP asesores en producción
+- **Plan activo:** ninguno (sesión de documentación y organización)
+- **Completado sesión 69:** PROTOCOLO DE CIERRE + LIBRO-GESTOR.md + LIBRO-CLIENTE.md + LIBRO-ACCESOS.md (gitignoreado)
+- **Tests:** 2714 PASS, 4 skipped
+- **Próximo paso:** App Passwords IMAP manuales (francisco/luis/gestor1/gestor2/javier) → seed cuentas IMAP en producción
 
 ---
 
@@ -60,4 +60,4 @@ grep "^### Task" docs/plans/2026-03-04-conciliacion-bancaria-inteligente.md
 
 1. Para cualquier duda técnica, leer el archivo correspondiente del libro antes de explorar código.
 2. Al cerrar sesión: actualizar `04-estado-pendientes-roadmap.md` con el estado actual.
-3. Mantener exactamente 5 archivos más este índice. No crear más sin consolidar.
+3. Libro Técnico: 5 archivos (00-04). Manuales: LIBRO-GESTOR, LIBRO-CLIENTE, LIBRO-ACCESOS (local). No crear más sin consolidar.
