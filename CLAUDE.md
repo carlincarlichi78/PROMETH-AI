@@ -234,21 +234,22 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 76)
+## Estado actual (04/03/2026, sesion 77)
 
-**Rama**: `main` | **Ultimo commit**: `cc3dcd3` (pusheado) | **Tests**: 2741 PASS, 4 skipped
+**Rama**: `main` | **Ultimo commit**: `3f91e352` (pendiente push) | **Tests**: 188 PASS bancario, 2 skipped
 
-### Completado sesion 76
-- Fix `[object Object]` UI: `api-client.ts` detecta FormData, parsea `detail` array FastAPI 422
-- `iban_utils.py` (nuevo): `construir_iban_es()` — Modulo 11 AEB + Modulo 97 ISO 13616
-- `parser_c43.py` refactor: `parsear_c43()` devuelve `list[dict]` (uno por R11, multi-cuenta)
-- `ingesta.py`: `ingestar_c43_multicuenta()` con JIT onboarding, dedup SHA256, respuesta detallada
-- `bancario.py`: `cuenta_iban` opcional; TXT→JIT, XLS→single-account
-- 11 tests nuevos en `test_zero_touch_multicuenta.py`; tests existentes adaptados
-- Frontend: `DetalleCuenta`, `ResultadoIngesta` multi-cuenta, `subir-extracto.tsx` sin IBAN para TXT
+### Completado sesion 77
+- `parser_tpv_xls.py` (nuevo): parsea TP*.XLS datafono CaixaBank (27 cols), fix `int(float())` codigo_comercio
+- `parser_tarjeta_pdf.py` (nuevo): parsea extractos PDF MyCard + VClNegocios, extrae fecha_cargo individual
+- `triangulacion_gerardo.py` (nuevo): orquesta C43 + match TPV-MCC + match tarjeta-TCR; fix offset +1 dia CaixaBank
+- `conciliar_facturas_gerardo.py` (nuevo): motor matching 4 capas sin LLM; 278 PDFs, 107 sugerencias, 24.8% cobertura
+- Motor conciliacion: Capa A exacto (48), Capa B fuzzy triangulacion (50), Capa C subset-sum VClNegocios (8), Capa D patron mensual (1)
+- Sesion analisis: mapa flujo documental completo, critica arquitectura, plan ejecucion modulo bancario sesion 78
 
-### Proxima sesion — pendientes
-1. **Migracion 030 en produccion** — script en 04-estado-pendientes-roadmap.md Task 13 (columna `confirmada`)
-2. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real (Gerardo Gonzalez)
-3. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
-4. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar credenciales
+### Proxima sesion — pendientes (sesion 78)
+1. **PUSH pendiente** — 3 commits sin push: `6750f00d`, `3f91e352` + docs sesion 77
+2. **Migracion 030 en produccion** — columna `confirmada` en `sugerencias_match` (script en 04-roadmap Task 13)
+3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real (Gerardo Gonzalez)
+4. **Fix interceptor Axios 422** en `dashboard/src/features/conciliacion/api.ts` (ya en plan sesion 78)
+5. **Tests E2E dashboard** (Playwright, flujos criticos conciliacion)
+6. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED — revisar credenciales

@@ -1,5 +1,40 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 76) | **Branch:** main | **Tests:** 2741 PASS, 4 skipped
+> **Actualizado:** 2026-03-04 (sesión 77) | **Branch:** main | **Tests:** 188 PASS bancario | **Push pendiente**
+
+---
+
+## Estado actual (sesión 77 — Motor conciliación 4 capas + triangulación Gerardo)
+
+**Parsers TPV XLS y tarjeta PDF. Motor matching 4 capas sin LLM: 278 PDFs, 107 sugerencias, 24.8% cobertura en EUR. Sesión de análisis: mapa flujo documental + plan sesión 78.**
+
+### Commits de la sesión 77
+
+| Commit | Descripción |
+|--------|-------------|
+| `6750f00d` | feat(bancario): triangulacion total Gerardo — TPV + tarjetas PDF + JIT |
+| `3f91e352` | feat(conciliacion): motor matching 4 capas sin LLM — facturas 2025 Gerardo |
+
+### Tasks completadas (sesión 77)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| `parser_tpv_xls.py` (nuevo) | ✅ DONE | Parsea TP*.XLS datafono CaixaBank 27 cols. Fix `int(float())` para `codigo_comercio`. |
+| `parser_tarjeta_pdf.py` (nuevo) | ✅ DONE | Parsea extractos PDF MyCard + VClNegocios. Extrae `fecha_cargo` individual para match exacto con R22 TCR. |
+| `triangulacion_gerardo.py` (nuevo) | ✅ DONE | Orquesta ingesta C43 + match TPV-MCC + match tarjeta-TCR. Fix offset +1 día: CaixaBank registra MCC el día siguiente de fecha_captura TPV. 1064 movs, 10/33 TPV, 62/184 tarjetas. |
+| `conciliar_facturas_gerardo.py` (nuevo) | ✅ DONE | Motor 4 capas sin LLM. Capa A exacto: 48 matches. Capa B fuzzy+triangulacion: 50. Capa C subset-sum VClNegocios: 8. Capa D patrón mensual: 1. 107 sugerencias persistidas. |
+| Análisis arquitectura | ✅ DONE | Mapa gráfico flujo documental completo. Crítica técnica sistema (subprocess antipatrón, pollers vs events, score Gate0, etc.) |
+| Plan sesión 78 | ✅ DONE | Fase 0–7 documentada: migración 030, parser CaixaBank, ingesta E2E, motor conciliación, fix Axios 422 |
+
+### Pendientes para sesión 78
+
+1. **PUSH pendiente** — `git push origin main` (commits `6750f00d`, `3f91e352`, docs sesión 77)
+2. **Migración 030 en producción** — columna `confirmada` en `sugerencias_match` (script en Task 13 abajo)
+3. **Subir TT280226.423.txt** desde Dashboard → validar ingesta C43 E2E JIT real (3 cuentas Gerardo González)
+4. **Fix interceptor Axios 422** — `detail` array → `detail.map(d => d.msg).join(", ")`
+5. **Test `test_caixabank_extendido`** — verificar/crear en `test_parser_c43.py` con `TT280226.423.txt`
+6. **Motor conciliación API** — `POST /api/bancario/2/conciliar` (producción)
+7. **Tests E2E dashboard** — Playwright flujos críticos
+8. **Error IMAP admin@prometh-ai.es**: AUTHENTICATIONFAILED
 
 ---
 
