@@ -2,6 +2,7 @@ import { useEmpresaStore } from '@/stores/empresa-store'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { PanelSugerencias } from './components/panel-sugerencias'
 import { TablaPatrones } from './components/tabla-patrones'
+import { VistaPendientes } from './components/vista-pendientes'
 
 export default function ConciliacionPage() {
   const empresaActiva = useEmpresaStore((s) => s.empresaActiva)
@@ -21,9 +22,7 @@ export default function ConciliacionPage() {
         </TabsList>
 
         <TabsContent value="pendientes" className="mt-4">
-          <div className="py-12 text-center text-muted-foreground border rounded-lg">
-            Movimientos pendientes de conciliación — próxima iteración.
-          </div>
+          <VistaPendientes />
         </TabsContent>
 
         <TabsContent value="sugerencias" className="mt-4">
