@@ -43,6 +43,7 @@ interface Estado {
   particulas: ParticulaActiva[]
   conectado: boolean
   contadores_fuente: { correo: number; manual: number; watcher: number }
+  eventosActivos: Record<number, EventoWS>
 }
 
 const MAX_EVENTOS = 15
@@ -69,14 +70,24 @@ export function usePipelineWebSocket(empresaId?: number) {
     particulas: [],
     conectado: false,
     contadores_fuente: { correo: 0, manual: 0, watcher: 0 },
+    eventosActivos: {},
   })
 
   const limpiarEventosViejos = useCallback(() => {
     const ahora = Date.now()
-    setEstado(prev => ({
-      ...prev,
-      eventos: prev.eventos.filter(e => ahora - e.recibido_en < TTL_EVENTO_MS),
-    }))
+    setEstado(prev => {
+      const eventosActualizados: Record<number, EventoWS> = {}
+      for (const [id, ev] of Object.entries(prev.eventosActivos)) {
+        if (ahora - ev.recibido_en < 10_000) {
+          eventosActualizados[Number(id)] = ev
+        }
+      }
+      return {
+        ...prev,
+        eventos: prev.eventos.filter(e => ahora - e.recibido_en < TTL_EVENTO_MS),
+        eventosActivos: eventosActualizados,
+      }
+    })
   }, [])
 
   const procesarMensaje = useCallback((raw: string) => {
@@ -94,6 +105,12 @@ export function usePipelineWebSocket(empresaId?: number) {
     setEstado(prev => {
       const nuevosEventos = [evento, ...prev.eventos].slice(0, MAX_EVENTOS)
       let nuevasParticulas = [...prev.particulas]
+
+      // Actualizar eventosActivos si el evento tiene empresa_id
+      let nuevosEventosActivos = { ...prev.eventosActivos }
+      if (msg.datos.empresa_id) {
+        nuevosEventosActivos[msg.datos.empresa_id] = evento
+      }
 
       // Crear partícula si el evento indica movimiento entre nodos
       if (msg.evento === 'pipeline_progreso' && msg.datos.fase_actual) {
@@ -148,14 +165,14 @@ export function usePipelineWebSocket(empresaId?: number) {
         const ahora2 = Date.now()
         nuevasParticulas = nuevasParticulas.filter(p => ahora2 - p.iniciado_en < 4000)
 
-        return { ...prev, eventos: nuevosEventos, particulas: nuevasParticulas, contadores_fuente: nuevosContadores }
+        return { ...prev, eventos: nuevosEventos, particulas: nuevasParticulas, contadores_fuente: nuevosContadores, eventosActivos: nuevosEventosActivos }
       }
 
       // Limpiar partículas > 4s (tiempo de animación)
       const ahora = Date.now()
       nuevasParticulas = nuevasParticulas.filter(p => ahora - p.iniciado_en < 4000)
 
-      return { ...prev, eventos: nuevosEventos, particulas: nuevasParticulas }
+      return { ...prev, eventos: nuevosEventos, particulas: nuevasParticulas, eventosActivos: nuevosEventosActivos }
     })
   }, [])
 
@@ -200,6 +217,12 @@ export function usePipelineWebSocket(empresaId?: number) {
     particulas: estado.particulas,
     conectado: estado.conectado,
     contadores_fuente: estado.contadores_fuente,
+    eventosActivos: estado.eventosActivos,
     eliminarParticula,
   }
+}
+
+export function esProcesandoAhora(eventoActivo: EventoWS | undefined): boolean {
+  if (!eventoActivo) return false
+  return Date.now() - eventoActivo.recibido_en < 10_000
 }
