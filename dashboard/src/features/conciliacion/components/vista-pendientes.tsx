@@ -7,11 +7,10 @@ import { useEmpresaStore } from '@/stores/empresa-store'
 import { useMovimientos } from '../api'
 import type { MovimientoBancario } from '../api'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { ArrowDownLeft, ArrowUpRight, MousePointerClick } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PanelConciliacion } from './panel-conciliacion'
 
 function formatImporte(importe: number, signo: 'D' | 'H'): string {
   const valor = importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -79,66 +78,6 @@ function MovimientoItem({
   )
 }
 
-// ── Panel de detalle (columna derecha) ────────────────────────────────────────
-
-function DetallePendiente({ mov }: { mov: MovimientoBancario }) {
-  const esAbono = mov.signo === 'H'
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Movimiento #{mov.id}</CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {mov.estado_conciliacion}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Fecha</p>
-              <p className="font-medium">{mov.fecha}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Importe</p>
-              <p className={cn(
-                'font-bold text-lg tabular-nums',
-                esAbono ? 'text-green-700' : 'text-red-700'
-              )}>
-                {formatImporte(mov.importe, mov.signo)}
-              </p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Concepto</p>
-              <p className="font-medium">{mov.concepto_propio || '—'}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Contraparte</p>
-              <p>{mov.nombre_contraparte || '—'}</p>
-            </div>
-            {mov.tipo_clasificado && (
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Tipo</p>
-                <Badge variant="secondary">{mov.tipo_clasificado}</Badge>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-dashed">
-        <CardContent className="py-8 text-center text-muted-foreground">
-          <MousePointerClick className="mx-auto mb-2 h-8 w-8 opacity-30" />
-          <p className="text-sm font-medium">Sugerencias y acciones</p>
-          <p className="text-xs mt-1">Aquí irán las sugerencias de match y los botones de acción</p>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function VistaPendientes() {
@@ -186,7 +125,7 @@ export function VistaPendientes() {
       {/* ── Columna derecha — detalle ── */}
       <div className="flex flex-1 flex-col overflow-y-auto p-4">
         {movSeleccionado ? (
-          <DetallePendiente mov={movSeleccionado} />
+          <PanelConciliacion mov={movSeleccionado} />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
             <MousePointerClick className="h-10 w-10 opacity-25" />
