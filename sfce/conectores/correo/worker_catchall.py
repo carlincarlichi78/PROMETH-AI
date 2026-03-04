@@ -27,6 +27,34 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 DIRECTORIO_DOCS = Path("docs")
+RAIZ_CLIENTES = Path("clientes")
+
+
+def _carpeta_slug(nombre: str) -> str:
+    """Convierte nombre de empresa al slug de carpeta (misma lógica que onboarding.py)."""
+    import re
+    slug = nombre.lower().strip()
+    for src, dst in [("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n")]:
+        slug = slug.replace(src, dst)
+    slug = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+    return slug
+
+
+def _inbox_empresa(empresa_id: int, sesion: Session) -> Path:
+    """Resuelve el directorio inbox de una empresa.
+
+    Deriva la carpeta del cliente desde el nombre de la empresa (slug con guiones),
+    apuntando a clientes/{slug}/inbox/ donde el pipeline busca los PDFs.
+    Fallback a docs/{empresa_id}/inbox/ si la carpeta no existe en disco.
+    """
+    from sfce.db.modelos import Empresa
+    empresa = sesion.query(Empresa).filter(Empresa.id == empresa_id).first()
+    if empresa and empresa.nombre:
+        slug = _carpeta_slug(empresa.nombre)
+        candidato = RAIZ_CLIENTES / slug
+        if candidato.exists():
+            return candidato / "inbox"
+    return DIRECTORIO_DOCS / str(empresa_id) / "inbox"
 
 
 def _emitir_ws_nuevo_pdf(empresa_id: int, nombre: str, fuente: str = "correo") -> None:
@@ -76,7 +104,7 @@ def _encolar_archivo(
 
     sha = hashlib.sha256(contenido).hexdigest()
 
-    dir_empresa = Path(directorio) / str(empresa_id) / "inbox"
+    dir_empresa = _inbox_empresa(empresa_id, sesion)
     dir_empresa.mkdir(parents=True, exist_ok=True)
     ruta = dir_empresa / nombre
     ruta.write_bytes(contenido)
@@ -169,7 +197,7 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
 
         sha = hashlib.sha256(contenido).hexdigest()
 
-        dir_empresa = DIRECTORIO_DOCS / str(empresa_id) / "inbox"
+        dir_empresa = _inbox_empresa(empresa_id, sesion)
         dir_empresa.mkdir(parents=True, exist_ok=True)
         ruta = dir_empresa / nombre
         ruta.write_bytes(contenido)

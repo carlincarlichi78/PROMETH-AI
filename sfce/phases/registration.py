@@ -509,6 +509,10 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
 
     try:
         factura_fs = verificar_factura(idfactura, tipo=tipo_fs)
+        logger.debug(f"  GET factura {idfactura}: total={factura_fs.get('total')}, "
+                     f"neto={factura_fs.get('neto')}, numlineas={factura_fs.get('numlineas')}, "
+                     f"codejercicio={factura_fs.get('codejercicio')}, "
+                     f"idempresa={factura_fs.get('idempresa')}")
     except Exception as e:
         return [f"No se pudo verificar factura {idfactura}: {e}"]
 
@@ -540,8 +544,16 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
 
     # Verificar total — comparar en divisa original
     total_esperado = float(datos.get("total", 0))
-    total_fs = float(factura_fs.get("total", 0))
+    total_fs = float(factura_fs.get("total") or 0)
+    neto_fs = float(factura_fs.get("neto") or 0)
     divisa = (datos.get("divisa") or "EUR").upper()
+    if total_fs == 0 and neto_fs == 0:
+        logger.warning(
+            f"  Factura {idfactura} total=0 y neto=0 — posible fallo en creación de líneas. "
+            f"numlineas={factura_fs.get('numlineas')}, "
+            f"idempresa={factura_fs.get('idempresa')}, "
+            f"codejercicio={factura_fs.get('codejercicio')}"
+        )
 
     # FS guarda total en divisa original, comparar directamente
     if abs(total_fs - total_esperado) > tolerancia:
@@ -551,7 +563,7 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
             # Facturas con IVA mixto: FS aplica codimpuesto uniforme,
             # pero la factura real puede tener lineas con IVA diferente.
             # Si neto FS coincide con base_imponible, la diferencia es solo IVA.
-            neto_fs = float(factura_fs.get("neto", 0))
+            # neto_fs ya calculado arriba
             base_esperada = float(datos.get("base_imponible", 0))
             if base_esperada and abs(neto_fs - base_esperada) < max(tolerancia, base_esperada * 0.005):
                 logger.info(f"  Total difiere pero neto OK ({neto_fs:.2f} vs base {base_esperada:.2f}), aceptando")
@@ -685,9 +697,13 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
 
     # Paso 1: crear cabecera
     endpoint_cabecera = "facturaproveedores" if es_proveedor else "facturaclientes"
+    logger.debug(f"  POST cabecera → {endpoint_cabecera}: {form_cabecera}")
     respuesta = api_post(endpoint_cabecera, data=form_cabecera)
+    logger.debug(f"  Respuesta cabecera: {json.dumps(respuesta)[:400]}")
 
     # Respuesta formato: {"ok": "...", "data": {"idfactura": "X", ...}}
+    if respuesta.get("error"):
+        raise ValueError(f"FS error creando cabecera: {respuesta['error']}")
     idfactura = (respuesta.get("data") or {}).get("idfactura")
     if not idfactura:
         idfactura = respuesta.get("idfactura")
@@ -696,9 +712,24 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
 
     # Paso 2: crear líneas
     endpoint_lineas = "lineafacturaproveedores" if es_proveedor else "lineafacturaclientes"
-    for linea in lineas:
+    for i, linea in enumerate(lineas):
         linea_data = {**linea, "idfactura": idfactura}
-        api_post(endpoint_lineas, data=linea_data)
+        logger.debug(f"  POST linea {i+1}/{len(lineas)} → {endpoint_lineas}: {linea_data}")
+        resp_linea = api_post(endpoint_lineas, data=linea_data)
+        logger.debug(f"  Respuesta linea {i+1}: {json.dumps(resp_linea)[:300]}")
+        if resp_linea.get("error"):
+            raise ValueError(
+                f"FS error creando linea {i+1} (idfactura={idfactura}): "
+                f"{resp_linea['error']} | datos={linea_data}"
+            )
+
+    # Paso 3: forzar recálculo de totales (FS puede no actualizarlos en el POST de líneas)
+    endpoint_factura = f"{endpoint_cabecera}/{idfactura}"
+    try:
+        api_put(endpoint_factura, data={"idfactura": idfactura})
+        logger.debug(f"  PUT recálculo cabecera {idfactura} OK")
+    except Exception as e:
+        logger.warning(f"  PUT recálculo cabecera {idfactura} falló (no crítico): {e}")
 
     return int(idfactura)
 

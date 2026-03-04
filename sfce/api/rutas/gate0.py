@@ -16,6 +16,34 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/gate0", tags=["gate0"])
 
 DIRECTORIO_DOCS = Path("docs")
+RAIZ_CLIENTES = Path("clientes")
+
+
+def _carpeta_slug(nombre: str) -> str:
+    """Convierte nombre de empresa al slug de carpeta (misma lógica que onboarding.py)."""
+    import re
+    slug = nombre.lower().strip()
+    for src, dst in [("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n")]:
+        slug = slug.replace(src, dst)
+    slug = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+    return slug
+
+
+def _inbox_empresa(empresa_id: int, sesion) -> Path:
+    """Resuelve el directorio inbox de una empresa.
+
+    Deriva la carpeta del cliente desde el nombre de la empresa (slug con guiones),
+    apuntando a clientes/{slug}/inbox/ donde el pipeline busca los PDFs.
+    Fallback a docs/{empresa_id}/inbox/ si la carpeta no existe en disco.
+    """
+    from sfce.db.modelos import Empresa
+    empresa = sesion.query(Empresa).filter(Empresa.id == empresa_id).first()
+    if empresa and empresa.nombre:
+        slug = _carpeta_slug(empresa.nombre)
+        candidato = RAIZ_CLIENTES / slug
+        if candidato.exists():
+            return candidato / "inbox"
+    return DIRECTORIO_DOCS / str(empresa_id) / "inbox"
 
 
 @router.post("/ingestar", status_code=202)
@@ -49,8 +77,8 @@ async def ingestar_documento(
                 tmp_ruta.unlink(missing_ok=True)
                 raise HTTPException(status_code=409, detail="Documento duplicado (SHA256 ya procesado)")
 
-            # Mover a directorio final
-            dir_final = DIRECTORIO_DOCS / str(empresa_id) / "inbox"
+            # Mover a directorio final (clientes/{slug}/inbox/ si hay slug)
+            dir_final = _inbox_empresa(empresa_id, sesion)
             dir_final.mkdir(parents=True, exist_ok=True)
             ruta_final = dir_final / preflight.nombre_sanitizado
             tmp_ruta.replace(ruta_final)  # replace() sobrescribe si ya existe (Windows safe)
@@ -152,8 +180,8 @@ async def ingestar_zip(
     if len(contenido) > MAX_ZIP:
         raise HTTPException(status_code=413, detail="ZIP demasiado grande (máx 500 MB)")
 
-    dir_destino = DIRECTORIO_DOCS / str(empresa_id) / "inbox"
     with Session(sesion_factory()) as sesion:
+        dir_destino = _inbox_empresa(empresa_id, sesion)
         resultado = extraer_pdfs_zip(contenido, empresa_id, dir_destino, sesion)
 
     return {
