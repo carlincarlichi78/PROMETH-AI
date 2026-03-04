@@ -1,5 +1,37 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 92) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 93) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 93 — OCR GPT-4o-mini cuarentena + fixes pipeline MARIA ISABEL)
+
+### Commits sesión 93
+
+| Hash | Descripción |
+|------|-------------|
+| *(pendiente commit cierre)* | fix intake/registration + scripts OCR gpt-mini |
+
+### Tasks completadas (sesión 93)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Borrar asientos 44-72 + facturas 28-56 FS | ✅ DONE | DELETE vía MariaDB root/root_uralde_2026. 87 partidas, 29 asientos, 29 líneas, 29 facturas borradas |
+| Fix IVA21 recargo=0 permanente | ✅ DONE | `UPDATE impuestos SET recargo=0 WHERE codimpuesto='IVA21'` en fs-uralde-mariadb-1 |
+| OCR GPT-4o-mini cuarentena | ✅ DONE | 260 PDFs procesados con gpt-4o-mini Vision (PyMuPDF + detail:low). 0 errores. Todos movidos a inbox/. Cache .ocr.json guardado junto a cada PDF |
+| Fix cache OCR bug (intake.py) | ✅ DONE | Cache hit ya no retorna raw dict — continúa por flujo de clasificación |
+| Fix FV tipo hint (intake.py) | ✅ DONE | PDFs en inbox/ingresos/ → tipo_doc=FV aunque clasifiquen como FC/OTRO |
+| Fix registration.py FV | ✅ DONE | Ordenación cronológica + cifnif/nombrecliente explícitos en facturaclientes POST |
+
+### Pendientes para sesión 94 — PIPELINE MARIA ISABEL
+
+**Estado inbox:** 223 PDFs con OCR gpt-4o-mini en `clientes/maria-isabel-navarro-lopez/inbox/`. Cuarentena vacía. FS empresa 7 limpio (0 facturas).
+
+**Nota sobre conteo:** usuario detectó 223 PDFs vs ~282 esperados (88 originales + 194 cuarentena). Posible causa: `shutil.move` sobrescribió duplicados `_1` sobre originales en varias pasadas del script OCR. Verificar antes de ejecutar pipeline completo.
+
+1. **Auditar inbox/** — contar PDFs por mes (deberían ser ~12 meses × ~15-20 docs cada uno). Identificar si faltan meses enteros.
+2. **Pipeline completo** — `python scripts/pipeline.py --cliente maria-isabel-navarro-lopez --ejercicio 2025 --inbox inbox --no-interactivo`
+3. **F6** — Ruta inbox email→pipeline
+4. **Tests E2E dashboard** — Playwright
 
 ---
 

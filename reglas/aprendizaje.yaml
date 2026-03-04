@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-04T19:27:04.857748'
+ultima_actualizacion: '2026-03-04T21:00:02.890251'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -11,7 +11,7 @@ patrones:
   - ANT
   aprendido: '2026-02-26'
   exitos: 4
-  fallos: 18
+  fallos: 25
   origen: manual
   descripcion: Proveedor/cliente no existe en FS — crear desde datos OCR
 - id: base_002
@@ -577,3 +577,471 @@ patrones:
   fallos: 0
   origen: auto
   error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaproveedores'
+- id: auto_20260304_205347
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 1T\ \-3\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:47.441346'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 1T -3.pdf
+  ultimo_exito: '2026-03-04T20:54:40.767431'
+- id: auto_20260304_205348
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 2T\-1\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:48.785859'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 2T-1.pdf
+  ultimo_exito: '2026-03-04T20:54:41.676626'
+- id: auto_20260304_205350
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 2T\-7\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:50.119268'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 2T-7.pdf
+  ultimo_exito: '2026-03-04T20:54:42.531279'
+- id: auto_20260304_205351
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 4T\-1\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:51.444315'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 4T-1.pdf
+  ultimo_exito: '2026-03-04T20:54:43.363113'
+- id: auto_20260304_205352
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 4T\-2\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:52.747343'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 4T-2.pdf
+  ultimo_exito: '2026-03-04T20:54:44.189254'
+- id: auto_20260304_205354
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 4T\-5\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:54.062670'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 4T-5.pdf
+  ultimo_exito: '2026-03-04T20:54:45.028861'
+- id: auto_20260304_205356
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:56.137653'
+  exitos: 38
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+  ultimo_exito: '2026-03-04T21:00:00.377310'
+- id: auto_20260304_205357
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:53:57.416267'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205401
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:01.595630'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205405
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:05.775559'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205409
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:09.947051'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205412
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 2T\-4\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:12.139611'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 2T-4.pdf
+  ultimo_exito: '2026-03-04T20:55:02.421342'
+- id: auto_20260304_205415
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:15.499049'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205419
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:19.585341'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205423
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:23.792351'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205427
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:27.938855'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205448
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:48.341251'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205452
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:52.492478'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205456
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:54:56.632892'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205500
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:55:00.779686'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205505
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:55:05.727382'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205509
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:55:09.926128'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205514
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:55:14.085769'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205518
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:55:18.239397'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205811
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:11.691836'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205815
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:15.899672'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205820
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:20.130675'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205824
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:24.191365'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205828
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:28.760825'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205832
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:32.978584'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205837
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:37.170495'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205845
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:58:45.297118'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205901
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:01.114368'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205905
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:05.717431'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205910
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:10.408738'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205914
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:14.966255'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205919
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:19.512896'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205924
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:24.101511'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205928
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:28.311885'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205932
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:32.471941'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205936
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:36.627596'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205940
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:40.840632'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205945
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:45.450818'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205949
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:49.600405'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_205953
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T20:59:53.721950'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260304_210001
+  regex: 400\ Client\ Error:\ Bad\ Request\ for\ url:\ https://fs\-uralde\.prometh\-ai\.es/api/3/facturaclientes
+  estrategia: derivar_importes
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-04T21:00:01.588967'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'

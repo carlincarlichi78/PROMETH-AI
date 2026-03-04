@@ -325,6 +325,11 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
                 entidad = config.buscar_cliente_por_nombre(nombre_receptor)
                 if entidad:
                     logger.info(f"FV: cliente encontrado por nombre '{nombre_receptor}': {entidad.get('_nombre_corto')}")
+        # Último fallback: cliente genérico marcado como fallback_sin_cif
+        if not entidad:
+            entidad = config.buscar_cliente_fallback_sin_cif()
+            if entidad:
+                logger.info(f"FV: usando cliente fallback '{entidad.get('_nombre_corto')}' para receptor desconocido")
         return entidad
 
     return None
@@ -794,42 +799,46 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
 
     # 0. Verificar cache OCR antes de llamar a APIs
     cache_datos = obtener_cache_ocr(str(ruta_pdf))
-    if cache_datos is not None:
-        logger.info(f"  [{nombre_archivo}] Cache OCR hit — reutilizando datos")
-        cache_datos["telemetria"] = {"duracion_ocr_s": 0.0, "cache_hit": True}
-        return {
-            "doc": cache_datos,
-            "hash": hash_pdf,
-            "avisos": [],
-            "tier": cache_datos.get("_ocr_tier", 0),
-            "_cache_hit": True,
-        }
-
-    # 1. Extraer texto con pdfplumber
-    try:
-        texto_raw = _extraer_texto_pdf(ruta_pdf)
-    except Exception as e:
-        logger.error(f"  Error extrayendo texto de {nombre_archivo}: {e}")
-        _mover_a_cuarentena(ruta_pdf, ruta_cuarentena, f"Error pdfplumber: {e}")
-        avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
-        return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
-
-    # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
-    _t_ocr = time.time()
-    datos_gpt = _extraer_datos_ocr(ruta_pdf)
-    _duracion_ocr = round(time.time() - _t_ocr, 3)
+    datos_gpt = None
+    texto_raw = ""
     ocr_tier = 0
     tier_motivo = "SmartOCR"
     motores_usados = ["smart_ocr"]
+    _duracion_ocr = 0.0
 
-    if not datos_gpt:
-        _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
-                            "No se pudo extraer datos (sin texto ni vision)")
-        avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
-        return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+    if cache_datos is not None:
+        logger.info(f"  [{nombre_archivo}] Cache OCR hit — reutilizando datos")
+        datos_gpt = cache_datos
+        datos_gpt["telemetria"] = {"duracion_ocr_s": 0.0, "cache_hit": True}
+        tier_motivo = "cache"
+    else:
+        # 1. Extraer texto con pdfplumber
+        try:
+            texto_raw = _extraer_texto_pdf(ruta_pdf)
+        except Exception as e:
+            logger.error(f"  Error extrayendo texto de {nombre_archivo}: {e}")
+            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena, f"Error pdfplumber: {e}")
+            avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+
+        # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
+        _t_ocr = time.time()
+        datos_gpt = _extraer_datos_ocr(ruta_pdf)
+        _duracion_ocr = round(time.time() - _t_ocr, 3)
+
+        if not datos_gpt:
+            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
+                                "No se pudo extraer datos (sin texto ni vision)")
+            avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
 
     # 3. Clasificar tipo documento
     tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
+
+    # Hint de tipo por subcarpeta: inbox/ingresos/ → FV (facturas emitidas)
+    if tipo_doc in ("OTRO", "FC") and "ingresos" in ruta_pdf.parts:
+        tipo_doc = "FV"
+        logger.info(f"  [{nombre_archivo}] Tipo sobreescrito a FV por subcarpeta ingresos/")
 
     # 4. Identificar entidad
     entidad = _identificar_entidad(datos_gpt, tipo_doc, config)
@@ -910,20 +919,21 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "_carpeta_origen": carpeta_origen,
         "_ruta_completa": str(ruta_pdf),
         "_nombre_estandar": nombre_estandar,
-        "telemetria": {"duracion_ocr_s": _duracion_ocr, "cache_hit": False},
+        "telemetria": {"duracion_ocr_s": _duracion_ocr, "cache_hit": cache_datos is not None},
     }
 
     if info_trabajador:
         doc_resultado["_trabajador"] = info_trabajador
 
-    # 9. Guardar en cache OCR para reutilizar en futuras ejecuciones
-    try:
-        guardar_cache_ocr(str(ruta_pdf), {
-            **doc_resultado,
-            "_ocr_motor_primario": motores_usados[0] if motores_usados else "desconocido",
-        })
-    except Exception as e:
-        logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
+    # 9. Guardar en cache OCR para reutilizar en futuras ejecuciones (solo si es nuevo)
+    if cache_datos is None:
+        try:
+            guardar_cache_ocr(str(ruta_pdf), {
+                **doc_resultado,
+                "_ocr_motor_primario": motores_usados[0] if motores_usados else "desconocido",
+            })
+        except Exception as e:
+            logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
 

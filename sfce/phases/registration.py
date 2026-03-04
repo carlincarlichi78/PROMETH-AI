@@ -242,15 +242,27 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
     else:
         cif = (datos.get("receptor_cif") or "").upper()
         cif_normalizado = _normalizar_cif(cif)
-        try:
-            clientes = api_get("clientes", params={
-                "cifnif": cif
-            }, limit=50)
-            for c in clientes:
-                if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
-                    return c.get("codcliente")
-        except Exception:
-            pass
+        if cif_normalizado:
+            try:
+                clientes = api_get("clientes", params={
+                    "cifnif": cif
+                }, limit=50)
+                for c in clientes:
+                    if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
+                        return c.get("codcliente")
+            except Exception:
+                pass
+        # Fallback: usar cliente genérico fallback_sin_cif (VARIOS_CLIENTES)
+        fallback = config.buscar_cliente_fallback_sin_cif()
+        if fallback:
+            fallback_nombre = fallback.get("nombre_fs", "")
+            try:
+                clientes_fs = api_get("clientes", limit=100)
+                for c in clientes_fs:
+                    if c.get("nombre", "").upper() == fallback_nombre.upper():
+                        return c.get("codcliente")
+            except Exception:
+                pass
 
     return None
 
@@ -353,6 +365,17 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     else:
         form["codcliente"] = codigo_entidad
         form["numero2"] = datos.get("numero_factura", "")
+        # FS requiere cifnif y nombrecliente explícitos en facturascli (no propaga del cliente)
+        entidad_config = config.buscar_cliente_fallback_sin_cif()
+        if entidad_config:
+            form["cifnif"] = entidad_config.get("cif") or "00000000T"
+            form["nombrecliente"] = entidad_config.get("nombre_fs", "VARIOS CLIENTES")
+        cif_receptor = (datos.get("receptor_cif") or "").upper()
+        nombre_receptor = datos.get("receptor_nombre") or ""
+        if cif_receptor:
+            form["cifnif"] = cif_receptor
+        if nombre_receptor:
+            form["nombrecliente"] = nombre_receptor
 
     # Divisa
     divisa = (datos.get("divisa") or "EUR").upper()
@@ -1041,6 +1064,14 @@ def ejecutar_registro(
         )
     if stats_entidades["errores"]:
         logger.warning(f"  {stats_entidades['errores']} errores creando entidades")
+
+    # Ordenar FV por fecha ASC (FS requiere orden cronologico para facturaclientes)
+    from ..core.nombres import _normalizar_fecha as _norm_fecha_reg
+    def _clave_fecha_reg(doc):
+        raw = doc.get("datos_extraidos", {}).get("fecha", "") or ""
+        norm = _norm_fecha_reg(str(raw))
+        return norm if norm != "SIN-FECHA" else "99991231"
+    documentos = sorted(documentos, key=_clave_fecha_reg)
 
     logger.info(f"Registrando {len(documentos)} facturas en FS...")
 

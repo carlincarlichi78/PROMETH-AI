@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 92)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 93)
 
 ---
 
@@ -47,12 +47,14 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 92)
+## Estado rápido (sesión 93)
 
-- **Completado sesión 92:** Asientos MARIA ISABEL resueltos (recargo=0 + PHP CLI + UPDATE manual). Fases 4-6 PASS 13/13. Diagnóstico OCR: Gemini falla en escáneres físicos → 160 PDFs en cuarentena, 80 caches nullos. Usuario borró JSONs.
-- **Push:** OK `07cceceb` | **Tests:** ~2568 PASS
-- **PRIORIDAD SESIÓN 93:** Arranque limpio MARIA ISABEL — (1) borrar asientos+facturas FS empresa 7, (2) fix RE `UPDATE impuestos SET recargo=0`, (3) mover cuarentena→inbox, (4) pipeline completo con Mistral, (5) `inbox/ingresos/` = FV
-- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
+- **Completado sesión 93:** (1) Borrados asientos 44-72 + facturas 28-56 FS empresa 7 ✓. (2) IVA21 recargo=0 ✓. (3) OCR gpt-4o-mini: 260 PDFs cuarentena procesados → inbox/. (4) Fixes intake.py + registration.py (cache hit, FV tipo hint, sort cronológico, cifnif/nombrecliente).
+- **Estado inbox:** 223 PDFs con cache gpt-4o-mini. Cuarentena vacía. FS empresa 7 limpio.
+- **⚠️ ADVERTENCIA:** Conteo 223 PDFs vs ~282 esperados. Posibles duplicados sobrescritos por shutil.move. Auditar antes de ejecutar pipeline completo.
+- **Push:** pendiente | **Tests:** ~2568 PASS
+- **PRIORIDAD SESIÓN 94:** (1) Auditar inbox/ (contar por mes), (2) pipeline completo `--inbox inbox --no-interactivo`, (3) F6 email→pipeline
+- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

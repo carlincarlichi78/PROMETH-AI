@@ -234,26 +234,20 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 92)
+## Estado actual (04/03/2026, sesion 93)
 
-**Rama**: `main` | **Ultimo commit**: `07cceceb` (sesión 91 pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: pendiente push sesión 93 | **Tests**: ~2568 PASS
 
-### Completado sesion 92
-- Asientos MARIA ISABEL: root cause = `recargo=5.2` en IVA21 instancia Uralde (RE). Fix SQL + PHP CLI `InvoiceToAccounting` + UPDATE manual `idasiento`. 29 asientos generados (idasientos 44-72) ✓
-- Fases 4-6 pipeline MARIA ISABEL: 13/13 checks PASS ✓
-- Diagnóstico OCR: 80 `.ocr.json` nullos (Gemini falló en escáneres). 160 PDFs en cuarentena raíz. Usuario borró todos los JSON para re-procesar.
+### Completado sesion 93
+- Borrado FS empresa 7: asientos 44-72 (87 partidas), facturas 28-56 (29 líneas) via MariaDB root ✓
+- Fix IVA21 recargo=0 permanente en instancia Uralde ✓
+- OCR GPT-4o-mini: 260 PDFs cuarentena → inbox/ con cache .ocr.json (0 errores, PyMuPDF+detail:low) ✓
+- Fixes intake.py: cache hit no retorna raw dict, FV type hint para ingresos/, fallback cliente ✓
+- Fixes registration.py: sort cronológico FV, cifnif/nombrecliente explícitos en POST ✓
 
-### Proxima sesion — pendientes (sesion 93) — ARRANQUE LIMPIO MARIA ISABEL
+### Proxima sesion — pendientes (sesion 94)
 
-**PRIMERO — limpiar FS empresa 7 (idempresa=7, codejercicio=0007):**
-1. Borrar asientos 44-72 + sus partidas: `DELETE FROM partidas WHERE idasiento BETWEEN 44 AND 72; DELETE FROM asientos WHERE idasiento BETWEEN 44 AND 72;` (MariaDB fs-uralde)
-2. Borrar facturas 28-56 + líneas: `DELETE FROM lineasfacturasprov WHERE idfactura BETWEEN 28 AND 56; DELETE FROM facturasprov WHERE idfactura BETWEEN 28 AND 56;`
-3. Fix permanente RE: `UPDATE impuestos SET recargo=0 WHERE codimpuesto='IVA21';` en instancia Uralde
-4. Verificar proveedores empresa 7 existentes (mantener, no recrear)
-
-**LUEGO — re-procesar todos los documentos:**
-5. Mover 160 PDFs de `cuarentena/` raíz → `inbox/` (los JSON ya fueron borrados por el usuario)
-6. Pipeline `--inbox inbox` con Mistral (no Gemini). Subcarpeta `inbox/ingresos/` = facturas emitidas (FV)
-7. Total: ~353 PDFs (193 inbox + 160 cuarentena recuperada). Comparar con M130/M303 al final.
-8. **F6** — Ruta inbox email→pipeline
-9. **Tests E2E dashboard** — Playwright
+1. **⚠️ Auditar inbox/** — 223 PDFs actuales vs ~282 esperados. Verificar si faltan meses. Posible pérdida por shutil.move sobrescribiendo duplicados `_1`
+2. **Pipeline completo**: `python scripts/pipeline.py --cliente maria-isabel-navarro-lopez --ejercicio 2025 --inbox inbox --no-interactivo`
+3. **F6** — Ruta inbox email→pipeline
+4. **Tests E2E dashboard** — Playwright
