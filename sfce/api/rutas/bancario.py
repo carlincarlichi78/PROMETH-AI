@@ -548,11 +548,11 @@ def _confirmar_en_fs(empresa: Empresa, doc: Documento, mov: MovimientoBancario) 
     if not empresa.idempresa_fs:
         return doc.asiento_id
 
-    _url, token = obtener_credenciales_gestoria(empresa.gestoria)
+    fs_url, token = obtener_credenciales_gestoria(empresa.gestoria)
 
     if doc.asiento_id:
         try:
-            resultado = api_get_one(f"asientos/{doc.asiento_id}", token=token)
+            resultado = api_get_one(f"asientos/{doc.asiento_id}", token=token, base_url=fs_url)
             if resultado is None:
                 raise HTTPException(404, f"Asiento {doc.asiento_id} no encontrado en FacturaScripts")
             return doc.asiento_id
@@ -570,7 +570,7 @@ def _confirmar_en_fs(empresa: Empresa, doc: Documento, mov: MovimientoBancario) 
             "idempresa": empresa.idempresa_fs,
             "codejercicio": codejercicio,
             "concepto": f"Conciliación bancaria movimiento #{mov.id}",
-        }, token=token)
+        }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
         return datos.get("idasiento")
     except (_requests.HTTPError, _requests.ConnectionError) as exc:
@@ -603,7 +603,7 @@ def _crear_asiento_directo_en_fs(
     if not empresa.idempresa_fs or not empresa.codejercicio_fs:
         return None
 
-    _url, token = obtener_credenciales_gestoria(empresa.gestoria)
+    fs_url, token = obtener_credenciales_gestoria(empresa.gestoria)
 
     # Subcuenta bancaria genérica PGC
     cuenta_bancaria = "5720000000"
@@ -629,7 +629,7 @@ def _crear_asiento_directo_en_fs(
             "codejercicio": empresa.codejercicio_fs,
             "concepto": concepto,
             "lineas": lineas,
-        }, token=token)
+        }, token=token, base_url=fs_url)
         datos = resp.get("data", {}) if isinstance(resp, dict) else {}
         idasiento = datos.get("idasiento")
         return int(idasiento) if idasiento else None

@@ -79,18 +79,19 @@ def api_get(endpoint: str, params: dict = None, token: str = None,
     return todos
 
 
-def api_get_one(endpoint: str, token: str = None) -> dict | None:
+def api_get_one(endpoint: str, token: str = None, base_url: str = None) -> dict | None:
     """GET un recurso individual por ID (sin paginacion).
 
     Args:
         endpoint: endpoint con ID (ej: 'asientos/123')
+        base_url: URL base de la instancia FS (si None usa API_BASE global)
 
     Returns:
         dict con datos del recurso, o None si no existe
     """
     token = token or obtener_token()
     headers = {"Token": token}
-    url = f"{API_BASE}/{endpoint}"
+    url = f"{(base_url or API_BASE).rstrip('/')}/{endpoint}"
     resp = requests.get(url, headers=headers, timeout=30)
     if resp.status_code == 404:
         return None
@@ -101,15 +102,18 @@ def api_get_one(endpoint: str, token: str = None) -> dict | None:
     return data
 
 
-def api_post(endpoint: str, data: dict, token: str = None) -> dict:
+def api_post(endpoint: str, data: dict, token: str = None, base_url: str = None) -> dict:
     """POST form-encoded a la API.
+
+    Args:
+        base_url: URL base de la instancia FS (si None usa API_BASE global)
 
     Returns:
         Respuesta JSON del servidor
     """
     token = token or obtener_token()
     headers = {"Token": token}
-    url = f"{API_BASE}/{endpoint}"
+    url = f"{(base_url or API_BASE).rstrip('/')}/{endpoint}"
     resp = requests.post(url, headers=headers, data=data, timeout=30)
     resp.raise_for_status()
     return resp.json()
