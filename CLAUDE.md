@@ -234,18 +234,20 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 88b)
+## Estado actual (04/03/2026, sesion 89)
 
-**Rama**: `main` | **Ultimo commit**: *(pendiente push)* | **Tests**: 2568 PASS
+**Rama**: `main` | **Ultimo commit**: `89d4e842` (pusheado) | **Tests**: ~2568 PASS
 
-### Completado sesion 88b
-- Ejercicio económico 2026 Gerardo González en FS: codejercicio="GG26", idempresa=3, fechas 01/01/2026-31/12/2026 ✓
-- `ConfigCliente.codejercicio` dinámico en `scripts/core/config.py` y `sfce/core/config.py` — resuelve por mapa `ejercicios` ✓
-- Fix crítico IMAP UIDs: `imap_servicio.py` — `b'9 10'.split()` antes de `.isdigit()` (Gmail retorna todos UIDs en un solo bytes) ✓
-- Workers health flags: `app.py` ahora setea `worker_ocr_activo`, `worker_pipeline_activo`, `worker_correo_activo = True` ✓
+### Completado sesion 89
+- Fix 500 post-deploy: bancario.py con `session` param no había sobrevivido restart — re-deployed ✓
+- `_confirmar_en_fs`: busca subcuenta proveedor en FS por NIF (fallback 4000000000) + crea 2 partidas con `json.dumps(lineas)` ✓
+- `_crear_asiento_directo_en_fs`: mismo fix `json.dumps(lineas)` ✓
+- `api_get` en `fs_api.py`: añadido `base_url` param — ahora todas las funciones lo soportan ✓
+- Limpieza: asiento FS#8 vacío eliminado, mov 132 reseteado a pendiente ✓
 
-### Proxima sesion — pendientes (sesion 89)
-1. **F8 — Pipeline FS registration fix** — Fase 2 rollback (FS total=0.00, `registered.json` nunca generado). Investigar `registration.py` con logs detallados de respuesta FS
-2. **F6 — Ruta inbox email→pipeline** — Worker guarda `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`. Alinear rutas
-3. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
-4. **Capa C VClNegocios** — bajó de 8 a 0 matches
+### Proxima sesion — pendientes (sesion 90)
+1. **Verificar confirmar-match prod** — mov 132 en pendiente, re-confirmar y comprobar asiento con importe correcto en FS
+2. **F8 — Pipeline FS registration fix** — Fase 2 rollback (FS total=0.00, `registered.json` nunca generado)
+3. **F6 — Ruta inbox email→pipeline** — alinear rutas worker correo ↔ pipeline
+4. **Tests E2E dashboard** — Playwright: confirmar match, rechazar, FilterBar, conciliar-directo, bulk
+5. **Capa C VClNegocios** — bajó de 8 a 0 matches

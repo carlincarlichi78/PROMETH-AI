@@ -1,5 +1,33 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 88b) | **Branch:** main | **Tests:** 2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-04 (sesión 89) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 89 — Conciliación: asiento con importe correcto)
+
+### Commits sesión 89
+
+| Hash | Descripción |
+|------|-------------|
+| `89d4e842` | fix(conciliacion): asiento con importe correcto — partidas json.dumps + base_url en api_get |
+
+### Tasks completadas (sesión 89)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| 500 error redeployar bancario.py | ✅ DONE | El docker cp de sesión 88 no sobrevivió el restart. Re-deployed via scp+docker cp la versión con `session` param |
+| Asiento FS con 0€ al confirmar match | ✅ DONE | `_confirmar_en_fs` buscaba subcuenta proveedor (FS por NIF, fallback 4000000000) y crea 2 partidas con `json.dumps(lineas)` |
+| `_crear_asiento_directo_en_fs` sin json.dumps | ✅ DONE | Mismo fix: `"lineas": json.dumps(lineas)` para que FS reciba JSON válido |
+| `api_get` sin `base_url` | ✅ DONE | Añadido parámetro `base_url` a `api_get` en `fs_api.py` — ahora todas las funciones lo soportan |
+| Limpieza asiento vacío FS#8 | ✅ DONE | DELETE asiento FS#8 + reset mov 132 a pendiente para re-confirmar |
+
+### Pendientes para sesión 90
+
+1. **F8 — Pipeline FS registration fix** — Fase 2 rollback (FS devuelve `total=0.00`). `registered.json` nunca se genera → pipeline bloqueado. Investigar `registration.py` + respuesta real FS con logs detallados
+2. **F6 — Ruta inbox email→pipeline** — Worker correo guarda en `clientes/{empresa_id}/inbox/`; pipeline espera `clientes/{slug}/{año}/inbox/`. Alinear rutas o mover automáticamente
+3. **Tests E2E dashboard** — Playwright flujos críticos: confirmar match (verificar asiento con importe), rechazar, FilterBar, conciliar-directo, bulk
+4. **Verificar confirmar-match producción** — mov 132 está en pendiente, re-confirmar y verificar que FS crea asiento con importe correcto
+5. **Capa C VClNegocios** — 0 matches (bajó de 8). Verificar si faltan PDFs en inbox prod
 
 ---
 
