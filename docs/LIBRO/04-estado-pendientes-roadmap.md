@@ -281,6 +281,18 @@ python -m pytest tests/test_bancario/test_migracion_029.py -v
 | Dashboard Rediseño Total (38 páginas nuevas) | `docs/plans/2026-03-01-dashboard-redesign-total.md` | APROBADO |
 | Motor de Escenarios de Campo | `docs/plans/2026-03-01-motor-campo-design.md` | APROBADO |
 
+### ClasificadorFiscal (descartado sesión 69 — reimplementar limpio cuando toque)
+
+**Qué era:** rama `feat/motor-clasificacion-fiscal` (commits `fa5f596`, `c85dcf7`). Eliminada por divergencia con main.
+
+**Qué hacía:**
+- `ClasificadorFiscal` — clase que deduce automáticamente el tratamiento fiscal de un proveedor (IVA, IRPF, suplidos, intracomunitario) a partir de su nombre/CIF/categoría, sin necesidad de regla manual en config.yaml
+- `categorias_gasto.yaml` — base de conocimiento fiscal España: ~40 categorías de gasto con sus tratamientos por defecto (IVA21/IVA0/IVA4, retención IRPF, tipo PGC, si es suplido)
+
+**Valor futuro:** Complementa el motor de reglas actual. En lugar de configurar cada proveedor manualmente, el clasificador propone el tratamiento y el usuario confirma o corrige. Encajaría como Capa 0 del pipeline (pre-Gate 0) o como sugerencia en la cola de revisión.
+
+**Para reimplementar:** crear rama nueva desde main, copiar la lógica de `ClasificadorFiscal` y `categorias_gasto.yaml` desde los commits referenciados arriba usando `git show fa5f596:ruta/archivo`.
+
 ### Dashboard Rediseño Total (pendiente)
 
 38 páginas nuevas planificadas:
