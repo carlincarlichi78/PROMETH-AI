@@ -1,5 +1,30 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 70) | **Branch:** main | **Tests:** 2719 PASS
+> **Actualizado:** 2026-03-04 (sesión 71) | **Branch:** main | **Tests:** 2719 PASS
+
+---
+
+## Estado actual (cierre sesión 71)
+
+### Commits de la sesión 71
+
+Sin commits de código — sesión de configuración Google Workspace.
+
+### Tasks completadas (sesión 71 — App Passwords Google Workspace)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Política 2FA Admin Console | ✅ DONE | Desactivar enforcement → usuarios configuran 2FA → reactivar. Documentado procedimiento en LIBRO-ACCESOS.md |
+| App Passwords asesores | ✅ DONE | 2FA activado + App Password SFCE-IMAP generada para los 6 usuarios (francisco, maria, luis, gestor1, gestor2, javier) |
+| App Password admin | ✅ DONE | Nueva App Password `bowa ixgl tijf oaku` generada para admin@prometh-ai.es |
+| Actualizar contraseñas individuales | ✅ DONE | francisco → `Uralde2027!`, javier → `Uralde2028!` anotadas en LIBRO-ACCESOS.md |
+| Recuperar App Password Maria | ✅ DONE | Descifrada desde BD local (Fernet) y registrada en LIBRO-ACCESOS.md |
+
+### Pendientes para próxima sesión
+
+1. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py` — crear/actualizar cuentas IMAP en BD prod con las App Passwords generadas
+2. **Sugerencias reales en PanelConciliacion** — reemplazar mock con `useQuery` a `/sugerencias` filtrado por `movimiento_id`
+3. **Tabs "Revisión" y "Conciliados"** — implementar con `TablaMovimientos` existente + filtro estado
+4. **Tests E2E dashboard** — Playwright flujos críticos (conciliación, documentos)
 
 ---
 

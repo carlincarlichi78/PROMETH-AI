@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 70)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-04 (sesión 71)
 
 ---
 
@@ -47,12 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 70)
+## Estado rápido (sesión 71)
 
 - **Plan activo:** ninguno
-- **Completado sesión 70:** POST /match-parcial (backend) + ConciliacionPage 5 tabs + VistaPendientes maestro-detalle + PanelConciliacion (3 secciones)
+- **Completado sesión 71:** App Passwords Google Workspace para 6 usuarios (francisco/maria/luis/gestor1/gestor2/javier) + admin. Procedimiento documentado en LIBRO-ACCESOS.md. Contraseñas individuales: francisco=`Uralde2027!`, javier=`Uralde2028!`
 - **Tests:** 2719 PASS, 4 skipped
-- **Próximo paso:** Conectar sugerencias reales en PanelConciliacion (reemplazar mock) + tabs Revisión/Conciliados
+- **Próximo paso:** Script seed IMAP en prod + sugerencias reales PanelConciliacion
 
 ---
 

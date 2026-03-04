@@ -234,19 +234,18 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 70)
+## Estado actual (04/03/2026, sesion 71)
 
-**Rama**: `main` | **Ultimo commit**: `6a3040d` (pusheado) | **Tests**: 2719 PASS
+**Rama**: `main` | **Ultimo commit**: `ffa81c0` (pusheado) | **Tests**: 2719 PASS
 
-### Completado sesion 70
-- `POST /api/bancario/{empresa_id}/match-parcial` — conciliacion N:1 con tolerancia 0.05€ + 5 tests
-- `ConciliacionPage` — 5 tabs (Pendientes/Sugerencias/Revision/Conciliados/Patrones), ruta `/conciliacion`, sidebar
-- `VistaPendientes` — layout maestro-detalle con `ScrollArea`, estado `selectedId`
-- `PanelConciliacion` — cabecera importe rojo/verde + sugerencias IA (mock) + asiento manual `Collapsible`
+### Completado sesion 71
+- App Passwords Google Workspace generadas para 6 asesores + admin (LIBRO-ACCESOS.md actualizado, gitignoreado)
+- Procedimiento 2FA documentado en LIBRO-ACCESOS.md (politica Admin Console + flujo usuario)
+- Contrasenas individuales anotadas: francisco=`Uralde2027!`, javier=`Uralde2028!`
+- App Password Maria recuperada desde BD local (Fernet decrypt)
 
 ### Proxima sesion — pendientes
-1. **App Passwords IMAP** (manual) — francisco/luis/gestor1/gestor2/javier: `myaccount.google.com → Seguridad → App passwords`
-2. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py`
-3. **Sugerencias reales en PanelConciliacion** — reemplazar mock con query a `/sugerencias` filtrado por `movimiento_id`
-4. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
-5. **Tests E2E dashboard** (Playwright, flujos criticos)
+1. **Script seed IMAP**: `docker exec sfce_api python scripts/crear_cuentas_imap_asesores.py` — cargar App Passwords en BD prod
+2. **Sugerencias reales en PanelConciliacion** — reemplazar mock con query a `/sugerencias` filtrado por `movimiento_id`
+3. **Tabs "Revision" y "Conciliados"** — implementar con `TablaMovimientos` + filtro estado
+4. **Tests E2E dashboard** (Playwright, flujos criticos)
