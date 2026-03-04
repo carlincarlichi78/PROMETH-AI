@@ -91,3 +91,4 @@ data/
 
 # Git worktrees
 .worktrees/
+tests/datos_prueba/bancario/

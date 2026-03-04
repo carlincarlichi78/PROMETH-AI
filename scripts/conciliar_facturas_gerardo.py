@@ -318,33 +318,95 @@ def _parse_ocr_json(ruta_json: Path) -> Optional[DocLocal]:
     )
 
 
-def _extraer_con_pdfplumber(ruta_pdf: Path) -> DocLocal:
-    """Extrae campos de un PDF usando pdfplumber + regex. Sin LLM."""
-    hash_pdf = _sha256(ruta_pdf.read_bytes())
-    hint = _hint_desde_filename(ruta_pdf.name)
-    fecha_fn = _fecha_desde_filename(ruta_pdf.name)
-
+def _extraer_texto_pdf(ruta_pdf: Path) -> str:
+    """
+    Tier 1: pdfplumber — motor propio, gratuito.
+    Tier 2: pymupdf (fitz) — motor MuPDF, gratuito, rescata lo que pdfplumber falla.
+    Retorna texto concatenado o '' si ambos fallan (PDF escaneado).
+    """
+    # Tier 1: pdfplumber
     try:
         import pdfplumber
         with pdfplumber.open(ruta_pdf) as pdf:
-            paginas = [p.extract_text() or '' for p in pdf.pages[:3]]
-        texto = '\n'.join(paginas)
+            texto = '\n'.join(p.extract_text() or '' for p in pdf.pages[:3])
+        if texto.strip():
+            return texto
     except Exception:
-        texto = ''
+        pass
+
+    # Tier 2: pymupdf (fitz) — motor de renderizado distinto
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(ruta_pdf)
+        texto = ''.join(p.get_text() for p in doc)
+        if texto.strip():
+            return texto
+    except Exception:
+        pass
+
+    return ''
+
+
+def _extraer_con_gemini_flash(ruta_pdf: Path) -> Optional[dict]:
+    """
+    Tier 3: Gemini Flash vision — gratuito hasta 20 req/dia.
+    Solo se llama cuando Tier 1 y Tier 2 devuelven texto vacio (PDF escaneado).
+    Retorna dict con campos estandarizados o None si falla/no disponible.
+    """
+    try:
+        from sfce.core.ocr_gemini import extraer_factura_gemini
+        import time
+        resultado = extraer_factura_gemini(ruta_pdf)
+        time.sleep(13)  # rate limit: 5 req/min en tier gratuito
+        return resultado
+    except Exception:
+        return None
+
+
+def _extraer_con_pdfplumber(ruta_pdf: Path) -> DocLocal:
+    """
+    Extrae campos de un PDF con cascada gratuita de 3 tiers:
+      Tier 1: pdfplumber + regex
+      Tier 2: pymupdf (fitz) + regex
+      Tier 3: Gemini Flash vision (20 req/dia gratis) — solo si texto vacio
+    """
+    hash_pdf = _sha256(ruta_pdf.read_bytes())
+    hint     = _hint_desde_filename(ruta_pdf.name)
+    fecha_fn = _fecha_desde_filename(ruta_pdf.name)
+
+    texto = _extraer_texto_pdf(ruta_pdf)
 
     if texto.strip():
-        nombre = _extraer_nombre_emisor(texto)
-        nif    = _extraer_nif(texto)
-        fecha  = _parse_fecha_en_texto(texto) or fecha_fn
+        # Tiers 1/2: extraccion por regex
+        nombre  = _extraer_nombre_emisor(texto)
+        nif     = _extraer_nif(texto)
+        fecha   = _parse_fecha_en_texto(texto) or fecha_fn
         importe = _extraer_importe_total(texto)
         campos_ok = sum(x is not None for x in [nombre, nif, fecha, importe])
         confianza = campos_ok * 25
-        fuente = 'pdfplumber'
+        fuente    = 'pdfplumber'
     else:
-        # PDF escaneado o sin texto — solo filename
         nombre, nif, fecha, importe = None, None, fecha_fn, None
-        confianza = 10
-        fuente = 'filename_only'
+        confianza = 0
+        fuente    = 'filename_only'
+
+    # Tier 3: Gemini Flash (gratuito 20 req/dia) cuando no hay importe
+    # Actua tanto en PDFs escaneados (sin texto) como en PDFs con texto
+    # pero regex no encontro el total (formatos poco estandar)
+    if importe is None:
+        print(f"    [T3-Gemini] {ruta_pdf.name[:55]}")
+        datos_gemini = _extraer_con_gemini_flash(ruta_pdf)
+        if datos_gemini:
+            dx = datos_gemini.get('datos_extraidos', datos_gemini)
+            # Enriquecer campos: Gemini solo sobreescribe si extrae algo mejor
+            nombre  = nombre  or dx.get('emisor_nombre') or dx.get('nombre_emisor')
+            nif     = nif     or dx.get('emisor_cif')
+            fecha   = fecha   or _parse_fecha(str(dx.get('fecha', ''))) or fecha_fn
+            raw_imp = dx.get('total') or dx.get('importe') or dx.get('importe_total')
+            importe = _parse_importe(raw_imp)
+            campos_ok = sum(x is not None for x in [nombre, nif, fecha, importe])
+            confianza = max(campos_ok * 20, 30)
+            fuente    = 'gemini_flash'
 
     return DocLocal(
         ruta           = ruta_pdf,
