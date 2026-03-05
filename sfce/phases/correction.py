@@ -596,7 +596,7 @@ def _aplicar_correccion(correccion: dict, fs: FSAdapter) -> bool:
                 return False
 
             # 2. Crear partida 6280 con el 50% no deducible (gasto vehículo)
-            r_nueva = fs._post("partidas", {
+            r_nueva = fs.crear_partida({
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": "6280000000",
                 "debe": datos["iva_no_deducible"],
@@ -612,7 +612,7 @@ def _aplicar_correccion(correccion: dict, fs: FSAdapter) -> bool:
                 return False
 
             # 2. Crear partida nueva en 4709 (IVA extranjero)
-            r_nueva = fs._post("partidas", {
+            r_nueva = fs.crear_partida({
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": datos["subcuenta_destino"],
                 "debe": datos["importe_aduana"],

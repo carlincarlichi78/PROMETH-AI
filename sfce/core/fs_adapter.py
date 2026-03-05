@@ -502,6 +502,16 @@ class FSAdapter:
         todas = self._get("partidas", params={"idasiento": idasiento}) or []
         return [p for p in todas if int(p.get("idasiento", 0)) == idasiento]
 
+    def crear_partida(self, datos: dict) -> FSResult:
+        """Crea una partida individual en un asiento existente.
+
+        Args:
+            datos: debe incluir 'idasiento', 'codsubcuenta', 'debe', 'haber'.
+                   'concepto' es opcional.
+                   idempresa se inyecta automáticamente por _post().
+        """
+        return self._post("partidas", datos)
+
     # -----------------------------------------------------------------------
     # API pública — Facturas consulta/eliminación
     # -----------------------------------------------------------------------

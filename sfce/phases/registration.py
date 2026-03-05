@@ -781,21 +781,29 @@ def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
             return False
 
         # Crear partida 472 IVA soportado (DEBE)
-        fs._post("partidas", {
+        r472 = fs.crear_partida({
             "idasiento": idasiento,
             "codsubcuenta": "4720000000",
             "concepto": f"IVA soportado intracom {iva_pct}%",
             "debe": iva_importe,
             "haber": 0,
         })
+        if not r472.ok:
+            logger.error("Error creando partida 472 intracom: %s", r472.error)
+            return False
+
         # Crear partida 477 IVA repercutido (HABER)
-        fs._post("partidas", {
+        r477 = fs.crear_partida({
             "idasiento": idasiento,
             "codsubcuenta": "4770000000",
             "concepto": f"IVA repercutido intracom {iva_pct}%",
             "debe": 0,
             "haber": iva_importe,
         })
+        if not r477.ok:
+            logger.error("Error creando partida 477 intracom: %s", r477.error)
+            return False
+
         logger.info(f"  Autorepercusion intracom: {iva_importe} EUR (472 DEBE / 477 HABER)")
         return True
     except Exception as e:
@@ -869,7 +877,7 @@ def _corregir_asientos_proveedores(registrados: list, fs: FSAdapter) -> int:
             continue
 
         # Swap debe <-> haber
-        r = fs._put(f"partidas/{partida['idpartida']}", {"debe": haber_orig, "haber": debe_orig})
+        r = fs.corregir_partida(partida['idpartida'], {"debe": haber_orig, "haber": debe_orig})
         if r.ok:
             corregidas += 1
         else:
@@ -937,7 +945,7 @@ def _corregir_divisas_asientos(registrados: list, fs: FSAdapter) -> int:
         if abs(debe - nuevo_debe) < 0.01:
             continue
 
-        r = fs._put(f"partidas/{partida['idpartida']}", {"debe": nuevo_debe, "haber": nuevo_haber})
+        r = fs.corregir_partida(partida['idpartida'], {"debe": nuevo_debe, "haber": nuevo_haber})
         if r.ok:
             corregidas += 1
         else:
