@@ -90,6 +90,8 @@ def _encolar_archivo(
     """Encola un ArchivoExtraido en ColaProcesamiento.
 
     Valida PDFs, calcula SHA256, guarda en disco y crea la entrada en cola.
+    Crea también el Documento correspondiente en BD para que worker_pipeline
+    pueda reclamar y lanzar el pipeline (F6).
 
     Args:
         hints_extra: campos de enriquecimiento adicionales (G7/G13).
@@ -98,6 +100,9 @@ def _encolar_archivo(
     Returns:
         True si el archivo fue encolado, False si fue rechazado.
     """
+    from datetime import datetime
+    from sfce.db.modelos import Documento
+
     nombre = sanitizar_nombre_archivo(archivo.nombre)
     contenido = archivo.contenido
 
@@ -128,8 +133,24 @@ def _encolar_archivo(
     if hints_extra:
         hints_dict["enriquecimiento"] = hints_extra
 
+    ejercicio = str(datetime.now().year)
+
+    # Crear Documento en BD para que worker_pipeline pueda reclamar (F6)
+    doc = Documento(
+        empresa_id=empresa_id,
+        tipo_doc="FC",  # tipo provisional; el pipeline lo detecta por OCR
+        ruta_pdf=nombre,
+        ruta_disco=str(ruta),
+        hash_pdf=sha,
+        estado="pendiente",
+        ejercicio=ejercicio,
+    )
+    sesion.add(doc)
+    sesion.flush()
+
     item = ColaProcesamiento(
         empresa_id=empresa_id,
+        documento_id=doc.id,
         nombre_archivo=nombre,
         ruta_archivo=str(ruta),
         estado="PENDIENTE",
@@ -140,7 +161,8 @@ def _encolar_archivo(
     )
     sesion.add(item)
     sesion.flush()
-    logger.info("Encolado '%s' para empresa %d", nombre, empresa_id)
+    doc.cola_id = item.id
+    logger.info("Encolado '%s' para empresa %d (doc_id=%d)", nombre, empresa_id, doc.id)
     _emitir_ws_nuevo_pdf(empresa_id, nombre, fuente="correo")
     return True
 
@@ -185,8 +207,12 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
     if dest_parsed.tipo_doc and not hints.tipo_doc:
         hints.tipo_doc = dest_parsed.tipo_doc
 
+    from datetime import datetime as _dt
+    from sfce.db.modelos import Documento
+
     encolados = 0
     rechazados = 0
+    ejercicio = str(_dt.now().year)
     for adjunto in email_data.get("adjuntos", []):
         nombre = sanitizar_nombre_archivo(adjunto.get("nombre", ""))
         contenido = adjunto.get("contenido", b"")
@@ -208,8 +234,22 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
         ruta = dir_empresa / nombre
         ruta.write_bytes(contenido)
 
+        # Crear Documento en BD para que worker_pipeline pueda reclamar (F6)
+        doc = Documento(
+            empresa_id=empresa_id,
+            tipo_doc="FC",  # tipo provisional; el pipeline lo detecta por OCR
+            ruta_pdf=nombre,
+            ruta_disco=str(ruta),
+            hash_pdf=sha,
+            estado="pendiente",
+            ejercicio=ejercicio,
+        )
+        sesion.add(doc)
+        sesion.flush()
+
         item = ColaProcesamiento(
             empresa_id=empresa_id,
+            documento_id=doc.id,
             nombre_archivo=nombre,
             ruta_archivo=str(ruta),
             estado="PENDIENTE",
@@ -224,6 +264,8 @@ def procesar_email_catchall(email_data: dict, sesion: Session) -> dict:
             }),
         )
         sesion.add(item)
+        sesion.flush()
+        doc.cola_id = item.id
         encolados += 1
 
     sesion.commit()

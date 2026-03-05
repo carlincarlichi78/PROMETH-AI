@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 from sfce.db.base import Base
 import sfce.db.modelos  # noqa — importar antes de create_all para resolver FKs
 import sfce.db.modelos_auth  # noqa
-from sfce.db.modelos import Empresa, ColaProcesamiento
+from sfce.db.modelos import Empresa, ColaProcesamiento, Documento
 from sfce.conectores.correo.worker_catchall import procesar_email_catchall
 
 PDF_VALIDO = b"%PDF-1.4 contenido de prueba"
@@ -143,3 +143,39 @@ def test_multiples_adjuntos_todos_encolados(sesion_bd):
     }
     resultado = procesar_email_catchall(email_data, sesion=sesion_bd)
     assert resultado["encolados"] == 2
+
+
+def test_email_catchall_crea_documento_en_bd(sesion_bd):
+    """Email válido crea Documento en BD con documento_id enlazado en ColaProcesamiento (F6)."""
+    email_data = {
+        "to": "pastorino@prometh-ai.es",
+        "from": "proveedor@mercadona.es",
+        "subject": "Factura",
+        "adjuntos": [{"nombre": "factura.pdf", "contenido": PDF_VALIDO}],
+    }
+    procesar_email_catchall(email_data, sesion=sesion_bd)
+
+    doc = sesion_bd.query(Documento).first()
+    assert doc is not None, "Debe crearse un Documento en BD"
+    assert doc.empresa_id == 1
+    assert doc.estado == "pendiente"
+
+    cola = sesion_bd.query(ColaProcesamiento).first()
+    assert cola.documento_id == doc.id, "ColaProcesamiento debe tener documento_id enlazado"
+    assert doc.cola_id == cola.id, "Documento debe tener cola_id enlazado"
+
+
+def test_documento_id_no_nulo_permite_pipeline(sesion_bd):
+    """documento_id no nulo garantiza que worker_pipeline pueda reclamar el doc (F6)."""
+    email_data = {
+        "to": "pastorino@prometh-ai.es",
+        "from": "x@y.com",
+        "subject": "",
+        "adjuntos": [{"nombre": "doc.pdf", "contenido": PDF_VALIDO}],
+    }
+    procesar_email_catchall(email_data, sesion=sesion_bd)
+
+    cola = sesion_bd.query(ColaProcesamiento).first()
+    assert cola.documento_id is not None, (
+        "documento_id None impide que worker_pipeline lance el pipeline (bug F6)"
+    )
