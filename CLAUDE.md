@@ -134,18 +134,16 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 103)
+## Estado actual (05/03/2026, sesion 103 cierre)
 
-**Rama**: `main` | **Ultimo commit**: (pendiente push) | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: `c7449e7e` | **Tests**: 2820 PASS
 
 ### Completado sesion 103
-- gen_asiento.php en servidor FS Uralde + copiado a container ✓
-- FSAdapter.generar_asiento() vía SSH subprocess + JSON parse ✓
-- registration.py llama generar_asiento() tras crear factura proveedor ✓
-- Fix intake.py: cache hit flattening + anti-stale-null guard ✓
-- Fix config.py: buscar_proveedor_por_nombre partial matching + fs_ssh_host/container props ✓
-- Fix contracts.py: CorrectionOutput.check coerce str validator ✓
-- Pipeline E2E María Isabel Fases 1-6 completas (score 82%) ✓
+- gen_asiento.php + FSAdapter.generar_asiento() + registration.py integrado ✓
+- E2E validado: FP 66 creada, asiento 105 via SSH+PHP automatico ✓
+- Autorepercusion 472/477 intracom 2.08 EUR OK ✓
+- Fix motivo_exclusion Pydantic en scripts/pipeline.py + sfce/phases/pre_validation.py ✓
+- Fix scripts/core/config.py: fs_ssh_host/fs_container_name (paridad sfce/core/config.py) ✓
 
 ### Proxima sesion — pendientes (sesion 104)
 
@@ -156,7 +154,6 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 4. Editar `.env` con tokens reales + `bash deploy.sh`
 
 **CONTABILIDAD:**
-1. **Test generar_asiento() fresco** — pipeline sin `--resume`, factura nueva → asiento automático
-2. **Ticket Coloso** — OCR thermal null → crear `.ocr.json` manual (B67718361, 05/01/2025, ~30€)
-3. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
-4. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+1. **Resto PDFs María Isabel** — ~200+ PDFs en procesado/T1+T2 + cuarentena 1 Enero -13.pdf, reprocesar pipeline completo
+2. **Ticket Coloso** — OCR thermal null → `.ocr.json` manual (B67718361, 05/01/2025, ~30€ DIESEL)
+3. **Cuarentena ~218 PDFs** — ampliar config.yaml y reprocesar

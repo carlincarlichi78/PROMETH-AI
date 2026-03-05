@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 102)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 103)
 
 ---
 
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 103)
+## Estado rápido (sesión 103 — CERRADA)
 
-- **Completado:** gen_asiento.php + FSAdapter.generar_asiento() + registration.py integrado. Pipeline E2E María Isabel Fases 1-6 completas (score 82%). Fix CorrectionOutput.check coerce str.
-- **CONTABILIDAD pendiente:** Ticket Coloso OCR null, PDFs María Isabel ~200+, cuarentena ~218 PDFs, test generar_asiento() en run fresco
+- **Completado:** E2E validado end-to-end — FP 66 creada, asiento 105 via SSH+PHP, 472/477 autorepercusión OK. Fix motivo_exclusion Pydantic, fix scripts/core/config.py ssh props. Tests 2820 PASS.
+- **CONTABILIDAD pendiente sesión 104:** ~200+ PDFs María Isabel, Ticket Coloso OCR null, cuarentena ~218 PDFs
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
