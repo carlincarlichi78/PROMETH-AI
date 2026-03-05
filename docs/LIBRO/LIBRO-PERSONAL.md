@@ -52,7 +52,7 @@ cd dashboard && npm run dev
 - **Completado sesión 98:** Pata 3 FSAdapter. `crear_partida()` público en FSAdapter. Migración `_post/_put("partidas",...)` en registration.py (×3) y correction.py (×2). Fix `_inbox_empresa()` worker_catchall (elimina fallback legacy). Watcher 23 tests PASS.
 - **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 - **Push:** `790d7822` OK | **Tests:** 2818 PASS
-- **PRIORIDAD SESIÓN 99:** (1) Ampliar config.yaml con proveedores cuarentena Maria Isabel, (2) Re-procesar ~218 PDFs, (3) Verificar 7000x→7050x asientos FV
+- **PRIORIDAD SESIÓN 99:** (1) F6 ruta inbox email→pipeline, (2) cross_validation.py → FSAdapter (nice to have)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

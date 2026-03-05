@@ -24,12 +24,8 @@
 
 ### Pendientes sesión 99
 
-1. **Ampliar config.yaml MARIA ISABEL** — 218 PDFs en cuarentena. Inspeccionar CIFs e identificar proveedores.
-2. **Re-procesar cuarentena Maria Isabel** — mover PDFs a inbox/ y pipeline --no-interactivo
-3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel
-4. **F6** — Ruta inbox email→pipeline (worker correo → `clientes/{id}/inbox/` vs pipeline `clientes/{slug}/{año}/inbox/`)
-5. **Tests E2E dashboard** — Playwright
-6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+1. **F6** — Ruta inbox email→pipeline (worker correo → `clientes/{id}/inbox/` vs pipeline `clientes/{slug}/{año}/inbox/`)
+2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 

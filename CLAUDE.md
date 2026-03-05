@@ -149,9 +149,5 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 
-1. **Ampliar config.yaml MARIA ISABEL** — identificar proveedores de los 218 PDFs en cuarentena y añadir al config.yaml
-2. **Re-procesar cuarentena** — mover PDFs a inbox/ y pipeline --no-interactivo
-3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel. Evaluar corrección.
-4. **F6** — Ruta inbox email→pipeline
-5. **Tests E2E dashboard** — Playwright
-6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+1. **F6** — Ruta inbox email→pipeline
+2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
