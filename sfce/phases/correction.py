@@ -21,7 +21,8 @@ from pathlib import Path
 
 from ..core.config import ConfigCliente
 from ..core.errors import CatalogoErrores, ResultadoFase
-from ..core.fs_api import api_get, api_put, convertir_a_eur
+from ..core.fs_adapter import FSAdapter
+from ..core.fs_api import convertir_a_eur
 from ..core.logger import crear_logger
 from ..core.reglas_pgc import (
     validar_subcuenta_lado,
@@ -552,8 +553,12 @@ def _check_irpf_factura_cliente(asiento_data: dict, config) -> list:
     return problemas
 
 
-def _aplicar_correccion(correccion: dict) -> bool:
-    """Aplica una correccion automatica via API PUT.
+def _aplicar_correccion(correccion: dict, fs: FSAdapter) -> bool:
+    """Aplica una correccion automatica via FSAdapter.
+
+    Args:
+        correccion: dict con tipo, datos y auto_fix
+        fs: FSAdapter ya configurado para la empresa
 
     Returns:
         True si se aplico correctamente
@@ -568,64 +573,53 @@ def _aplicar_correccion(correccion: dict) -> bool:
     try:
         if tipo == "divisa_sin_convertir":
             campo = datos["campo"]
-            return bool(api_put(f"partidas/{idpartida}",
-                                {campo: datos["importe_correcto"]}))
+            r = fs.corregir_partida(idpartida, {campo: datos["importe_correcto"]})
+            return r.ok
 
         elif tipo == "nc_sin_invertir":
             corr = datos.get("correccion", {})
-            return bool(api_put(f"partidas/{idpartida}", corr))
+            r = fs.corregir_partida(idpartida, corr)
+            return r.ok
 
         elif tipo == "subcuenta_incorrecta":
-            return bool(api_put(f"partidas/{idpartida}",
-                                {"codsubcuenta": datos["subcuenta_esperada"]}))
+            r = fs.corregir_partida(idpartida, {"codsubcuenta": datos["subcuenta_esperada"]})
+            return r.ok
 
         elif tipo == "regla_especial_reclasificar":
-            return bool(api_put(f"partidas/{idpartida}",
-                                {"codsubcuenta": datos["subcuenta_destino"]}))
+            r = fs.corregir_partida(idpartida, {"codsubcuenta": datos["subcuenta_destino"]})
+            return r.ok
 
         elif tipo == "regla_especial_iva_turismo_50":
             # 1. Reducir partida 472 al 50% deducible
-            ok_472 = api_put(f"partidas/{idpartida}",
-                             {"debe": datos["iva_deducible"]})
-            if not ok_472:
+            r472 = fs.corregir_partida(idpartida, {"debe": datos["iva_deducible"]})
+            if not r472.ok:
                 return False
 
             # 2. Crear partida 6280 con el 50% no deducible (gasto vehículo)
-            import requests
-            from ..core.fs_api import API_BASE, obtener_token
-            url = f"{API_BASE}/partidas"
-            headers = {"Token": obtener_token()}
-            nueva = {
+            r_nueva = fs._post("partidas", {
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": "6280000000",
                 "debe": datos["iva_no_deducible"],
                 "haber": 0,
                 "concepto": "IVA turismo no deducible 50% — Art.95.Tres.2 LIVA",
-            }
-            resp = requests.post(url, data=nueva, headers=headers)
-            return resp.status_code in (200, 201)
+            })
+            return r_nueva.ok
 
         elif tipo == "regla_especial_iva_extranjero":
             # 1. Reducir partida 600 (quitar importe IVA ADUANA)
-            ok_600 = api_put(f"partidas/{idpartida}",
-                             {"debe": datos["debe_nuevo"]})
-            if not ok_600:
+            r600 = fs.corregir_partida(idpartida, {"debe": datos["debe_nuevo"]})
+            if not r600.ok:
                 return False
 
             # 2. Crear partida nueva en 4709 (IVA extranjero)
-            import requests
-            from ..core.fs_api import API_BASE, obtener_token
-            url = f"{API_BASE}/partidas"
-            headers = {"Token": obtener_token()}
-            nueva_partida = {
+            r_nueva = fs._post("partidas", {
                 "idasiento": datos["idasiento"],
                 "codsubcuenta": datos["subcuenta_destino"],
                 "debe": datos["importe_aduana"],
                 "haber": 0,
                 "concepto": "IVA extranjero - suplido aduanero",
-            }
-            resp = requests.post(url, data=nueva_partida, headers=headers)
-            return resp.status_code in (200, 201)
+            })
+            return r_nueva.ok
 
     except Exception as e:
         logger.error(f"Error aplicando correccion {tipo}: {e}")
@@ -662,6 +656,9 @@ def ejecutar_correccion(
         ResultadoFase con asientos corregidos
     """
     resultado = ResultadoFase("correccion")
+
+    # Crear adapter FS una sola vez para toda la fase
+    fs = FSAdapter.desde_config(config)
 
     # Cargar asientos_generados.json
     ruta_asientos = ruta_cliente / "asientos_generados.json"
@@ -756,7 +753,7 @@ def ejecutar_correccion(
 
             if es_auto:
                 logger.info(f"  Corrigiendo: {problema['descripcion']}")
-                exito = _aplicar_correccion(problema)
+                exito = _aplicar_correccion(problema, fs)
                 if exito:
                     correcciones_aplicadas.append(problema)
                     resultado.correccion(

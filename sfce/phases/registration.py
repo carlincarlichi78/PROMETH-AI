@@ -29,8 +29,8 @@ from ..core.asientos_directos import (
 )
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import (api_delete, api_get, api_get_one, api_post,
-                            api_put, convertir_a_eur, verificar_factura)
+from ..core.fs_adapter import FSAdapter
+from ..core.fs_api import convertir_a_eur
 from ..core.logger import crear_logger
 
 logger = crear_logger("registration")
@@ -60,7 +60,7 @@ def _aplicar_enriquecimiento(datos_extraidos: Any, hints: dict) -> None:
         datos_extraidos.categoria_gasto = categoria
 
 
-def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
+def _asegurar_entidades_fs(config: ConfigCliente, fs: FSAdapter) -> dict:
     """Crea proveedores y clientes en FS si no existen.
 
     Recorre config.proveedores y config.clientes, busca cada CIF en FS,
@@ -79,7 +79,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
     }
 
     # --- Proveedores ---
-    proveedores_fs = api_get("proveedores", limit=500)
+    proveedores_fs = fs._get("proveedores", params={"limit": 500}) or []
     cifs_existentes = {
         _normalizar_cif(p.get("cifnif", "")): p.get("codproveedor")
         for p in proveedores_fs
@@ -95,10 +95,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
 
             # Actualizar codretencion si configurado
             if codretencion:
-                try:
-                    api_put(f"proveedores/{codprov}", data={"codretencion": codretencion})
-                except Exception:
-                    pass
+                fs._put(f"proveedores/{codprov}", {"codretencion": codretencion})
             continue
 
         pais = datos.get("pais", "ESP")
@@ -114,9 +111,9 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
         }
 
         try:
-            resp = api_post("proveedores", form)
-            codprov = resp.get("data", {}).get("codproveedor")
-            idcontacto = resp.get("data", {}).get("idcontacto")
+            result = fs._post("proveedores", form)
+            codprov = result.data.get("codproveedor")
+            idcontacto = result.data.get("idcontacto")
 
             if not codprov:
                 stats["errores"] += 1
@@ -125,11 +122,11 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
 
             # Setear codpais en contacto (CRITICO para modelos fiscales)
             if idcontacto:
-                api_put(f"contactos/{idcontacto}", data={"codpais": pais})
+                fs._put(f"contactos/{idcontacto}", {"codpais": pais})
 
             # Setear codretencion si configurado
             if codretencion:
-                api_put(f"proveedores/{codprov}", data={"codretencion": codretencion})
+                fs._put(f"proveedores/{codprov}", {"codretencion": codretencion})
 
             cifs_existentes[cif_norm] = codprov
             stats["creados_prov"] += 1
@@ -139,7 +136,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
             logger.error(f"  Error creando proveedor {nombre_corto}: {e}")
 
     # --- Clientes ---
-    clientes_fs = api_get("clientes", limit=500)
+    clientes_fs = fs._get("clientes", params={"limit": 500}) or []
     cifs_cli_existentes = {
         _normalizar_cif(c.get("cifnif", "")): c.get("codcliente")
         for c in clientes_fs
@@ -162,9 +159,9 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
         }
 
         try:
-            resp = api_post("clientes", form)
-            codcli = resp.get("data", {}).get("codcliente")
-            idcontacto = resp.get("data", {}).get("idcontacto")
+            result = fs._post("clientes", form)
+            codcli = result.data.get("codcliente")
+            idcontacto = result.data.get("idcontacto")
 
             if not codcli:
                 stats["errores"] += 1
@@ -172,7 +169,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
                 continue
 
             if idcontacto:
-                api_put(f"contactos/{idcontacto}", data={"codpais": pais})
+                fs._put(f"contactos/{idcontacto}", {"codpais": pais})
 
             cifs_cli_existentes[cif_norm] = codcli
             stats["creados_cli"] += 1
@@ -185,7 +182,7 @@ def _asegurar_entidades_fs(config: ConfigCliente) -> dict:
 
 
 def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
-                               tipo_doc: str) -> Optional[str]:
+                               tipo_doc: str, fs: FSAdapter) -> Optional[str]:
     """Busca el codigo del proveedor/cliente en FS via API.
 
     NOTA: filtro idempresa NO funciona en API FS, post-filtrar en Python.
@@ -216,53 +213,36 @@ def _buscar_codigo_entidad_fs(config: ConfigCliente, doc: dict,
             cif = entidad_config["cif"].upper()
         cif_normalizado = _normalizar_cif(cif)
 
-        # Buscar en FS por cifnif (si hay CIF)
+        # Buscar en FS por cifnif (si hay CIF) — post-filtrar (filtros FS no funcionan)
         if cif_normalizado:
-            try:
-                proveedores = api_get("proveedores", params={
-                    "cifnif": cif
-                }, limit=50)
-                for p in proveedores:
-                    if _normalizar_cif(p.get("cifnif", "")) == cif_normalizado:
-                        return p.get("codproveedor")
-            except Exception:
-                pass
+            proveedores = fs._get("proveedores", params={"cifnif": cif, "limit": 50}) or []
+            for p in proveedores:
+                if _normalizar_cif(p.get("cifnif", "")) == cif_normalizado:
+                    return p.get("codproveedor")
 
         # Buscar por nombre
         if nombre_fs:
-            try:
-                proveedores = api_get("proveedores", params={
-                    "nombre": nombre_fs
-                }, limit=50)
-                for p in proveedores:
-                    if p.get("nombre", "").upper() == nombre_fs.upper():
-                        return p.get("codproveedor")
-            except Exception:
-                pass
+            proveedores = fs._get("proveedores", params={"nombre": nombre_fs, "limit": 50}) or []
+            for p in proveedores:
+                if p.get("nombre", "").upper() == nombre_fs.upper():
+                    return p.get("codproveedor")
     else:
         cif = (datos.get("receptor_cif") or "").upper()
         cif_normalizado = _normalizar_cif(cif)
         if cif_normalizado:
-            try:
-                clientes = api_get("clientes", params={
-                    "cifnif": cif
-                }, limit=50)
-                for c in clientes:
-                    if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
-                        return c.get("codcliente")
-            except Exception:
-                pass
+            clientes = fs._get("clientes", params={"cifnif": cif, "limit": 50}) or []
+            for c in clientes:
+                if _normalizar_cif(c.get("cifnif", "")) == cif_normalizado:
+                    return c.get("codcliente")
+
         # Fallback: usar cliente genérico fallback_sin_cif (VARIOS_CLIENTES)
         fallback = config.buscar_cliente_fallback_sin_cif()
         if fallback:
             fallback_nombre = fallback.get("nombre_fs", "")
-            try:
-                clientes_fs = api_get("clientes", limit=100)
-                for c in clientes_fs:
-                    if c.get("nombre", "").upper() == fallback_nombre.upper():
-                        return c.get("codcliente")
-            except Exception:
-                pass
+            clientes_fs = fs._get("clientes", params={"limit": 100}) or []
+            for c in clientes_fs:
+                if c.get("nombre", "").upper() == fallback_nombre.upper():
+                    return c.get("codcliente")
 
     return None
 
@@ -520,7 +500,8 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
 
 def _verificar_factura_creada(idfactura: int, tipo_doc: str,
                                doc: dict, config: ConfigCliente,
-                               tolerancia: float = 0.02) -> list[str]:
+                               tolerancia: float = 0.02,
+                               fs: FSAdapter = None) -> list[str]:
     """VERIFICACION 2: Compara factura creada vs datos extraidos.
 
     Returns:
@@ -531,13 +512,15 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
     tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
 
     try:
-        factura_fs = verificar_factura(idfactura, tipo=tipo_fs)
+        factura_fs = fs.verificar_factura(idfactura, tipo=tipo_fs) if fs else None
+        if factura_fs is None:
+            return [f"No se pudo verificar factura {idfactura}"]
         logger.debug(f"  GET factura {idfactura}: total={factura_fs.get('total')}, "
                      f"neto={factura_fs.get('neto')}, numlineas={factura_fs.get('numlineas')}, "
                      f"codejercicio={factura_fs.get('codejercicio')}, "
                      f"idempresa={factura_fs.get('idempresa')}")
     except Exception as e:
-        return [f"No se pudo verificar factura {idfactura}: {e}"]
+        return [f"Error verificando factura {idfactura}: {e}"]
 
     # Verificar fecha — normalizar ambos a YYYY-MM-DD para comparar
     from ..core.nombres import _normalizar_fecha
@@ -605,7 +588,7 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
     return discrepancias
 
 
-def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
+def _marcar_pagada(idfactura: int, tipo_doc: str, fs: FSAdapter) -> bool:
     """Marca factura como pagada via PUT y verifica.
 
     Returns:
@@ -619,29 +602,25 @@ def _marcar_pagada(idfactura: int, tipo_doc: str) -> bool:
     endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
 
     try:
-        api_put(endpoint, data={"pagada": 1})
+        fs._put(endpoint, {"pagada": 1})
 
         # Verificar
-        factura = verificar_factura(idfactura, tipo=tipo_fs)
-        pagada = factura.get("pagada", False)
+        factura = fs.verificar_factura(idfactura, tipo=tipo_fs)
+        pagada = (factura or {}).get("pagada", False)
         return bool(pagada)
     except Exception as e:
         logger.error(f"Error marcando pagada factura {idfactura}: {e}")
         return False
 
 
-def _eliminar_factura(idfactura: int, tipo_doc: str) -> bool:
+def _eliminar_factura(idfactura: int, tipo_doc: str, fs: FSAdapter) -> bool:
     """Elimina factura de FS (rollback)."""
     tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "cliente"
-    endpoint_map = {
-        "proveedor": "facturaproveedores",
-        "cliente": "facturaclientes"
-    }
-    endpoint = f"{endpoint_map[tipo_fs]}/{idfactura}"
-    return api_delete(endpoint)
+    return fs.eliminar_factura(idfactura, tipo=tipo_fs)
 
 
-def _enriquecer_cabecera_con_entidad(form_cabecera: dict, es_proveedor: bool) -> dict:
+def _enriquecer_cabecera_con_entidad(form_cabecera: dict, es_proveedor: bool,
+                                      fs: FSAdapter) -> dict:
     """Añade cifnif, nombre y codalmacen al form de cabecera.
 
     El endpoint estándar POST /api/3/facturaproveedores requiere cifnif/nombre
@@ -653,46 +632,38 @@ def _enriquecer_cabecera_con_entidad(form_cabecera: dict, es_proveedor: bool) ->
     if es_proveedor:
         codproveedor = form_cabecera.get("codproveedor")
         if codproveedor:
-            try:
-                prov = api_get_one(f"proveedores/{codproveedor}")
-                if prov:
-                    resultado["cifnif"] = prov.get("cifnif", "")
-                    resultado["nombre"] = prov.get("nombre", "")
-            except Exception:
-                pass
+            prov = fs._get_one(f"proveedores/{codproveedor}")
+            if prov:
+                resultado["cifnif"] = prov.get("cifnif", "")
+                resultado["nombre"] = prov.get("nombre", "")
     else:
         codcliente = form_cabecera.get("codcliente")
         if codcliente:
-            try:
-                cli = api_get_one(f"clientes/{codcliente}")
-                if cli:
-                    resultado["cifnif"] = cli.get("cifnif", "")
-                    resultado["nombre"] = cli.get("nombre", "")
-            except Exception:
-                pass
+            cli = fs._get_one(f"clientes/{codcliente}")
+            if cli:
+                resultado["cifnif"] = cli.get("cifnif", "")
+                resultado["nombre"] = cli.get("nombre", "")
 
     # Obtener codalmacen de la empresa (en instancias multi-empresa no es 'ALG')
     # También deriva codpago con el mismo código (FS crea ambos secuencialmente).
     idempresa = form_cabecera.get("idempresa")
     if idempresa and "codalmacen" not in resultado:
-        try:
-            almacenes = api_get("almacenes")
-            for alm in almacenes:
-                if str(alm.get("idempresa", "")) == str(idempresa):
-                    codalmacen = alm.get("codalmacen")
-                    resultado["codalmacen"] = codalmacen
-                    # En instancias FS multi-empresa, formaspago usa mismo índice
-                    # que almacenes (creados secuencialmente por empresa)
-                    if "codpago" not in resultado or not resultado.get("codpago"):
-                        resultado["codpago"] = codalmacen
-                    break
-        except Exception:
-            pass
+        almacenes = fs._get("almacenes") or []
+        for alm in almacenes:
+            if str(alm.get("idempresa", "")) == str(idempresa):
+                codalmacen = alm.get("codalmacen")
+                resultado["codalmacen"] = codalmacen
+                # En instancias FS multi-empresa, formaspago usa mismo índice
+                # que almacenes (creados secuencialmente por empresa)
+                if "codpago" not in resultado or not resultado.get("codpago"):
+                    resultado["codpago"] = codalmacen
+                break
 
     return resultado
 
 
-def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
+def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict,
+                           fs: FSAdapter) -> int:
     """Crea factura en FS usando endpoint estándar en 2 pasos.
 
     Reemplaza crearFacturaProveedor/crearFacturaCliente (incompatibles con
@@ -716,22 +687,20 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
     form_cabecera = {k: v for k, v in form_enviado.items() if k != "lineas"}
 
     # Enriquecer con cifnif/nombre (obligatorios en endpoint estándar)
-    form_cabecera = _enriquecer_cabecera_con_entidad(form_cabecera, es_proveedor)
+    form_cabecera = _enriquecer_cabecera_con_entidad(form_cabecera, es_proveedor, fs)
 
     # Paso 1: crear cabecera
     endpoint_cabecera = "facturaproveedores" if es_proveedor else "facturaclientes"
     logger.debug(f"  POST cabecera → {endpoint_cabecera}: {json.dumps(form_cabecera)[:300]}")
-    respuesta = api_post(endpoint_cabecera, data=form_cabecera)
-    logger.debug(f"  Respuesta cabecera: {json.dumps(respuesta)[:400]}")
+    # fs._post filtra campos _*, inyecta idempresa/codejercicio, retry en timeout
+    result_cab = fs._post(endpoint_cabecera, form_cabecera)
+    logger.debug(f"  Respuesta cabecera: {result_cab.raw_response}")
 
-    # Respuesta formato: {"ok": "...", "data": {"idfactura": "X", ...}}
-    if respuesta.get("error"):
-        raise ValueError(f"FS error creando cabecera: {respuesta['error']}")
-    idfactura = (respuesta.get("data") or {}).get("idfactura")
+    if not result_cab.ok:
+        raise ValueError(f"FS error creando cabecera: {result_cab.error}")
+    idfactura = result_cab.id_creado or result_cab.data.get("idfactura")
     if not idfactura:
-        idfactura = respuesta.get("idfactura")
-    if not idfactura:
-        raise ValueError(f"Respuesta sin idfactura: {json.dumps(respuesta)[:200]}")
+        raise ValueError(f"Respuesta sin idfactura: {result_cab.raw_response}")
 
     # Paso 2: crear líneas
     # FS REST API no auto-calcula pvpsindto/pvptotal: pasarlos explícitamente
@@ -750,15 +719,15 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
             "pvptotal": pvpsindto,  # sin descuento
         }
         logger.debug(f"  POST linea {i+1}/{len(lineas)} → {endpoint_lineas}: {linea_data}")
-        resp_linea = api_post(endpoint_lineas, data=linea_data)
-        logger.debug(f"  Respuesta linea {i+1}: {json.dumps(resp_linea)[:400]}")
-        if resp_linea.get("error"):
+        result_lin = fs._post(endpoint_lineas, linea_data)
+        logger.debug(f"  Respuesta linea {i+1}: {result_lin.raw_response}")
+        if not result_lin.ok:
             raise ValueError(
                 f"FS error creando linea {i+1} (idfactura={idfactura}): "
-                f"{resp_linea['error']} | datos={linea_data}"
+                f"{result_lin.error} | datos={linea_data}"
             )
         # Acumular totales desde la respuesta de FS
-        ld = resp_linea.get("data") or {}
+        ld = result_lin.data or {}
         pvptotal_resp = float(ld.get("pvptotal") or pvpsindto)
         iva_pct = float(ld.get("iva") or linea.get("_iva_pct", 0))
         irpf_pct = float(ld.get("irpf") or linea.get("_irpf_pct", 0))
@@ -769,24 +738,24 @@ def _crear_factura_2pasos(es_proveedor: bool, form_enviado: dict) -> int:
     # Paso 3: actualizar totales en la cabecera (FS REST API no los recalcula automáticamente)
     endpoint_factura = f"{endpoint_cabecera}/{idfactura}"
     total_calculado = round(neto_total + totaliva_total - totalirpf_total, 4)
-    try:
-        api_put(endpoint_factura, data={
-            "neto": round(neto_total, 4),
-            "totaliva": round(totaliva_total, 4),
-            "totalirpf": round(totalirpf_total, 4),
-            "total": total_calculado,
-        })
+    result_put = fs._put(endpoint_factura, {
+        "neto": round(neto_total, 4),
+        "totaliva": round(totaliva_total, 4),
+        "totalirpf": round(totalirpf_total, 4),
+        "total": total_calculado,
+    })
+    if result_put.ok:
         logger.info(f"  PUT totales cabecera {idfactura}: neto={neto_total:.2f} "
                     f"iva={totaliva_total:.2f} irpf={totalirpf_total:.2f} "
                     f"total={total_calculado:.2f}")
-    except Exception as e:
-        logger.warning(f"  PUT totales cabecera {idfactura} falló (no crítico): {e}")
+    else:
+        logger.warning(f"  PUT totales cabecera {idfactura} falló (no crítico): {result_put.error}")
 
     return int(idfactura)
 
 
 def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
-                                       form_data: dict) -> bool:
+                                       form_data: dict, fs: FSAdapter) -> bool:
     """Añade partidas de autorepercusion IVA para facturas intracomunitarias.
 
     Contabilizacion intracomunitaria:
@@ -795,7 +764,10 @@ def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
     El neto es 0 (se anulan), pero es obligatorio declararlo.
     """
     try:
-        factura = verificar_factura(idfactura, tipo="proveedor")
+        factura = fs.verificar_factura(idfactura, tipo="proveedor")
+        if not factura:
+            logger.warning(f"  Intracom: factura {idfactura} no encontrada, skip autorepercusion")
+            return False
         idasiento = factura.get("idasiento")
         if not idasiento:
             logger.warning(f"  Intracom: factura {idfactura} sin asiento, skip autorepercusion")
@@ -809,7 +781,7 @@ def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
             return False
 
         # Crear partida 472 IVA soportado (DEBE)
-        api_post("partidas", data={
+        fs._post("partidas", {
             "idasiento": idasiento,
             "codsubcuenta": "4720000000",
             "concepto": f"IVA soportado intracom {iva_pct}%",
@@ -817,7 +789,7 @@ def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
             "haber": 0,
         })
         # Crear partida 477 IVA repercutido (HABER)
-        api_post("partidas", data={
+        fs._post("partidas", {
             "idasiento": idasiento,
             "codsubcuenta": "4770000000",
             "concepto": f"IVA repercutido intracom {iva_pct}%",
@@ -831,7 +803,7 @@ def _aplicar_autorepercusion_intracom(idfactura: int, tipo_doc: str,
         return False
 
 
-def _corregir_asientos_proveedores(registrados: list) -> int:
+def _corregir_asientos_proveedores(registrados: list, fs: FSAdapter) -> int:
     """Corrige asientos de facturas proveedor: FS API genera debe/haber invertidos.
 
     Bug FS: crearFacturaProveedor genera asientos con 400 DEBE / 600 HABER
@@ -856,10 +828,11 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
         if not idfactura:
             continue
         try:
-            factura = verificar_factura(idfactura, tipo="proveedor")
-            idasiento = factura.get("idasiento")
-            if idasiento:
-                ids_asientos.add(idasiento)
+            factura = fs.verificar_factura(idfactura, tipo="proveedor")
+            if factura:
+                idasiento = factura.get("idasiento")
+                if idasiento:
+                    ids_asientos.add(idasiento)
         except Exception as e:
             logger.warning(f"  No se pudo obtener asiento de factura {idfactura}: {e}")
 
@@ -869,7 +842,7 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
     logger.info(f"Corrigiendo asientos invertidos: {len(ids_asientos)} asientos")
 
     # Obtener TODAS las partidas (filtro idasiento no funciona en API FS)
-    todas_partidas = api_get("partidas")
+    todas_partidas = fs._get("partidas") or []
 
     corregidas = 0
     for partida in todas_partidas:
@@ -896,20 +869,17 @@ def _corregir_asientos_proveedores(registrados: list) -> int:
             continue
 
         # Swap debe <-> haber
-        try:
-            api_put(
-                f"partidas/{partida['idpartida']}",
-                data={"debe": haber_orig, "haber": debe_orig}
-            )
+        r = fs._put(f"partidas/{partida['idpartida']}", {"debe": haber_orig, "haber": debe_orig})
+        if r.ok:
             corregidas += 1
-        except Exception as e:
-            logger.error(f"  Error corrigiendo partida {partida['idpartida']}: {e}")
+        else:
+            logger.error(f"  Error corrigiendo partida {partida['idpartida']}: {r.error}")
 
     logger.info(f"  {corregidas} partidas corregidas (debe/haber invertidos)")
     return corregidas
 
 
-def _corregir_divisas_asientos(registrados: list) -> int:
+def _corregir_divisas_asientos(registrados: list, fs: FSAdapter) -> int:
     """Corrige asientos de facturas en divisa extranjera.
 
     Bug FS: crearFacturaProveedor genera partidas con importes en divisa
@@ -930,7 +900,9 @@ def _corregir_divisas_asientos(registrados: list) -> int:
         if not idfactura:
             continue
         try:
-            factura = verificar_factura(idfactura, tipo="proveedor")
+            factura = fs.verificar_factura(idfactura, tipo="proveedor")
+            if not factura:
+                continue
             divisa = factura.get("coddivisa", "EUR")
             tasaconv = float(factura.get("tasaconv", 1))
             if divisa != "EUR" and tasaconv > 1:
@@ -945,7 +917,7 @@ def _corregir_divisas_asientos(registrados: list) -> int:
 
     logger.info(f"Corrigiendo divisas en asientos: {len(facturas_divisa)} asientos")
 
-    todas_partidas = api_get("partidas")
+    todas_partidas = fs._get("partidas") or []
     corregidas = 0
     for partida in todas_partidas:
         ida = partida["idasiento"]
@@ -965,14 +937,11 @@ def _corregir_divisas_asientos(registrados: list) -> int:
         if abs(debe - nuevo_debe) < 0.01:
             continue
 
-        try:
-            api_put(
-                f"partidas/{partida['idpartida']}",
-                data={"debe": nuevo_debe, "haber": nuevo_haber}
-            )
+        r = fs._put(f"partidas/{partida['idpartida']}", {"debe": nuevo_debe, "haber": nuevo_haber})
+        if r.ok:
             corregidas += 1
-        except Exception as e:
-            logger.error(f"  Error corrigiendo divisa partida {partida['idpartida']}: {e}")
+        else:
+            logger.error(f"  Error corrigiendo divisa partida {partida['idpartida']}: {r.error}")
 
     logger.info(f"  {corregidas} partidas convertidas a EUR")
     return corregidas
@@ -1017,6 +986,9 @@ def ejecutar_registro(
     """
     resultado = ResultadoFase("registro")
 
+    # Crear adapter FS una sola vez para toda la fase
+    fs = FSAdapter.desde_config(config)
+
     # Cargar validated_batch.json
     ruta_validados = ruta_cliente / "validated_batch.json"
     if not ruta_validados.exists():
@@ -1055,7 +1027,7 @@ def ejecutar_registro(
 
     # Asegurar que todos los proveedores/clientes del config existen en FS
     logger.info("Verificando entidades en FS...")
-    stats_entidades = _asegurar_entidades_fs(config)
+    stats_entidades = _asegurar_entidades_fs(config, fs)
     if stats_entidades["creados_prov"] or stats_entidades["creados_cli"]:
         logger.info(
             f"  Entidades creadas: {stats_entidades['creados_prov']} proveedores, "
@@ -1161,7 +1133,7 @@ def ejecutar_registro(
         # 1. Buscar codigo de entidad en FS
         doc_trabajo = {**doc}
         ctx = {**contexto_base, "tipo": tipo_doc}
-        codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc)
+        codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc, fs)
 
         if not codigo_entidad:
             # Intentar resolver con aprendizaje (crear entidad, fuzzy CIF, etc.)
@@ -1169,7 +1141,7 @@ def ejecutar_registro(
             solucion = resolutor.intentar_resolver(error_entidad, doc_trabajo, ctx)
             if solucion:
                 doc_trabajo = solucion["datos_corregidos"]
-                codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc)
+                codigo_entidad = _buscar_codigo_entidad_fs(config, doc_trabajo, tipo_doc, fs)
 
             if not codigo_entidad:
                 logger.error(f"  No se encontro entidad en FS para {archivo}")
@@ -1193,7 +1165,7 @@ def ejecutar_registro(
                 form_enviado = {k: v for k, v in form_data.items() if not k.startswith("_")}
                 logger.debug(f"  POST 2pasos ({'prov' if es_proveedor else 'cli'}) payload: {form_enviado}")
                 _t0 = time.time()
-                idfactura = _crear_factura_2pasos(es_proveedor, form_enviado)
+                idfactura = _crear_factura_2pasos(es_proveedor, form_enviado, fs)
                 _t_registro = round(time.time() - _t0, 3)
                 logger.info(f"  Factura creada: ID {idfactura}")
                 break
@@ -1215,14 +1187,14 @@ def ejecutar_registro(
         # 4. VERIFICACION 2: GET y comparar
         tolerancia = config.tolerancias.get("comparacion_importes", 0.02)
         discrepancias = _verificar_factura_creada(
-            idfactura, tipo_doc, doc, config, tolerancia)
+            idfactura, tipo_doc, doc, config, tolerancia, fs=fs)
 
         if discrepancias:
             logger.warning(f"  Discrepancias en verificacion post-registro:")
             for d in discrepancias:
                 logger.warning(f"    {d}")
             # Rollback: eliminar factura
-            eliminada = _eliminar_factura(idfactura, tipo_doc)
+            eliminada = _eliminar_factura(idfactura, tipo_doc, fs)
             if eliminada:
                 logger.info(f"  Factura {idfactura} eliminada (rollback)")
             else:
@@ -1239,14 +1211,14 @@ def ejecutar_registro(
             continue
 
         # 5. Marcar pagada
-        pagada_ok = _marcar_pagada(idfactura, tipo_doc)
+        pagada_ok = _marcar_pagada(idfactura, tipo_doc, fs)
         if not pagada_ok:
             logger.warning(f"  No se pudo marcar como pagada (ID {idfactura})")
             resultado.aviso(f"Factura {idfactura} no marcada como pagada")
 
         # 5b. Autorepercusion IVA intracomunitario
         if form_data.get("_intracomunitario"):
-            _aplicar_autorepercusion_intracom(idfactura, tipo_doc, form_data)
+            _aplicar_autorepercusion_intracom(idfactura, tipo_doc, form_data, fs)
 
         # Registrar exito
         registro = {
@@ -1310,7 +1282,7 @@ def ejecutar_registro(
                             if r.get("tipo_registro") != "asiento_directo"]
     if registrados_facturas:
         try:
-            n_corregidas = _corregir_asientos_proveedores(registrados_facturas)
+            n_corregidas = _corregir_asientos_proveedores(registrados_facturas, fs)
             if n_corregidas > 0:
                 logger.info(f"Asientos proveedor corregidos: {n_corregidas} partidas")
         except Exception as e:
@@ -1319,7 +1291,7 @@ def ejecutar_registro(
 
         # Corregir divisas: FS genera partidas en divisa original, no EUR
         try:
-            n_divisas = _corregir_divisas_asientos(registrados_facturas)
+            n_divisas = _corregir_divisas_asientos(registrados_facturas, fs)
             if n_divisas > 0:
                 logger.info(f"Divisas corregidas en asientos: {n_divisas} partidas")
         except Exception as e:

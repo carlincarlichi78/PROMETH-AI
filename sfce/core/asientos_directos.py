@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from .fs_api import api_post
+from .fs_adapter import FSAdapter
 from .logger import crear_logger
 
 logger = crear_logger("asientos_directos")
@@ -239,41 +239,21 @@ def crear_asiento_directo(
         dict con idasiento y num_partidas
 
     Raises:
-        HTTPError: si falla alguna llamada a la API
+        FSError: si falla alguna llamada a la API
     """
-    # 1. Crear asiento cabecera
-    datos_asiento = {
-        "concepto": concepto,
-        "fecha": fecha,
-        "codejercicio": codejercicio,
-        "idempresa": idempresa,
-    }
+    from .fs_api import obtener_token, API_BASE
     logger.info(f"Creando asiento: {concepto} ({fecha})")
-    resp_asiento = api_post("asientos", datos_asiento)
 
-    # FS API devuelve {"ok": "...", "data": {"idasiento": "456", ...}}
-    idasiento = (
-        resp_asiento.get("data", {}).get("idasiento")
-        or resp_asiento.get("idasiento")
+    fs = FSAdapter(
+        base_url=API_BASE,
+        token=obtener_token(),
+        idempresa=idempresa,
+        codejercicio=codejercicio,
     )
-    if not idasiento:
-        raise ValueError(f"Respuesta sin idasiento: {resp_asiento}")
-    idasiento = int(idasiento)
-    logger.info(f"Asiento creado: idasiento={idasiento}")
+    result = fs.crear_asiento_con_partidas(concepto, fecha, partidas)
+    result.raise_if_error()
 
-    # 2. Crear cada partida vinculada al asiento
-    num_partidas = 0
-    for partida in partidas:
-        datos_partida = {
-            "idasiento": idasiento,
-            "codsubcuenta": partida["codsubcuenta"],
-            "debe": partida["debe"],
-            "haber": partida["haber"],
-            "concepto": partida.get("concepto", concepto),
-        }
-        api_post("partidas", datos_partida)
-        num_partidas += 1
-        logger.debug(f"  Partida: {partida['codsubcuenta']} D={partida['debe']} H={partida['haber']}")
-
+    idasiento = result.id_creado
+    num_partidas = result.data.get("num_partidas", len(partidas))
     logger.info(f"Asiento {idasiento} completado con {num_partidas} partidas")
     return {"idasiento": idasiento, "num_partidas": num_partidas}

@@ -16,14 +16,14 @@ from pathlib import Path
 
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import api_get, api_get_one, verificar_factura
+from ..core.fs_adapter import FSAdapter
 from ..core.logger import crear_logger
 
 logger = crear_logger("asientos")
 
 
 def _obtener_asiento_factura(idfactura: int, tipo_doc: str,
-                              config: ConfigCliente) -> dict | None:
+                              fs: FSAdapter) -> dict | None:
     """Obtiene el asiento vinculado a una factura.
 
     Returns:
@@ -32,31 +32,28 @@ def _obtener_asiento_factura(idfactura: int, tipo_doc: str,
     tipo_fs = "proveedor" if tipo_doc in ("FC", "NC", "ANT", "REC", "SUM") else "cliente"
 
     try:
-        factura = verificar_factura(idfactura, tipo=tipo_fs)
+        factura = fs.verificar_factura(idfactura, tipo=tipo_fs)
+        if not factura:
+            return None
         idasiento = factura.get("idasiento")
 
         if not idasiento:
             return None
 
-        # Obtener asiento completo (recurso individual, no lista)
-        asiento = api_get_one(f"asientos/{idasiento}")
-        return asiento
+        return fs.obtener_asiento(int(idasiento))
     except Exception as e:
         logger.error(f"Error obteniendo asiento de factura {idfactura}: {e}")
         return None
 
 
-def _obtener_partidas_asiento(idasiento: int) -> list:
+def _obtener_partidas_asiento(idasiento: int, fs: FSAdapter) -> list:
     """Obtiene todas las partidas (lineas) de un asiento.
 
     Returns:
         Lista de partidas con subcuenta, debe, haber, concepto, etc.
     """
     try:
-        # Filtro idasiento NO funciona en API FS — post-filtrar en Python
-        todas = api_get("partidas", params={"idasiento": idasiento})
-        partidas = [p for p in todas if int(p.get("idasiento", 0)) == idasiento]
-        return partidas
+        return fs.obtener_partidas(idasiento)
     except Exception as e:
         logger.error(f"Error obteniendo partidas del asiento {idasiento}: {e}")
         return []
@@ -78,6 +75,9 @@ def ejecutar_asientos(
         ResultadoFase con asientos y partidas obtenidos
     """
     resultado = ResultadoFase("asientos")
+
+    # Crear adapter FS una sola vez para toda la fase
+    fs = FSAdapter.desde_config(config)
 
     # Cargar registered.json
     ruta_registrados = ruta_cliente / "registered.json"
@@ -120,7 +120,7 @@ def ejecutar_asientos(
 
         # Obtener asiento completo desde API
         try:
-            asiento = api_get_one(f"asientos/{idasiento}")
+            asiento = fs.obtener_asiento(idasiento)
         except Exception as e:
             logger.error(f"  Error obteniendo asiento {idasiento}: {e}")
             sin_asiento.append(reg)
@@ -132,7 +132,7 @@ def ejecutar_asientos(
             continue
 
         # Obtener partidas
-        partidas = _obtener_partidas_asiento(idasiento)
+        partidas = _obtener_partidas_asiento(idasiento, fs)
         logger.info(f"  {len(partidas)} partidas obtenidas")
 
         total_debe = sum(float(p.get("debe", 0)) for p in partidas)
@@ -175,7 +175,7 @@ def ejecutar_asientos(
         logger.info(f"Verificando asiento: {archivo} (factura ID {idfactura})")
 
         # Obtener asiento
-        asiento = _obtener_asiento_factura(idfactura, tipo_doc, config)
+        asiento = _obtener_asiento_factura(idfactura, tipo_doc, fs)
 
         if not asiento:
             logger.warning(f"  {archivo}: SIN ASIENTO vinculado")
@@ -186,7 +186,7 @@ def ejecutar_asientos(
         logger.info(f"  Asiento ID {idasiento} encontrado")
 
         # Obtener partidas
-        partidas = _obtener_partidas_asiento(idasiento)
+        partidas = _obtener_partidas_asiento(idasiento, fs)
         logger.info(f"  {len(partidas)} partidas obtenidas")
 
         # Calcular totales
