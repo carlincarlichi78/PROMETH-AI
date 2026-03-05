@@ -1220,8 +1220,8 @@ def ejecutar_registro(
             logger.warning(f"  No se pudo marcar como pagada (ID {idfactura})")
             resultado.aviso(f"Factura {idfactura} no marcada como pagada")
 
-        # 5b. Generar asiento contable via PHP CLI (solo facturas proveedor)
-        # FS no genera asientos automaticamente para facturas proveedor creadas via API REST.
+        # 5b. Generar asiento contable via PHP CLI (facturas proveedor y cliente)
+        # FS no genera asientos automaticamente para facturas creadas via API REST.
         # gen_asiento.php también corrige subcuenta_gasto e intracom si se pasan.
         intracom_pct = None
         res_asiento = None
@@ -1243,6 +1243,15 @@ def ejecutar_registro(
             else:
                 logger.warning(f"  Asiento no generado para factura {idfactura}: {res_asiento.error}")
                 resultado.aviso(f"Asiento no generado: {res_asiento.error}",
+                               {"idfactura": idfactura, "error": res_asiento.error})
+        elif tipo_doc == "FV":
+            res_asiento = fs.generar_asiento(idfactura, tipo="cliente")
+            if res_asiento.ok:
+                ya = "ya existia" if res_asiento.data.get("ya_existia") else "nuevo"
+                logger.info(f"  Asiento generado: {res_asiento.id_creado} ({ya})")
+            else:
+                logger.warning(f"  Asiento no generado para FV {idfactura}: {res_asiento.error}")
+                resultado.aviso(f"Asiento FV no generado: {res_asiento.error}",
                                {"idfactura": idfactura, "error": res_asiento.error})
 
         # 5c. Autorepercusion IVA intracomunitario (fallback: solo si gen_asiento no lo manejó)

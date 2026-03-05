@@ -464,9 +464,14 @@ def validar_documento_individual(
 
     # Check 1: CIF formato
     tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
-    err = _validar_cif_formato(cif_entidad, pais_entidad)
+    # Si intake identificó la entidad con CIF canónico, usarlo para validar formato
+    cif_canonical = doc.get("entidad_cif", "")
+    cif_validar = cif_canonical if cif_canonical else cif_entidad
+    err = _validar_cif_formato(cif_validar, pais_entidad)
     if err:
-        if tipo_doc in tipos_cif_opcional:
+        # FV sin receptor_cif: no bloquear (fallback VARIOS_CLIENTES en CHECK 2)
+        es_fv_sin_receptor = tipo_doc == "FV" and not datos.get("receptor_cif")
+        if tipo_doc in tipos_cif_opcional or es_fv_sin_receptor:
             avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
         else:
             errores_doc.append(f"[CHECK 1] {err}")

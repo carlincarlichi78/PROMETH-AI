@@ -1044,6 +1044,37 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
             return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1, "sugerencias": []}
 
+    # 2b. Corrección inversión emisor/receptor (OCR a veces los confunde)
+    _emisor_cif = (datos_gpt.get("emisor_cif") or "").strip()
+    _receptor_cif = (datos_gpt.get("receptor_cif") or "").strip()
+    _empresa_cif = (config.empresa.get("cif") or "").strip().upper()
+
+    # Caso A: emisor_cif vacío pero receptor_cif es un proveedor conocido → OCR invirtió ticket
+    if not _emisor_cif and _receptor_cif:
+        _prov = config.buscar_proveedor_por_cif(_receptor_cif)
+        if _prov:
+            logger.info(
+                f"  [{nombre_archivo}] Swap emisor/receptor: OCR invirtió roles "
+                f"(receptor_cif={_receptor_cif} es proveedor)"
+            )
+            datos_gpt["emisor_cif"] = _receptor_cif
+            datos_gpt["receptor_cif"] = _empresa_cif
+            datos_gpt["receptor_nombre"] = config.empresa.get("nombre", "")
+
+    # Caso B: receptor_cif es el CIF de la empresa y emisor_cif es un cliente conocido → FV invertido
+    elif _receptor_cif.upper() == _empresa_cif and _emisor_cif:
+        _cliente = config.buscar_cliente_por_cif(_emisor_cif)
+        if _cliente:
+            logger.info(
+                f"  [{nombre_archivo}] Swap emisor/receptor: OCR invirtió FV "
+                f"(emisor={_emisor_cif} es cliente, receptor=empresa → swap)"
+            )
+            _old_emisor_nombre = datos_gpt.get("emisor_nombre") or ""
+            datos_gpt["emisor_cif"] = _empresa_cif
+            datos_gpt["emisor_nombre"] = config.empresa.get("nombre", "")
+            datos_gpt["receptor_cif"] = _emisor_cif
+            datos_gpt["receptor_nombre"] = _old_emisor_nombre
+
     # 3. Clasificar tipo documento
     tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
 
@@ -1051,6 +1082,11 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     if tipo_doc in ("OTRO", "FC") and "ingresos" in ruta_pdf.parts:
         tipo_doc = "FV"
         logger.info(f"  [{nombre_archivo}] Tipo sobreescrito a FV por subcarpeta ingresos/")
+
+    # Hint de tipo por nombre de archivo: "Ingresos*.pdf" en inbox raíz → FV
+    if tipo_doc in ("OTRO", "FC") and "ingresos" in ruta_pdf.stem.lower():
+        tipo_doc = "FV"
+        logger.info(f"  [{nombre_archivo}] Tipo corregido a FV por nombre archivo")
 
     # 4. Identificar entidad
     entidad = _identificar_entidad(datos_gpt, tipo_doc, config)
