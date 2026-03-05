@@ -134,16 +134,26 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 101b)
+## Estado actual (05/03/2026, sesion 102)
 
-**Rama**: `main` | **Ultimo commit**: `111a8c83` (pusheado) | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: `111a8c83` CONTABILIDAD / `37800d7` MBS SUITES (ambos pusheados) | **Tests**: 2820 PASS (CONTABILIDAD) · 49 PASS (MBS SUITES)
 
-### Completado sesion 101b
-- Asiento intracom Dropbox factura 63 FS Uralde: fix línea IVA0, regenerar asiento 98, 472/477 añadidos. Cuadrado ✓
-- fix(config): Dropbox `codimpuesto: IVA21→IVA0` en config.yaml María Isabel ✓
+### Completado sesion 102
+- MBS SUITES: Task 4.2 React+Vite+Tailwind + Task 4.3 Overview+Competitors+PriceChart ✓
+- MBS SUITES: Task 5.1 nginx.conf SSL + docker-compose.prod.yml + deploy.sh ✓
+- Plan de implementación MBS SUITES completado al 100% (Fases 0-5) ✓
 
-### Proxima sesion — pendientes (sesion 102)
+### Proxima sesion — pendientes (sesion 103)
 
+**MBS SUITES (ops deploy — abrir sesion en `PROYECTOS/MBS SUITES/`):**
+1. DNS `dashboard.mbsintelligence.com` → VPS Hetzner
+2. `certbot certonly --standalone -d dashboard.mbsintelligence.com` en servidor
+3. `rsync -av --exclude='.git' --exclude='node_modules' "MBS SUITES/" carli@65.108.60.69:/opt/apps/mbs-intel/`
+4. Editar `.env` con tokens reales + `bash deploy.sh`
+5. Crear zonas + propiedades MBS desde Django shell (ver plan Task 5.1 Step 6)
+6. Crear Periodic Task en Admin: `scraping.trigger_daily_scrape` crontab `0 6 * * *`
+
+**CONTABILIDAD:**
 1. **Ticket gasolinera** — "CoLoS0 SAN 46 S.L.u", añadir proveedor a config.yaml María Isabel
 2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
 3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)

@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 101)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 102)
 
 ---
 
@@ -47,11 +47,11 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 101b)
+## Estado rápido (sesión 102)
 
-- **Completado:** Asiento intracom Dropbox (factura 63 FS Uralde empresa 7) corregido. Asiento 98: 400 HABER 9.91 / 472 DEBE 2.08 / 477 HABER 2.08 / 600 DEBE 9.91. CUADRADO ✓
-- **Push:** `111a8c83` OK | **Tests:** 2820 PASS
-- **PRIORIDAD SESIÓN 102:** (1) Ticket gasolinera → config.yaml (2) Resto PDFs María Isabel ~200+ (3) cross_validation.py
+- **Completado:** MBS SUITES — plan implementación completado al 100%. Fases 1-5 completas. 49 tests PASS. Push `37800d7` OK.
+- **MBS SUITES deploy pendiente:** DNS + certbot + rsync + .env + `bash deploy.sh` + datos iniciales (ver 04-estado Task 5.1)
+- **CONTABILIDAD pendiente:** Ticket gasolinera, PDFs María Isabel ~200+, cuarentena ~218 PDFs
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

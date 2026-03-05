@@ -1,9 +1,46 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 101b) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 102) | **Branch:** main | **Tests:** 2820 PASS (CONTABILIDAD) / 49 PASS (MBS SUITES) | **Push:** OK
 
 ---
 
-## Estado actual (sesión 101b — asiento intracom Dropbox corregido)
+## Estado actual (sesión 102 — MBS SUITES plan implementado completo)
+
+### Commits sesión 102 (MBS SUITES — repo mbs-suites-intelligence)
+
+| Hash | Descripción |
+|------|-------------|
+| `91af586` | feat: dashboard React — Vite + Tailwind + Overview + Competitors + PriceChart |
+| `37800d7` | feat: deploy config — nginx SSL + docker-compose.prod + script deploy |
+
+### Tasks sesión 102
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Task 4.2: Frontend React + Vite + Tailwind | ✅ DONE | package.json, vite.config, tsconfig, index.html, src/main.tsx, App.tsx + router |
+| Task 4.3: Dashboard Overview + Competitors | ✅ DONE | KPICard, PriceChart (Recharts), Overview (KPIs+IA+alertas), Competitors (lista+historial) |
+| Task 5.1: Deploy config | ✅ DONE | nginx.conf SSL, docker-compose.prod.yml, deploy.sh — build OK, TS 0 errores |
+| Push GitHub | ✅ DONE | `37800d7` en origin/main |
+
+### Pendientes sesión 103 (MBS SUITES — ops deploy)
+
+1. **DNS** — apuntar `dashboard.mbsintelligence.com` al VPS Hetzner (65.108.60.69)
+2. **SSL** — `certbot certonly --standalone -d dashboard.mbsintelligence.com` en servidor
+3. **rsync** — subir repo al servidor: `rsync -av --exclude='.git' --exclude='node_modules' "MBS SUITES/" carli@65.108.60.69:/opt/apps/mbs-intel/`
+4. **`.env` real** — copiar `.env.example` → `.env` con APIFY_TOKEN, ANTHROPIC_API_KEY, RESEND_API_KEY, DB_PASSWORD, DJANGO_SECRET_KEY
+5. **`bash deploy.sh`** — arranca todo (build frontend + migraciones + collectstatic + containers)
+6. **Datos iniciales** — crear zonas + propiedades MBS desde Django shell (script en plan Task 5.1 Step 6)
+7. **Periodic Task en Admin** — crear tarea `scraping.trigger_daily_scrape` crontab `0 6 * * *`
+
+### Pendientes sesión 102 (CONTABILIDAD)
+
+1. **Ticket gasolinera** — "CoLoS0 SAN 46 S.L.u" no identificado, añadir proveedor a config.yaml
+2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+4. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+
+---
+
+## Estado anterior (sesión 101b — asiento intracom Dropbox corregido)
 
 ### Commits sesión 101b
 
