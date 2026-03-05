@@ -23,7 +23,7 @@ from typing import Optional
 from ..core.aritmetica import ejecutar_checks_aritmeticos
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import api_get
+from ..core.fs_adapter import FSAdapter
 from ..core.logger import crear_logger
 from ..core.reglas_pgc import (
     validar_coherencia_cif_iva,
@@ -312,7 +312,7 @@ def _validar_no_existe_en_fs(doc: dict, tipo_doc: str,
     endpoint = "facturaproveedores" if es_proveedor else "facturaclientes"
 
     try:
-        # Buscar por numero de factura
+        fs = FSAdapter.desde_config(config)
         # NOTA: filtro idempresa NO funciona en API FS, post-filtrar en Python
         params = {}
         if es_proveedor:
@@ -320,7 +320,7 @@ def _validar_no_existe_en_fs(doc: dict, tipo_doc: str,
         else:
             params["numero2"] = num_factura
 
-        existentes = api_get(endpoint, params=params, limit=50)
+        existentes = fs._get(endpoint, params=params) or []
 
         # Post-filtrar por idempresa (API ignora este filtro)
         for existente in existentes:
