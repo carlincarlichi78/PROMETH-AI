@@ -134,20 +134,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 109 cierre)
+## Estado actual (05/03/2026, sesion 110 cierre)
 
-**Rama**: `main` | **Ultimo commit**: fix(pipeline): 4 fixes María Isabel | **Tests**: 2841 PASS
+**Rama**: `main` | **Ultimo commit**: refactor(cache_ocr): .ocr_cache/ + limpiar FS | **Tests**: 2841 PASS
 
-### Completado sesion 109
-- Fix intake.py: swap emisor/receptor OCR (Caso A: receptor_cif=proveedor; Caso B: receptor=empresa+emisor=cliente) ✓
-- Fix pre_validation.py: CHECK 1 no bloquea FV sin receptor_cif (fallback VARIOS_CLIENTES) ✓
-- Fix intake.py: "Ingresos*" en nombre archivo → tipo FV ✓
-- Fix registration.py: generar_asiento para FV (tipo="cliente") ✓
-- Pipeline María Isabel: 11/11 PDFs registrados con asiento (7 FC + 4 FV) ✓
+### Completado sesion 110
+- Limpiar FS empresa 7 (María Isabel) — DELETE partidas/asientos/facturas en MariaDB fs-uralde ✓
+- Mover 11 PDFs de 2025/procesado/ → inbox/ ✓
+- Crear .ocr_cache/ y migrar 11 .ocr.json ✓
+- Refactor cache_ocr.py: _ruta_cliente_desde_pdf() + _ruta_cache() usa .ocr_cache/ con retrocompat ✓
+- Borrar pipeline state files ✓
 - Tests 2841 PASS ✓
 
-### Proxima sesion — pendientes (sesion 110)
+### Proxima sesion — pendientes (sesion 111)
 
 **CONTABILIDAD:**
-1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
-2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+1. **Re-ejecutar pipeline María Isabel** — verificar que lee cache de .ocr_cache/
+2. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)

@@ -1,5 +1,32 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 109 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 110 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** pendiente
+
+---
+
+## Estado actual (sesión 110 — Reorganización: limpiar FS + .ocr_cache/ + reset pipeline)
+
+### Commits sesión 110
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente) | refactor(cache_ocr): migrar cache OCR a .ocr_cache/ con retrocompat + limpiar FS empresa 7 |
+
+### Tasks sesión 110
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Limpiar FS empresa 7 (María Isabel) | ✅ DONE | DELETE facturasprov, facturascli, asientos, partidas — todo a 0 en MariaDB fs-uralde |
+| Mover PDFs a inbox/ | ✅ DONE | 11 PDFs de 2025/procesado/T3+T4 → inbox/ |
+| Crear .ocr_cache/ y migrar JSONs | ✅ DONE | 11 .ocr.json de inbox/ → .ocr_cache/ |
+| Modificar cache_ocr.py | ✅ DONE | _ruta_cliente_desde_pdf() busca config.yaml, _ruta_cache() usa .ocr_cache/, retrocompat migra legacy automáticamente |
+| Borrar state files pipeline | ✅ DONE | pipeline_state.json, intake_results.json, etc. eliminados |
+| Tests pytest | ✅ DONE | 2841 PASS |
+
+### Pendientes sesión 111 (CONTABILIDAD)
+
+1. **Re-ejecutar pipeline María Isabel** — 11 PDFs listos en inbox/ con cache OCR en .ocr_cache/ — verificar que pipeline lee de nueva ubicación
+2. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 

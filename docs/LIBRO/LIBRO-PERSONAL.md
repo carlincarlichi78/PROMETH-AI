@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 109 — CERRADA)
+## Estado rápido (sesión 110 — CERRADA)
 
-- **Completado:** 4 fixes pipeline María Isabel. 11/11 PDFs registrados con asiento. Bugs corregidos: swap OCR emisor/receptor, CHECK1 FV sin CIF, Ingresos→FV por nombre, generar_asiento para FV. Tests 2841 PASS.
-- **CONTABILIDAD pendiente sesión 110:** Dropbox duplicadas (1 Enero -8 ×2), cross_validation.py migrar a FSAdapter
+- **Completado:** Reorganización María Isabel — limpiar FS empresa 7 (MariaDB), mover 11 PDFs a inbox/, crear .ocr_cache/ con 11 JSONs migrados, refactor cache_ocr.py con retrocompat. Tests 2841 PASS.
+- **CONTABILIDAD pendiente sesión 111:** Re-ejecutar pipeline María Isabel (verificar .ocr_cache/), Dropbox duplicadas, cross_validation.py migrar a FSAdapter
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

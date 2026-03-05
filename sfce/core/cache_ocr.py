@@ -4,18 +4,19 @@ Permite reutilizar resultados OCR de ejecuciones anteriores evitando
 llamadas costosas a APIs externas (Mistral, GPT, Gemini) cuando el PDF
 no ha cambiado desde el ultimo procesamiento.
 
-Mecanismo: junto a cada PDF se guarda un archivo .ocr.json con:
-- hash SHA256 del PDF (para detectar cambios)
-- timestamp de cuando se genero el cache
-- motor y tier OCR usados
-- datos OCR extraidos
+Mecanismo: el archivo .ocr.json se guarda en clientes/{slug}/.ocr_cache/
+junto al nombre del PDF (ej: factura.ocr.json).
 
 Si el hash del PDF actual coincide con el del cache, se reutilizan los datos.
 Si difiere, el cache se considera invalido y se ignora.
+
+Retrocompatibilidad: si existe un .ocr.json junto al PDF (ubicacion legacy),
+se migra automaticamente a .ocr_cache/ la primera vez que se accede.
 """
 import hashlib
 import json
 import logging
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -54,11 +55,39 @@ def calcular_hash_archivo(ruta_pdf: str) -> str:
     return hasher.hexdigest()
 
 
+def _ruta_cliente_desde_pdf(ruta_pdf: Path) -> Path | None:
+    """Sube desde ruta_pdf hasta encontrar el directorio que contiene config.yaml.
+
+    Permite ubicar la raiz del cliente independientemente de en que subcarpeta
+    este el PDF (inbox/, inbox/ingresos/, 2025/procesado/T3/, etc.).
+
+    Args:
+        ruta_pdf: Ruta al archivo PDF.
+
+    Returns:
+        Ruta al directorio raiz del cliente, o None si no se encuentra.
+    """
+    actual = ruta_pdf.parent
+    for _ in range(6):
+        if (actual / "config.yaml").exists():
+            return actual
+        if actual == actual.parent:
+            break
+        actual = actual.parent
+    return None
+
+
 def _ruta_cache(ruta_pdf: str) -> Path:
     """Calcula la ruta del archivo .ocr.json para un PDF dado.
 
-    El archivo cache se coloca junto al PDF, con la misma base de nombre
-    pero extension .ocr.json (ej: factura.pdf -> factura.ocr.json).
+    Busca el directorio raiz del cliente (el que contiene config.yaml) y
+    coloca el cache en .ocr_cache/{nombre}.ocr.json.
+
+    Si no encuentra la raiz del cliente (ej: rutas absolutas fuera del arbol),
+    usa la ubicacion legacy (junto al PDF) para no romper compatibilidad.
+
+    Retrocompatibilidad: si existe un .ocr.json junto al PDF y no existe
+    el archivo en la ubicacion nueva, lo migra automaticamente.
 
     Args:
         ruta_pdf: Ruta al archivo PDF.
@@ -67,7 +96,23 @@ def _ruta_cache(ruta_pdf: str) -> Path:
         Ruta al archivo de cache correspondiente.
     """
     ruta = Path(ruta_pdf)
-    return ruta.parent / (ruta.stem + EXTENSION_CACHE)
+    nombre_cache = ruta.stem + EXTENSION_CACHE
+
+    ruta_cliente = _ruta_cliente_desde_pdf(ruta)
+    if ruta_cliente is None:
+        # Fallback legacy: junto al PDF
+        return ruta.parent / nombre_cache
+
+    ruta_nueva = ruta_cliente / ".ocr_cache" / nombre_cache
+    ruta_legacy = ruta.parent / nombre_cache
+
+    # Migracion automatica: mover legacy -> nueva si existe el antiguo
+    if ruta_legacy.exists() and not ruta_nueva.exists():
+        ruta_nueva.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(ruta_legacy), str(ruta_nueva))
+        logger.debug("Cache migrado a .ocr_cache/: %s", nombre_cache)
+
+    return ruta_nueva
 
 
 def obtener_cache_ocr(ruta_pdf: str) -> dict | None:
@@ -150,6 +195,7 @@ def guardar_cache_ocr(ruta_pdf: str, datos_ocr: dict) -> str:
     }
 
     ruta = _ruta_cache(ruta_pdf)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
     ruta.write_text(
         json.dumps(envelope, ensure_ascii=False, indent=2),
         encoding="utf-8",
