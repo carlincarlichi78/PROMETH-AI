@@ -403,3 +403,53 @@ def test_nomina_fallback_a_campos_raiz_legacy():
     assert len(partidas) == 4
     partida_6400 = next(p for p in partidas if p["codsubcuenta"] == "6400000000")
     assert partida_6400["debe"] == pytest.approx(2500.00)
+
+
+# === Tests metadata V3.2 — construir_partidas_rlc ===
+
+def test_rlc_lee_de_metadata_v3_2():
+    """V3.2: cuota_empresarial en metadata{} — verifica importe real."""
+    datos = {
+        "tipo_documento": "rlc_ss",
+        "total": 630.00,
+        "metadata": {
+            "base_cotizacion": 1800.00,
+            "cuota_empresarial": 540.00,
+            "cuota_obrera": 90.00,
+        }
+    }
+    partidas = construir_partidas_rlc(datos)
+    assert len(partidas) == 2
+    partida_6420 = next(p for p in partidas if p["codsubcuenta"] == "6420000000")
+    assert partida_6420["debe"] == pytest.approx(540.00)
+
+
+def test_rlc_cuota_cero_no_usa_fallback_incorrecto():
+    """cuota_empresarial=0.0 no debe saltar al fallback (or lo trataría como falsy)."""
+    datos = {
+        "tipo_documento": "rlc_ss",
+        "total": 0.0,
+        "metadata": {
+            "base_cotizacion": 0.0,
+            "cuota_empresarial": 0.0,
+            "cuota_obrera": 0.0,
+        },
+        # Campo legacy con valor diferente: si el or lo usa, el test falla
+        "cuota_empresarial": 999.99,
+    }
+    partidas = construir_partidas_rlc(datos)
+    assert len(partidas) == 2
+    partida_6420 = next(p for p in partidas if p["codsubcuenta"] == "6420000000")
+    assert partida_6420["debe"] == pytest.approx(0.0)
+
+
+def test_rlc_fallback_a_campos_raiz_legacy():
+    """Si metadata vacío, usa cuota_empresarial de la raíz."""
+    datos = {
+        "cuota_empresarial": 540.00,
+        "metadata": {},
+    }
+    partidas = construir_partidas_rlc(datos)
+    assert len(partidas) == 2
+    partida_6420 = next(p for p in partidas if p["codsubcuenta"] == "6420000000")
+    assert partida_6420["debe"] == pytest.approx(540.00)

@@ -169,14 +169,33 @@ def construir_partidas_bancario(datos: dict, subtipo: str) -> list[dict]:
 def construir_partidas_rlc(datos: dict) -> list[dict]:
     """Construye partidas para devengo SS empresa (RLC).
 
+    Compatible con esquema V3.2 (campos en metadata{}) y legacy (campos en raiz).
+    Patron is not None para no perder valores cero.
+
     Args:
-        datos: dict con cuota_empresarial
+        datos: dict con cuota_empresarial en metadata{} (V3.2) o en raiz (legacy)
 
     Returns:
         Lista de 2 partidas (6420 DEBE / 4760 HABER)
     """
+    meta = datos.get("metadata") or {}
+
+    def _resolver(campo: str):
+        v = meta.get(campo)
+        if v is not None:
+            return v
+        return datos.get(campo)
+
+    datos_normalizados = {
+        **datos,
+        "base_cotizacion": _resolver("base_cotizacion"),
+        "cuota_empresarial": _resolver("cuota_empresarial"),
+        "cuota_obrera": _resolver("cuota_obrera"),
+    }
     plantillas = _cargar_plantillas()
-    return _construir_partidas_desde_plantilla(plantillas["rlc_devengo"]["partidas"], datos)
+    return _construir_partidas_desde_plantilla(
+        plantillas["rlc_devengo"]["partidas"], datos_normalizados
+    )
 
 
 def construir_partidas_impuesto(datos: dict) -> list[dict]:
