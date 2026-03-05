@@ -1,5 +1,41 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 95) | **Branch:** main | **Tests:** 2779 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 96) | **Branch:** main | **Tests:** 2801 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 96 — FSAdapter capa defensiva FacturaScripts)
+
+### Commits sesión 96
+
+| Hash | Descripción |
+|------|-------------|
+| `cc01845e` | feat(core): FSAdapter — capa defensiva FacturaScripts (B1-B5) |
+| `75bfdeeb` | feat(core): FSAdapter B6 — migrar pre_validation.py (check 9) |
+
+### Tasks completadas (sesión 96)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| FSAdapter creado | ✅ DONE | `sfce/core/fs_adapter.py` ~420L: FSResult, FSError, FSAdapter con todas las defensas FS |
+| 22 tests TDD | ✅ DONE | `tests/test_fs_adapter.py` cubre: filtrado _*, idempresa, retry, lineas json, recargo=0, nick 10 chars, personafisica, rollback 2-pasos |
+| B1 asientos_directos.py | ✅ DONE | `crear_asiento_directo()` → `fs.crear_asiento_con_partidas()` |
+| B2 phases/asientos.py | ✅ DONE | `FSAdapter.desde_config(config)`, pasa `fs` a helpers |
+| B3 phases/correction.py | ✅ DONE | `fs.corregir_partida()` + `fs._post()` |
+| B4 phases/registration.py | ✅ DONE | Todas las funciones internas usan `fs: FSAdapter` |
+| B5 api/rutas/bancario.py | ✅ DONE | `FSAdapter.desde_empresa_bd(empresa, gestoria)` |
+| B6 phases/pre_validation.py | ✅ DONE | `_validar_no_existe_en_fs()` → `FSAdapter.desde_config(config)` |
+| Tests suite completa | ✅ DONE | 2801 passed, 4 skipped (antes: 2779) |
+
+### Pendientes sesión 97
+
+**Estado FSAdapter:** completo en pipeline principal. `cross_validation.py`, `aprendizaje.py` y scripts siguen con api_get (fuera de scope inmediato).
+
+1. **Ampliar config.yaml MARIA ISABEL** — 218 PDFs en cuarentena. Inspeccionar CIFs e identificar proveedores.
+2. **Re-procesar cuarentena** — mover PDFs a inbox/ + pipeline --no-interactivo
+3. **Verificar 7000x vs 7050x** — FS usa cuenta ventas mercaderías para FV servicios. Evaluar corrección.
+4. **F6** — Ruta inbox email→pipeline
+5. **Tests E2E dashboard** — Playwright
+6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 

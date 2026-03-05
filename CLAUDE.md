@@ -121,134 +121,34 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ## PROTOCOLO DE CIERRE
 
-> **Disparador**: las palabras exactas **"PROTOCOLO DE CIERRE"** en cualquier mensaje del usuario.
-> **Autonomía total**: ejecutar sin pedir confirmación. Solo reportar bloqueos reales.
+> **Disparador**: palabras exactas **"PROTOCOLO DE CIERRE"**. Ejecutar sin confirmar.
 
-### FASE 1 — Recopilar estado de la sesión
-```bash
-git log --oneline $(git merge-base HEAD origin/main 2>/dev/null || echo "HEAD~10")..HEAD
-git status --short
-python -m pytest --tb=no -q 2>/dev/null | tail -3
-```
-Determinar: nº sesión = última sesión en CLAUDE.md + 1. Identificar commits, tests, qué se implementó.
-
-### FASE 2 — Actualizar los 5 LIBROS
-
-**SIEMPRE** → `docs/LIBRO/04-estado-pendientes-roadmap.md`:
-- Insertar nuevo bloque "## Estado actual (cierre sesión N)" AL PRINCIPIO del archivo (después del título).
-- Incluir: tabla de commits, tabla de tasks completadas con qué se hizo, pendientes para la próxima sesión.
-- Mantener los bloques de sesiones anteriores (histórico valioso).
-
-**Solo si hubo cambios en esa área** (leer git diff para decidir):
-- `docs/LIBRO/00-indice-infra-stack.md` → infra, Docker, nginx, credenciales, stack, API FS lecciones críticas
-- `docs/LIBRO/01-arquitectura-pipeline-ocr.md` → pipeline, OCR, motor reglas, cuarentena, módulos nuevos
-- `docs/LIBRO/02-bd-y-api.md` → nuevas tablas, migraciones, endpoints API nuevos o modificados
-- `docs/LIBRO/03-bancario-fiscal-seguridad.md` → bancario, conciliación, fiscal, correo IMAP, seguridad/JWT
-- `docs/LIBRO/LIBRO-GESTOR.md` → cambios en UI del dashboard, flujos de usuario, nuevos módulos accesibles
-- `docs/LIBRO/LIBRO-CLIENTE.md` → cambios en portal de cliente, nuevas formas de enviar documentos
-- `docs/LIBRO/LIBRO-ACCESOS.md` → nuevos usuarios, tokens API rotados, App Passwords IMAP, nuevas instancias FS, nuevos GitHub secrets (**archivo local gitignoreado — NUNCA en git**)
-
-Regla: si el cambio es una corrección de bug sin impacto arquitectural, no actualizar el libro técnico (solo el 04).
-
-### FASE 3 — Actualizar LIBRO-PERSONAL.md
-En `docs/LIBRO/LIBRO-PERSONAL.md`, sección "Estado rápido":
-- Cambiar número de sesión y lo que está completado/pendiente.
-- Actualizar "Comandos de inicio de sesión" si cambió el punto de entrada (test file, plan activo, etc.).
-- Actualizar la versión/fecha del encabezado del archivo.
-
-### FASE 4 — Actualizar CLAUDE.md del proyecto
-Reemplazar la sección `## Estado actual (...)` con el estado nuevo:
-```
-## Estado actual (DD/MM/YYYY, sesion N)
-**Rama**: main | **Ultimo commit**: [hash] (pusheado) | **Tests**: N PASS
-
-### Completado sesion N
-- [bullet conciso por cada cosa completada]
-
-### Proxima sesion — pendientes
-1. [pendiente 1 — descripción breve]
-2. [pendiente 2]
-...
-```
-
-### FASE 5 — Actualizar MEMORY.md
-En `~/.claude/projects/c--Users-carli-PROYECTOS-CONTABILIDAD/memory/MEMORY.md`:
-- Añadir o actualizar entradas con lecciones nuevas que evitan errores recurrentes.
-- Eliminar entradas obsoletas (problemas ya resueltos definitivamente).
-- No duplicar lo que ya está documentado en el libro.
-
-### FASE 6 — Commit de documentación
-```bash
-git add docs/LIBRO/ CLAUDE.md
-git diff --staged --stat  # verificar qué se va a commitear
-git commit -m "docs: cierre sesion N — [resumen de 1 linea de lo completado]"
-```
-
-### FASE 7 — Push
-```bash
-git push origin main
-```
-Verificar que el push fue exitoso. Si hay conflictos, resolverlos (no force-push).
-
-### FASE 8 — Deploy a producción
-Solo ejecutar si hubo commits de código (no solo docs) en esta sesión:
-```bash
-# CI/CD se dispara automáticamente con el push a main
-# Verificar estado del contenedor en prod:
-ssh carli@65.108.60.69 "cd /opt/apps/sfce && docker compose ps sfce_api | tail -2"
-```
-Si hay migraciones nuevas en esta sesión: ejecutarlas manualmente:
-```bash
-ssh carli@65.108.60.69 "cd /opt/apps/sfce && docker exec sfce_api python -c \"
-import importlib.util, glob
-for f in sorted(glob.glob('sfce/db/migraciones/0[23][0-9]_*.py')):
-    spec = importlib.util.spec_from_file_location('m', f)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    if hasattr(mod, 'aplicar'):
-        from sfce.db.base import crear_motor, _leer_config_bd
-        mod.aplicar(crear_motor(_leer_config_bd()))
-        print(f'OK: {f}')
-\""
-```
-Anotar resultado en el informe final.
-
-### FASE 9 — Informe de cierre (mostrar al usuario)
-```
-╔══════════════════════════════════════════════╗
-║  CIERRE SESIÓN N — DD/MM/YYYY               ║
-╠══════════════════════════════════════════════╣
-║  Commits: [hash] descripcion                 ║
-║           [hash] descripcion                 ║
-║  Tests:   N PASS                             ║
-║  Libros:  04 ✓ | 00 - | 01 - | 02 ✓ | 03 - ║
-║  Git:     push OK                            ║
-║  Prod:    CI/CD desplegado / migración N OK  ║
-╠══════════════════════════════════════════════╣
-║  PRÓXIMA SESIÓN:                             ║
-║  1. [pendiente 1]                            ║
-║  2. [pendiente 2]                            ║
-╚══════════════════════════════════════════════╝
-  → Abrir nueva sesión para continuar limpio.
-```
+- **F1** `git log ..HEAD`, `git status`, `pytest | tail -3`. Determinar nº sesión = última en CLAUDE.md + 1.
+- **F2** `docs/LIBRO/04-estado-pendientes-roadmap.md`: insertar bloque "## Estado actual (sesión N)" AL PRINCIPIO con tabla commits + tasks + pendientes. Actualizar otros libros solo si hubo cambios en esa área: 00=infra, 01=pipeline/OCR, 02=BD/API, 03=bancario/fiscal, GESTOR/CLIENTE/ACCESOS según corresponda.
+- **F3** `docs/LIBRO/LIBRO-PERSONAL.md`: actualizar nº sesión, completado/pendiente, comandos de inicio.
+- **F4** `CLAUDE.md`: reemplazar `## Estado actual (...)` con fecha, nº sesión, último commit, tests, completado, pendientes.
+- **F5** `MEMORY.md`: añadir lecciones nuevas, eliminar obsoletas, no duplicar libros.
+- **F6** `git add docs/LIBRO/ CLAUDE.md && git commit -m "docs: cierre sesion N — [resumen]"` + `git push origin main`.
+- **F7 Deploy** (solo si hubo commits de código): CI/CD se dispara con el push. Verificar: `ssh carli@65.108.60.69 "docker compose -f /opt/apps/sfce/docker-compose.yml ps sfce_api | tail -2"`. Migraciones nuevas: `docker exec sfce_api python -m sfce.db.migraciones` o ejecutar manualmente.
+- **F8 Informe**: mostrar tabla con commits, tests, libros actualizados, estado push/deploy, y próximos pendientes numerados.
 
 ---
 
-## Estado actual (05/03/2026, sesion 95)
+## Estado actual (05/03/2026, sesion 96)
 
-**Rama**: `main` | **Ultimo commit**: `b6818afe` (pusheado) | **Tests**: 2779 PASS
+**Rama**: `main` | **Ultimo commit**: `75bfdeeb` (pusheado) | **Tests**: 2801 PASS
 
-### Completado sesion 95
-- Golden Prompt V3.2 diseñado y aprobado (few-shot, esquema universal, metadata{} para nóminas/RLC) ✓
-- `sfce/core/prompts.py`: PROMPT_EXTRACCION_V3_2 + alias PROMPT_EXTRACCION ✓
-- `construir_partidas_nomina`: lee de metadata{} con patrón is_not_none, fallback legacy ✓
-- `construir_partidas_rlc`: ídem para cuota_empresarial/base_cotizacion/cuota_obrera ✓
-- `pre_validation._check_rlc_cuota`: lee de metadata con is_not_none ✓
-- `ocr_mistral/gpt/gemini + smart_parser`: .format(texto_documento=...) ✓
-- `construir_partidas_bancario`: ValueError → logger.warning + fallback "comision" ✓
-- 6 tests nuevos TDD (nómina is_not_none×3, RLC×3), todos verdes ✓
+### Completado sesion 96
+- `sfce/core/fs_adapter.py`: FSAdapter completo (FSResult, FSError, defensas FS, 2-pasos+rollback, retry) ✓
+- `tests/test_fs_adapter.py`: 22 tests TDD, todos verdes ✓
+- B1 `asientos_directos.py` → `fs.crear_asiento_con_partidas()` ✓
+- B2 `phases/asientos.py` → `FSAdapter.desde_config()` ✓
+- B3 `phases/correction.py` → `fs.corregir_partida()` ✓
+- B4 `phases/registration.py` → FSAdapter en todas las funciones internas ✓
+- B5 `api/rutas/bancario.py` → `FSAdapter.desde_empresa_bd()` ✓
+- B6 `phases/pre_validation.py` → `_validar_no_existe_en_fs()` usa FSAdapter ✓
 
-### Proxima sesion — pendientes (sesion 96)
+### Proxima sesion — pendientes (sesion 97)
 
 **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 
@@ -257,3 +157,4 @@ Anotar resultado en el informe final.
 3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel. Evaluar corrección.
 4. **F6** — Ruta inbox email→pipeline
 5. **Tests E2E dashboard** — Playwright
+6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)

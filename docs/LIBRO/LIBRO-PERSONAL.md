@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 95)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 96)
 
 ---
 
@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: ~2779 passed
+# Esperado: ~2801 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,12 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 95)
+## Estado rápido (sesión 96)
 
-- **Completado sesión 95:** Golden Prompt V3.2 integrado en todos los motores OCR. Esquema universal + metadata{} para nóminas/RLC. Patrón is_not_none en construir_partidas_nomina y _rlc. 2779 tests PASS.
+- **Completado sesión 96:** FSAdapter completo (B1-B6). Capa defensiva FS centraliza: filtrado _*, idempresa, retry, lineas json, recargo=0, nick 10 chars, personafisica, rollback 2-pasos. Migrados: asientos_directos, phases/asientos, correction, registration, bancario, pre_validation. 2801 tests PASS.
 - **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
-- **Push:** `b6818afe` OK | **Tests:** 2779 PASS
-- **PRIORIDAD SESIÓN 96:** (1) Ampliar config.yaml con proveedores cuarentena, (2) Re-procesar ~218 PDFs, (3) Verificar 7000x→7050x asientos FV
+- **Push:** `75bfdeeb` OK | **Tests:** 2801 PASS
+- **PRIORIDAD SESIÓN 97:** (1) Ampliar config.yaml con proveedores cuarentena, (2) Re-procesar ~218 PDFs, (3) Verificar 7000x→7050x asientos FV
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
