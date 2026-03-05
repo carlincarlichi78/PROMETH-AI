@@ -374,6 +374,11 @@ class ProblemaDetectado(BaseModel):
     """Problema encontrado en un asiento."""
     check: str = ""
     tipo: str = ""
+
+    @field_validator("check", mode="before")
+    @classmethod
+    def coerce_check_str(cls, v):
+        return str(v) if v is not None else ""
     descripcion: str
     auto_corregible: bool = False
     corregido: bool = False

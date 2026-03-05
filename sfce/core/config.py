@@ -112,6 +112,16 @@ class ConfigCliente:
         return self.empresa.get("fs_token")
 
     @property
+    def fs_ssh_host(self) -> str | None:
+        """Host SSH para ejecutar comandos PHP en el container FS (ej: carli@65.108.60.69)."""
+        return self.empresa.get("fs_ssh_host")
+
+    @property
+    def fs_container_name(self) -> str | None:
+        """Nombre del container Docker de FS (ej: fs-uralde-facturascripts-1)."""
+        return self.empresa.get("fs_container_name")
+
+    @property
     def obligaciones(self) -> dict:
         """Devuelve obligaciones fiscales/contables segun tipo de entidad."""
         return self._tipo_entidad or {}
@@ -145,8 +155,9 @@ class ConfigCliente:
         return None
 
     def buscar_proveedor_por_nombre(self, nombre: str) -> Optional[dict]:
-        """Busca proveedor por nombre o aliases."""
+        """Busca proveedor por nombre o aliases (exacto primero, luego parcial)."""
         nombre_upper = nombre.upper()
+        # Paso 1: exacto (clave, nombre_fs, alias)
         for clave, datos in self.proveedores.items():
             if clave.upper() == nombre_upper:
                 return {**datos, "_nombre_corto": clave}
@@ -154,6 +165,12 @@ class ConfigCliente:
                 return {**datos, "_nombre_corto": clave}
             for alias in datos.get("aliases", []):
                 if alias.upper() == nombre_upper:
+                    return {**datos, "_nombre_corto": clave}
+        # Paso 2: parcial — alias contenido en el nombre OCR o viceversa
+        for clave, datos in self.proveedores.items():
+            for alias in datos.get("aliases", []):
+                a = alias.upper()
+                if len(a) >= 6 and (a in nombre_upper or nombre_upper in a):
                     return {**datos, "_nombre_corto": clave}
         return None
 

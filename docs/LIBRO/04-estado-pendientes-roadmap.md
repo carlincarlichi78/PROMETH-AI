@@ -1,9 +1,44 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 102) | **Branch:** main | **Tests:** 2820 PASS (CONTABILIDAD) / 49 PASS (MBS SUITES) | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 103) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 102 — MBS SUITES plan implementado completo)
+## Estado actual (sesión 103 — gen_asiento.php + FSAdapter + pipeline E2E completo)
+
+### Commits sesión 103
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente push) | fix(contracts): CorrectionOutput.check coerce str validator |
+| (pendiente push) | feat(fs-adapter): generar_asiento() vía PHP CLI SSH |
+| (pendiente push) | feat(registration): llamar generar_asiento() tras crear factura proveedor |
+| (pendiente push) | fix(intake): cache hit flattening + anti-stale-null guard |
+| (pendiente push) | fix(config): buscar_proveedor_por_nombre partial matching + fs_ssh_host/container |
+
+### Tasks sesión 103
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| gen_asiento.php en servidor | ✅ DONE | Script PHP en `/opt/apps/fs-uralde/gen_asiento.php` + copiado a container. Patrón MAX-antes/MAX-después + UPDATE idfactura→idasiento |
+| FSAdapter.generar_asiento() | ✅ DONE | Método nuevo en `sfce/core/fs_adapter.py`. SSH subprocess + JSON parse + FSResult. `desde_config()` pasa ssh_host/container_name |
+| registration.py llama generar_asiento() | ✅ DONE | Insertado entre "marcar pagada" y "autorepercusión intracom". Solo si `es_proveedor` |
+| Fix cache hit flattening (intake.py) | ✅ DONE | `datos_gpt = cache_datos.get("datos_extraidos")` — evita `emisor_cif=None` desde cache |
+| Fix anti-stale-null cache (intake.py) | ✅ DONE | No guardar cache si todos los campos OCR son null |
+| Fix buscar_proveedor_por_nombre | ✅ DONE | Añadido fallback partial matching (len≥6, alias contenido en nombre OCR) |
+| Fix CorrectionOutput.check str | ✅ DONE | `@field_validator("check", mode="before")` coerce a str — Fase 4 pasa |
+| Pipeline E2E María Isabel (Dropbox) | ✅ DONE | Fases 1-6 completas. Score 82% REVISION. PDF movido a procesado/T1/ |
+
+### Pendientes sesión 104 (CONTABILIDAD)
+
+1. **Ticket Coloso** — OCR thermal → todos null. Opciones: (a) crear `.ocr.json` manual con datos conocidos (B67718361, 05/01/2025, ~30€ DIESEL), (b) usar motor GPT-4o-mini Vision
+2. **Test generar_asiento() en run fresco** — pipeline sin `--resume`, crear factura nueva y verificar que asiento se genera automáticamente
+3. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline completo
+4. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+5. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+
+---
+
+## Estado anterior (sesión 102 — MBS SUITES plan implementado completo)
 
 ### Commits sesión 102 (MBS SUITES — repo mbs-suites-intelligence)
 

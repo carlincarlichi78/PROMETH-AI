@@ -823,8 +823,16 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
 
     if cache_datos is not None:
         logger.info(f"  [{nombre_archivo}] Cache OCR hit — reutilizando datos")
-        datos_gpt = cache_datos
+        # cache_datos es el doc completo guardado (con datos_extraidos anidado).
+        # El resto del codigo espera datos_gpt plano (emisor_cif, emisor_nombre, etc.)
+        # en la raiz, igual que devuelve SmartOCR.extraer(). Extraer datos_extraidos.
+        datos_extraidos_cache = cache_datos.get("datos_extraidos")
+        if datos_extraidos_cache and isinstance(datos_extraidos_cache, dict):
+            datos_gpt = {**datos_extraidos_cache}
+        else:
+            datos_gpt = cache_datos  # cache legacy: ya plano
         datos_gpt["telemetria"] = {"duracion_ocr_s": 0.0, "cache_hit": True}
+        ocr_tier = cache_datos.get("_ocr_tier", 0)
         tier_motivo = "cache"
     else:
         # 1. Extraer texto con pdfplumber
@@ -942,13 +950,21 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
 
     # 9. Guardar en cache OCR para reutilizar en futuras ejecuciones (solo si es nuevo)
     if cache_datos is None:
-        try:
-            guardar_cache_ocr(str(ruta_pdf), {
-                **doc_resultado,
-                "_ocr_motor_primario": motores_usados[0] if motores_usados else "desconocido",
-            })
-        except Exception as e:
-            logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
+        # No persistir cache si datos_extraidos son todos nulos (cache stale)
+        _de = doc_resultado.get("datos_extraidos", {}) or {}
+        _campos_ocr = ["emisor_cif", "emisor_nombre", "receptor_cif", "receptor_nombre",
+                       "numero_factura", "fecha", "total", "base_imponible"]
+        _tiene_datos = any(_de.get(c) not in (None, "", "?") for c in _campos_ocr)
+        if not _tiene_datos:
+            logger.warning(f"  [{nombre_archivo}] OCR sin datos utiles — cache NO guardado")
+        else:
+            try:
+                guardar_cache_ocr(str(ruta_pdf), {
+                    **doc_resultado,
+                    "_ocr_motor_primario": motores_usados[0] if motores_usados else "desconocido",
+                })
+            except Exception as e:
+                logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
 
     return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
 

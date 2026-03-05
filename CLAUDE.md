@@ -134,27 +134,29 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 102)
+## Estado actual (05/03/2026, sesion 103)
 
-**Rama**: `main` | **Ultimo commit**: `111a8c83` CONTABILIDAD / `37800d7` MBS SUITES (ambos pusheados) | **Tests**: 2820 PASS (CONTABILIDAD) · 49 PASS (MBS SUITES)
+**Rama**: `main` | **Ultimo commit**: (pendiente push) | **Tests**: 2820 PASS
 
-### Completado sesion 102
-- MBS SUITES: Task 4.2 React+Vite+Tailwind + Task 4.3 Overview+Competitors+PriceChart ✓
-- MBS SUITES: Task 5.1 nginx.conf SSL + docker-compose.prod.yml + deploy.sh ✓
-- Plan de implementación MBS SUITES completado al 100% (Fases 0-5) ✓
+### Completado sesion 103
+- gen_asiento.php en servidor FS Uralde + copiado a container ✓
+- FSAdapter.generar_asiento() vía SSH subprocess + JSON parse ✓
+- registration.py llama generar_asiento() tras crear factura proveedor ✓
+- Fix intake.py: cache hit flattening + anti-stale-null guard ✓
+- Fix config.py: buscar_proveedor_por_nombre partial matching + fs_ssh_host/container props ✓
+- Fix contracts.py: CorrectionOutput.check coerce str validator ✓
+- Pipeline E2E María Isabel Fases 1-6 completas (score 82%) ✓
 
-### Proxima sesion — pendientes (sesion 103)
+### Proxima sesion — pendientes (sesion 104)
 
 **MBS SUITES (ops deploy — abrir sesion en `PROYECTOS/MBS SUITES/`):**
 1. DNS `dashboard.mbsintelligence.com` → VPS Hetzner
 2. `certbot certonly --standalone -d dashboard.mbsintelligence.com` en servidor
 3. `rsync -av --exclude='.git' --exclude='node_modules' "MBS SUITES/" carli@65.108.60.69:/opt/apps/mbs-intel/`
 4. Editar `.env` con tokens reales + `bash deploy.sh`
-5. Crear zonas + propiedades MBS desde Django shell (ver plan Task 5.1 Step 6)
-6. Crear Periodic Task en Admin: `scraping.trigger_daily_scrape` crontab `0 6 * * *`
 
 **CONTABILIDAD:**
-1. **Ticket gasolinera** — "CoLoS0 SAN 46 S.L.u", añadir proveedor a config.yaml María Isabel
-2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
-3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+1. **Test generar_asiento() fresco** — pipeline sin `--resume`, factura nueva → asiento automático
+2. **Ticket Coloso** — OCR thermal null → crear `.ocr.json` manual (B67718361, 05/01/2025, ~30€)
+3. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
 4. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar

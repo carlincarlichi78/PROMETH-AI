@@ -15,6 +15,8 @@
 from __future__ import annotations
 
 import json
+import re
+import subprocess
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -70,7 +72,8 @@ class FSAdapter:
     No usar instancias globales — crear una por ejecución/empresa.
     """
 
-    def __init__(self, base_url: str, token: str, idempresa: int, codejercicio: str):
+    def __init__(self, base_url: str, token: str, idempresa: int, codejercicio: str,
+                 ssh_host: str | None = None, container_name: str | None = None):
         """Los 4 parámetros son OBLIGATORIOS. Sin defaults.
 
         Args:
@@ -78,11 +81,15 @@ class FSAdapter:
             token: Token API de FS
             idempresa: ID de la empresa en FS (ej: 7)
             codejercicio: Código del ejercicio (ej: '0007', 'GG26')
+            ssh_host: Host SSH para gen_asiento.php (ej: 'carli@65.108.60.69')
+            container_name: Nombre del container Docker FS (ej: 'fs-uralde-facturascripts-1')
         """
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.idempresa = idempresa
         self.codejercicio = codejercicio
+        self.ssh_host = ssh_host
+        self.container_name = container_name
 
         self._session = requests.Session()
         self._session.headers["Token"] = token
@@ -542,6 +549,79 @@ class FSAdapter:
         return self._put(f"{endpoint}/{idlinea}", cambios)
 
     # -----------------------------------------------------------------------
+    # Generacion de asientos via PHP CLI (SSH → Docker)
+    # -----------------------------------------------------------------------
+
+    def generar_asiento(self, idfactura: int, tipo: str = "proveedor") -> FSResult:
+        """Genera asiento contable para una factura via PHP CLI en el container FS.
+
+        FS no genera asientos automaticamente para facturas proveedor creadas via API.
+        Este metodo usa SSH + docker exec + gen_asiento.php para resolverlo.
+
+        El script PHP ya hace el UPDATE en MariaDB (FS no enlaza idasiento por bug conocido).
+        Este metodo ademas intenta un PUT REST para refrescar el estado FS en memoria.
+
+        Args:
+            idfactura: ID de la factura en FS (idfactura en facturasprov/facturascli)
+            tipo: "proveedor" (default) o "cliente"
+
+        Returns:
+            FSResult con id_creado=idasiento si ok, error si falla.
+        """
+        if not self.ssh_host or not self.container_name:
+            return FSResult(
+                ok=False,
+                error="generar_asiento: ssh_host/container_name no configurados en config.yaml",
+            )
+
+        cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes",
+            self.ssh_host,
+            f"docker exec {self.container_name} php -d display_errors=0 "
+            f"/var/www/html/gen_asiento.php {idfactura} {tipo}",
+        ]
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            output = proc.stdout.strip()
+        except subprocess.TimeoutExpired:
+            return FSResult(ok=False, error="generar_asiento: timeout SSH (60s)")
+        except Exception as exc:
+            return FSResult(ok=False, error=f"generar_asiento: error SSH: {exc}")
+
+        # Extraer JSON de la salida (puede haber warnings PHP antes)
+        match = re.search(r"\{.*\}", output)
+        if not match:
+            return FSResult(
+                ok=False,
+                error=f"generar_asiento: sin JSON en respuesta PHP: {output[:200]}",
+            )
+
+        try:
+            resp = json.loads(match.group())
+        except json.JSONDecodeError as exc:
+            return FSResult(ok=False, error=f"generar_asiento: JSON invalido: {exc}")
+
+        if not resp.get("ok"):
+            return FSResult(
+                ok=False,
+                error=f"generar_asiento: {resp.get('error', 'error PHP desconocido')}",
+            )
+
+        idasiento = int(resp["idasiento"])
+        ya_existia = resp.get("ya_existia", False)
+
+        # PUT REST para refrescar estado en memoria de FS (no critico)
+        if not ya_existia:
+            endpoint_tabla = "facturasclientes" if tipo == "cliente" else "facturasproveedores"
+            try:
+                self._put(f"{endpoint_tabla}/{idfactura}", {"idasiento": idasiento})
+            except Exception:
+                pass  # MariaDB ya actualizado por PHP; fallo REST no es bloqueante
+
+        return FSResult(ok=True, id_creado=idasiento, data={"idasiento": idasiento,
+                                                             "ya_existia": ya_existia})
+
+    # -----------------------------------------------------------------------
     # Factories
     # -----------------------------------------------------------------------
 
@@ -558,6 +638,8 @@ class FSAdapter:
             token=obtener_token(),
             idempresa=config.idempresa,
             codejercicio=config.codejercicio,
+            ssh_host=getattr(config, "fs_ssh_host", None),
+            container_name=getattr(config, "fs_container_name", None),
         )
 
     @classmethod

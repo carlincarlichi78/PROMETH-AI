@@ -47,11 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 102)
+## Estado rápido (sesión 103)
 
-- **Completado:** MBS SUITES — plan implementación completado al 100%. Fases 1-5 completas. 49 tests PASS. Push `37800d7` OK.
-- **MBS SUITES deploy pendiente:** DNS + certbot + rsync + .env + `bash deploy.sh` + datos iniciales (ver 04-estado Task 5.1)
-- **CONTABILIDAD pendiente:** Ticket gasolinera, PDFs María Isabel ~200+, cuarentena ~218 PDFs
+- **Completado:** gen_asiento.php + FSAdapter.generar_asiento() + registration.py integrado. Pipeline E2E María Isabel Fases 1-6 completas (score 82%). Fix CorrectionOutput.check coerce str.
+- **CONTABILIDAD pendiente:** Ticket Coloso OCR null, PDFs María Isabel ~200+, cuarentena ~218 PDFs, test generar_asiento() en run fresco
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

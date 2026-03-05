@@ -6,6 +6,8 @@ empresa:
   codagente_fs: null
   fs_url: "https://fs-uralde.prometh-ai.es/api/3"
   fs_token: "d0ed76fcc22785424b6c"
+  fs_ssh_host: "carli@65.108.60.69"
+  fs_container_name: "fs-uralde-facturascripts-1"
   ejercicio_activo: "2025"
   ejercicios:
     "2025": "0007"
@@ -272,13 +274,13 @@ proveedores:
   coloso_algeciras:
     cif: "B67718361"
     nombre_fs: "COLOSO ALGECIRAS AV SLU"
-    aliases: ["COLOSO ALGECIRAS", "COLOSO"]
+    aliases: ["COLOSO ALGECIRAS", "COLOSO", "COLOSO SAN ISIDRO", "CoLoS0 SAN 46"]
     pais: ESP
     divisa: EUR
     subcuenta: "6290000000"
     codimpuesto: IVA21
     regimen: general
-    notas: "Suministros varios Algeciras"
+    notas: "Gasolinera (estacion San Isidro, Churriana). Combustible vehiculo DIESEL"
 
   algetonersl:
     cif: "B11554789"
