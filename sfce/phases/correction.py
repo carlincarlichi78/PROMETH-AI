@@ -807,17 +807,14 @@ def ejecutar_correccion(
         })
 
     # Guardar asientos_corregidos.json
+    from sfce.core.contracts import CorrectionOutput
     ruta_corregidos = ruta_cliente / "asientos_corregidos.json"
-    corregidos_json = {
-        "fecha_correccion": datetime.now().isoformat(),
-        "total_asientos": len(asientos),
-        "total_asientos_directos": len(asientos_directos),
-        "total_problemas": sum(a["problemas_detectados"] for a in asientos_corregidos),
-        "total_correcciones": sum(a["correcciones_aplicadas"] for a in asientos_corregidos),
-        "asientos": asientos_corregidos,
-    }
     with open(ruta_corregidos, "w", encoding="utf-8") as f:
-        json.dump(corregidos_json, f, ensure_ascii=False, indent=2)
+        f.write(CorrectionOutput.validar_y_serializar(
+            asientos_corregidos=asientos_corregidos,
+            total_asientos=len(asientos),
+            total_directos=len(asientos_directos),
+        ))
 
     resultado.datos["asientos_corregidos"] = asientos_corregidos
     resultado.datos["ruta_corregidos"] = str(ruta_corregidos)

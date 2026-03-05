@@ -669,17 +669,10 @@ def ejecutar_cruce(
             )
 
     # Guardar reporte
+    from sfce.core.contracts import CrossValidationOutput
     ruta_reporte = ruta_cliente / "cross_validation_report.json"
-    reporte = {
-        "fecha_cruce": datetime.now().isoformat(),
-        "ejercicio": config.ejercicio,
-        "total_checks": len(checks),
-        "total_pass": total_ok,
-        "total_fail": total_fail,
-        "checks": checks,
-    }
     with open(ruta_reporte, "w", encoding="utf-8") as f:
-        json.dump(reporte, f, ensure_ascii=False, indent=2)
+        f.write(CrossValidationOutput.validar_y_serializar(checks))
 
     resultado.datos["checks"] = checks
     resultado.datos["ruta_reporte"] = str(ruta_reporte)

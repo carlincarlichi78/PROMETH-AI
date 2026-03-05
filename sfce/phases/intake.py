@@ -1083,17 +1083,16 @@ def ejecutar_intake(
                         {"entidad": d["entidad"], "ocr_tier": tier})
 
     # --- Fase 3: Guardar resultados ---
+    from sfce.core.contracts import IntakeOutput
     ruta_resultados = ruta_cliente / "intake_results.json"
-    resultados_json = {
-        "fecha_ejecucion": __import__("datetime").datetime.now().isoformat(),
-        "total_pdfs_encontrados": len(pdfs),
-        "total_procesados": len(documentos_extraidos),
-        "total_duplicados": len(pdfs) - len(pdfs_a_procesar),
-        "ocr_tier_stats": tier_stats,
-        "documentos": documentos_extraidos
-    }
+    json_validado = IntakeOutput.validar_y_serializar(
+        documentos=documentos_extraidos,
+        total_pdfs=len(pdfs),
+        total_duplicados=len(pdfs) - len(pdfs_a_procesar),
+        tier_stats=tier_stats,
+    )
     with open(ruta_resultados, "w", encoding="utf-8") as f:
-        json.dump(resultados_json, f, ensure_ascii=False, indent=2)
+        f.write(json_validado)
 
     logger.info(f"OCR Tiers: T0={tier_stats.get(0, 0)}, "
                 f"T1={tier_stats.get(1, 0)}, T2={tier_stats.get(2, 0)}")

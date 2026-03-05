@@ -1005,16 +1005,12 @@ def ejecutar_registro(
         resultado.datos["registrados"] = []
         resultado.datos["fallidos"] = []
         # Escribir registered.json vacío para que fases posteriores no fallen
+        from sfce.core.contracts import RegistrationOutput
         ruta_registrados = ruta_cliente / "registered.json"
         with open(ruta_registrados, "w", encoding="utf-8") as f:
-            json.dump({
-                "fecha_registro": datetime.now().isoformat(),
-                "total_entrada": 0,
-                "total_registrados": 0,
-                "total_fallidos": 0,
-                "registrados": [],
-                "fallidos": [],
-            }, f, ensure_ascii=False, indent=2)
+            f.write(RegistrationOutput.validar_y_serializar(
+                registrados=[], fallidos=[], total_entrada=0,
+            ))
         return resultado
 
     # Inicializar motor de aprendizaje
@@ -1238,17 +1234,14 @@ def ejecutar_registro(
             )
 
     # Guardar registered.json
+    from sfce.core.contracts import RegistrationOutput
     ruta_registrados = ruta_cliente / "registered.json"
-    registro_json = {
-        "fecha_registro": datetime.now().isoformat(),
-        "total_entrada": len(documentos),
-        "total_registrados": len(registrados),
-        "total_fallidos": len(fallidos),
-        "registrados": registrados,
-        "fallidos": fallidos,
-    }
     with open(ruta_registrados, "w", encoding="utf-8") as f:
-        json.dump(registro_json, f, ensure_ascii=False, indent=2)
+        f.write(RegistrationOutput.validar_y_serializar(
+            registrados=registrados,
+            fallidos=fallidos,
+            total_entrada=len(documentos),
+        ))
 
     # Actualizar pipeline_state con hashes registrados
     ruta_estado = ruta_cliente / "pipeline_state.json"

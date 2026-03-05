@@ -912,17 +912,15 @@ def ejecutar_pre_validacion(
             )
 
     # Guardar validated_batch.json
+    from sfce.core.contracts import PreValidationOutput
     ruta_validados = ruta_cliente / "validated_batch.json"
-    batch_json = {
-        "fecha_validacion": datetime.now().isoformat(),
-        "total_entrada": len(documentos),
-        "total_validados": len(validados),
-        "total_excluidos": len(excluidos),
-        "documentos": validados,
-        "excluidos": excluidos,
-    }
+    json_validado = PreValidationOutput.validar_y_serializar(
+        validados=validados,
+        excluidos=excluidos,
+        total_entrada=len(documentos),
+    )
     with open(ruta_validados, "w", encoding="utf-8") as f:
-        json.dump(batch_json, f, ensure_ascii=False, indent=2)
+        f.write(json_validado)
 
     # Resultado
     resultado.datos["validados"] = validados

@@ -582,27 +582,23 @@ def _ejecutar_fases_01_paralelo(
     )
 
     # 4. Escribir intake_results.json
+    from sfce.core.contracts import IntakeOutput, PreValidationOutput
     ruta_intake_json = ruta_cliente / "intake_results.json"
     with open(ruta_intake_json, "w", encoding="utf-8") as f:
-        json.dump({
-            "fecha_ejecucion": datetime.now().isoformat(),
-            "total_pdfs_encontrados": len(pdfs),
-            "total_procesados": len(docs_extraidos),
-            "total_duplicados": len(pdfs) - len(pdfs_a_procesar),
-            "ocr_tier_stats": tier_stats,
-            "documentos": docs_extraidos,
-        }, f, ensure_ascii=False, indent=2)
+        f.write(IntakeOutput.validar_y_serializar(
+            documentos=docs_extraidos,
+            total_pdfs=len(pdfs),
+            total_duplicados=len(pdfs) - len(pdfs_a_procesar),
+            tier_stats=tier_stats,
+        ))
 
     # 5. Escribir validated_batch.json (ya ordenado por fecha ASC)
     ruta_validados_json = ruta_cliente / "validated_batch.json"
     with open(ruta_validados_json, "w", encoding="utf-8") as f:
-        json.dump({
-            "fecha_ejecucion": datetime.now().isoformat(),
-            "total_validados": len(validados),
-            "total_excluidos": len(excluidos),
-            "validados": validados,
-            "excluidos": excluidos,
-        }, f, ensure_ascii=False, indent=2)
+        f.write(PreValidationOutput.validar_y_serializar(
+            validados=validados,
+            excluidos=excluidos,
+        ))
 
     logger.info(
         f"OCR Tiers: T0={tier_stats.get(0,0)}, "

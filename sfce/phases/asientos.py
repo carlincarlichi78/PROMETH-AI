@@ -256,21 +256,16 @@ def ejecutar_asientos(
             resultado.error("Ninguna factura tiene asiento generado")
 
     # Guardar asientos_generados.json
+    from sfce.core.contracts import AsientosOutput
     ruta_asientos = ruta_cliente / "asientos_generados.json"
-    n_directos = sum(1 for a in asientos_obtenidos
-                     if a.get("tipo_registro") == "asiento_directo")
-    n_facturas = len(asientos_obtenidos) - n_directos
-    asientos_json = {
-        "fecha_verificacion": datetime.now().isoformat(),
-        "total_documentos": len(registrados),
-        "total_facturas": len(registrados_facturas),
-        "total_directos": len(registrados_directos),
-        "total_con_asiento": len(asientos_obtenidos),
-        "total_sin_asiento": len(sin_asiento),
-        "asientos": asientos_obtenidos,
-    }
     with open(ruta_asientos, "w", encoding="utf-8") as f:
-        json.dump(asientos_json, f, ensure_ascii=False, indent=2)
+        f.write(AsientosOutput.validar_y_serializar(
+            asientos=asientos_obtenidos,
+            sin_asiento=sin_asiento,
+            total_documentos=len(registrados),
+            total_facturas=len(registrados_facturas),
+            total_directos=len(registrados_directos),
+        ))
 
     resultado.datos["asientos"] = asientos_obtenidos
     resultado.datos["sin_asiento"] = sin_asiento
