@@ -343,3 +343,63 @@ def test_crear_asiento_directo_error_api(mock_api_post):
             idempresa=1,
             partidas=partidas,
         )
+
+
+# === Tests metadata V3.2 — construir_partidas_nomina ===
+
+def test_nomina_lee_de_metadata_v3_2():
+    """V3.2: campos de nómina en metadata{} — verifica importes reales, no triviales."""
+    datos = {
+        "tipo_documento": "nomina",
+        "total": 1990.00,
+        "metadata": {
+            "bruto": 2500.00,
+            "irpf_importe": 350.00,
+            "ss_trabajador": 160.00,
+            "neto": 1990.00,
+        }
+    }
+    partidas = construir_partidas_nomina(datos)
+    assert len(partidas) == 4
+    # 6400 (bruto) DEBE == 2500
+    partida_6400 = next(p for p in partidas if p["codsubcuenta"] == "6400000000")
+    assert partida_6400["debe"] == pytest.approx(2500.00)
+    # 4751 (IRPF) HABER == 350
+    partida_4751 = next(p for p in partidas if p["codsubcuenta"] == "4751000000")
+    assert partida_4751["haber"] == pytest.approx(350.00)
+
+
+def test_nomina_irpf_cero_no_usa_fallback_incorrecto():
+    """Empleado exento de IRPF: irpf_importe=0.0 no debe saltar al fallback (or fallaría)."""
+    datos = {
+        "tipo_documento": "nomina",
+        "total": 2340.00,
+        "metadata": {
+            "bruto": 2500.00,
+            "irpf_importe": 0.0,   # exento — falsy pero correcto
+            "ss_trabajador": 160.00,
+            "neto": 2340.00,
+        },
+        # Campo legacy con valor diferente: si el or lo usa, el test falla
+        "retenciones_irpf": 999.99,
+    }
+    partidas = construir_partidas_nomina(datos)
+    assert len(partidas) == 4
+    partida_4751 = next(p for p in partidas if p["codsubcuenta"] == "4751000000")
+    # Debe ser 0.0 (metadata), no 999.99 (legacy)
+    assert partida_4751["haber"] == pytest.approx(0.0)
+
+
+def test_nomina_fallback_a_campos_raiz_legacy():
+    """Si metadata está vacío, usa los campos legacy de la raíz (retrocompatibilidad)."""
+    datos = {
+        "bruto": 2500.00,
+        "retenciones_irpf": 350.00,
+        "aportaciones_ss_trabajador": 160.00,
+        "neto": 1990.00,
+        "metadata": {},
+    }
+    partidas = construir_partidas_nomina(datos)
+    assert len(partidas) == 4
+    partida_6400 = next(p for p in partidas if p["codsubcuenta"] == "6400000000")
+    assert partida_6400["debe"] == pytest.approx(2500.00)

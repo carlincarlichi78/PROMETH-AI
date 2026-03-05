@@ -88,8 +88,11 @@ def _construir_partidas_desde_plantilla(plantilla: list[dict], datos: dict) -> l
 def construir_partidas_nomina(datos: dict) -> list[dict]:
     """Construye partidas para devengo de nomina.
 
+    Compatible con esquema V3.2 (campos en metadata{}) y legacy (campos en raiz).
+    Patron is not None para no perder valores cero (ej: empleado exento de IRPF).
+
     Args:
-        datos: dict con bruto, retenciones_irpf, aportaciones_ss_trabajador, neto
+        datos: dict con campos de nomina en metadata{} (V3.2) o en raiz (legacy)
 
     Returns:
         Lista de 4 partidas (6400 DEBE / 4751+4760+4650 HABER)
@@ -97,10 +100,19 @@ def construir_partidas_nomina(datos: dict) -> list[dict]:
     Raises:
         ValueError: si bruto != irpf + ss_trabajador + neto
     """
-    bruto = round(datos.get("bruto", 0), 2)
-    irpf = round(datos.get("retenciones_irpf", 0), 2)
-    ss = round(datos.get("aportaciones_ss_trabajador", 0), 2)
-    neto = round(datos.get("neto", 0), 2)
+    meta = datos.get("metadata") or {}
+
+    def _resolver(campo_meta: str, campo_legacy: str) -> float:
+        v = meta.get(campo_meta)
+        if v is not None:
+            return round(float(v), 2)
+        v = datos.get(campo_legacy)
+        return round(float(v), 2) if v is not None else 0.0
+
+    bruto = _resolver("bruto", "bruto")
+    irpf  = _resolver("irpf_importe", "retenciones_irpf")
+    ss    = _resolver("ss_trabajador", "aportaciones_ss_trabajador")
+    neto  = _resolver("neto", "neto")
 
     suma_haber = round(irpf + ss + neto, 2)
     if abs(bruto - suma_haber) > 0.01:
@@ -108,8 +120,18 @@ def construir_partidas_nomina(datos: dict) -> list[dict]:
             f"Nomina no cuadra: bruto={bruto} != irpf({irpf}) + ss({ss}) + neto({neto}) = {suma_haber}"
         )
 
+    # Normalizar a nombres legacy que usa la plantilla YAML
+    datos_normalizados = {
+        **datos,
+        "bruto": bruto,
+        "retenciones_irpf": irpf,
+        "aportaciones_ss_trabajador": ss,
+        "neto": neto,
+    }
     plantillas = _cargar_plantillas()
-    return _construir_partidas_desde_plantilla(plantillas["nomina_devengo"]["partidas"], datos)
+    return _construir_partidas_desde_plantilla(
+        plantillas["nomina_devengo"]["partidas"], datos_normalizados
+    )
 
 
 def construir_partidas_bancario(datos: dict, subtipo: str) -> list[dict]:
