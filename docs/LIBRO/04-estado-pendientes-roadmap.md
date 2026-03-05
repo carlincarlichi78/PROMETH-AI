@@ -1,5 +1,32 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 108 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 109 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 109 — Pipeline María Isabel: 4 fixes + 11/11 PDFs registrados)
+
+### Commits sesión 109
+
+| Hash | Descripción |
+|------|-------------|
+| a7da5182 | fix(pipeline): 4 fixes María Isabel — swap emisor/receptor OCR, CHECK1 FV, Ingresos→FV, generar_asiento FV |
+
+### Tasks sesión 109
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Diagnóstico 3 bugs pipeline María Isabel | ✅ DONE | CIF inversión OCR, pre_validation CHECK1, Ingresos→FV, asientos FV sin generar |
+| Fix 1: swap emisor/receptor OCR (intake.py) | ✅ DONE | Caso A: emisor_cif null + receptor_cif es proveedor → swap CIF. Caso B: receptor_cif=empresa + emisor_cif es cliente → swap completo (FV invertido) |
+| Fix 2: CHECK 1 pre_validation (pre_validation.py) | ✅ DONE | FV sin receptor_cif no bloquea (usa fallback VARIOS_CLIENTES). FC con entidad_cif canónico de intake → usa ese para validar |
+| Fix 3: "Ingresos*" en nombre archivo → FV (intake.py) | ✅ DONE | Añadido hint por `ruta_pdf.stem.lower()` además de subcarpeta |
+| Fix 4: generar_asiento para FV (registration.py) | ✅ DONE | `elif tipo_doc == "FV": fs.generar_asiento(idfactura, tipo="cliente")` |
+| Pipeline María Isabel 11/11 | ✅ DONE | 11 FC + 4 FV registrados con asientos. inbox vacío |
+| Tests pytest | ✅ DONE | 2841 PASS |
+
+### Pendientes sesión 110 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 

@@ -134,19 +134,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 108 cierre)
+## Estado actual (05/03/2026, sesion 109 cierre)
 
-**Rama**: `main` | **Ultimo commit**: feat(gen_asiento): subcuenta_gasto + intracom_pct | **Tests**: 2841 PASS
+**Rama**: `main` | **Ultimo commit**: fix(pipeline): 4 fixes María Isabel | **Tests**: 2841 PASS
 
-### Completado sesion 108
-- `gen_asiento.php` args opcionales subcuenta_gasto + intracom_pct: UPDATE 600 + UPDATE 472 fantasma + INSERT 477 ✓
-- `FSAdapter.generar_asiento()` nuevos params + `registration.py` step 5b/5c actualizados ✓
-- Test produccion: facturas 73-76 asientos correctos (629/623+475/622+472-477/625) ✓
+### Completado sesion 109
+- Fix intake.py: swap emisor/receptor OCR (Caso A: receptor_cif=proveedor; Caso B: receptor=empresa+emisor=cliente) ✓
+- Fix pre_validation.py: CHECK 1 no bloquea FV sin receptor_cif (fallback VARIOS_CLIENTES) ✓
+- Fix intake.py: "Ingresos*" en nombre archivo → tipo FV ✓
+- Fix registration.py: generar_asiento para FV (tipo="cliente") ✓
+- Pipeline María Isabel: 11/11 PDFs registrados con asiento (7 FC + 4 FV) ✓
 - Tests 2841 PASS ✓
 
-### Proxima sesion — pendientes (sesion 109)
+### Proxima sesion — pendientes (sesion 110)
 
 **CONTABILIDAD:**
 1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
-2. **Resto PDFs Maria Isabel** — verificar PDFs pendientes de importar, reprocesar con pipeline
-3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)

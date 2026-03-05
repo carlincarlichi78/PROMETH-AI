@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 108 — CERRADA)
+## Estado rápido (sesión 109 — CERRADA)
 
-- **Completado:** gen_asiento.php reescrito con subcuenta_gasto + intracom_pct. FSAdapter y registration.py actualizados. Facturas 73-76 testeadas en producción. Tests 2841 PASS.
-- **CONTABILIDAD pendiente sesión 109:** Dropbox duplicadas (1 Enero -8 ×2), PDFs María Isabel pendientes, cross_validation.py migrar a FSAdapter
+- **Completado:** 4 fixes pipeline María Isabel. 11/11 PDFs registrados con asiento. Bugs corregidos: swap OCR emisor/receptor, CHECK1 FV sin CIF, Ingresos→FV por nombre, generar_asiento para FV. Tests 2841 PASS.
+- **CONTABILIDAD pendiente sesión 110:** Dropbox duplicadas (1 Enero -8 ×2), cross_validation.py migrar a FSAdapter
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
