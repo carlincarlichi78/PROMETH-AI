@@ -134,23 +134,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 97)
+## Estado actual (05/03/2026, sesion 98)
 
-**Rama**: `main` | **Ultimo commit**: `9aa4bcc9` (pusheado) | **Tests**: 2818 PASS
+**Rama**: `main` | **Ultimo commit**: `790d7822` (pusheado) | **Tests**: 2818 PASS
 
-### Completado sesion 97
-- `sfce/core/contracts.py`: 6 modelos Pydantic (IntakeOutput…CrossValidationOutput), validación en escritura ✓
-- `tests/test_contracts.py`: 17 tests TDD, todos verdes ✓
-- 6 fases integradas: intake, pre_validation, registration, asientos, correction, cross_validation ✓
-- `scripts/pipeline.py` `_ejecutar_fases_01_paralelo()` usa contratos ✓
-- `scripts/validar_contratos.py`: script diagnóstico JSONs existentes ✓
-- Clave canónica `"validados"` en validated_batch.json garantizada por contrato ✓
+### Completado sesion 98
+- `sfce/conectores/correo/worker_catchall.py`: `_inbox_empresa()` siempre → `clientes/{slug}/inbox/`, elimina fallback docs/{id} ✓
+- `sfce/core/fs_adapter.py`: `crear_partida()` método público, encapsula `_post("partidas",...)` ✓
+- `sfce/phases/registration.py`: 3 usos de `fs._post/_put` en partidas migrados a métodos públicos ✓
+- `sfce/phases/correction.py`: 2 usos de `fs._post("partidas",...)` migrados a `fs.crear_partida()` ✓
+- `scripts/watcher.py`: verificado completo (ya existía). 23 tests PASS ✓
 
-### Proxima sesion — pendientes (sesion 98)
+### Proxima sesion — pendientes (sesion 99)
 
 **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 
-1. **Ampliar config.yaml** — identificar proveedores de los 218 PDFs en cuarentena y añadir al config.yaml
+1. **Ampliar config.yaml MARIA ISABEL** — identificar proveedores de los 218 PDFs en cuarentena y añadir al config.yaml
 2. **Re-procesar cuarentena** — mover PDFs a inbox/ y pipeline --no-interactivo
 3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel. Evaluar corrección.
 4. **F6** — Ruta inbox email→pipeline

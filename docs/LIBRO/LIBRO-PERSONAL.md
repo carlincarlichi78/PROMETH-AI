@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 97)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 98)
 
 ---
 
@@ -47,12 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 97)
+## Estado rápido (sesión 98)
 
-- **Completado sesión 97:** Pata 2 contratos Pydantic. `sfce/core/contracts.py` con 6 modelos. Validación en escritura en las 6 fases + pipeline paralelo. Clave canónica `"validados"` en validated_batch.json. 2818 tests PASS (+17).
+- **Completado sesión 98:** Pata 3 FSAdapter. `crear_partida()` público en FSAdapter. Migración `_post/_put("partidas",...)` en registration.py (×3) y correction.py (×2). Fix `_inbox_empresa()` worker_catchall (elimina fallback legacy). Watcher 23 tests PASS.
 - **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
-- **Push:** `9aa4bcc9` OK | **Tests:** 2818 PASS
-- **PRIORIDAD SESIÓN 98:** (1) Ampliar config.yaml con proveedores cuarentena, (2) Re-procesar ~218 PDFs, (3) Verificar 7000x→7050x asientos FV
+- **Push:** `790d7822` OK | **Tests:** 2818 PASS
+- **PRIORIDAD SESIÓN 99:** (1) Ampliar config.yaml con proveedores cuarentena Maria Isabel, (2) Re-procesar ~218 PDFs, (3) Verificar 7000x→7050x asientos FV
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

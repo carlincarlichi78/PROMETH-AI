@@ -1,9 +1,39 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 97) | **Branch:** main | **Tests:** 2818 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 98) | **Branch:** main | **Tests:** 2818 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 97 — Pata 2: contratos Pydantic entre fases del pipeline)
+## Estado actual (sesión 98 — Pata 3: FSAdapter API pública + inbox rutas + watcher verificado)
+
+### Commits sesión 98
+
+| Hash | Descripción |
+|------|-------------|
+| `5ba0d2dc` | fix: _inbox_empresa siempre resuelve a clientes/{slug}/inbox/, elimina fallback docs/{id} |
+| `790d7822` | refactor: crear_partida() público en FSAdapter, eliminar uso de _post/_put directos en partidas |
+
+### Tasks completadas (sesión 98)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Fix _inbox_empresa() | ✅ DONE | Elimina fallback `docs/{id}/inbox/`. SIEMPRE → `clientes/{slug}/inbox/`. Crea dir si no existe. Lanza ValueError si empresa inexistente. |
+| crear_partida() público | ✅ DONE | `FSAdapter.crear_partida(datos)` como método público. Encapsula `_post("partidas", ...)`. |
+| Migrar _post/_put partidas | ✅ DONE | `registration.py` ×3 (472/477 intracom + 2 correcciones asientos) + `correction.py` ×2 (IVA turismo 50%, IVA extranjero). Manejo de errores en 472/477. |
+| Watcher verificado | ✅ DONE | `scripts/watcher.py` ya existía completo. 23 tests pasando. 6 config.yaml con empresa_id. `.env.example` y `iniciar_dashboard.bat` completos. |
+| Tests suite completa | ✅ DONE | 2818 passed, 0 failed (sin regresiones) |
+
+### Pendientes sesión 99
+
+1. **Ampliar config.yaml MARIA ISABEL** — 218 PDFs en cuarentena. Inspeccionar CIFs e identificar proveedores.
+2. **Re-procesar cuarentena Maria Isabel** — mover PDFs a inbox/ y pipeline --no-interactivo
+3. **Verificar 7000x vs 7050x** — FS usa 7000000000 (mercaderías) en vez de 7050000000 (servicios) para FV de Maria Isabel
+4. **F6** — Ruta inbox email→pipeline (worker correo → `clientes/{id}/inbox/` vs pipeline `clientes/{slug}/{año}/inbox/`)
+5. **Tests E2E dashboard** — Playwright
+6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+
+---
+
+## Estado anterior (sesión 97 — Pata 2: contratos Pydantic entre fases del pipeline)
 
 ### Commits sesión 97
 
