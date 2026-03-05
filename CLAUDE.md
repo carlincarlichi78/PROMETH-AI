@@ -134,26 +134,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 103 cierre)
+## Estado actual (05/03/2026, sesion 104 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `c7449e7e` | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: (pendiente push) | **Tests**: 2820 PASS
 
-### Completado sesion 103
-- gen_asiento.php + FSAdapter.generar_asiento() + registration.py integrado ✓
-- E2E validado: FP 66 creada, asiento 105 via SSH+PHP automatico ✓
-- Autorepercusion 472/477 intracom 2.08 EUR OK ✓
-- Fix motivo_exclusion Pydantic en scripts/pipeline.py + sfce/phases/pre_validation.py ✓
-- Fix scripts/core/config.py: fs_ssh_host/fs_container_name (paridad sfce/core/config.py) ✓
+### Completado sesion 104
+- Empresa 7 limpiada en FS: 1 FP (Dropbox id=66) + 7 asientos borrados ✓
+- Pipeline E2E María Isabel: 6 FP (Campmany×2, Autopista Sol×2, Plenergy, Coloso), asientos 107-117 ✓
+- Ticket Coloso (1 Enero -13.pdf): .ocr.json manual B67718361, 30€ → FP 72, asiento 117 ✓
+- Fix registration.py: `numero_factura: null` → NoneType.upper() crash → `or "Factura"` ✓
 
-### Proxima sesion — pendientes (sesion 104)
-
-**MBS SUITES (ops deploy — abrir sesion en `PROYECTOS/MBS SUITES/`):**
-1. DNS `dashboard.mbsintelligence.com` → VPS Hetzner
-2. `certbot certonly --standalone -d dashboard.mbsintelligence.com` en servidor
-3. `rsync -av --exclude='.git' --exclude='node_modules' "MBS SUITES/" carli@65.108.60.69:/opt/apps/mbs-intel/`
-4. Editar `.env` con tokens reales + `bash deploy.sh`
+### Proxima sesion — pendientes (sesion 105)
 
 **CONTABILIDAD:**
-1. **Resto PDFs María Isabel** — ~200+ PDFs en procesado/T1+T2 + cuarentena 1 Enero -13.pdf, reprocesar pipeline completo
-2. **Ticket Coloso** — OCR thermal null → `.ocr.json` manual (B67718361, 05/01/2025, ~30€ DIESEL)
-3. **Cuarentena ~218 PDFs** — ampliar config.yaml y reprocesar
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` y `1 Enero -8_1.pdf` (mismo hash, confianza 31%): descartar o procesar 1
+2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
+3. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar

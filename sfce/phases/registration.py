@@ -273,7 +273,7 @@ def _pre_aplicar_correcciones_conocidas(
     resultado = []
     for linea in lineas_fs:
         l = dict(linea)
-        desc = l.get("descripcion", "")
+        desc = l.get("descripcion") or ""
 
         # Prioridad 1: suplido aduanero → IVA0 + subcuenta 4709
         suplido = detectar_suplido_en_linea(desc)
@@ -432,7 +432,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
 
         lineas_fs = []
         for linea in lineas_gpt:
-            desc = linea.get("descripcion", "")
+            desc = linea.get("descripcion") or ""
             pvp = linea.get("precio_unitario", 0)
 
             # Bug fix: precio_unitario=0 pero base_imponible disponible
@@ -469,7 +469,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
                 f"Usando linea unica con base_imponible"
             )
             lineas_fs = [{
-                "descripcion": datos.get("numero_factura", "Factura"),
+                "descripcion": datos.get("numero_factura") or "Factura",
                 "cantidad": 1,
                 "pvpunitario": base_doc,
                 "codimpuesto": codimpuesto_defecto,
@@ -481,7 +481,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     else:
         # Sin lineas detalladas: crear una linea con el total
         linea_unica = {
-            "descripcion": datos.get("numero_factura", "Factura"),
+            "descripcion": datos.get("numero_factura") or "Factura",
             "cantidad": 1,
             "pvpunitario": datos.get("base_imponible", datos.get("total", 0)),
             "codimpuesto": codimpuesto_defecto,

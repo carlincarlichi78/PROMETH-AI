@@ -1,9 +1,35 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 103 cierre) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 104 cierre) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 103 — E2E generar_asiento() validado end-to-end)
+## Estado actual (sesión 104 — E2E María Isabel completo, Coloso resuelto)
+
+### Commits sesión 104
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente) | fix(registration): numero_factura null → crash NoneType.upper() en tickets |
+
+### Tasks sesión 104
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Limpiar empresa 7 FS | ✅ DONE | Borrar 1 FP (Dropbox id=66) + 7 asientos. Empresa 7 vacía para reproceso limpio |
+| Pipeline E2E María Isabel (8 PDFs) | ✅ DONE | 6 FP registradas: Campmany ×2, Autopista Sol ×2, Plenergy ×1, Coloso ×1. Asientos 107-117 |
+| Ticket Coloso (1 Enero -13.pdf) | ✅ DONE | OCR thermal corrupto (CIF "257") → `.ocr.json` manual B67718361, total 30€. FP 72, asiento 117 |
+| Fix registration.py null descripcion | ✅ DONE | `datos.get("numero_factura") or "Factura"` en 3 sitios — evita crash en tickets sin nº factura |
+
+### Pendientes sesión 105 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` y `1 Enero -8_1.pdf` (mismo hash, confianza 31%). Decidir: descartar duplicados o procesar uno como FP Dropbox intracom
+2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline completo
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+4. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+
+---
+
+## Estado anterior (sesión 103 — E2E generar_asiento() validado end-to-end)
 
 ### Commits sesión 103
 
