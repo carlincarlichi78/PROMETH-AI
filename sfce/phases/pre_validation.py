@@ -883,6 +883,7 @@ def ejecutar_pre_validacion(
                 logger.warning(f"    {e}")
             excluidos.append({
                 **doc,
+                "motivo_exclusion": "; ".join(errores_doc),
                 "errores_validacion": errores_doc,
                 "avisos_validacion": avisos_doc,
             })

@@ -120,6 +120,16 @@ class ConfigCliente:
         return self.empresa.get("fs_token")
 
     @property
+    def fs_ssh_host(self) -> str | None:
+        """Host SSH para ejecutar PHP en el container FS (ej: carli@65.108.60.69)."""
+        return self.empresa.get("fs_ssh_host")
+
+    @property
+    def fs_container_name(self) -> str | None:
+        """Nombre del container Docker de FS (ej: fs-uralde-facturascripts-1)."""
+        return self.empresa.get("fs_container_name")
+
+    @property
     def obligaciones(self) -> dict:
         """Devuelve obligaciones fiscales/contables segun tipo de entidad."""
         return self._tipo_entidad or {}

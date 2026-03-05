@@ -556,6 +556,7 @@ def _ejecutar_fases_01_paralelo(
         if errores_val:
             excluidos.append({
                 **doc,
+                "motivo_exclusion": "; ".join(errores_val),
                 "errores_validacion": errores_val,
                 "avisos_validacion": avisos_val,
             })
