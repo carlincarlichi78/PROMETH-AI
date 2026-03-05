@@ -38,6 +38,11 @@ from ..core.nombres import renombrar_documento
 from ..core.ocr_mistral import extraer_factura_mistral
 from ..core.smart_ocr import SmartOCR
 from ..core.prompts import PROMPT_EXTRACCION
+from ..core.proveedor_discovery import (
+    cargar_cifs_sugeridos,
+    descubrir_proveedor,
+    guardar_sugerencias,
+)
 
 # Import condicional Gemini (solo Tier 2)
 try:
@@ -968,13 +973,16 @@ _gemini_lock = threading.Lock()
 
 def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
                      gemini_disponible, ruta_cuarentena, interactivo,
-                     ruta_inbox=None):
+                     ruta_inbox=None, cifs_sugeridos=None):
     """Procesa un solo PDF: pdfplumber + OCR tiers + clasificacion + confianza.
 
     Thread-safe: cada PDF es independiente. Gemini serializado via _gemini_lock.
 
+    Args:
+        cifs_sugeridos: set de CIFs ya sugeridos en runs previos (deduplicacion discovery)
+
     Returns:
-        dict con keys: doc (dict|None), hash, avisos (list), tier (int)
+        dict con keys: doc (dict|None), hash, avisos (list), tier (int), sugerencias (list)
     """
     nombre_archivo = ruta_pdf.name
     # Guardar carpeta origen relativa al inbox (para clasificacion por actividad)
@@ -986,6 +994,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             carpeta_origen = ruta_pdf.parent.name
     logger.info(f"Procesando: {nombre_archivo}")
     avisos = []
+    sugerencias = []
 
     # 0. Verificar cache OCR antes de llamar a APIs
     cache_datos = obtener_cache_ocr(str(ruta_pdf))
@@ -1022,7 +1031,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             logger.error(f"  Error extrayendo texto de {nombre_archivo}: {e}")
             _mover_a_cuarentena(ruta_pdf, ruta_cuarentena, f"Error pdfplumber: {e}")
             avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
-            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1, "sugerencias": []}
 
         # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
         _t_ocr = time.time()
@@ -1033,7 +1042,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
                                 "No se pudo extraer datos (sin texto ni vision)")
             avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
-            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1}
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1, "sugerencias": []}
 
     # 3. Clasificar tipo documento
     tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
@@ -1098,14 +1107,27 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
                                     f"Entidad desconocida: {cif_desc}")
                 avisos.append((f"Entidad desconocida saltada: {cif_desc}",
                               {"archivo": nombre_archivo}))
-                return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+                return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
+                        "sugerencias": []}
         else:
+            # Intentar discovery solo si hay CIF válido y no fue sugerido antes
+            _cif_para_discovery = (datos_gpt.get("emisor_cif") or "").strip().upper()
+            _ya_sugerido = _cif_para_discovery in (cifs_sugeridos or set())
+            if _cif_para_discovery and not _ya_sugerido:
+                sugerencia = descubrir_proveedor(datos_gpt, config)
+                if sugerencia:
+                    sugerencia["_archivo"] = nombre_archivo
+                    sugerencias.append(sugerencia)
+                    logger.info(
+                        f"  [{nombre_archivo}] Discovery: sugerencia generada para {_cif_para_discovery}"
+                    )
             _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
                                 f"CIF desconocido: {cif_desc}")
             avisos.append((f"CIF desconocido: {cif_desc}",
                           {"archivo": nombre_archivo, "cif": cif_desc,
                            "nombre": nombre_desc}))
-            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
+                    "sugerencias": sugerencias}
 
     # 5. Calcular confianza
     doc_confianza = _construir_documento_confianza(
@@ -1193,7 +1215,8 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             except Exception as e:
                 logger.warning(f"  [{nombre_archivo}] Error guardando cache OCR: {e}")
 
-    return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier}
+    return {"doc": doc_resultado, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
+            "sugerencias": sugerencias}
 
 
 def ejecutar_intake(
@@ -1220,6 +1243,10 @@ def ejecutar_intake(
     resultado = ResultadoFase("intake")
     ruta_inbox = ruta_cliente / carpeta_inbox
     ruta_cuarentena = ruta_cliente / "cuarentena"
+
+    # Cargar CIFs ya sugeridos en runs previos (deduplicacion discovery)
+    ruta_sugerencias = ruta_cliente / "config_sugerencias.yaml"
+    cifs_ya_sugeridos = cargar_cifs_sugeridos(ruta_sugerencias)
 
     if not ruta_inbox.exists():
         resultado.error("No existe carpeta inbox/", {"ruta": str(ruta_inbox)})
@@ -1288,13 +1315,15 @@ def ejecutar_intake(
     documentos_extraidos = []
     hashes_nuevos = []
     tier_stats: dict = {}
+    sugerencias_discovery: list = []
 
     def _submit_pdf(args):
         ruta_pdf, hash_pdf = args
         return _procesar_un_pdf(
             ruta_pdf, hash_pdf, config, client, motor_primario,
             gemini_disponible, ruta_cuarentena, interactivo,
-            ruta_inbox=ruta_inbox
+            ruta_inbox=ruta_inbox,
+            cifs_sugeridos=cifs_ya_sugeridos,
         )
 
     if usar_paralelo:
@@ -1312,6 +1341,7 @@ def ejecutar_intake(
                 # Recoger resultados
                 for msg, datos in res["avisos"]:
                     resultado.aviso(msg, datos)
+                sugerencias_discovery.extend(res.get("sugerencias", []))
                 if res["doc"]:
                     documentos_extraidos.append(res["doc"])
                     hashes_nuevos.append(res["hash"])
@@ -1328,6 +1358,7 @@ def ejecutar_intake(
             res = _submit_pdf(item)
             for msg, datos in res["avisos"]:
                 resultado.aviso(msg, datos)
+            sugerencias_discovery.extend(res.get("sugerencias", []))
             if res["doc"]:
                 documentos_extraidos.append(res["doc"])
                 hashes_nuevos.append(res["hash"])
@@ -1354,6 +1385,13 @@ def ejecutar_intake(
 
     logger.info(f"OCR Tiers: T0={tier_stats.get('0', 0)}, "
                 f"T1={tier_stats.get('1', 0)}, T2={tier_stats.get('2', 0)}")
+
+    # --- Fase 3b: Guardar sugerencias de proveedor discovery ---
+    if sugerencias_discovery:
+        guardar_sugerencias(ruta_sugerencias, sugerencias_discovery)
+        logger.info(
+            f"Discovery: {len(sugerencias_discovery)} sugerencias → {ruta_sugerencias.name}"
+        )
 
     # --- Fase 4: Deteccion de duplicados de negocio ---
     cache_hits = sum(1 for r in [res for res in [None]] if False)  # placeholder

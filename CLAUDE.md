@@ -134,20 +134,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 105 cierre)
+## Estado actual (05/03/2026, sesion 106 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `f4346f10` | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: feat(discovery): proveedor_discovery GPT-4o | **Tests**: 2841 PASS
 
-### Completado sesion 105
-- `_match_proveedor_multi_signal()` — 9 senales acumuladas, threshold ≥35 ✓
-- `_enriquecer_desde_config()` — config.yaml verdad absoluta para proveedores conocidos ✓
-- Floor confianza (score≥50→80%, score≥35→65%) ✓
-- Coloso Algeciras anti-cuarentena: ticket thermal OCR nulo resuelto via .ocr.json manual ✓
-- Tests 2820 PASS ✓
+### Completado sesion 106
+- `sfce/core/proveedor_discovery.py` — GPT-4o identifica proveedores desconocidos, genera `config_sugerencias.yaml` comentado ✓
+- Integracion en `intake.py`: fase 3b discovery (CIF desconocido → GPT-4o, doc sigue a cuarentena) ✓
+- Deduplicacion cross-run: `cargar_cifs_sugeridos()` evita re-llamar GPT para el mismo CIF ✓
+- 21 tests nuevos: `test_proveedor_discovery.py` (17) + `test_intake_discovery.py` (4). Tests 2841 PASS ✓
 
-### Proxima sesion — pendientes (sesion 106)
+### Proxima sesion — pendientes (sesion 107)
 
 **CONTABILIDAD:**
 1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
-2. **Resto PDFs Maria Isabel** — verificar si hay mas PDFs pendientes de importar (solo 6 PDFs en sistema ahora)
-3. **Cuarentena** — 0 PDFs actualmente. Si llegan nuevos lotes, ampliar config.yaml y reprocesar
+2. **Resto PDFs Maria Isabel** — verificar PDFs pendientes de importar al inbox, reprocesar
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)

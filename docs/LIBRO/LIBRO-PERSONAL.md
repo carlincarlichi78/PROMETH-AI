@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 105 — CERRADA)
+## Estado rápido (sesión 106 — CERRADA)
 
-- **Completado:** intake multi-señal (9 señales, threshold≥35) + `_enriquecer_desde_config()` + floor confianza. Coloso Algeciras ticket thermal resuelto. Tests 2820 PASS. Commit `f4346f10`.
-- **CONTABILIDAD pendiente sesión 106:** Dropbox duplicadas (1 Enero -8 ×2), verificar PDFs pendientes María Isabel (solo 6 en sistema), cuarentena vacía
+- **Completado:** Proveedor Discovery GPT-4o — `sfce/core/proveedor_discovery.py` + integración intake + 21 tests nuevos. Tests 2841 PASS.
+- **CONTABILIDAD pendiente sesión 107:** Dropbox duplicadas (1 Enero -8 ×2), verificar PDFs pendientes María Isabel, cross_validation.py FSAdapter (nice to have)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

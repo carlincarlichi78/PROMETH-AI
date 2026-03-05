@@ -1,9 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 105 cierre) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 106 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 105 — intake multi-señal + verdad absoluta config.yaml)
+## Estado actual (sesión 106 — Proveedor Discovery GPT-4o)
+
+### Commits sesión 106
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente) | feat(discovery): proveedor_discovery GPT-4o + intake integration |
+
+### Tasks sesión 106
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| `sfce/core/proveedor_discovery.py` | ✅ DONE | Módulo nuevo: `descubrir_proveedor()` (GPT-4o, timeout 30s, 1 retry), `cargar_cifs_sugeridos()`, `guardar_sugerencias()` — genera `config_sugerencias.yaml` comentado |
+| Integración en intake.py | ✅ DONE | Fase 3b en `_procesar_un_pdf`: CIF desconocido + no en `cifs_sugeridos` → llama GPT-4o. Doc sigue a cuarentena. Acumula sugerencias por run |
+| Deduplicación cross-run | ✅ DONE | `cargar_cifs_sugeridos()` lee CIFs del archivo previo al inicio de `ejecutar_intake`. No repite llamada GPT para el mismo CIF |
+| `tests/test_proveedor_discovery.py` | ✅ DONE | 17 tests unitarios (GPT mock, dedup, guardar, cargar) |
+| `tests/test_intake_discovery.py` | ✅ DONE | 4 tests integración (_procesar_un_pdf con discovery, ejecutar_intake escribe sugerencias) |
+| Tests totales | ✅ DONE | 2841 PASS (↑21 tests desde sesión 105) |
+
+### Pendientes sesión 107 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%). Decidir: descartar o procesar uno como FP intracom
+2. **Resto PDFs María Isabel** — verificar PDFs pendientes de importar al inbox, reprocesar con pipeline
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+
+---
+
+## Estado anterior (sesión 105 — intake multi-señal + verdad absoluta config.yaml)
 
 ### Commits sesión 105
 
