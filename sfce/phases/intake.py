@@ -1044,7 +1044,7 @@ def ejecutar_intake(
 
     documentos_extraidos = []
     hashes_nuevos = []
-    tier_stats = {0: 0, 1: 0, 2: 0}
+    tier_stats: dict = {}
 
     def _submit_pdf(args):
         ruta_pdf, hash_pdf = args
@@ -1073,7 +1073,7 @@ def ejecutar_intake(
                     documentos_extraidos.append(res["doc"])
                     hashes_nuevos.append(res["hash"])
                     tier = res["tier"]
-                    tier_stats[tier] = tier_stats.get(tier, 0) + 1
+                    tier_stats[str(tier)] = tier_stats.get(str(tier), 0) + 1
                     if auditoria:
                         d = res["doc"]
                         auditoria.registrar("intake", "info",
@@ -1089,7 +1089,7 @@ def ejecutar_intake(
                 documentos_extraidos.append(res["doc"])
                 hashes_nuevos.append(res["hash"])
                 tier = res["tier"]
-                tier_stats[tier] = tier_stats.get(tier, 0) + 1
+                tier_stats[str(tier)] = tier_stats.get(str(tier), 0) + 1
                 if auditoria:
                     d = res["doc"]
                     auditoria.registrar("intake", "info",
@@ -1109,8 +1109,8 @@ def ejecutar_intake(
     with open(ruta_resultados, "w", encoding="utf-8") as f:
         f.write(json_validado)
 
-    logger.info(f"OCR Tiers: T0={tier_stats.get(0, 0)}, "
-                f"T1={tier_stats.get(1, 0)}, T2={tier_stats.get(2, 0)}")
+    logger.info(f"OCR Tiers: T0={tier_stats.get('0', 0)}, "
+                f"T1={tier_stats.get('1', 0)}, T2={tier_stats.get('2', 0)}")
 
     # --- Fase 4: Deteccion de duplicados de negocio ---
     cache_hits = sum(1 for r in [res for res in [None]] if False)  # placeholder
