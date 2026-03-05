@@ -47,12 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 99)
+## Estado rápido (sesión 101b)
 
-- **Completado sesión 99:** F6 resuelto. Bug: `worker_catchall` creaba `ColaProcesamiento(documento_id=None)` → pipeline nunca arrancaba tras email. Fix: crear `Documento` antes de `ColaProcesamiento` en `_encolar_archivo()` y `procesar_email_catchall()`. +2 tests F6.
-- **Push:** `7507a65e` OK | **Tests:** 2820 PASS
-- **PRIORIDAD SESIÓN 100:** (1) cross_validation.py → FSAdapter (nice to have)
-- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
+- **Completado:** Asiento intracom Dropbox (factura 63 FS Uralde empresa 7) corregido. Asiento 98: 400 HABER 9.91 / 472 DEBE 2.08 / 477 HABER 2.08 / 600 DEBE 9.91. CUADRADO ✓
+- **Push:** `111a8c83` OK | **Tests:** 2820 PASS
+- **PRIORIDAD SESIÓN 102:** (1) Ticket gasolinera → config.yaml (2) Resto PDFs María Isabel ~200+ (3) cross_validation.py
+- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

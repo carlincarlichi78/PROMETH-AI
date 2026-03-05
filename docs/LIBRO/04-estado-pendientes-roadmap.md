@@ -1,9 +1,33 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 101) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 101b) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 101 — MBS SUITES: nuevo proyecto planificado)
+## Estado actual (sesión 101b — asiento intracom Dropbox corregido)
+
+### Commits sesión 101b
+
+| Hash | Descripción |
+|------|-------------|
+| `111a8c83` | fix(config): Dropbox codimpuesto IVA21→IVA0 + asiento intracom 63 corregido manualmente en FS |
+
+### Tasks sesión 101b
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Asiento intracom Dropbox (factura 63) | ✅ DONE | Fix línea IVA=0, borrar asiento 97 corrompido, regenerar asiento 98 limpio, UPDATE idasiento, añadir 472 DEBE 2.08 + 477 HABER 2.08. DEBE=HABER=11.9911 ✓ |
+| Bug pipeline intracom | ✅ DONE | Root cause: CIF `9852817J`→`IE9852817` (ya fix sesión 101). `codimpuesto: IVA21`→`IVA0` en config Dropbox |
+
+### Pendientes sesión 102 (CONTABILIDAD)
+
+1. **Ticket gasolinera** — "CoLoS0 SAN 46 S.L.u" no identificado, añadir proveedor a config.yaml
+2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+4. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+
+---
+
+## Estado anterior (sesión 101 — MBS SUITES: nuevo proyecto planificado)
 
 ### Commits sesión 100-101
 
