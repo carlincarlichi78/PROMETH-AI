@@ -133,7 +133,7 @@ proveedores:
     pais: IRL
     divisa: EUR
     subcuenta: "6290000000"
-    codimpuesto: IVA21
+    codimpuesto: IVA0
     regimen: intracomunitario
     notas: "Almacenamiento cloud. Mensual. Intracomunitario IE"
 
