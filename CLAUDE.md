@@ -234,18 +234,21 @@ Anotar resultado en el informe final.
 
 ---
 
-## Estado actual (04/03/2026, sesion 94)
+## Estado actual (05/03/2026, sesion 95)
 
-**Rama**: `main` | **Ultimo commit**: `fe55d2d3` (pusheado) | **Tests**: ~2568 PASS
+**Rama**: `main` | **Ultimo commit**: `b6818afe` (pusheado) | **Tests**: 2779 PASS
 
-### Completado sesion 94
-- Debug 400 facturaclientes: 7 facturas previas (IDs 2-8, fechas dic-2025) bloqueaban orden cronológico. Eliminadas. ✓
-- 5 FV Ingresos registradas manualmente: facturas 10-14 (BLANCO ABOGADOS, ene-sep 2025) ✓
-- Asientos FV 91-95 generados vía PHP CLI `InvoiceToAccounting::generate()` para FacturaCliente ✓
-- Fix partidas duplicadas (generate() ya crea las 4 correctas: 430x+477x+7000x+4730x) ✓
-- Fix `sfce/core/fs_api.py`: `normalizar_fecha` soporta DD/MM/YYYY + `calcular_trimestre` con try/except ✓
+### Completado sesion 95
+- Golden Prompt V3.2 diseñado y aprobado (few-shot, esquema universal, metadata{} para nóminas/RLC) ✓
+- `sfce/core/prompts.py`: PROMPT_EXTRACCION_V3_2 + alias PROMPT_EXTRACCION ✓
+- `construir_partidas_nomina`: lee de metadata{} con patrón is_not_none, fallback legacy ✓
+- `construir_partidas_rlc`: ídem para cuota_empresarial/base_cotizacion/cuota_obrera ✓
+- `pre_validation._check_rlc_cuota`: lee de metadata con is_not_none ✓
+- `ocr_mistral/gpt/gemini + smart_parser`: .format(texto_documento=...) ✓
+- `construir_partidas_bancario`: ValueError → logger.warning + fallback "comision" ✓
+- 6 tests nuevos TDD (nómina is_not_none×3, RLC×3), todos verdes ✓
 
-### Proxima sesion — pendientes (sesion 95)
+### Proxima sesion — pendientes (sesion 96)
 
 **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 

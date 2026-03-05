@@ -1,5 +1,42 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-04 (sesión 94) | **Branch:** main | **Tests:** ~2568 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 95) | **Branch:** main | **Tests:** 2779 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 95 — Golden Prompt V3.2 integrado)
+
+### Commits sesión 95
+
+| Hash | Descripción |
+|------|-------------|
+| `fc1117a2` | docs: design golden prompt V3.2 — unificacion OCR few-shot con metadata |
+| `8f14c23c` | feat(ocr): añadir PROMPT_EXTRACCION_V3_2 few-shot + alias retrocompat |
+| `fd8897e2` | feat(ocr): construir_partidas_nomina lee de metadata V3.2 con patron is_not_none |
+| `13d2aadb` | feat(ocr): construir_partidas_rlc lee de metadata V3.2 con patron is_not_none |
+| `b6818afe` | feat(ocr): integracion completa — OCR modules, smart_parser, pre_validation, ValueError fallback |
+
+### Tasks completadas (sesión 95)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Audit prompts OCR | ✅ DONE | Inventario completo: PROMPT_EXTRACCION (multi-tipo, 135L), PROMPT_PARSEO (minimalista), prompts Gemini auditor |
+| Design Golden Prompt V3.2 | ✅ DONE | Diseño aprobado: esquema universal + metadata{} para nóminas/RLC, 4 ejemplos few-shot, patrón is_not_none, no tocar registration.py (subtipo viene de config.yaml) |
+| prompts.py — V3.2 + alias | ✅ DONE | PROMPT_EXTRACCION_V3_2 + alias PROMPT_EXTRACCION para retrocompat |
+| construir_partidas_nomina | ✅ DONE | Lee de metadata{} primero (is not None), fallback a raíz legacy. Normaliza a nombres YAML |
+| construir_partidas_rlc | ✅ DONE | Ídem para cuota_empresarial/base_cotizacion/cuota_obrera |
+| pre_validation._check_rlc_cuota | ✅ DONE | Lee de metadata{} con is not None |
+| ocr_mistral/gpt/gemini + smart_parser | ✅ DONE | .format(texto_documento=...) en todos los módulos |
+| ValueError → warning bancario | ✅ DONE | construir_partidas_bancario degrada a logger.warning + fallback "comision" |
+
+### Pendientes sesión 96
+
+**Estado OCR:** Golden Prompt V3.2 activo en todos los motores. 2779 tests PASS.
+
+1. **Ampliar config.yaml MARIA ISABEL** — 218 PDFs en cuarentena. Inspeccionar CIFs e identificar proveedores.
+2. **Re-procesar cuarentena** — mover PDFs a inbox/ + pipeline --no-interactivo
+3. **Verificar 7000x vs 7050x** — FS usa cuenta ventas mercaderías para FV servicios. Evaluar corrección.
+4. **F6** — Ruta inbox email→pipeline
+5. **Tests E2E dashboard** — Playwright
 
 ---
 
