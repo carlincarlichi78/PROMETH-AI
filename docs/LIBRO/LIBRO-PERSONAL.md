@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 98)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-05 (sesión 99)
 
 ---
 
@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: ~2801 passed
+# Esperado: ~2820 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,12 +47,11 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 98)
+## Estado rápido (sesión 99)
 
-- **Completado sesión 98:** Pata 3 FSAdapter. `crear_partida()` público en FSAdapter. Migración `_post/_put("partidas",...)` en registration.py (×3) y correction.py (×2). Fix `_inbox_empresa()` worker_catchall (elimina fallback legacy). Watcher 23 tests PASS.
-- **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
-- **Push:** `790d7822` OK | **Tests:** 2818 PASS
-- **PRIORIDAD SESIÓN 99:** (1) F6 ruta inbox email→pipeline, (2) cross_validation.py → FSAdapter (nice to have)
+- **Completado sesión 99:** F6 resuelto. Bug: `worker_catchall` creaba `ColaProcesamiento(documento_id=None)` → pipeline nunca arrancaba tras email. Fix: crear `Documento` antes de `ColaProcesamiento` en `_encolar_archivo()` y `procesar_email_catchall()`. +2 tests F6.
+- **Push:** `7507a65e` OK | **Tests:** 2820 PASS
+- **PRIORIDAD SESIÓN 100:** (1) cross_validation.py → FSAdapter (nice to have)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

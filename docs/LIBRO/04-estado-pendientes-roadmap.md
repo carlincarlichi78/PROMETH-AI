@@ -1,5 +1,26 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 98) | **Branch:** main | **Tests:** 2818 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 99) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 99 — F6: flujo email→pipeline completado)
+
+### Commits sesión 99
+
+| Hash | Descripción |
+|------|-------------|
+| `7507a65e` | fix(F6): worker_catchall crea Documento en BD antes de ColaProcesamiento |
+
+### Tasks completadas (sesión 99)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| F6 — Ruta inbox email→pipeline | ✅ DONE | Bug: `worker_catchall` creaba `ColaProcesamiento(documento_id=None)` → `_clamar_docs_para_empresa` devolvía `[]` → pipeline nunca arrancaba. Fix: crear `Documento` con flush() antes de `ColaProcesamiento` en `_encolar_archivo()` + bucle de `procesar_email_catchall()`. |
+| Tests F6 | ✅ DONE | +2 tests: `test_email_catchall_crea_documento_en_bd`, `test_documento_id_no_nulo_permite_pipeline`. 2820 PASS. |
+
+### Pendientes sesión 100
+
+1. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 

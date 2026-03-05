@@ -134,20 +134,14 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 98)
+## Estado actual (05/03/2026, sesion 99)
 
-**Rama**: `main` | **Ultimo commit**: `790d7822` (pusheado) | **Tests**: 2818 PASS
+**Rama**: `main` | **Ultimo commit**: `7507a65e` (pusheado) | **Tests**: 2820 PASS
 
-### Completado sesion 98
-- `sfce/conectores/correo/worker_catchall.py`: `_inbox_empresa()` siempre → `clientes/{slug}/inbox/`, elimina fallback docs/{id} ✓
-- `sfce/core/fs_adapter.py`: `crear_partida()` método público, encapsula `_post("partidas",...)` ✓
-- `sfce/phases/registration.py`: 3 usos de `fs._post/_put` en partidas migrados a métodos públicos ✓
-- `sfce/phases/correction.py`: 2 usos de `fs._post("partidas",...)` migrados a `fs.crear_partida()` ✓
-- `scripts/watcher.py`: verificado completo (ya existía). 23 tests PASS ✓
+### Completado sesion 99
+- `sfce/conectores/correo/worker_catchall.py`: F6 fix — crear `Documento` en BD antes de `ColaProcesamiento` en `_encolar_archivo()` y `procesar_email_catchall()`. Ahora `documento_id` nunca es None → worker_pipeline lanza el pipeline. ✓
+- `tests/test_correo/test_worker_catchall.py`: +2 tests F6 (crea documento en BD + documento_id no nulo). 2820 PASS ✓
 
-### Proxima sesion — pendientes (sesion 99)
+### Proxima sesion — pendientes (sesion 100)
 
-**Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
-
-1. **F6** — Ruta inbox email→pipeline
-2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+1. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
