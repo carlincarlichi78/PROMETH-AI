@@ -48,6 +48,13 @@ except ImportError:
 
 logger = crear_logger("intake")
 
+# Palabras vacías para filtro de keywords
+_STOPWORDS = {
+    "de", "del", "la", "el", "los", "las", "un", "una", "por",
+    "para", "con", "en", "a", "y", "o", "que", "es", "su", "se",
+    "the", "and", "for", "with", "from", "this", "that",
+}
+
 
 def _calcular_hash(ruta_pdf: Path) -> str:
     """Calcula SHA256 de un archivo PDF."""
@@ -348,6 +355,174 @@ def _identificar_entidad(datos_gpt: dict, tipo_doc: str,
         return entidad
 
     return None
+
+
+def _match_proveedor_multi_signal(
+    datos_gpt: dict,
+    config: "ConfigCliente",
+    texto_raw: str = "",
+    nombre_archivo: str = "",
+) -> dict | None:
+    """Match exhaustivo documento → proveedor usando todas las señales disponibles.
+
+    Evalúa: CIF exacto, CIF en texto raw, nombre/alias, CIF parcial,
+    nombre en texto raw, keywords concepto, nombre en archivo, importe
+    típico, idioma+país.
+
+    Returns:
+        dict con proveedor_key, proveedor_datos, match_method, match_score,
+        signals — o None si score < 35.
+    """
+    from ..core.config import _normalizar_cif
+
+    scores: dict[str, int] = {}
+    signals: dict[str, list[str]] = {}
+
+    def _add(key: str, senal: str, puntos: int) -> None:
+        scores[key] = scores.get(key, 0) + puntos
+        signals.setdefault(key, []).append(f"{senal}(+{puntos})")
+
+    cif_ocr = _normalizar_cif(datos_gpt.get("emisor_cif") or "")
+    cif_empresa = _normalizar_cif(config.cif)
+
+    # a) CIF exacto (+50)
+    if cif_ocr:
+        prov = config.buscar_proveedor_por_cif(cif_ocr)
+        if prov:
+            _add(prov["_nombre_corto"], "cif_exacto", 50)
+
+    # b) CIF en texto_raw (+45)
+    if texto_raw:
+        for cif in _extraer_cif_del_texto(texto_raw):
+            cif_n = _normalizar_cif(cif)
+            if cif_n == cif_empresa:
+                continue  # Excluir CIF propio
+            prov = config.buscar_proveedor_por_cif(cif_n)
+            if prov:
+                _add(prov["_nombre_corto"], "cif_texto_raw", 45)
+
+    # c) Nombre/alias (+40)
+    nombre_ocr = datos_gpt.get("emisor_nombre") or ""
+    if nombre_ocr:
+        prov = config.buscar_proveedor_por_nombre(nombre_ocr)
+        if prov:
+            _add(prov["_nombre_corto"], "nombre_alias", 40)
+
+    # d) CIF parcial — últimos 6 dígitos comunes (+35)
+    if cif_ocr:
+        digitos_ocr = re.sub(r'[^0-9]', '', cif_ocr)
+        if len(digitos_ocr) >= 6:
+            sufijo_ocr = digitos_ocr[-6:]
+            for clave, datos in config.proveedores.items():
+                cif_conf = _normalizar_cif(datos.get("cif", ""))
+                if not cif_conf:
+                    continue
+                digitos_conf = re.sub(r'[^0-9]', '', cif_conf)
+                if len(digitos_conf) >= 6 and digitos_conf.endswith(sufijo_ocr):
+                    if scores.get(clave, 0) < 35:  # no duplicar si ya exacto
+                        _add(clave, "cif_parcial", 35)
+
+    # e) Nombre proveedor en texto_raw (+30)
+    if texto_raw:
+        texto_upper = texto_raw.upper()
+        for clave, datos in config.proveedores.items():
+            terminos = [datos.get("nombre_fs", "")] + list(datos.get("aliases", []))
+            for termino in terminos:
+                if len(termino) >= 6 and termino.upper() in texto_upper:
+                    _add(clave, "nombre_en_texto", 30)
+                    break
+
+    # f) Keywords concepto vs notas proveedor (+25)
+    concepto = (datos_gpt.get("concepto_resumen") or "").upper()
+    if concepto:
+        tokens_concepto = {
+            t for t in re.split(r'\W+', concepto)
+            if len(t) >= 4 and t.lower() not in _STOPWORDS
+        }
+        if tokens_concepto:
+            for clave, datos in config.proveedores.items():
+                notas = (datos.get("notas") or "").upper()
+                tokens_notas = {
+                    t for t in re.split(r'\W+', notas)
+                    if len(t) >= 4 and t.lower() not in _STOPWORDS
+                }
+                comunes = tokens_concepto & tokens_notas
+                if comunes:
+                    etiqueta = "keyword(" + ",".join(sorted(comunes)[:2]) + ")"
+                    _add(clave, etiqueta, 25)
+
+    # g) Nombre proveedor en nombre del archivo (+20)
+    if nombre_archivo:
+        arch_upper = nombre_archivo.upper()
+        for clave, datos in config.proveedores.items():
+            terminos = [datos.get("nombre_fs", "")] + list(datos.get("aliases", []))
+            for termino in terminos:
+                if len(termino) >= 5 and termino.upper() in arch_upper:
+                    _add(clave, "nombre_archivo", 20)
+                    break
+
+    # h) Importe típico ±10% (+15) — si el proveedor tiene campo importe_tipico
+    total = datos_gpt.get("total")
+    if total is not None:
+        try:
+            total_f = float(total)
+            for clave, datos in config.proveedores.items():
+                imp_tipico = datos.get("importe_tipico")
+                if imp_tipico is not None:
+                    imp_f = float(imp_tipico)
+                    if imp_f > 0 and abs(total_f - imp_f) / imp_f <= 0.10:
+                        _add(clave, "importe_tipico", 15)
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass
+
+    # i) Idioma extranjero + proveedor con pais != ESP (+10)
+    if texto_raw:
+        _palabras_en = {"the", "and", "invoice", "total", "payment",
+                        "amount", "date", "company", "tax", "vat"}
+        tokens_txt = set(re.split(r'\W+', texto_raw.lower()))
+        if len(tokens_txt & _palabras_en) >= 3:
+            for clave, datos in config.proveedores.items():
+                if datos.get("pais") not in ("ESP", ""):
+                    _add(clave, "idioma_extranjero", 10)
+
+    if not scores:
+        return None
+
+    mejor_key = max(scores, key=lambda k: scores[k])
+    mejor_score = scores[mejor_key]
+
+    if mejor_score < 35:
+        return None
+
+    prov_datos = config.proveedores[mejor_key]
+    return {
+        "proveedor_key": mejor_key,
+        "proveedor_datos": {**prov_datos, "_nombre_corto": mejor_key},
+        "match_method": signals[mejor_key][0] if signals[mejor_key] else "unknown",
+        "match_score": mejor_score,
+        "signals": signals[mejor_key],
+    }
+
+
+def _enriquecer_desde_config(datos_gpt: dict, match: dict) -> dict:
+    """Sobrescribe datos OCR con información canónica del proveedor en config.yaml.
+
+    Actualiza: emisor_cif, emisor_nombre, _config_match (auditoría).
+    NO toca: fecha, total, base_imponible, numero_factura, concepto_resumen.
+    Retorna un nuevo dict (no muta el original).
+    """
+    prov = match["proveedor_datos"]
+    return {
+        **datos_gpt,
+        "emisor_cif": prov.get("cif") or datos_gpt.get("emisor_cif"),
+        "emisor_nombre": prov.get("nombre_fs") or datos_gpt.get("emisor_nombre"),
+        "_config_match": {
+            "proveedor_key": match["proveedor_key"],
+            "method": match["match_method"],
+            "score": match["match_score"],
+            "signals": match["signals"],
+        },
+    }
 
 
 def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
@@ -834,6 +1009,11 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         datos_gpt["telemetria"] = {"duracion_ocr_s": 0.0, "cache_hit": True}
         ocr_tier = cache_datos.get("_ocr_tier", 0)
         tier_motivo = "cache"
+        # Extraer texto_raw para multi-signal (rápido, local, sin APIs)
+        try:
+            texto_raw = _extraer_texto_pdf(ruta_pdf)
+        except Exception:
+            texto_raw = ""
     else:
         # 1. Extraer texto con pdfplumber
         try:
@@ -866,6 +1046,42 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     # 4. Identificar entidad
     entidad = _identificar_entidad(datos_gpt, tipo_doc, config)
 
+    # 4b. Multi-signal: si no se encontró, intentar match exhaustivo antes de cuarentena
+    if not entidad and tipo_doc in ("FC", "NC", "ANT", "SUM"):
+        match_ms = _match_proveedor_multi_signal(
+            datos_gpt, config, texto_raw, nombre_archivo
+        )
+        if match_ms:
+            datos_gpt = _enriquecer_desde_config(datos_gpt, match_ms)
+            entidad = match_ms["proveedor_datos"]
+            # Reclasificar tipo si aún es OTRO/FV y el match es un proveedor
+            if tipo_doc == "OTRO":
+                tipo_doc = "FC"
+            logger.info(
+                f"  [{nombre_archivo}] Config match: {match_ms['proveedor_key']} "
+                f"(score={match_ms['match_score']})"
+            )
+            logger.info(
+                f"  [{nombre_archivo}]   Señales: {', '.join(match_ms['signals'])}"
+            )
+
+    # 4c. Multi-signal también para documentos OTRO que podrían ser FC/FV
+    if not entidad and tipo_doc == "OTRO":
+        match_ms = _match_proveedor_multi_signal(
+            datos_gpt, config, texto_raw, nombre_archivo
+        )
+        if match_ms:
+            datos_gpt = _enriquecer_desde_config(datos_gpt, match_ms)
+            entidad = match_ms["proveedor_datos"]
+            tipo_doc = "FC"
+            logger.info(
+                f"  [{nombre_archivo}] Config match (OTRO→FC): "
+                f"{match_ms['proveedor_key']} (score={match_ms['match_score']})"
+            )
+            logger.info(
+                f"  [{nombre_archivo}]   Señales: {', '.join(match_ms['signals'])}"
+            )
+
     if not entidad:
         es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
         cif_desc = (datos_gpt.get("emisor_cif") if es_proveedor
@@ -896,11 +1112,22 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         nombre_archivo, hash_pdf, texto_raw, datos_gpt,
         tipo_doc, entidad, config
     )
-    nivel = calcular_nivel(doc_confianza.confianza_global())
+    confianza_global_val = doc_confianza.confianza_global()
     campos_bajos = doc_confianza.campos_bajo_umbral()
 
+    # Floor de confianza para proveedores conocidos vía multi-signal
+    config_match = datos_gpt.get("_config_match")
+    if config_match:
+        score_ms = config_match.get("score", 0)
+        if score_ms >= 50:
+            confianza_global_val = max(confianza_global_val, 80)
+        elif score_ms >= 35:
+            confianza_global_val = max(confianza_global_val, 65)
+
+    nivel = calcular_nivel(confianza_global_val)
+
     logger.info(f"  [{nombre_archivo}] {tipo_doc} | Tier {ocr_tier} | "
-                f"{doc_confianza.confianza_global()}% ({nivel})")
+                f"{confianza_global_val}% ({nivel})")
 
     # 6. Nombre estandar del documento
     nombre_estandar = renombrar_documento(datos_gpt, tipo_doc)
@@ -924,7 +1151,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "datos_extraidos": datos_gpt,
         "entidad": entidad.get("_nombre_corto", "desconocido") if entidad else "desconocido",
         "entidad_cif": entidad.get("cif", "") if entidad else "",
-        "confianza_global": doc_confianza.confianza_global(),
+        "confianza_global": confianza_global_val,
         "nivel_confianza": nivel,
         "campos_bajo_umbral": campos_bajos,
         "confianza_detalle": {
