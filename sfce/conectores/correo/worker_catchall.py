@@ -43,19 +43,24 @@ def _carpeta_slug(nombre: str) -> str:
 def _inbox_empresa(empresa_id: int, sesion: Session) -> Path:
     """Resuelve el directorio inbox de una empresa.
 
-    Prioridad:
-    1. empresa.slug del DB (ya con guiones, ej: gerardo-gonzalez-callejon)
-    2. slug derivado del nombre (fallback para empresas sin slug en DB)
-    3. docs/{empresa_id}/inbox/ si ninguna carpeta existe en disco
+    SIEMPRE resuelve a clientes/{slug}/inbox/.
+    Crea la carpeta si no existe (el pipeline y el watcher la esperan ahí).
+    Nunca cae a docs/{id}/inbox/ (ruta legacy eliminada en sesión 98).
     """
     from sfce.db.modelos import Empresa
     empresa = sesion.query(Empresa).filter(Empresa.id == empresa_id).first()
-    if empresa:
-        for candidato_slug in filter(None, [empresa.slug, _carpeta_slug(empresa.nombre or "")]):
-            candidato = RAIZ_CLIENTES / candidato_slug
-            if candidato.exists():
-                return candidato / "inbox"
-    return DIRECTORIO_DOCS / str(empresa_id) / "inbox"
+    if not empresa:
+        logger.error("Empresa %d no encontrada en BD", empresa_id)
+        raise ValueError(f"Empresa {empresa_id} no existe en BD")
+
+    # Prioridad: slug de BD > slug derivado del nombre
+    slug = empresa.slug or _carpeta_slug(empresa.nombre or "")
+    if not slug:
+        raise ValueError(f"Empresa {empresa_id} sin slug ni nombre")
+
+    inbox = RAIZ_CLIENTES / slug / "inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+    return inbox
 
 
 def _emitir_ws_nuevo_pdf(empresa_id: int, nombre: str, fuente: str = "correo") -> None:
