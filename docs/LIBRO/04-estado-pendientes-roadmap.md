@@ -1,9 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 104 cierre) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 105 cierre) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
 
 ---
 
-## Estado actual (sesión 104 — E2E María Isabel completo, Coloso resuelto)
+## Estado actual (sesión 105 — intake multi-señal + verdad absoluta config.yaml)
+
+### Commits sesión 105
+
+| Hash | Descripción |
+|------|-------------|
+| `f4346f10` | feat(intake): match multi-señal + verdad absoluta config.yaml |
+
+### Tasks sesión 105
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| `_match_proveedor_multi_signal()` | ✅ DONE | 9 señales acumuladas (CIF exacto+50, CIF raw+45, nombre/alias+40, CIF parcial+35, nombre en texto+30, keywords+25, nombre archivo+20, importe+15, idioma+10). Threshold≥35 |
+| `_enriquecer_desde_config()` | ✅ DONE | config.yaml como verdad absoluta: proveedor conocido → sobreescribe CIF y nombre OCR |
+| Floor confianza | ✅ DONE | score≥50 → max(actual,80%); score≥35 → max(actual,65%) |
+| Coloso Algeciras anti-cuarentena | ✅ DONE | Ticket térmico OCR nulo → .ocr.json manual B67718361. FC, entidad=coloso_algeciras, conf=42% |
+| Tests | ✅ DONE | 2820 PASS |
+
+### Pendientes sesión 106 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%). Decidir: descartar o procesar uno como FP intracom
+2. **Resto PDFs María Isabel** — actualmente solo 6 PDFs en sistema (5 en procesado, 1 en inbox). Verificar si hay más PDFs pendientes de importar al inbox
+3. **Cuarentena** — 0 PDFs actualmente (limpia). Si hay nuevos lotes, ampliar config.yaml y reprocesar
+4. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+
+---
+
+## Estado anterior (sesión 104 — E2E María Isabel completo, Coloso resuelto)
 
 ### Commits sesión 104
 

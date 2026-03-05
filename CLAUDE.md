@@ -134,19 +134,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 104 cierre)
+## Estado actual (05/03/2026, sesion 105 cierre)
 
-**Rama**: `main` | **Ultimo commit**: (pendiente push) | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: `f4346f10` | **Tests**: 2820 PASS
 
-### Completado sesion 104
-- Empresa 7 limpiada en FS: 1 FP (Dropbox id=66) + 7 asientos borrados ✓
-- Pipeline E2E María Isabel: 6 FP (Campmany×2, Autopista Sol×2, Plenergy, Coloso), asientos 107-117 ✓
-- Ticket Coloso (1 Enero -13.pdf): .ocr.json manual B67718361, 30€ → FP 72, asiento 117 ✓
-- Fix registration.py: `numero_factura: null` → NoneType.upper() crash → `or "Factura"` ✓
+### Completado sesion 105
+- `_match_proveedor_multi_signal()` — 9 senales acumuladas, threshold ≥35 ✓
+- `_enriquecer_desde_config()` — config.yaml verdad absoluta para proveedores conocidos ✓
+- Floor confianza (score≥50→80%, score≥35→65%) ✓
+- Coloso Algeciras anti-cuarentena: ticket thermal OCR nulo resuelto via .ocr.json manual ✓
+- Tests 2820 PASS ✓
 
-### Proxima sesion — pendientes (sesion 105)
+### Proxima sesion — pendientes (sesion 106)
 
 **CONTABILIDAD:**
-1. **Dropbox duplicadas** — `1 Enero -8.pdf` y `1 Enero -8_1.pdf` (mismo hash, confianza 31%): descartar o procesar 1
-2. **Resto PDFs María Isabel** — ~200+ PDFs inbox original, reprocesar con pipeline
-3. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+2. **Resto PDFs Maria Isabel** — verificar si hay mas PDFs pendientes de importar (solo 6 PDFs en sistema ahora)
+3. **Cuarentena** — 0 PDFs actualmente. Si llegan nuevos lotes, ampliar config.yaml y reprocesar

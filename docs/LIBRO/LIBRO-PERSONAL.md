@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 104 — CERRADA)
+## Estado rápido (sesión 105 — CERRADA)
 
-- **Completado:** Empresa 7 limpia + pipeline E2E completo (6 FP: Campmany×2, Autopista Sol×2, Plenergy, Coloso). Fix ticket sin nº factura (NoneType.upper crash). Tests 2820 PASS.
-- **CONTABILIDAD pendiente sesión 105:** Dropbox duplicadas (1 Enero -8 ×2), ~200+ PDFs restantes María Isabel, cuarentena ~218 PDFs
+- **Completado:** intake multi-señal (9 señales, threshold≥35) + `_enriquecer_desde_config()` + floor confianza. Coloso Algeciras ticket thermal resuelto. Tests 2820 PASS. Commit `f4346f10`.
+- **CONTABILIDAD pendiente sesión 106:** Dropbox duplicadas (1 Enero -8 ×2), verificar PDFs pendientes María Isabel (solo 6 en sistema), cuarentena vacía
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mariadb -u root -proot_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
