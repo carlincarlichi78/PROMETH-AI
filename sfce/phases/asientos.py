@@ -272,7 +272,7 @@ def ejecutar_asientos(
     resultado.datos["ruta_asientos"] = str(ruta_asientos)
 
     logger.info(f"Asientos verificados: {len(asientos_obtenidos)} OK "
-                f"({n_facturas} facturas, {n_directos} directos), "
+                f"({len(registrados_facturas)} facturas, {len(registrados_directos)} directos), "
                 f"{len(sin_asiento)} pendientes")
 
     return resultado

@@ -521,7 +521,7 @@ def _ejecutar_fases_01_paralelo(
             docs_extraidos.append(res["doc"])
             hashes_nuevos.append(res["hash"])
             tier = res.get("tier", 0)
-            tier_stats[tier] = tier_stats.get(tier, 0) + 1
+            tier_stats[str(tier)] = tier_stats.get(str(tier), 0) + 1
             if auditoria:
                 d = res["doc"]
                 auditoria.registrar("intake", "info",
@@ -601,8 +601,8 @@ def _ejecutar_fases_01_paralelo(
         ))
 
     logger.info(
-        f"OCR Tiers: T0={tier_stats.get(0,0)}, "
-        f"T1={tier_stats.get(1,0)}, T2={tier_stats.get(2,0)}"
+        f"OCR Tiers: T0={tier_stats.get('0',0)}, "
+        f"T1={tier_stats.get('1',0)}, T2={tier_stats.get('2',0)}"
     )
     logger.info(f"Pre-validacion: {len(validados)} OK, {len(excluidos)} excluidos")
     logger.info(f"Orden cronologico aplicado — primer doc: {primer_fecha}")

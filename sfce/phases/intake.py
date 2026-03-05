@@ -196,7 +196,9 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     Returns:
         FC, FV, NC, ANT, REC, NOM, SUM, BAN, RLC, IMP, OTRO
     """
-    tipo_gpt = datos_gpt.get("tipo", "").lower()
+    # Leer campo tipo desde variantes de nombre (compatibilidad V3.2 vs legacy)
+    tipo_gpt = (datos_gpt.get("tipo") or datos_gpt.get("tipo_doc")
+                or datos_gpt.get("tipo_documento") or "").lower()
 
     # Tipos nuevos — clasificacion directa por tipo GPT
     if tipo_gpt == "nomina":
@@ -217,6 +219,7 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
         return "ANT"
     if "recibo" in tipo_gpt:
         return "REC"
+    # "ticket" = factura simplificada, cae en clasificacion por CIF/entidad
 
     # Determinar si es compra o venta por el CIF
     from ..core.config import _normalizar_cif
@@ -233,11 +236,23 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     if receptor_cif and _cif_coincide(receptor_cif, cif_empresa):
         return "FC"
 
-    # Fallback
+    # Fallback por keywords en tipo_gpt
     if "factura_cliente" in tipo_gpt:
         return "FV"
     if "factura_proveedor" in tipo_gpt:
         return "FC"
+
+    # Fallback: buscar emisor/receptor en proveedores/clientes cuando CIF no identifica FC/FV
+    emisor_nombre = datos_gpt.get("emisor_nombre") or ""
+    receptor_nombre = datos_gpt.get("receptor_nombre") or ""
+    if emisor_cif and config.buscar_proveedor_por_cif(emisor_cif):
+        return "FC"
+    if emisor_nombre and config.buscar_proveedor_por_nombre(emisor_nombre):
+        return "FC"
+    if receptor_cif and config.buscar_cliente_por_cif(receptor_cif):
+        return "FV"
+    if receptor_nombre and config.buscar_cliente_por_nombre(receptor_nombre):
+        return "FV"
 
     return "OTRO"
 
