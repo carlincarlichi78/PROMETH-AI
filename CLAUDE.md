@@ -134,14 +134,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 99)
+## Estado actual (05/03/2026, sesion 101)
 
-**Rama**: `main` | **Ultimo commit**: `7507a65e` (pusheado) | **Tests**: 2820 PASS
+**Rama**: `main` | **Ultimo commit**: `1e0e590a` (pusheado) | **Tests**: 2820 PASS
 
-### Completado sesion 99
-- `sfce/conectores/correo/worker_catchall.py`: F6 fix — crear `Documento` en BD antes de `ColaProcesamiento` en `_encolar_archivo()` y `procesar_email_catchall()`. Ahora `documento_id` nunca es None → worker_pipeline lanza el pipeline. ✓
-- `tests/test_correo/test_worker_catchall.py`: +2 tests F6 (crea documento en BD + documento_id no nulo). 2820 PASS ✓
+### Completado sesion 101
+- MBS SUITES: nuevo proyecto planificado — briefing cliente + diseño técnico aprobado + plan de implementación 5 fases en `PROYECTOS/MBS SUITES/docs/plans/` ✓
+- fix(config): CIF Dropbox IE9852817 corregido para Maria Isabel ✓
 
-### Proxima sesion — pendientes (sesion 100)
+### Proxima sesion — pendientes (sesion 102)
 
-1. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+**MBS SUITES (abrir sesión en `PROYECTOS/MBS SUITES/`):**
+1. Crear repo GitHub `mbs-suites-intelligence` (privado) + `git init` + primer commit
+2. Ejecutar `docs/plans/test_apify_actors.py` con token Apify real (Fase 0)
+3. Arrancar Fase 1: Task 1.1 setup Django + Docker Compose
+
+**CONTABILIDAD:**
+1. **cross_validation.py** — migrar api_get a FSAdapter
+2. **Cuarentena ~218 PDFs** — ampliar config.yaml y reprocesar

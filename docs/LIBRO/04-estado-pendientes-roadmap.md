@@ -1,5 +1,37 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 99) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 101) | **Branch:** main | **Tests:** 2820 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 101 — MBS SUITES: nuevo proyecto planificado)
+
+### Commits sesión 100-101
+
+| Hash | Descripción |
+|------|-------------|
+| `1e0e590a` | fix(config): CIF Dropbox corregido IE9852817 para Maria Isabel |
+| `44e253f2` | fix(pipeline): correcciones descubiertas en prueba E2E sesion 100 |
+
+### Tasks sesión 101
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| MBS SUITES — nuevo proyecto | ✅ DONE | Briefing completo de Marbella Banus Suites (reseñas, stack, fundadores, mercado). Diseño técnico aprobado + plan implementación completo en `PROYECTOS/MBS SUITES/docs/plans/` |
+| MBS SUITES — validación Apify | ✅ DONE | Test script `test_apify_actors.py` integrado como Fase 0 del plan |
+| CONTABILIDAD — CIF Maria Isabel | ✅ DONE | Fix CIF Dropbox IE9852817 (sesión 100, commit 1e0e590a) |
+
+### Pendientes sesión 102 (CONTABILIDAD)
+
+1. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+2. **Cuarentena ~218 PDFs** — ampliar config.yaml con proveedores y reprocesar
+3. **Tests E2E dashboard** — Playwright
+
+### Pendientes sesión 102 (MBS SUITES — proyecto nuevo)
+
+1. **Crear repo GitHub** `mbs-suites-intelligence` (privado)
+2. **Inicializar git** en `PROYECTOS/MBS SUITES/`
+3. **Ejecutar Fase 0** — `test_apify_actors.py` con token Apify real
+4. **Arrancar Fase 1** — setup Django + Docker
 
 ---
 
