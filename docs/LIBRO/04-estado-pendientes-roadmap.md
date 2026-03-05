@@ -1,5 +1,67 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 106 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 108 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 108 — gen_asiento.php: subcuenta_gasto + intracom)
+
+### Commits sesión 108
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente push) | feat(gen_asiento): subcuenta_gasto + intracom_pct via PHP CLI |
+
+### Tasks sesión 108
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| gen_asiento.php reescrito | ✅ DONE | Args opcionales `[subcuenta_gasto] [intracom_pct]`. UPDATE partida 600→subcuenta correcta. UPDATE 472 fantasma + INSERT 477 para intracom. JSON incluye subcuenta_gasto/intracom_pct |
+| FSAdapter.generar_asiento() | ✅ DONE | Nuevos params `subcuenta_gasto: str\|None` e `intracom_pct: float\|None`. Se pasan como args 3/4 al PHP |
+| registration.py step 5b/5c | ✅ DONE | Step 5b pasa `_subcuenta_gasto` e `_iva_autorepercusion` (si intracom). Step 5c solo corre como fallback si gen_asiento no manejó la autorepercusión |
+| Test producción facturas 73-76 | ✅ DONE | Asientos 121-124 borrados y regenerados. Coloso→629, Chito→623+475, Dropbox→622+472/477 intracom, Mapfre→625 |
+| Tests pytest | ✅ DONE | 2841 PASS |
+
+### Pendientes sesión 109 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%). Decidir: descartar o procesar uno como FP intracom
+2. **Resto PDFs María Isabel** — verificar PDFs pendientes de importar, reprocesar con pipeline
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+
+---
+
+## Estado actual (sesión 107 — Diagnóstico InvoiceToAccounting FS)
+
+### Commits sesión 107
+
+| Hash | Descripción |
+|------|-------------|
+| — | Sin commits de código (sesión diagnóstico) |
+
+### Tasks sesión 107
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Limpieza FS Uralde emp7 | ✅ DONE | Borradas 6 FP + asientos de María Isabel Navarro López (idfactura 67-72, asientos 107-117) |
+| Diagnóstico gen_asiento | ✅ DONE | 4 facturas prueba creadas (A=COLOSO IVA21, B=CHITO IRPF15, C=DROPBOX intracom, D=MAPFRE exenta) |
+| Comportamiento FS gen_asiento | ✅ DONE | Verificados asientos generados por InvoiceToAccounting::generate() para cada tipo |
+
+### Hallazgos clave sesión 107
+
+- **pvptotal en líneas FS = neto sin IVA** (no total). Si pvptotal incluye IVA, Calculator discrepa y generate() falla.
+- **FS auto-genera asiento en PUT** si totales de cabecera coinciden con Calculator. No hace falta llamar gen_asiento.php manualmente.
+- **Intracom (operacion=I)**: FS genera 4720000000 con 0/0. Sin autorepercusión (falta 472 DEBE + 477 HABER). Requiere corrección post-generate.
+- **Exenta (IVA0 doméstica)**: mismo patrón que intracom — 4720000000 vacía. Gasto en 600 (debería ser 625/628 según tipo).
+- **IVA21 normal**: correcto — 400 HABER total / 472 DEBE iva / 600 DEBE neto.
+- **IVA21 + IRPF15**: correcto — 400 HABER total / 472 DEBE iva / 4751 HABER irpf / 600 DEBE neto.
+
+### Pendientes sesión 108 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%). Decidir: descartar o procesar uno como FP intracom
+2. **Resto PDFs María Isabel** — verificar PDFs pendientes de importar, reprocesar con pipeline
+3. **Corrección gen_asiento.php para intracom** — añadir partidas 472/477 automáticamente cuando `operacion=I` o codimpuesto intracom
+4. **Reclasificación cuenta gasto exentas** — mapear codimpuesto a cuenta gasto correcta (600→625 seguros, 628 suministros, etc.)
+
+---
 
 ---
 

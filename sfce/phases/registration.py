@@ -1222,8 +1222,21 @@ def ejecutar_registro(
 
         # 5b. Generar asiento contable via PHP CLI (solo facturas proveedor)
         # FS no genera asientos automaticamente para facturas proveedor creadas via API REST.
+        # gen_asiento.php también corrige subcuenta_gasto e intracom si se pasan.
+        intracom_pct = None
+        res_asiento = None
         if es_proveedor:
-            res_asiento = fs.generar_asiento(idfactura, tipo="proveedor")
+            intracom_pct = (
+                form_data.get("_iva_autorepercusion")
+                if form_data.get("_intracomunitario")
+                else None
+            )
+            res_asiento = fs.generar_asiento(
+                idfactura,
+                tipo="proveedor",
+                subcuenta_gasto=form_data.get("_subcuenta_gasto"),
+                intracom_pct=intracom_pct,
+            )
             if res_asiento.ok:
                 ya = "ya existia" if res_asiento.data.get("ya_existia") else "nuevo"
                 logger.info(f"  Asiento generado: {res_asiento.id_creado} ({ya})")
@@ -1232,8 +1245,11 @@ def ejecutar_registro(
                 resultado.aviso(f"Asiento no generado: {res_asiento.error}",
                                {"idfactura": idfactura, "error": res_asiento.error})
 
-        # 5c. Autorepercusion IVA intracomunitario
-        if form_data.get("_intracomunitario"):
+        # 5c. Autorepercusion IVA intracomunitario (fallback: solo si gen_asiento no lo manejó)
+        # Si gen_asiento.php se ejecutó con intracom_pct, las partidas 472/477 ya están hechas.
+        if form_data.get("_intracomunitario") and not (
+            res_asiento is not None and res_asiento.ok and intracom_pct
+        ):
             _aplicar_autorepercusion_intracom(idfactura, tipo_doc, form_data, fs)
 
         # Registrar exito

@@ -552,7 +552,13 @@ class FSAdapter:
     # Generacion de asientos via PHP CLI (SSH → Docker)
     # -----------------------------------------------------------------------
 
-    def generar_asiento(self, idfactura: int, tipo: str = "proveedor") -> FSResult:
+    def generar_asiento(
+        self,
+        idfactura: int,
+        tipo: str = "proveedor",
+        subcuenta_gasto: str | None = None,
+        intracom_pct: float | None = None,
+    ) -> FSResult:
         """Genera asiento contable para una factura via PHP CLI en el container FS.
 
         FS no genera asientos automaticamente para facturas proveedor creadas via API.
@@ -564,6 +570,8 @@ class FSAdapter:
         Args:
             idfactura: ID de la factura en FS (idfactura en facturasprov/facturascli)
             tipo: "proveedor" (default) o "cliente"
+            subcuenta_gasto: si viene y no es "6000000000" → UPDATE partida 600 del asiento
+            intracom_pct: si > 0 → UPDATE partida 472 fantasma + INSERT partida 477
 
         Returns:
             FSResult con id_creado=idasiento si ok, error si falla.
@@ -574,11 +582,18 @@ class FSAdapter:
                 error="generar_asiento: ssh_host/container_name no configurados en config.yaml",
             )
 
+        # Construir argumentos opcionales para el script PHP
+        args_extra = ""
+        if subcuenta_gasto or intracom_pct:
+            sc = subcuenta_gasto or ""
+            pct = intracom_pct or 0
+            args_extra = f" {sc} {pct}"
+
         cmd = [
             "ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes",
             self.ssh_host,
             f"docker exec {self.container_name} php -d display_errors=0 "
-            f"/var/www/html/gen_asiento.php {idfactura} {tipo}",
+            f"/var/www/html/gen_asiento.php {idfactura} {tipo}{args_extra}",
         ]
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)

@@ -134,19 +134,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 106 cierre)
+## Estado actual (05/03/2026, sesion 108 cierre)
 
-**Rama**: `main` | **Ultimo commit**: feat(discovery): proveedor_discovery GPT-4o | **Tests**: 2841 PASS
+**Rama**: `main` | **Ultimo commit**: feat(gen_asiento): subcuenta_gasto + intracom_pct | **Tests**: 2841 PASS
 
-### Completado sesion 106
-- `sfce/core/proveedor_discovery.py` — GPT-4o identifica proveedores desconocidos, genera `config_sugerencias.yaml` comentado ✓
-- Integracion en `intake.py`: fase 3b discovery (CIF desconocido → GPT-4o, doc sigue a cuarentena) ✓
-- Deduplicacion cross-run: `cargar_cifs_sugeridos()` evita re-llamar GPT para el mismo CIF ✓
-- 21 tests nuevos: `test_proveedor_discovery.py` (17) + `test_intake_discovery.py` (4). Tests 2841 PASS ✓
+### Completado sesion 108
+- `gen_asiento.php` args opcionales subcuenta_gasto + intracom_pct: UPDATE 600 + UPDATE 472 fantasma + INSERT 477 ✓
+- `FSAdapter.generar_asiento()` nuevos params + `registration.py` step 5b/5c actualizados ✓
+- Test produccion: facturas 73-76 asientos correctos (629/623+475/622+472-477/625) ✓
+- Tests 2841 PASS ✓
 
-### Proxima sesion — pendientes (sesion 107)
+### Proxima sesion — pendientes (sesion 109)
 
 **CONTABILIDAD:**
 1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
-2. **Resto PDFs Maria Isabel** — verificar PDFs pendientes de importar al inbox, reprocesar
+2. **Resto PDFs Maria Isabel** — verificar PDFs pendientes de importar, reprocesar con pipeline
 3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
