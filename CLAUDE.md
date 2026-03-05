@@ -134,21 +134,19 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 96)
+## Estado actual (05/03/2026, sesion 97)
 
-**Rama**: `main` | **Ultimo commit**: `75bfdeeb` (pusheado) | **Tests**: 2801 PASS
+**Rama**: `main` | **Ultimo commit**: `9aa4bcc9` (pusheado) | **Tests**: 2818 PASS
 
-### Completado sesion 96
-- `sfce/core/fs_adapter.py`: FSAdapter completo (FSResult, FSError, defensas FS, 2-pasos+rollback, retry) ✓
-- `tests/test_fs_adapter.py`: 22 tests TDD, todos verdes ✓
-- B1 `asientos_directos.py` → `fs.crear_asiento_con_partidas()` ✓
-- B2 `phases/asientos.py` → `FSAdapter.desde_config()` ✓
-- B3 `phases/correction.py` → `fs.corregir_partida()` ✓
-- B4 `phases/registration.py` → FSAdapter en todas las funciones internas ✓
-- B5 `api/rutas/bancario.py` → `FSAdapter.desde_empresa_bd()` ✓
-- B6 `phases/pre_validation.py` → `_validar_no_existe_en_fs()` usa FSAdapter ✓
+### Completado sesion 97
+- `sfce/core/contracts.py`: 6 modelos Pydantic (IntakeOutput…CrossValidationOutput), validación en escritura ✓
+- `tests/test_contracts.py`: 17 tests TDD, todos verdes ✓
+- 6 fases integradas: intake, pre_validation, registration, asientos, correction, cross_validation ✓
+- `scripts/pipeline.py` `_ejecutar_fases_01_paralelo()` usa contratos ✓
+- `scripts/validar_contratos.py`: script diagnóstico JSONs existentes ✓
+- Clave canónica `"validados"` en validated_batch.json garantizada por contrato ✓
 
-### Proxima sesion — pendientes (sesion 97)
+### Proxima sesion — pendientes (sesion 98)
 
 **Estado FS empresa 7:** FC=5 (58-62)+asientos(86-90) ✓ | FV=5 (10-14)+asientos(91-95) ✓ | Cuarentena: ~218 PDFs
 

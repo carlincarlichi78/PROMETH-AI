@@ -1,5 +1,38 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 96) | **Branch:** main | **Tests:** 2801 PASS | **Push:** OK
+> **Actualizado:** 2026-03-05 (sesión 97) | **Branch:** main | **Tests:** 2818 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 97 — Pata 2: contratos Pydantic entre fases del pipeline)
+
+### Commits sesión 97
+
+| Hash | Descripción |
+|------|-------------|
+| `c2e47721` | feat(contracts): Pydantic models para interfaces entre fases del pipeline |
+| `9aa4bcc9` | feat(contracts): integrar validacion Pydantic en escritura de todas las fases |
+
+### Tasks completadas (sesión 97)
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| contracts.py | ✅ DONE | `sfce/core/contracts.py`: 6 modelos Pydantic (IntakeOutput, PreValidationOutput, RegistrationOutput, AsientosOutput, CorrectionOutput, CrossValidationOutput) con validación en escritura |
+| test_contracts.py | ✅ DONE | 17 tests unitarios: tipos inválidos, coerce str→float, totales inconsistentes, clave canónica 'validados', campos extra no rompen |
+| Integración fases | ✅ DONE | 6 fases + pipeline paralelo: cada `json.dump()` reemplazado por `XxxOutput.validar_y_serializar()` |
+| Clave canónica validados | ✅ DONE | `validated_batch.json` siempre produce `"validados"` (nunca `"documentos"`) |
+| scripts/validar_contratos.py | ✅ DONE | Script diagnóstico para validar JSONs existentes de cualquier cliente |
+| Tests suite completa | ✅ DONE | 2818 passed, 4 skipped (antes: 2801, +17 nuevos) |
+
+### Pendientes sesión 98
+
+**Estado contratos:** completo en pipeline principal. `cross_validation.py`, `aprendizaje.py`, scripts siguen con api_get (fuera de scope contratos).
+
+1. **Ampliar config.yaml MARIA ISABEL** — 218 PDFs en cuarentena. Inspeccionar CIFs e identificar proveedores.
+2. **Re-procesar cuarentena** — mover PDFs a inbox/ + pipeline --no-interactivo
+3. **Verificar 7000x vs 7050x** — FS usa cuenta ventas mercaderías para FV servicios. Evaluar corrección.
+4. **F6** — Ruta inbox email→pipeline
+5. **Tests E2E dashboard** — Playwright
+6. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
 
 ---
 
