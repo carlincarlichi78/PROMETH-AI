@@ -10,19 +10,12 @@ from typing import Optional
 
 logger = logging.getLogger("sfce.smart_parser")
 
+from .prompts import PROMPT_EXTRACCION_V3_2 as PROMPT_PARSEO_V3  # noqa: E402
+
 # Tipos de doc con template regex disponible
 _TIPOS_CON_TEMPLATE = {"BAN", "IMP"}
 # Mínimo de palabras para confiar en parseo Gemini (texto suficientemente rico)
 _MIN_PALABRAS_GEMINI = 8
-
-PROMPT_PARSEO = (
-    "Eres experto en contabilidad española. Analiza el texto y devuelve "
-    "SOLO JSON con: numero_factura, fecha, base_imponible, iva_porcentaje, "
-    "irpf_porcentaje, total, emisor_nombre, emisor_cif, receptor_nombre, receptor_cif. "
-    "emisor = quien emite la factura. receptor = quien la recibe. "
-    "Usa null para campos no encontrados. Importes como decimal, porcentajes como entero.\n\n"
-    "Texto:\n{texto}"
-)
 
 
 def _elegir_motor_parseo(
@@ -61,7 +54,7 @@ def _parsear_con_gemini(texto: str) -> Optional[dict]:
         client = genai.Client(api_key=key)
         respuesta = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=[{"parts": [{"text": PROMPT_PARSEO.format(texto=texto[:3000])}]}],
+            contents=[{"parts": [{"text": PROMPT_PARSEO_V3.format(texto_documento=texto[:3000])}]}],
             config={"response_mime_type": "application/json", "temperature": 0.1},
         )
         datos = json.loads(respuesta.text)
@@ -82,7 +75,7 @@ def _parsear_con_gpt_mini(texto: str) -> Optional[dict]:
         client = openai.OpenAI(api_key=key)
         respuesta = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "user", "content": PROMPT_PARSEO.format(texto=texto[:3000])}],
+            messages=[{"role": "user", "content": PROMPT_PARSEO_V3.format(texto_documento=texto[:3000])}],
             response_format={"type": "json_object"},
             temperature=0.1,
         )
@@ -104,7 +97,7 @@ def _parsear_con_gpt4o(texto: str) -> Optional[dict]:
         client = openai.OpenAI(api_key=key)
         respuesta = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": PROMPT_PARSEO.format(texto=texto[:4000])}],
+            messages=[{"role": "user", "content": PROMPT_PARSEO_V3.format(texto_documento=texto[:4000])}],
             response_format={"type": "json_object"},
             temperature=0.1,
         )

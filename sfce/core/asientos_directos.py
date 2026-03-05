@@ -50,9 +50,12 @@ def resolver_tipo_asiento(doc: dict) -> str:
 
     if tipo == "BAN":
         subtipo = doc.get("datos_extraidos", {}).get("subtipo", "comision")
-        clave = f"bancario_{subtipo}"
         if subtipo not in _SUBTIPOS_BANCARIOS:
-            raise ValueError(f"Subtipo bancario no soportado: {subtipo}")
+            logger.warning(
+                "Subtipo bancario '%s' no reconocido, usando 'comision' como fallback", subtipo
+            )
+            subtipo = "comision"
+        clave = f"bancario_{subtipo}"
         return clave
 
     clave = _TIPO_A_YAML.get(tipo)
@@ -148,7 +151,10 @@ def construir_partidas_bancario(datos: dict, subtipo: str) -> list[dict]:
         ValueError: si el subtipo no esta soportado
     """
     if subtipo not in _SUBTIPOS_BANCARIOS:
-        raise ValueError(f"Subtipo bancario no soportado: {subtipo}")
+        logger.warning(
+            "Subtipo bancario '%s' no reconocido, usando 'comision' como fallback", subtipo
+        )
+        subtipo = "comision"
 
     # Renting: OCR extrae importe=base y total=base+IVA,
     # pero plantilla espera base_imponible, iva_importe, importe(=total)

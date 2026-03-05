@@ -46,7 +46,9 @@ def extraer_factura_gemini(ruta_pdf: Path) -> Optional[dict]:
                 {
                     "parts": [
                         {"inline_data": {"mime_type": "application/pdf", "data": base64.standard_b64encode(pdf_bytes).decode()}},
-                        {"text": PROMPT_EXTRACCION + "\n\nExtrae los datos de este documento:"},
+                        {"text": PROMPT_EXTRACCION.format(
+                            texto_documento="Analiza el documento PDF adjunto y extrae sus datos."
+                        )},
                     ]
                 }
             ],

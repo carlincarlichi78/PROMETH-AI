@@ -394,9 +394,18 @@ def _check_bancario_importe(datos: dict) -> Optional[str]:
 
 
 def _check_rlc_cuota(datos: dict) -> Optional[str]:
-    """R1: cuota coherente con base (tolerancia amplia por alicuotas variables)."""
-    base = float(datos.get("base_cotizacion", 0))
-    cuota = float(datos.get("cuota_empresarial", 0))
+    """R1: cuota coherente con base (tolerancia amplia por alicuotas variables).
+
+    Compatible con esquema V3.2 (campos en metadata{}) y legacy (campos en raiz).
+    """
+    meta = datos.get("metadata") or {}
+
+    raw_base = meta.get("base_cotizacion") if meta.get("base_cotizacion") is not None else datos.get("base_cotizacion")
+    raw_cuota = meta.get("cuota_empresarial") if meta.get("cuota_empresarial") is not None else datos.get("cuota_empresarial")
+
+    base = float(raw_base or 0)
+    cuota = float(raw_cuota or 0)
+
     if base == 0 or cuota == 0:
         return None
     ratio = cuota / base

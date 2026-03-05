@@ -101,11 +101,11 @@ def extraer_factura_gpt(ruta_pdf: Path) -> Optional[dict]:
         texto = _extraer_texto_pdf(ruta_pdf)
 
         if texto:
+            prompt_completo = PROMPT_EXTRACCION.format(texto_documento=texto)
             respuesta = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": PROMPT_EXTRACCION},
-                    {"role": "user", "content": f"Documento:\n\n{texto}"},
+                    {"role": "user", "content": prompt_completo},
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.1,
@@ -118,12 +118,14 @@ def extraer_factura_gpt(ruta_pdf: Path) -> Optional[dict]:
                 logger.warning(f"No se pudo extraer texto ni imagen de {ruta_pdf.name}")
                 return None
 
+            prompt_vision = PROMPT_EXTRACCION.format(
+                texto_documento="Analiza el documento PDF adjunto y extrae sus datos."
+            )
             respuesta = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": PROMPT_EXTRACCION},
                     {"role": "user", "content": [
-                        {"type": "text", "text": "Extrae los datos de este documento:"},
+                        {"type": "text", "text": prompt_vision},
                         {"type": "image_url", "image_url": {
                             "url": f"data:image/png;base64,{imagen_b64}",
                             "detail": "high",

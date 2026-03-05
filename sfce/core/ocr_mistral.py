@@ -75,11 +75,7 @@ def extraer_factura_mistral(ruta_pdf: Path) -> Optional[dict]:
             return None
 
         # Parsear campos con segundo llamado a Mistral chat usando prompt compartido
-        prompt_parseo = f"""{PROMPT_EXTRACCION}
-
-Documento:
-
-{texto_ocr}"""
+        prompt_parseo = PROMPT_EXTRACCION.format(texto_documento=texto_ocr)
 
         chat_resp = client.chat.complete(
             model="mistral-small-latest",
