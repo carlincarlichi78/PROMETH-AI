@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-05T19:06:53.112676'
+ultima_actualizacion: '2026-03-06T10:15:42.510963'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -11,7 +11,7 @@ patrones:
   - ANT
   aprendido: '2026-02-26'
   exitos: 4
-  fallos: 25
+  fallos: 27
   origen: manual
   descripcion: Proveedor/cliente no existe en FS — crear desde datos OCR
 - id: base_002
@@ -1134,3 +1134,23 @@ patrones:
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-09-10. La factura FAC0007A1 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260306_101530
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 3T\-3\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-06T10:15:30.283931'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 3T-3.pdf
+- id: auto_20260306_101530
+  regex: No\ se\ encontro\ entidad\ en\ FS\ para\ Ingresos\ 3T\-4\.pdf
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-06T10:15:30.976225'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: No se encontro entidad en FS para Ingresos 3T-4.pdf

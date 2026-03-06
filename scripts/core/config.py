@@ -22,10 +22,12 @@ PAISES_UE = {
 }
 
 
-def _normalizar_cif(cif: str) -> str:
+def _normalizar_cif(cif) -> str:
     """Normaliza CIF removiendo espacios, puntos y guiones para comparacion."""
     import re
-    return re.sub(r'[\s\.\-/]', '', cif).upper()
+    if not cif:
+        return ""
+    return re.sub(r'[\s\.\-/]', '', str(cif)).upper()
 
 
 def _slugificar(nombre: str) -> str:
@@ -169,8 +171,58 @@ class ConfigCliente:
             "_nombre_corto": nombre_corto,
         }
 
+    @property
+    def cifs_propios(self) -> list:
+        """Lista de CIFs propios de la empresa (incluye el principal)."""
+        raw = self.empresa.get("cifs_propios", [])
+        if raw:
+            return [_normalizar_cif(c) for c in raw]
+        return [_normalizar_cif(self.cif)] if self.cif else []
+
+    @property
+    def nombres_propios(self) -> list:
+        """Lista de nombres/variantes de la empresa."""
+        raw = self.empresa.get("nombres_propios", [])
+        if raw:
+            return [n.upper() for n in raw]
+        return [self.nombre.upper()] if self.nombre else []
+
+    def es_cif_propio(self, cif: str) -> bool:
+        """Verifica si un CIF pertenece a la empresa (incluye variantes)."""
+        if not cif:
+            return False
+        cif_norm = _normalizar_cif(cif)
+        for cif_propio in self.cifs_propios:
+            if cif_norm == cif_propio or cif_norm.endswith(cif_propio) or cif_propio.endswith(cif_norm):
+                return True
+        return False
+
+    def buscar_por_cif(self, cif: str) -> Optional[tuple]:
+        """Busca en TODOS (proveedores + clientes) por CIF.
+
+        Returns:
+            (clave, datos, rol) o None. rol = "proveedor" o "cliente"
+        """
+        cif_norm = _normalizar_cif(cif)
+        if not cif_norm:
+            return None
+        for nombre, datos in self.proveedores.items():
+            if _normalizar_cif(datos.get("cif", "")) == cif_norm:
+                return (nombre, datos, "proveedor")
+            for variante in datos.get("cif_variantes_ocr", []):
+                if _normalizar_cif(variante) == cif_norm:
+                    return (nombre, datos, "proveedor")
+        for nombre, datos in self.clientes.items():
+            cif_cli = datos.get("cif") or ""
+            if cif_cli and _normalizar_cif(cif_cli) == cif_norm:
+                return (nombre, datos, "cliente")
+        return None
+
     def buscar_proveedor_por_cif(self, cif: str) -> Optional[dict]:
-        """Busca proveedor por CIF. BD primero, fallback YAML."""
+        """Busca proveedor por CIF. BD primero, fallback YAML.
+
+        Tambien busca en cif_variantes_ocr de cada proveedor.
+        """
         if self._repo and self._empresa_bd_id:
             cif_norm = _normalizar_cif(cif)
             if cif_norm:
@@ -181,9 +233,14 @@ class ConfigCliente:
                     return self._overlay_a_dict(overlay)
         # Fallback YAML
         cif_norm = _normalizar_cif(cif)
+        if not cif_norm:
+            return None
         for nombre, datos in self.proveedores.items():
             if _normalizar_cif(datos.get("cif", "")) == cif_norm:
                 return {**datos, "_nombre_corto": nombre}
+            for variante in datos.get("cif_variantes_ocr", []):
+                if _normalizar_cif(variante) == cif_norm:
+                    return {**datos, "_nombre_corto": nombre}
         return None
 
     def buscar_proveedor_por_nombre(self, nombre: str) -> Optional[dict]:

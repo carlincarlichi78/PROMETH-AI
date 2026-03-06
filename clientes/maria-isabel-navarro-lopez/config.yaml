@@ -356,7 +356,7 @@ proveedores:
     - DROPBOX
     pais: IRL
     divisa: EUR
-    subcuenta: '6290000000'
+    subcuenta: '6220000000'
     codimpuesto: IVA0
     regimen: intracomunitario
     notas: Almacenamiento cloud. Mensual. Intracomunitario IE
@@ -380,7 +380,7 @@ proveedores:
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
-      subcuenta_gasto: '6290000000'
+      subcuenta_gasto: '6220000000'
       intracom: true
       iva_autorepercusion: 21
   es_san_isidro:

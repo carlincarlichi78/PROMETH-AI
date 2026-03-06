@@ -22,10 +22,12 @@ PAISES_UE = {
 }
 
 
-def _normalizar_cif(cif: str) -> str:
+def _normalizar_cif(cif) -> str:
     """Normaliza CIF removiendo espacios, puntos y guiones para comparacion."""
     import re
-    return re.sub(r'[\s\.\-/]', '', cif).upper()
+    if not cif:
+        return ""
+    return re.sub(r'[\s\.\-/]', '', str(cif)).upper()
 
 
 class ConfigCliente:

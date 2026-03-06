@@ -466,6 +466,17 @@ def _match_proveedor_multi_signal(
                     etiqueta = "keyword(" + ",".join(sorted(comunes)[:2]) + ")"
                     _add(clave, etiqueta, 25)
 
+    # f2) concepto_keywords v2 — lista de keywords por proveedor (+30)
+    if concepto:
+        for clave, datos in config.proveedores.items():
+            keywords_v2 = datos.get("concepto_keywords", [])
+            if not keywords_v2:
+                continue
+            for kw in keywords_v2:
+                if kw and kw.upper() in concepto:
+                    _add(clave, f"concepto_kw({kw.lower()[:12]})", 30)
+                    break
+
     # g) Nombre proveedor en nombre del archivo (+20)
     if nombre_archivo:
         arch_upper = nombre_archivo.upper()
@@ -488,6 +499,19 @@ def _match_proveedor_multi_signal(
                     if imp_f > 0 and abs(total_f - imp_f) / imp_f <= 0.10:
                         _add(clave, "importe_tipico", 15)
         except (TypeError, ValueError, ZeroDivisionError):
+            pass
+
+    # h2) importe_rango v2 — [min, max] del proveedor (+15)
+    if total is not None:
+        try:
+            total_f2 = float(total)
+            for clave, datos in config.proveedores.items():
+                rango = datos.get("importe_rango")
+                if rango and len(rango) == 2:
+                    r_min, r_max = float(rango[0]), float(rango[1])
+                    if r_min <= total_f2 <= r_max:
+                        _add(clave, "importe_rango", 15)
+        except (TypeError, ValueError):
             pass
 
     # i) Idioma extranjero + proveedor con pais != ESP (+10)
@@ -761,7 +785,7 @@ def _construir_documento_confianza(
 
     # Si la entidad esta en config, agregar fuente config
     if entidad:
-        doc.agregar_dato("cif", "config", entidad.get("cif", "").upper())
+        doc.agregar_dato("cif", "config", (entidad.get("cif") or "").upper())
 
     # Importe total
     total_gpt = datos_gpt.get("total")
@@ -1073,7 +1097,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     # 1. Si emisor_cif es CIF propio → yo emito → FV
     if _emisor_cif and config.es_cif_propio(_emisor_cif):
         _tipo_pre = "FV"
-        logger.info(f"  [{nombre_archivo}] Rol: emisor es CIF propio → FV")
+        logger.info(f"  [{nombre_archivo}] Rol: emisor es CIF propio -> FV")
 
     # 2. Si emisor_cif matchea un CLIENTE → OCR invirtió → FV + swap
     elif _emisor_cif:
@@ -1081,7 +1105,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         if _res_emisor and _res_emisor[2] == "cliente":
             logger.info(
                 f"  [{nombre_archivo}] Rol: emisor {_emisor_cif} es cliente "
-                f"'{_res_emisor[0]}' → FV + swap"
+                f"'{_res_emisor[0]}' -> FV + swap"
             )
             _tipo_pre = "FV"
             _old_e_nombre = datos_gpt.get("emisor_nombre") or ""
@@ -1097,7 +1121,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         if _res_receptor and _res_receptor[2] == "proveedor":
             logger.info(
                 f"  [{nombre_archivo}] Rol: receptor {_receptor_cif} es proveedor "
-                f"'{_res_receptor[0]}' → swap"
+                f"'{_res_receptor[0]}' -> swap"
             )
             _old_e_nombre = datos_gpt.get("emisor_nombre") or ""
             _old_r_nombre = datos_gpt.get("receptor_nombre") or ""
@@ -1239,7 +1263,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         "tipo": tipo_doc,
         "datos_extraidos": datos_gpt,
         "entidad": entidad.get("_nombre_corto", "desconocido") if entidad else "desconocido",
-        "entidad_cif": entidad.get("cif", "") if entidad else "",
+        "entidad_cif": (entidad.get("cif") or "") if entidad else "",
         "confianza_global": confianza_global_val,
         "nivel_confianza": nivel,
         "campos_bajo_umbral": campos_bajos,

@@ -404,6 +404,22 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         regimen = (entidad.get("regimen", "general") if entidad else "general").lower()
         es_intracomunitario = regimen == "intracomunitario"
 
+    # Override: asiento.subcuenta_gasto v2 tiene prioridad sobre subcuenta legacy
+    if entidad:
+        asiento_cfg = entidad.get("asiento") or {}
+        subcuenta_v2 = asiento_cfg.get("subcuenta_gasto")
+        if subcuenta_v2:
+            form["_subcuenta_gasto"] = subcuenta_v2
+            logger.info(f"  Subcuenta gasto v2: {subcuenta_v2} (asiento.subcuenta_gasto)")
+        elif not form.get("_subcuenta_gasto"):
+            subcuenta_legacy = entidad.get("subcuenta")
+            if subcuenta_legacy:
+                form["_subcuenta_gasto"] = subcuenta_legacy
+        # asiento.intracom: permite declarar intracom aunque regimen sea general
+        if asiento_cfg.get("intracom"):
+            es_intracomunitario = True
+            logger.info(f"  Intracom declarado via asiento.intracom=true")
+
     # Bug fix: intracomunitario siempre IVA0 (autorepercusion se hace post-registro)
     if es_intracomunitario:
         codimpuesto_defecto = "IVA0"

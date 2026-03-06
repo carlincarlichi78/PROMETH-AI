@@ -624,6 +624,39 @@ def validar_documento_individual(
         if aviso:
             avisos_doc.append(aviso)
 
+    # V1-V3: Checks de validacion v2 del config.yaml (solo AVISOS, no errores)
+    if es_proveedor and entidad:
+        validacion_cfg = entidad.get("validacion") or {}
+        if validacion_cfg:
+            # V1: IVA esperado
+            iva_esperado = validacion_cfg.get("iva_esperado")
+            if iva_esperado is not None:
+                iva_doc = float(datos.get("iva_porcentaje", 0) or 0)
+                iva_lista = iva_esperado if isinstance(iva_esperado, list) else [iva_esperado]
+                if iva_doc not in [float(v) for v in iva_lista]:
+                    avisos_doc.append(
+                        f"[V1] IVA {iva_doc}% no coincide con esperado "
+                        f"{iva_lista} para {entidad.get('_nombre_corto', cif_entidad)}"
+                    )
+            # V2: IRPF obligatorio
+            irpf_obligatorio = validacion_cfg.get("irpf_obligatorio")
+            if irpf_obligatorio:
+                irpf_doc = datos.get("irpf_porcentaje")
+                if not irpf_doc:
+                    avisos_doc.append(
+                        f"[V2] Proveedor {entidad.get('_nombre_corto', cif_entidad)} "
+                        f"requiere IRPF pero no se detectó en la factura"
+                    )
+            # V3: Total máximo
+            total_max = validacion_cfg.get("total_max")
+            if total_max is not None:
+                total_doc = float(datos.get("total", 0) or 0)
+                if total_doc > float(total_max):
+                    avisos_doc.append(
+                        f"[V3] Total {total_doc}€ supera máximo configurado "
+                        f"{total_max}€ para {entidad.get('_nombre_corto', cif_entidad)}"
+                    )
+
     return errores_doc, avisos_doc
 
 
