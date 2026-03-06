@@ -1,0 +1,400 @@
+empresa:
+  nombre: "MARIA ISABEL NAVARRO LOPEZ"
+  cif: "25719412F"
+  cifs_propios: ["25719412F"]
+  nombres_propios:
+    - "MARIA ISABEL NAVARRO LOPEZ"
+    - "MARIA NAVARRO"
+    - "NAVARRO LOPEZ MARIA ISABEL"
+    - "M.I. NAVARRO"
+    - "MARIA NAVARO LOPEZ"
+  tipo: autonomo
+  idempresa: 7
+  codagente_fs: null
+  fs_url: "https://fs-uralde.prometh-ai.es/api/3"
+  fs_token: "d0ed76fcc22785424b6c"
+  fs_ssh_host: "carli@65.108.60.69"
+  fs_container_name: "fs-uralde-facturascripts-1"
+  ejercicio_activo: "2025"
+  ejercicios:
+    "2025": "0007"
+  regimen_iva: general
+
+perfil:
+  descripcion: "Abogada autonoma. IAE 731. Estimacion directa simplificada. IVA 21%."
+  modelo_negocio: |
+    Abogada autonoma con despacho profesional.
+    Cliente principal: BLANCO ABOGADOS S.L. (B92476787) — factura mensual con IRPF 15%.
+    Otros clientes: comunidades de propietarios, particulares.
+    Mutua: Mutualidad de la Abogacia (V28024149) — cuota mensual, sustituye RETA.
+    Gestora: ASESORIA LOPEZ DE URALDE S.L. (B92010768).
+  actividades:
+    - codigo: "731"
+      descripcion: "Abogada"
+      iva_venta: 21
+      exenta: false
+  particularidades:
+    - "Mutualidad Abogacia sustituye a la RETA — es gasto deducible IRPF sin IVA"
+    - "Cliente principal BLANCO ABOGADOS practica retencion IRPF 15%"
+    - "Gastos de vehiculo: combustible (peajes Autopista del Sol, gasolineras)"
+    - "Software profesional: Dropbox, iCloud (intracomunitario IE)"
+    - "Formacion: Centro Estudios Profesionales Andalucia"
+    - "Notificaciones y gestiones: ENAX (B85683167) x34 apuntes/ano"
+    - "Paga retenciones a 2 colaboradores (Modelo 111 — importes minimos)"
+  empleados: false
+  importador: false
+  exportador: false
+  divisas_habituales: []
+
+proveedores:
+  mutualidad_abogacia:
+    rol: proveedor
+    cif: "V28024149"
+    nombre_fs: "MUTUALIDAD DE LA ABOGACIA"
+    aliases: ["MUTUALIDAD ABOGACIA", "MUTUALIDAD", "MUTUA ABOGACIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6420000000"
+    codimpuesto: IVA0
+    regimen: general
+    notas: "Cuota mensual Mutualidad Abogacia. Sin IVA. Sustituye RETA. Gasto IRPF no IVA"
+
+  asesoria_uralde:
+    rol: proveedor
+    cif: "B92010768"
+    nombre_fs: "ASESORIA LOPEZ DE URALDE S.L."
+    aliases: ["ASESORIA LOPEZ DE URALDE", "URALDE", "LOPEZ DE URALDE", "092010768", "892010768"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Gestora. Gasto G19 servicios profesionales"
+
+  plenergy:
+    rol: proveedor
+    cif: "B93275394"
+    cif_variantes_ocr: ["893275394"]
+    nombre_fs: "PLENERGY GRUPO SL"
+    aliases: ["PLENERGY", "PLENOIL", "PLENERGY GRUPO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo profesional. G18"
+
+  icam:
+    rol: proveedor
+    cif: "Q2963001I"
+    nombre_fs: "ILUSTRE COLEGIO DE ABOGADOS DE MALAGA"
+    aliases: ["COLEGIO ABOGADOS", "ICAM", "COLEGIO ABOGADOS MALAGA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Cuota colegial y servicios ICAM"
+
+  autopista_sol:
+    rol: proveedor
+    cif: "A81432353"
+    cif_variantes_ocr: ["481432353", "A81132353", "A81412353", "A5143255"]
+    nombre_fs: "AUTOPISTA DEL SOL CESA"
+    aliases: ["AUTOPISTA DEL SOL", "AUTOPISTA SOL", "CESA", "A81132353", "A81412353", "A5143255"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Peajes autopista vehiculo profesional"
+
+  enax:
+    rol: proveedor
+    cif: "B85683167"
+    nombre_fs: "EXTERNALIZACION DE NOTIFICADOS Y APLICACIONES SL"
+    aliases: ["ENAX", "EXTERNALIZACION NOTIFICADOS", "ENAX NOTIFICACIONES", "8-85683167", "B-85683767", "B-85683167"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Notificaciones electronicas y gestiones procesales. ~34 facturas/ano"
+
+  avatel:
+    rol: proveedor
+    cif: "A93135218"
+    nombre_fs: "AVATEL TELECOM SA"
+    aliases: ["AVATEL", "AVATEL TELECOM"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Internet y telefonia despacho"
+
+  centro_estudios:
+    rol: proveedor
+    cif: "B41190794"
+    nombre_fs: "CENTRO DE ESTUDIOS PROFESIONALES DE ANDALUCIA"
+    aliases: ["CENTRO ESTUDIOS", "CEPA", "CENTRO ESTUDIOS PROFESIONALES"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6220000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Formacion y cursos profesionales. G22"
+
+  dropbox:
+    rol: proveedor
+    cif: "IE9852817"
+    nombre_fs: "DROPBOX INTERNATIONAL UNLIMITED COMPANY"
+    aliases: ["DROPBOX"]
+    pais: IRL
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    notas: "Almacenamiento cloud. Mensual. Intracomunitario IE"
+
+  es_san_isidro:
+    rol: proveedor
+    cif: "A29367711"
+    nombre_fs: "E.S. SAN ISIDRO"
+    aliases: ["SAN ISIDRO", "E.S. SAN ISIDRO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Gasolinera. Combustible vehiculo"
+
+  holafibra:
+    rol: proveedor
+    cif: "B93508000"
+    nombre_fs: "HOLAFIBRA TELECOM SL"
+    aliases: ["HOLAFIBRA", "HOLAFIBRA TELECOM"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Internet y telefonia (alternativa Avatel)"
+
+  petroprix:
+    rol: proveedor
+    cif: "B23709892"
+    nombre_fs: "PETROPRIX ENERGIA SL"
+    aliases: ["PETROPRIX", "PETROPRIX ENERGIA", "823709892"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo"
+
+  media_markt:
+    rol: proveedor
+    cif: "A11785409"
+    nombre_fs: "MEDIA MARKT S.A."
+    aliases: ["MEDIA MARKT", "MEDIAMARKT"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material electronico oficina"
+
+  apple_distribution:
+    rol: proveedor
+    cif: "9700053D"
+    nombre_fs: "APPLE DISTRIBUTION INTERNATIONAL LTD"
+    aliases: ["APPLE", "APPLE DISTRIBUTION", "ICLOUD"]
+    pais: IRL
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: intracomunitario
+    notas: "iCloud y software Apple. Mensual. Intracomunitario IE"
+
+  complementos_puerta_europa:
+    rol: proveedor
+    cif: "B72385594"
+    nombre_fs: "COMPLEMENTOS PUERTA DE EUROPA SL"
+    aliases: ["COMPLEMENTOS PUERTA DE EUROPA", "PUERTA EUROPA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material oficina"
+
+  moeve_retail:
+    rol: proveedor
+    cif: "A28354520"
+    nombre_fs: "MOEVE RETAIL OPERATIONS SAU"
+    aliases: ["MOEVE", "MOEVE RETAIL", "REPSOL", "A283354520", "A2854520"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo (Repsol)"
+
+  galp:
+    rol: proveedor
+    cif: "A28559573"
+    nombre_fs: "GALP ENERGIA ESPANA SA"
+    aliases: ["GALP", "GALP ENERGIA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo"
+
+  spanpetrol:
+    rol: proveedor
+    cif: "B80341985"
+    nombre_fs: "SPANPETROL SL"
+    aliases: ["SPANPETROL", "E.S MANILVA", "ES MANILVA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo (gasolinera Manilva)"
+
+  markoil:
+    rol: proveedor
+    cif: "A79209854"
+    nombre_fs: "MARKOIL SA"
+    aliases: ["MARKOIL"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo"
+
+  eessa:
+    rol: proveedor
+    cif: "A80393812"
+    nombre_fs: "EESSA"
+    aliases: ["EESSA"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6280000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Combustible vehiculo"
+
+  coloso_algeciras:
+    rol: proveedor
+    cif: "B67718361"
+    nombre_fs: "COLOSO ALGECIRAS AV SLU"
+    aliases: ["COLOSO ALGECIRAS", "COLOSO", "COLOSO SAN ISIDRO", "CoLoS0 SAN 46"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Gasolinera (estacion San Isidro, Churriana). Combustible vehiculo DIESEL"
+
+  algetonersl:
+    rol: proveedor
+    cif: "B11554789"
+    nombre_fs: "SUMINISTROS DE OFICINAS ALGETONERSL"
+    aliases: ["ALGETONERSL", "SUMINISTROS OFICINAS ALGECIRAS", "ALGETONER"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Toner y material oficina"
+
+  amazon:
+    rol: proveedor
+    cif: "W0184081H"
+    nombre_fs: "AMAZON EU SARL"
+    aliases: ["AMAZON", "AMAZON EU"]
+    pais: LUX
+    divisa: EUR
+    subcuenta: "6290000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Material oficina online"
+
+  campmany_bermejo:
+    rol: proveedor
+    cif: "00383225E"
+    nombre_fs: "CAMPMANY BERMEJO EMILIO"
+    aliases: ["CAMPMANY", "CAMPMANY BERMEJO"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    codretencion: IRPF15
+    regimen: general
+    notas: "Abogado colaborador. IRPF 15%"
+
+  morilla_perez:
+    rol: proveedor
+    cif: "21476347M"
+    nombre_fs: "MORILLA PEREZ PEDRO JOSE"
+    aliases: ["MORILLA", "MORILLA PEREZ"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Profesional colaborador"
+
+  ruiz_rico:
+    rol: proveedor
+    cif: "24870562H"
+    nombre_fs: "RUIZ RICO MARQUEZ JUAN"
+    aliases: ["RUIZ RICO", "RUIZ RICO MARQUEZ"]
+    pais: ESP
+    divisa: EUR
+    subcuenta: "6230000000"
+    codimpuesto: IVA21
+    regimen: general
+    notas: "Profesional colaborador"
+
+clientes:
+  blanco_abogados:
+    rol: cliente
+    cif: "B92476787"
+    nombre_fs: "BLANCO ABOGADOS SL"
+    aliases: ["BLANCO ABOGADOS", "BLANCO ABOGADOS , S.L", "BLANCO ABOGADOS S.L."]
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    subcuenta_cliente: "4300000001"
+    subcuenta_ingreso: "7050000000"
+    irpf_que_retienen: 15
+    notas: "Cliente principal (honorarios gestion juridica)"
+  varios_clientes:
+    rol: cliente
+    cif: null
+    nombre_fs: "VARIOS CLIENTES"
+    aliases: []
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    fallback: true
+    fallback_sin_cif: true
+    notas: "Cliente generico para particulares y comunidades sin entrada propia"
+
+tipos_cambio: {}
+
+tolerancias:
+  cuadre_asiento: 0.01
+  comparacion_importes: 0.02
+  confianza_minima: 85
+
+sfce:
+  empresa_id: 14

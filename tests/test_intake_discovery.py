@@ -23,6 +23,10 @@ def _crear_config_mock(ruta_yaml: Path):
     config.buscar_proveedor_por_nombre.return_value = None
     config.buscar_cliente_por_cif.return_value = None
     config.buscar_cliente_por_nombre.return_value = None
+    config.es_cif_propio.return_value = False
+    config.buscar_por_cif.return_value = None
+    config.cifs_propios = ["25719412F"]
+    config.nombres_propios = ["MARIA ISABEL NAVARRO LOPEZ"]
     return config
 
 

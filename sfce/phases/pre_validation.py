@@ -464,15 +464,16 @@ def validar_documento_individual(
 
     # Check 1: CIF formato
     tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
-    # Si intake identificó la entidad con CIF canónico, usarlo para validar formato
+    # Si intake identifico la entidad con CIF canonico, usarlo para validar formato
     cif_canonical = doc.get("entidad_cif", "")
     cif_validar = cif_canonical if cif_canonical else cif_entidad
+    # Si intake ya identifico la entidad (multi-signal o config match), no bloquear
+    entidad_identificada = bool(doc.get("_config_match")) or bool(entidad)
     err = _validar_cif_formato(cif_validar, pais_entidad)
     if err:
-        # FV sin receptor_cif: no bloquear (fallback VARIOS_CLIENTES en CHECK 2)
         es_fv_sin_receptor = tipo_doc == "FV" and not datos.get("receptor_cif")
-        if tipo_doc in tipos_cif_opcional or es_fv_sin_receptor:
-            avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
+        if tipo_doc in tipos_cif_opcional or es_fv_sin_receptor or entidad_identificada:
+            avisos_doc.append(f"[CHECK 1] {err} (no bloqueante: entidad identificada)")
         else:
             errores_doc.append(f"[CHECK 1] {err}")
 
@@ -711,10 +712,12 @@ def ejecutar_pre_validacion(
 
         # Check 1: CIF formato (no bloquear NOM/BAN/RLC/IMP si falta CIF)
         tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
+        # Si intake ya identifico la entidad (multi-signal/config match), no bloquear
+        entidad_identificada = bool(doc.get("_config_match")) or bool(entidad)
         err = _validar_cif_formato(cif_entidad, pais_entidad)
         if err:
-            if tipo_doc in tipos_cif_opcional:
-                avisos_doc.append(f"[CHECK 1] {err} (no bloqueante para {tipo_doc})")
+            if tipo_doc in tipos_cif_opcional or entidad_identificada:
+                avisos_doc.append(f"[CHECK 1] {err} (no bloqueante: entidad identificada)")
             else:
                 errores_doc.append(f"[CHECK 1] {err}")
 

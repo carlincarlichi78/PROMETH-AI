@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-05T16:00:09.501447'
+ultima_actualizacion: '2026-03-05T19:06:53.112676'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -1095,3 +1095,42 @@ patrones:
   fallos: 0
   origen: auto
   error_original: '400 Client Error: Bad Request for url: https://fs-uralde.prometh-ai.es/api/3/facturaclientes'
+- id: auto_20260305_190106
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-07\-30\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-05T19:01:06.769254'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-07-30. La factura FAC0007A1 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260305_190109
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-09\-05\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-05T19:01:09.959640'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-09-05. La factura FAC0007A1 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260305_190110
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-09\-10\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-05T19:01:10.541361'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-09-10. La factura FAC0007A1 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '

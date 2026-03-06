@@ -237,16 +237,26 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     from ..core.config import _normalizar_cif
     emisor_cif = _normalizar_cif(datos_gpt.get("emisor_cif") or "")
     receptor_cif = _normalizar_cif(datos_gpt.get("receptor_cif") or "")
-    cif_empresa = _normalizar_cif(config.cif)
 
-    # Comparacion con y sin prefijo pais (ej: "ES76638663H" == "76638663H")
-    def _cif_coincide(cif_ocr: str, cif_ref: str) -> bool:
-        return cif_ocr == cif_ref or cif_ocr.endswith(cif_ref) or cif_ref.endswith(cif_ocr)
-
-    if emisor_cif and _cif_coincide(emisor_cif, cif_empresa):
+    # 1. Si emisor_cif es CIF propio → yo emito → FV
+    if emisor_cif and config.es_cif_propio(emisor_cif):
         return "FV"
-    if receptor_cif and _cif_coincide(receptor_cif, cif_empresa):
+    # 2. Si receptor_cif es CIF propio → yo recibo → FC
+    if receptor_cif and config.es_cif_propio(receptor_cif):
         return "FC"
+
+    # 3. Clasificacion por rol: buscar en proveedores + clientes
+    # Si emisor_cif matchea un CLIENTE conocido → OCR invirtio → FV
+    if emisor_cif:
+        resultado = config.buscar_por_cif(emisor_cif)
+        if resultado and resultado[2] == "cliente":
+            return "FV"
+
+    # Si receptor_cif matchea un PROVEEDOR conocido → OCR invirtio → FC
+    if receptor_cif:
+        resultado_r = config.buscar_por_cif(receptor_cif)
+        if resultado_r and resultado_r[2] == "proveedor":
+            return "FC"
 
     # Fallback por keywords en tipo_gpt
     if "factura_cliente" in tipo_gpt:
@@ -254,7 +264,7 @@ def _clasificar_tipo_documento(datos_gpt: dict, config: ConfigCliente) -> str:
     if "factura_proveedor" in tipo_gpt:
         return "FC"
 
-    # Fallback: buscar emisor/receptor en proveedores/clientes cuando CIF no identifica FC/FV
+    # Fallback: buscar emisor/receptor en proveedores/clientes
     emisor_nombre = datos_gpt.get("emisor_nombre") or ""
     receptor_nombre = datos_gpt.get("receptor_nombre") or ""
     if emisor_cif and config.buscar_proveedor_por_cif(emisor_cif):
@@ -646,7 +656,10 @@ def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
 
 
 def _mover_a_cuarentena(ruta_pdf: Path, ruta_cuarentena: Path, motivo: str):
-    """Mueve un PDF a la carpeta de cuarentena."""
+    """Mueve un PDF a la carpeta de cuarentena y borra su cache OCR.
+
+    Borrar el cache evita bucle infinito: cuarentena → inbox → cache malo → cuarentena.
+    """
     ruta_cuarentena.mkdir(parents=True, exist_ok=True)
     destino = ruta_cuarentena / ruta_pdf.name
     # Evitar sobreescribir
@@ -659,6 +672,14 @@ def _mover_a_cuarentena(ruta_pdf: Path, ruta_cuarentena: Path, motivo: str):
             i += 1
     shutil.move(str(ruta_pdf), str(destino))
     logger.warning(f"PDF movido a cuarentena: {destino.name} — Motivo: {motivo}")
+    # Borrar cache OCR (ruta_cuarentena.parent = ruta_cliente)
+    try:
+        ruta_cache = ruta_cuarentena.parent / ".ocr_cache" / (ruta_pdf.stem + ".ocr.json")
+        if ruta_cache.exists():
+            ruta_cache.unlink()
+            logger.info(f"  Cache OCR borrado (cuarentena): {ruta_cache.name}")
+    except Exception:
+        pass
 
 
 def _parsear_importe(texto: str) -> Optional[float]:
@@ -1044,39 +1065,49 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             avisos.append((f"Sin datos extraibles: {nombre_archivo}", None))
             return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1, "sugerencias": []}
 
-    # 2b. Corrección inversión emisor/receptor (OCR a veces los confunde)
+    # 2b. Clasificación por rol (config.yaml v2) — swaps basados en roles declarativos
     _emisor_cif = (datos_gpt.get("emisor_cif") or "").strip()
     _receptor_cif = (datos_gpt.get("receptor_cif") or "").strip()
-    _empresa_cif = (config.empresa.get("cif") or "").strip().upper()
+    _tipo_pre = None  # pre-clasificacion basada en roles
 
-    # Caso A: emisor_cif vacío pero receptor_cif es un proveedor conocido → OCR invirtió ticket
-    if not _emisor_cif and _receptor_cif:
-        _prov = config.buscar_proveedor_por_cif(_receptor_cif)
-        if _prov:
-            logger.info(
-                f"  [{nombre_archivo}] Swap emisor/receptor: OCR invirtió roles "
-                f"(receptor_cif={_receptor_cif} es proveedor)"
-            )
-            datos_gpt["emisor_cif"] = _receptor_cif
-            datos_gpt["receptor_cif"] = _empresa_cif
-            datos_gpt["receptor_nombre"] = config.empresa.get("nombre", "")
+    # 1. Si emisor_cif es CIF propio → yo emito → FV
+    if _emisor_cif and config.es_cif_propio(_emisor_cif):
+        _tipo_pre = "FV"
+        logger.info(f"  [{nombre_archivo}] Rol: emisor es CIF propio → FV")
 
-    # Caso B: receptor_cif es el CIF de la empresa y emisor_cif es un cliente conocido → FV invertido
-    elif _receptor_cif.upper() == _empresa_cif and _emisor_cif:
-        _cliente = config.buscar_cliente_por_cif(_emisor_cif)
-        if _cliente:
+    # 2. Si emisor_cif matchea un CLIENTE → OCR invirtió → FV + swap
+    elif _emisor_cif:
+        _res_emisor = config.buscar_por_cif(_emisor_cif)
+        if _res_emisor and _res_emisor[2] == "cliente":
             logger.info(
-                f"  [{nombre_archivo}] Swap emisor/receptor: OCR invirtió FV "
-                f"(emisor={_emisor_cif} es cliente, receptor=empresa → swap)"
+                f"  [{nombre_archivo}] Rol: emisor {_emisor_cif} es cliente "
+                f"'{_res_emisor[0]}' → FV + swap"
             )
-            _old_emisor_nombre = datos_gpt.get("emisor_nombre") or ""
-            datos_gpt["emisor_cif"] = _empresa_cif
-            datos_gpt["emisor_nombre"] = config.empresa.get("nombre", "")
+            _tipo_pre = "FV"
+            _old_e_nombre = datos_gpt.get("emisor_nombre") or ""
+            _old_r_nombre = datos_gpt.get("receptor_nombre") or ""
+            datos_gpt["emisor_cif"] = _receptor_cif or config.cif
+            datos_gpt["emisor_nombre"] = _old_r_nombre or config.nombre
             datos_gpt["receptor_cif"] = _emisor_cif
-            datos_gpt["receptor_nombre"] = _old_emisor_nombre
+            datos_gpt["receptor_nombre"] = _old_e_nombre
 
-    # 3. Clasificar tipo documento
-    tipo_doc = _clasificar_tipo_documento(datos_gpt, config)
+    # 3. Si receptor_cif matchea un PROVEEDOR y no hay emisor → OCR invirtió → swap
+    if _receptor_cif and not (datos_gpt.get("emisor_cif") or "").strip():
+        _res_receptor = config.buscar_por_cif(_receptor_cif)
+        if _res_receptor and _res_receptor[2] == "proveedor":
+            logger.info(
+                f"  [{nombre_archivo}] Rol: receptor {_receptor_cif} es proveedor "
+                f"'{_res_receptor[0]}' → swap"
+            )
+            _old_e_nombre = datos_gpt.get("emisor_nombre") or ""
+            _old_r_nombre = datos_gpt.get("receptor_nombre") or ""
+            datos_gpt["emisor_cif"] = _receptor_cif
+            datos_gpt["emisor_nombre"] = _old_r_nombre
+            datos_gpt["receptor_cif"] = ""
+            datos_gpt["receptor_nombre"] = _old_e_nombre
+
+    # 3. Clasificar tipo documento (usar pre-clasificacion por rol si disponible)
+    tipo_doc = _tipo_pre or _clasificar_tipo_documento(datos_gpt, config)
 
     # Hint de tipo por subcarpeta: inbox/ingresos/ → FV (facturas emitidas)
     if tipo_doc in ("OTRO", "FC") and "ingresos" in ruta_pdf.parts:
