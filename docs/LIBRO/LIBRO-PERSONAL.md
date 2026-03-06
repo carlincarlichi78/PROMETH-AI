@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-06 (sesión 112)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-06 (sesión 113)
 
 ---
 
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 110 — CERRADA)
+## Estado rápido (sesión 113 — CERRADA)
 
-- **Completado:** Reorganización María Isabel — limpiar FS empresa 7 (MariaDB), mover 11 PDFs a inbox/, crear .ocr_cache/ con 11 JSONs migrados, refactor cache_ocr.py con retrocompat. Tests 2841 PASS.
-- **CONTABILIDAD pendiente sesión 111:** Re-ejecutar pipeline María Isabel (verificar .ocr_cache/), Dropbox duplicadas, cross_validation.py migrar a FSAdapter
+- **Completado:** Fix FV IRPF en pipeline (registration.py + 2 tests), cross_validation.py migrado a FSAdapter, asientos 3T-2/3T-5 corregidos en MariaDB (partida 4730 añadida). Tests 2858 PASS.
+- **Pendiente sesión 114:** Dropbox duplicadas bloqueado (archivos físicos no disponibles, María Isabel necesita re-subir). Enriquecer otros clientes cuando estén onboarded.
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 

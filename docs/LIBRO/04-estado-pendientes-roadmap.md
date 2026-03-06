@@ -1,5 +1,30 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-06 (sesión 112 cierre) | **Branch:** main | **Tests:** 2856 PASS | **Push:** OK
+> **Actualizado:** 2026-03-06 (sesión 113 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 113 — Fix FV IRPF + cross_validation FSAdapter)
+
+### Commits sesión 113
+
+| Hash | Descripción |
+|------|-------------|
+| e58a8c9b | fix(registration): FV con IRPF inyecta irpf_pct + migrar cross_validation a FSAdapter |
+
+### Tasks sesión 113
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Dropbox duplicadas (1 Enero -8.pdf) | ⚠️ BLOQUEADO | Archivos físicos no encontrados en filesystem. No están en inbox/cuarentena/procesado. Factura tampoco en FS. Necesita re-subir PDF original. |
+| FV sin IRPF (3T-3, 3T-4) | ✅ CORRECTO | Receptores son particulares (JUAN ANTONIO RUIZ GARCIA, NAOMI MOISIN) — sin IRPF es correcto. 3T-3=idfactura25, 3T-4=idfactura26 en FS con asientos OK. |
+| FV totales asiento discrepan (3T-2, 3T-5) | ✅ FIXED | Bug pipeline: FV con IRPF no transmitía totalirpf a FS. Fix: _construir_form_data inyecta _irpf_pct en lineas FV. Asientos 161+173 corregidos en MariaDB (4730 añadida, totalirpf actualizado). |
+| cross_validation.py → FSAdapter | ✅ DONE | _obtener_datos_fs migrada de api_get a FSAdapter._get. ejecutar_cruce crea FSAdapter.desde_config(config). |
+| Tests | ✅ DONE | 2858 PASS (2856 base + 2 nuevos para FV IRPF) |
+
+### Pendientes sesión 114 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — archivos 1 Enero -8.pdf y _1.pdf no encontrados localmente. Factura Dropbox (11.99€ intracom IE9852817, enero 2025) no está en FS. Bloqueado hasta que María Isabel re-suba el PDF.
+2. **Enriquecer otros clientes** — ejecutar enriquecer_config.py para el resto cuando estén onboarded
 
 ---
 

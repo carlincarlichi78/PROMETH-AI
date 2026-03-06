@@ -134,24 +134,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (06/03/2026, sesion 112 cierre)
+## Estado actual (06/03/2026, sesion 113 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `5c295db2` docs: cierre sesion 112 | **Tests**: 2856 PASS
+**Rama**: `main` | **Ultimo commit**: `e58a8c9b` fix(registration) | **Tests**: 2858 PASS
 
-### Completado sesion 112
-- Dropbox subcuenta 6290→6220 en config.yaml ✓
-- concepto_keywords (f2 +30) + importe_rango (h2 +15) en intake multi-signal ✓
-- Checks V1-V3 en pre_validation (solo avisos: iva_esperado, irpf_obligatorio, total_max) ✓
-- asiento.subcuenta_gasto prioridad sobre subcuenta legacy en registration ✓
-- Bugfix: `(entidad.get("cif") or "").upper()` — varios_clientes con cif:null ✓
-- Pipeline María Isabel 11/11 PASS, 0 cuarentena, 7 FC + 4 FV en FS ✓
-- Tests 2856 PASS ✓
+### Completado sesion 113
+- FV IRPF bug: _construir_form_data inyecta _irpf_pct en lineas FV → totalirpf correcto ✓
+- Asientos 3T-2/3T-5 corregidos en MariaDB: partida 4730 añadida, totalirpf actualizado ✓
+- cross_validation.py migrado de api_get a FSAdapter._get ✓
+- 2 tests nuevos FV con/sin IRPF (2858 PASS total) ✓
+- Dropbox duplicadas investigado: archivos físicos no encontrados → BLOQUEADO ✓
+- FV sin IRPF (3T-3/4): correcto — receptores son particulares, no empresas ✓
 
-### Proxima sesion — pendientes (sesion 113)
+### Proxima sesion — pendientes (sesion 114)
 
 **CONTABILIDAD:**
-1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash): descartar o procesar 1 como FP intracom
-2. **FV sin IRPF** — Ingresos 3T-3/3T-4: aviso autonoma sin retención IRPF — verificar correcto
-3. **FV totales asiento discrepan** — Ingresos 3T-2/3T-5: total asiento != total factura
-4. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
-5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
+1. **Dropbox duplicadas** — BLOQUEADO: archivos no disponibles localmente. Factura Dropbox (11.99€ intracom IE9852817, enero 2025) no en FS. María Isabel necesita re-subir PDF.
+2. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
