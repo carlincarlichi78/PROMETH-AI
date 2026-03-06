@@ -134,20 +134,24 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (06/03/2026, sesion 111 cierre)
+## Estado actual (06/03/2026, sesion 112 cierre)
 
-**Rama**: `main` | **Ultimo commit**: feat(enriquecer): enriquecer_config.py GPT-4o | **Tests**: 2856 PASS
+**Rama**: `main` | **Ultimo commit**: `5c295db2` docs: cierre sesion 112 | **Tests**: 2856 PASS
 
-### Completado sesion 111
-- Crear scripts/enriquecer_config.py — enriquece config.yaml con GPT-4o (formato_pdf, frecuencia, importe_rango, concepto_keywords, validacion, asiento, perfil_fiscal) ✓
-- Crear tests/test_enriquecer_config.py — 15 tests (merge, dry-run, YAML, backup, intracom, force) ✓
-- Ejecutar real Maria Isabel — 26 proveedores + 1 cliente enriquecidos, perfil_fiscal añadido ✓
+### Completado sesion 112
+- Dropbox subcuenta 6290→6220 en config.yaml ✓
+- concepto_keywords (f2 +30) + importe_rango (h2 +15) en intake multi-signal ✓
+- Checks V1-V3 en pre_validation (solo avisos: iva_esperado, irpf_obligatorio, total_max) ✓
+- asiento.subcuenta_gasto prioridad sobre subcuenta legacy en registration ✓
+- Bugfix: `(entidad.get("cif") or "").upper()` — varios_clientes con cif:null ✓
+- Pipeline María Isabel 11/11 PASS, 0 cuarentena, 7 FC + 4 FV en FS ✓
 - Tests 2856 PASS ✓
 
-### Proxima sesion — pendientes (sesion 112)
+### Proxima sesion — pendientes (sesion 113)
 
 **CONTABILIDAD:**
-1. **Re-ejecutar pipeline María Isabel** — 11 PDFs en inbox/ con config enriquecido
-2. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
-3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
-4. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash): descartar o procesar 1 como FP intracom
+2. **FV sin IRPF** — Ingresos 3T-3/3T-4: aviso autonoma sin retención IRPF — verificar correcto
+3. **FV totales asiento discrepan** — Ingresos 3T-2/3T-5: total asiento != total factura
+4. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
