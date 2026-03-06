@@ -24,7 +24,7 @@ from pathlib import Path
 
 from ..core.config import ConfigCliente
 from ..core.errors import ResultadoFase
-from ..core.fs_api import api_get
+from ..core.fs_adapter import FSAdapter
 from ..core.logger import crear_logger
 from ..core.ocr_gemini import auditar_asiento_gemini
 from ..core.auditor_asientos import AuditorAsientos
@@ -32,7 +32,7 @@ from ..core.auditor_asientos import AuditorAsientos
 logger = crear_logger("cross_validation")
 
 
-def _obtener_datos_fs(config: ConfigCliente) -> dict:
+def _obtener_datos_fs(config: ConfigCliente, fs: FSAdapter) -> dict:
     """Obtiene todos los datos necesarios de FS para los cruces.
 
     Returns:
@@ -46,7 +46,7 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
     datos = {}
 
     try:
-        todas_fp = api_get("facturaproveedores")
+        todas_fp = fs._get("facturaproveedores") or []
         datos["facturas_prov"] = [
             f for f in todas_fp
             if str(f.get("idempresa")) == idempresa
@@ -58,7 +58,7 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
         datos["facturas_prov"] = []
 
     try:
-        todas_fc = api_get("facturaclientes")
+        todas_fc = fs._get("facturaclientes") or []
         datos["facturas_cli"] = [
             f for f in todas_fc
             if str(f.get("idempresa")) == idempresa
@@ -70,7 +70,7 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
         datos["facturas_cli"] = []
 
     try:
-        todos_as = api_get("asientos")
+        todos_as = fs._get("asientos") or []
         datos["asientos"] = [
             a for a in todos_as
             if str(a.get("idempresa")) == idempresa
@@ -84,7 +84,7 @@ def _obtener_datos_fs(config: ConfigCliente) -> dict:
     try:
         # Partidas no tienen idempresa — filtrar por idasiento de esta empresa
         ids_asientos = {int(a.get("idasiento", 0)) for a in datos["asientos"]}
-        todas_p = api_get("partidas")
+        todas_p = fs._get("partidas") or []
         datos["partidas"] = [
             p for p in todas_p
             if int(p.get("idasiento", 0)) in ids_asientos
@@ -613,8 +613,9 @@ def ejecutar_cruce(
     resultado = ResultadoFase("cruce")
     tolerancia = config.tolerancias.get("comparacion_importes", 0.02)
 
+    fs = FSAdapter.desde_config(config)
     logger.info("Obteniendo datos de FS para verificacion cruzada...")
-    datos = _obtener_datos_fs(config)
+    datos = _obtener_datos_fs(config, fs)
 
     if not datos["partidas"]:
         resultado.error("No se obtuvieron partidas de FS")

@@ -493,6 +493,15 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
 
         # Shift-left: inyectar codimpuesto/codsubcuenta correctos antes del POST
         lineas_fs = _pre_aplicar_correcciones_conocidas(lineas_fs, entidad, reglas)
+
+        # FV con IRPF: inyectar _irpf_pct para que _crear_factura_2pasos calcule totalirpf
+        if not es_proveedor:
+            irpf_pct_ocr = float(datos.get("irpf_porcentaje") or 0)
+            if irpf_pct_ocr > 0:
+                for l in lineas_fs:
+                    l["_irpf_pct"] = irpf_pct_ocr
+                logger.info(f"  FV con IRPF {irpf_pct_ocr}% — inyectado en lineas")
+
         form["lineas"] = json.dumps(lineas_fs)
     else:
         # Sin lineas detalladas: crear una linea con el total
@@ -504,6 +513,14 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         }
         # Shift-left: inyectar subcuenta del proveedor incluso en linea unica
         linea_unica = _pre_aplicar_correcciones_conocidas([linea_unica], entidad, reglas)[0]
+
+        # FV con IRPF: inyectar _irpf_pct en linea unica
+        if not es_proveedor:
+            irpf_pct_ocr = float(datos.get("irpf_porcentaje") or 0)
+            if irpf_pct_ocr > 0:
+                linea_unica["_irpf_pct"] = irpf_pct_ocr
+                logger.info(f"  FV con IRPF {irpf_pct_ocr}% — inyectado en linea unica")
+
         form["lineas"] = json.dumps([linea_unica])
 
     # Marcar para post-procesamiento intracomunitario

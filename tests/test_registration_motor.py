@@ -141,6 +141,57 @@ class TestMotorEnFormData:
                                      motor=motor)
         assert form.get("_subcuenta_gasto") == "6280000000"
 
+    def test_fv_con_irpf_inyecta_irpf_pct_en_lineas(self):
+        """FV con irpf_porcentaje detectado: _irpf_pct se inyecta en lineas para totalirpf."""
+        from sfce.phases.registration import _construir_form_data
+        config = _config_test()
+        config.clientes["blanco_abogados"] = {
+            "cif": "B92476787", "nombre_fs": "BLANCO ABOGADOS SL",
+            "rol": "cliente",
+        }
+        doc = {
+            "tipo": "FV",
+            "datos_extraidos": {
+                "receptor_cif": "B92476787",
+                "receptor_nombre": "BLANCO ABOGADOS SL",
+                "fecha": "2025-07-30",
+                "base_imponible": 1840.0,
+                "iva_porcentaje": 21,
+                "irpf_porcentaje": 15,
+                "irpf_importe": 276.0,
+                "total": 1950.40,
+                "numero_factura": "18/2025",
+                "lineas": [{"descripcion": "Honorarios", "cantidad": 1,
+                             "precio_unitario": 1840}],
+            },
+        }
+        form = _construir_form_data(doc, "FV", config, "CLI001")
+        lineas = json.loads(form["lineas"])
+        assert len(lineas) == 1
+        assert lineas[0].get("_irpf_pct") == 15.0
+
+    def test_fv_sin_irpf_no_inyecta_irpf_pct(self):
+        """FV sin irpf_porcentaje: _irpf_pct no se añade."""
+        from sfce.phases.registration import _construir_form_data
+        config = _config_test()
+        doc = {
+            "tipo": "FV",
+            "datos_extraidos": {
+                "receptor_cif": None,
+                "fecha": "2025-09-05",
+                "base_imponible": 900.0,
+                "iva_porcentaje": 21,
+                "irpf_porcentaje": None,
+                "total": 1089.0,
+                "numero_factura": "19/2025",
+                "lineas": [{"descripcion": "Honorarios", "cantidad": 1,
+                             "precio_unitario": 900}],
+            },
+        }
+        form = _construir_form_data(doc, "FV", config, "CLI002")
+        lineas = json.loads(form["lineas"])
+        assert lineas[0].get("_irpf_pct", 0) == 0
+
     def test_nomina_via_motor_iva0(self):
         """Nominas via motor: IVA0 automatico."""
         from sfce.phases.registration import _construir_form_data
