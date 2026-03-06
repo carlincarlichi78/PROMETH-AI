@@ -1,5 +1,31 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-05 (sesión 110 cierre) | **Branch:** main | **Tests:** 2841 PASS | **Push:** pendiente
+> **Actualizado:** 2026-03-06 (sesión 111 cierre) | **Branch:** main | **Tests:** 2856 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 111 — Enriquecer config.yaml automático GPT-4o)
+
+### Commits sesión 111
+
+| Hash | Descripción |
+|------|-------------|
+| (este commit) | feat(enriquecer): script enriquecer_config.py GPT-4o + tests + config María Isabel enriquecido |
+
+### Tasks sesión 111
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Crear scripts/enriquecer_config.py | ✅ DONE | Script que enriquece config.yaml con campos avanzados vía GPT-4o (formato_pdf, frecuencia, importe_rango, concepto_keywords, validacion, asiento, perfil_fiscal) |
+| Crear tests/test_enriquecer_config.py | ✅ DONE | 15 tests (merge sin pisar, dry-run, YAML válido, backup, intracom, force) |
+| Ejecutar María Isabel real | ✅ DONE | 26 proveedores + 1 cliente enriquecidos, perfil_fiscal añadido, backup config.yaml.bak.20260305 |
+| Tests pytest | ✅ DONE | 2856 PASS |
+
+### Pendientes sesión 112 (CONTABILIDAD)
+
+1. **Re-ejecutar pipeline María Isabel** — 11 PDFs listos en inbox/ con cache OCR en .ocr_cache/ — verificar pipeline con config enriquecido
+2. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+4. **Enriquecer otros clientes** — ejecutar enriquecer_config.py para el resto de clientes cuando estén onboarded
 
 ---
 

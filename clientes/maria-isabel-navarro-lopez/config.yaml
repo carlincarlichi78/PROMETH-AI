@@ -1,368 +1,1054 @@
 empresa:
-  nombre: "MARIA ISABEL NAVARRO LOPEZ"
-  cif: "25719412F"
+  nombre: MARIA ISABEL NAVARRO LOPEZ
+  cif: 25719412F
+  cifs_propios:
+  - 25719412F
+  nombres_propios:
+  - MARIA ISABEL NAVARRO LOPEZ
+  - MARIA NAVARRO
+  - NAVARRO LOPEZ MARIA ISABEL
+  - M.I. NAVARRO
+  - MARIA NAVARO LOPEZ
   tipo: autonomo
   idempresa: 7
   codagente_fs: null
-  fs_url: "https://fs-uralde.prometh-ai.es/api/3"
-  fs_token: "d0ed76fcc22785424b6c"
-  fs_ssh_host: "carli@65.108.60.69"
-  fs_container_name: "fs-uralde-facturascripts-1"
-  ejercicio_activo: "2025"
+  fs_url: https://fs-uralde.prometh-ai.es/api/3
+  fs_token: d0ed76fcc22785424b6c
+  fs_ssh_host: carli@65.108.60.69
+  fs_container_name: fs-uralde-facturascripts-1
+  ejercicio_activo: '2025'
   ejercicios:
-    "2025": "0007"
+    '2025': '0007'
   regimen_iva: general
-
 perfil:
-  descripcion: "Abogada autonoma. IAE 731. Estimacion directa simplificada. IVA 21%."
-  modelo_negocio: |
-    Abogada autonoma con despacho profesional.
+  descripcion: Abogada autonoma. IAE 731. Estimacion directa simplificada. IVA 21%.
+  modelo_negocio: 'Abogada autonoma con despacho profesional.
+
     Cliente principal: BLANCO ABOGADOS S.L. (B92476787) — factura mensual con IRPF 15%.
+
     Otros clientes: comunidades de propietarios, particulares.
+
     Mutua: Mutualidad de la Abogacia (V28024149) — cuota mensual, sustituye RETA.
+
     Gestora: ASESORIA LOPEZ DE URALDE S.L. (B92010768).
+
+    '
   actividades:
-    - codigo: "731"
-      descripcion: "Abogada"
-      iva_venta: 21
-      exenta: false
+  - codigo: '731'
+    descripcion: Abogada
+    iva_venta: 21
+    exenta: false
   particularidades:
-    - "Mutualidad Abogacia sustituye a la RETA — es gasto deducible IRPF sin IVA"
-    - "Cliente principal BLANCO ABOGADOS practica retencion IRPF 15%"
-    - "Gastos de vehiculo: combustible (peajes Autopista del Sol, gasolineras)"
-    - "Software profesional: Dropbox, iCloud (intracomunitario IE)"
-    - "Formacion: Centro Estudios Profesionales Andalucia"
-    - "Notificaciones y gestiones: ENAX (B85683167) x34 apuntes/ano"
-    - "Paga retenciones a 2 colaboradores (Modelo 111 — importes minimos)"
+  - Mutualidad Abogacia sustituye a la RETA — es gasto deducible IRPF sin IVA
+  - Cliente principal BLANCO ABOGADOS practica retencion IRPF 15%
+  - 'Gastos de vehiculo: combustible (peajes Autopista del Sol, gasolineras)'
+  - 'Software profesional: Dropbox, iCloud (intracomunitario IE)'
+  - 'Formacion: Centro Estudios Profesionales Andalucia'
+  - 'Notificaciones y gestiones: ENAX (B85683167) x34 apuntes/ano'
+  - Paga retenciones a 2 colaboradores (Modelo 111 — importes minimos)
   empleados: false
   importador: false
   exportador: false
   divisas_habituales: []
-
 proveedores:
   mutualidad_abogacia:
-    cif: "V28024149"
-    nombre_fs: "MUTUALIDAD DE LA ABOGACIA"
-    aliases: ["MUTUALIDAD ABOGACIA", "MUTUALIDAD", "MUTUA ABOGACIA"]
+    rol: proveedor
+    cif: V28024149
+    nombre_fs: MUTUALIDAD DE LA ABOGACIA
+    aliases:
+    - MUTUALIDAD ABOGACIA
+    - MUTUALIDAD
+    - MUTUA ABOGACIA
     pais: ESP
     divisa: EUR
-    subcuenta: "6420000000"
+    subcuenta: '6420000000'
     codimpuesto: IVA0
     regimen: general
-    notas: "Cuota mensual Mutualidad Abogacia. Sin IVA. Sustituye RETA. Gasto IRPF no IVA"
-
+    notas: Cuota mensual Mutualidad Abogacia. Sin IVA. Sustituye RETA. Gasto IRPF no IVA
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - mutualidad
+    - abogacia
+    - cuota
+    - mensual
+    - reemplazo
+    - reta
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 0
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 0
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6420000000'
+      intracom: false
   asesoria_uralde:
-    cif: "B92010768"
-    nombre_fs: "ASESORIA LOPEZ DE URALDE S.L."
-    aliases: ["ASESORIA LOPEZ DE URALDE", "URALDE", "LOPEZ DE URALDE", "092010768", "892010768"]
+    rol: proveedor
+    cif: B92010768
+    nombre_fs: ASESORIA LOPEZ DE URALDE S.L.
+    aliases:
+    - ASESORIA LOPEZ DE URALDE
+    - URALDE
+    - LOPEZ DE URALDE
+    - 092010768
+    - '892010768'
     pais: ESP
     divisa: EUR
-    subcuenta: "6230000000"
+    subcuenta: '6230000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Gestora. Gasto G19 servicios profesionales"
-
+    notas: Gestora. Gasto G19 servicios profesionales
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - gestoría
+    - asesoría fiscal
+    - servicios profesionales
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6230000000'
+      intracom: false
   plenergy:
-    cif: "B93275394"
-    nombre_fs: "PLENERGY GRUPO SL"
-    aliases: ["PLENERGY", "PLENOIL", "PLENERGY GRUPO"]
+    rol: proveedor
+    cif: B93275394
+    cif_variantes_ocr:
+    - '893275394'
+    nombre_fs: PLENERGY GRUPO SL
+    aliases:
+    - PLENERGY
+    - PLENOIL
+    - PLENERGY GRUPO
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo profesional. G18"
-
+    notas: Combustible vehiculo profesional. G18
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - profesional
+    - gasolina
+    - diesel
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   icam:
-    cif: "Q2963001I"
-    nombre_fs: "ILUSTRE COLEGIO DE ABOGADOS DE MALAGA"
-    aliases: ["COLEGIO ABOGADOS", "ICAM", "COLEGIO ABOGADOS MALAGA"]
+    rol: proveedor
+    cif: Q2963001I
+    nombre_fs: ILUSTRE COLEGIO DE ABOGADOS DE MALAGA
+    aliases:
+    - COLEGIO ABOGADOS
+    - ICAM
+    - COLEGIO ABOGADOS MALAGA
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Cuota colegial y servicios ICAM"
-
+    notas: Cuota colegial y servicios ICAM
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 150
+    concepto_keywords:
+    - cuota
+    - colegial
+    - servicios
+    - abogados
+    - malaga
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   autopista_sol:
-    cif: "A81432353"
-    nombre_fs: "AUTOPISTA DEL SOL CESA"
-    aliases: ["AUTOPISTA DEL SOL", "AUTOPISTA SOL", "CESA", "A81132353", "A81412353", "A5143255"]
+    rol: proveedor
+    cif: A81432353
+    cif_variantes_ocr:
+    - '481432353'
+    - A81132353
+    - A81412353
+    - A5143255
+    nombre_fs: AUTOPISTA DEL SOL CESA
+    aliases:
+    - AUTOPISTA DEL SOL
+    - AUTOPISTA SOL
+    - CESA
+    - A81132353
+    - A81412353
+    - A5143255
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Peajes autopista vehiculo profesional"
-
+    notas: Peajes autopista vehiculo profesional
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 5
+    - 50
+    concepto_keywords:
+    - peaje
+    - autopista
+    - vehículo
+    - profesional
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   enax:
-    cif: "B85683167"
-    nombre_fs: "EXTERNALIZACION DE NOTIFICADOS Y APLICACIONES SL"
-    aliases: ["ENAX", "EXTERNALIZACION NOTIFICADOS", "ENAX NOTIFICACIONES", "8-85683167", "B-85683767", "B-85683167"]
+    rol: proveedor
+    cif: B85683167
+    nombre_fs: EXTERNALIZACION DE NOTIFICADOS Y APLICACIONES SL
+    aliases:
+    - ENAX
+    - EXTERNALIZACION NOTIFICADOS
+    - ENAX NOTIFICACIONES
+    - 8-85683167
+    - B-85683767
+    - B-85683167
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Notificaciones electronicas y gestiones procesales. ~34 facturas/ano"
-
+    notas: Notificaciones electronicas y gestiones procesales. ~34 facturas/ano
+    formato_pdf: digital
+    frecuencia: anual
+    importe_rango:
+    - 1000
+    - 3000
+    concepto_keywords:
+    - notificaciones
+    - gestiones
+    - procesales
+    - electrónicas
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   avatel:
-    cif: "A93135218"
-    nombre_fs: "AVATEL TELECOM SA"
-    aliases: ["AVATEL", "AVATEL TELECOM"]
+    rol: proveedor
+    cif: A93135218
+    nombre_fs: AVATEL TELECOM SA
+    aliases:
+    - AVATEL
+    - AVATEL TELECOM
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Internet y telefonia despacho"
-
+    notas: Internet y telefonia despacho
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 150
+    concepto_keywords:
+    - internet
+    - telefonía
+    - avatel
+    - despacho
+    - servicio
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   centro_estudios:
-    cif: "B41190794"
-    nombre_fs: "CENTRO DE ESTUDIOS PROFESIONALES DE ANDALUCIA"
-    aliases: ["CENTRO ESTUDIOS", "CEPA", "CENTRO ESTUDIOS PROFESIONALES"]
+    rol: proveedor
+    cif: B41190794
+    nombre_fs: CENTRO DE ESTUDIOS PROFESIONALES DE ANDALUCIA
+    aliases:
+    - CENTRO ESTUDIOS
+    - CEPA
+    - CENTRO ESTUDIOS PROFESIONALES
     pais: ESP
     divisa: EUR
-    subcuenta: "6220000000"
+    subcuenta: '6220000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Formacion y cursos profesionales. G22"
-
+    notas: Formacion y cursos profesionales. G22
+    formato_pdf: escaneado
+    frecuencia: puntual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - formación
+    - cursos
+    - profesionales
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6220000000'
+      intracom: false
   dropbox:
-    cif: "IE9852817"
-    nombre_fs: "DROPBOX INTERNATIONAL UNLIMITED COMPANY"
-    aliases: ["DROPBOX"]
+    rol: proveedor
+    cif: IE9852817
+    nombre_fs: DROPBOX INTERNATIONAL UNLIMITED COMPANY
+    aliases:
+    - DROPBOX
     pais: IRL
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA0
     regimen: intracomunitario
-    notas: "Almacenamiento cloud. Mensual. Intracomunitario IE"
-
+    notas: Almacenamiento cloud. Mensual. Intracomunitario IE
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 10
+    - 20
+    concepto_keywords:
+    - almacenamiento
+    - cloud
+    - Dropbox
+    - servicio
+    - mensual
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: true
+      iva_autorepercusion: 21
   es_san_isidro:
-    cif: "A29367711"
-    nombre_fs: "E.S. SAN ISIDRO"
-    aliases: ["SAN ISIDRO", "E.S. SAN ISIDRO"]
+    rol: proveedor
+    cif: A29367711
+    nombre_fs: E.S. SAN ISIDRO
+    aliases:
+    - SAN ISIDRO
+    - E.S. SAN ISIDRO
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Gasolinera. Combustible vehiculo"
-
+    notas: Gasolinera. Combustible vehiculo
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - gasolina
+    - vehículo
+    - E.S. SAN ISIDRO
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   holafibra:
-    cif: "B93508000"
-    nombre_fs: "HOLAFIBRA TELECOM SL"
-    aliases: ["HOLAFIBRA", "HOLAFIBRA TELECOM"]
+    rol: proveedor
+    cif: B93508000
+    nombre_fs: HOLAFIBRA TELECOM SL
+    aliases:
+    - HOLAFIBRA
+    - HOLAFIBRA TELECOM
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Internet y telefonia (alternativa Avatel)"
-
-  blanco_abogados:
-    cif: "B92476787"
-    nombre_fs: "BLANCO ABOGADOS S.L."
-    aliases: ["BLANCO ABOGADOS", "BLANCO", "892476787"]
-    pais: ESP
-    divisa: EUR
-    subcuenta: "6230000000"
-    codimpuesto: IVA21
-    regimen: general
-    notas: "Colaboracion profesional + cliente principal ingresos"
-
+    notas: Internet y telefonia (alternativa Avatel)
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 150
+    concepto_keywords:
+    - internet
+    - telefonía
+    - holafibra
+    - telecom
+    - avatel
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   petroprix:
-    cif: "B23709892"
-    nombre_fs: "PETROPRIX ENERGIA SL"
-    aliases: ["PETROPRIX", "PETROPRIX ENERGIA", "823709892"]
+    rol: proveedor
+    cif: B23709892
+    nombre_fs: PETROPRIX ENERGIA SL
+    aliases:
+    - PETROPRIX
+    - PETROPRIX ENERGIA
+    - '823709892'
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo"
-
+    notas: Combustible vehiculo
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 50
+    - 150
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - gasolina
+    - PETROPRIX
+    - energía
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   media_markt:
-    cif: "A11785409"
-    nombre_fs: "MEDIA MARKT S.A."
-    aliases: ["MEDIA MARKT", "MEDIAMARKT"]
+    rol: proveedor
+    cif: A11785409
+    nombre_fs: MEDIA MARKT S.A.
+    aliases:
+    - MEDIA MARKT
+    - MEDIAMARKT
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Material electronico oficina"
-
+    notas: Material electronico oficina
+    formato_pdf: digital
+    frecuencia: puntual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - material
+    - electrónico
+    - oficina
+    - media
+    - markt
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   apple_distribution:
-    cif: "9700053D"
-    nombre_fs: "APPLE DISTRIBUTION INTERNATIONAL LTD"
-    aliases: ["APPLE", "APPLE DISTRIBUTION", "ICLOUD"]
+    rol: proveedor
+    cif: 9700053D
+    nombre_fs: APPLE DISTRIBUTION INTERNATIONAL LTD
+    aliases:
+    - APPLE
+    - APPLE DISTRIBUTION
+    - ICLOUD
     pais: IRL
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: intracomunitario
-    notas: "iCloud y software Apple. Mensual. Intracomunitario IE"
-
+    notas: iCloud y software Apple. Mensual. Intracomunitario IE
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 10
+    - 50
+    concepto_keywords:
+    - icloud
+    - software
+    - apple
+    - servicio
+    - almacenamiento
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: true
+      iva_autorepercusion: 21
   complementos_puerta_europa:
-    cif: "B72385594"
-    nombre_fs: "COMPLEMENTOS PUERTA DE EUROPA SL"
-    aliases: ["COMPLEMENTOS PUERTA DE EUROPA", "PUERTA EUROPA"]
+    rol: proveedor
+    cif: B72385594
+    nombre_fs: COMPLEMENTOS PUERTA DE EUROPA SL
+    aliases:
+    - COMPLEMENTOS PUERTA DE EUROPA
+    - PUERTA EUROPA
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Material oficina"
-
+    notas: Material oficina
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 200
+    concepto_keywords:
+    - material
+    - oficina
+    - papelería
+    - consumibles
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   moeve_retail:
-    cif: "A28354520"
-    nombre_fs: "MOEVE RETAIL OPERATIONS SAU"
-    aliases: ["MOEVE", "MOEVE RETAIL", "REPSOL", "A283354520", "A2854520"]
+    rol: proveedor
+    cif: A28354520
+    nombre_fs: MOEVE RETAIL OPERATIONS SAU
+    aliases:
+    - MOEVE
+    - MOEVE RETAIL
+    - REPSOL
+    - A283354520
+    - A2854520
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo (Repsol)"
-
+    notas: Combustible vehiculo (Repsol)
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - repsol
+    - vehículo
+    - gasolina
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   galp:
-    cif: "A28559573"
-    nombre_fs: "GALP ENERGIA ESPANA SA"
-    aliases: ["GALP", "GALP ENERGIA"]
+    rol: proveedor
+    cif: A28559573
+    nombre_fs: GALP ENERGIA ESPANA SA
+    aliases:
+    - GALP
+    - GALP ENERGIA
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo"
-
+    notas: Combustible vehiculo
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 50
+    - 150
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - galp
+    - gasolina
+    - factura
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   spanpetrol:
-    cif: "B80341985"
-    nombre_fs: "SPANPETROL SL"
-    aliases: ["SPANPETROL", "E.S MANILVA", "ES MANILVA"]
+    rol: proveedor
+    cif: B80341985
+    nombre_fs: SPANPETROL SL
+    aliases:
+    - SPANPETROL
+    - E.S MANILVA
+    - ES MANILVA
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo (gasolinera Manilva)"
-
+    notas: Combustible vehiculo (gasolinera Manilva)
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - gasolinera
+    - Manilva
+    - SPANPETROL
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   markoil:
-    cif: "A79209854"
-    nombre_fs: "MARKOIL SA"
-    aliases: ["MARKOIL"]
+    rol: proveedor
+    cif: A79209854
+    nombre_fs: MARKOIL SA
+    aliases:
+    - MARKOIL
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo"
-
+    notas: Combustible vehiculo
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - gasolina
+    - diesel
+    - repostaje
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   eessa:
-    cif: "A80393812"
-    nombre_fs: "EESSA"
-    aliases: ["EESSA"]
+    rol: proveedor
+    cif: A80393812
+    nombre_fs: EESSA
+    aliases:
+    - EESSA
     pais: ESP
     divisa: EUR
-    subcuenta: "6280000000"
+    subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Combustible vehiculo"
-
+    notas: Combustible vehiculo
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - vehículo
+    - EESSA
+    - gasolina
+    - gasoil
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   coloso_algeciras:
-    cif: "B67718361"
-    nombre_fs: "COLOSO ALGECIRAS AV SLU"
-    aliases: ["COLOSO ALGECIRAS", "COLOSO", "COLOSO SAN ISIDRO", "CoLoS0 SAN 46"]
+    rol: proveedor
+    cif: B67718361
+    nombre_fs: COLOSO ALGECIRAS AV SLU
+    aliases:
+    - COLOSO ALGECIRAS
+    - COLOSO
+    - COLOSO SAN ISIDRO
+    - CoLoS0 SAN 46
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Gasolinera (estacion San Isidro, Churriana). Combustible vehiculo DIESEL"
-
+    notas: Gasolinera (estacion San Isidro, Churriana). Combustible vehiculo DIESEL
+    formato_pdf: ticket_termico
+    frecuencia: puntual
+    importe_rango:
+    - 30
+    - 100
+    concepto_keywords:
+    - combustible
+    - diesel
+    - gasolinera
+    - vehículo
+    - COLOSO
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6280000000'
+      intracom: false
   algetonersl:
-    cif: "B11554789"
-    nombre_fs: "SUMINISTROS DE OFICINAS ALGETONERSL"
-    aliases: ["ALGETONERSL", "SUMINISTROS OFICINAS ALGECIRAS", "ALGETONER"]
+    rol: proveedor
+    cif: B11554789
+    nombre_fs: SUMINISTROS DE OFICINAS ALGETONERSL
+    aliases:
+    - ALGETONERSL
+    - SUMINISTROS OFICINAS ALGECIRAS
+    - ALGETONER
     pais: ESP
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Toner y material oficina"
-
+    notas: Toner y material oficina
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 200
+    concepto_keywords:
+    - toner
+    - material
+    - oficina
+    - suministros
+    - algetoner
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
   amazon:
-    cif: "W0184081H"
-    nombre_fs: "AMAZON EU SARL"
-    aliases: ["AMAZON", "AMAZON EU"]
+    rol: proveedor
+    cif: W0184081H
+    nombre_fs: AMAZON EU SARL
+    aliases:
+    - AMAZON
+    - AMAZON EU
     pais: LUX
     divisa: EUR
-    subcuenta: "6290000000"
+    subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Material oficina online"
-
+    notas: Material oficina online
+    formato_pdf: digital
+    frecuencia: puntual
+    importe_rango:
+    - 50
+    - 200
+    concepto_keywords:
+    - material
+    - oficina
+    - Amazon
+    - papelería
+    - consumibles
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: true
+      iva_autorepercusion: 21
   campmany_bermejo:
-    cif: "00383225E"
-    nombre_fs: "CAMPMANY BERMEJO EMILIO"
-    aliases: ["CAMPMANY", "CAMPMANY BERMEJO"]
+    rol: proveedor
+    cif: 00383225E
+    nombre_fs: CAMPMANY BERMEJO EMILIO
+    aliases:
+    - CAMPMANY
+    - CAMPMANY BERMEJO
     pais: ESP
     divisa: EUR
-    subcuenta: "6230000000"
+    subcuenta: '6230000000'
     codimpuesto: IVA21
     codretencion: IRPF15
     regimen: general
-    notas: "Abogado colaborador. IRPF 15%"
-
+    notas: Abogado colaborador. IRPF 15%
+    formato_pdf: escaneado
+    frecuencia: puntual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - abogado
+    - colaborador
+    - servicios
+    - legales
+    - asesoría
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: true
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6230000000'
+      intracom: false
+      subcuenta_irpf: '4751000000'
   morilla_perez:
-    cif: "21476347M"
-    nombre_fs: "MORILLA PEREZ PEDRO JOSE"
-    aliases: ["MORILLA", "MORILLA PEREZ"]
+    rol: proveedor
+    cif: 21476347M
+    nombre_fs: MORILLA PEREZ PEDRO JOSE
+    aliases:
+    - MORILLA
+    - MORILLA PEREZ
     pais: ESP
     divisa: EUR
-    subcuenta: "6230000000"
+    subcuenta: '6230000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Profesional colaborador"
-
+    notas: Profesional colaborador
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - asesoría
+    - consultoría
+    - servicios legales
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6230000000'
+      intracom: false
   ruiz_rico:
-    cif: "24870562H"
-    nombre_fs: "RUIZ RICO MARQUEZ JUAN"
-    aliases: ["RUIZ RICO", "RUIZ RICO MARQUEZ"]
+    rol: proveedor
+    cif: 24870562H
+    nombre_fs: RUIZ RICO MARQUEZ JUAN
+    aliases:
+    - RUIZ RICO
+    - RUIZ RICO MARQUEZ
     pais: ESP
     divisa: EUR
-    subcuenta: "6230000000"
+    subcuenta: '6230000000'
     codimpuesto: IVA21
     regimen: general
-    notas: "Profesional colaborador"
-
+    notas: Profesional colaborador
+    formato_pdf: escaneado
+    frecuencia: mensual
+    importe_rango:
+    - 100
+    - 300
+    concepto_keywords:
+    - colaborador
+    - servicios
+    - profesionales
+    - asesoría
+    - consultoría
+    persona_fisica: true
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 500
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6230000000'
+      intracom: false
 clientes:
-  BLANCO_ABOGADOS:
+  blanco_abogados:
+    rol: cliente
     cif: B92476787
     nombre_fs: BLANCO ABOGADOS SL
+    aliases:
+    - BLANCO ABOGADOS
+    - BLANCO ABOGADOS , S.L
+    - BLANCO ABOGADOS S.L.
     pais: ESP
     divisa: EUR
     codimpuesto: IVA21
     regimen: general
-    notas: "Cliente principal (honorarios gestión)"
-  VARIOS_CLIENTES:
-    cif: ""
+    subcuenta_cliente: '4300000001'
+    subcuenta_ingreso: '7050000000'
+    irpf_que_retienen: 15
+    notas: Cliente principal (honorarios gestion juridica)
+    frecuencia: mensual
+    importe_rango:
+    - 1000
+    - 5000
+    concepto_keywords:
+    - honorarios
+    - gestión jurídica
+    validacion:
+      iva_emitido:
+      - 21
+      irpf_retenido: 15
+  varios_clientes:
+    rol: cliente
+    cif: null
     nombre_fs: VARIOS CLIENTES
+    aliases: []
     pais: ESP
     divisa: EUR
     codimpuesto: IVA21
     regimen: general
+    fallback: true
     fallback_sin_cif: true
-    notas: "Cliente genérico para particulares y comunidades sin entrada propia"
-
+    notas: Cliente generico para particulares y comunidades sin entrada propia
 tipos_cambio: {}
-
 tolerancias:
   cuadre_asiento: 0.01
   comparacion_importes: 0.02
   confianza_minima: 85
-
 sfce:
   empresa_id: 14
+perfil_fiscal:
+  territorio: peninsula
+  regimen_iva: general
+  regimen_irpf: estimacion_directa_simplificada
+  cuentas:
+    proveedor_default: '4000000000'
+    cliente_default: '4300000000'
+    gasto_default: '6290000000'
+    ingreso_default: '7050000000'
+    iva_soportado: '4720000000'
+    iva_repercutido: '4770000000'
+    irpf_retenido_a_mi: '4730000000'
+    irpf_yo_retengo: '4751000000'
+    banco: '5720000000'
+  deducibilidad:
+    vehiculo_turismo:
+      iva: 50
+      gasto: 50
+    vehiculo_comercial:
+      iva: 100
+      gasto: 100

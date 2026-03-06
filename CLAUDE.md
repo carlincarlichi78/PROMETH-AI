@@ -134,21 +134,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (05/03/2026, sesion 110 cierre)
+## Estado actual (06/03/2026, sesion 111 cierre)
 
-**Rama**: `main` | **Ultimo commit**: refactor(cache_ocr): .ocr_cache/ + limpiar FS | **Tests**: 2841 PASS
+**Rama**: `main` | **Ultimo commit**: feat(enriquecer): enriquecer_config.py GPT-4o | **Tests**: 2856 PASS
 
-### Completado sesion 110
-- Limpiar FS empresa 7 (María Isabel) — DELETE partidas/asientos/facturas en MariaDB fs-uralde ✓
-- Mover 11 PDFs de 2025/procesado/ → inbox/ ✓
-- Crear .ocr_cache/ y migrar 11 .ocr.json ✓
-- Refactor cache_ocr.py: _ruta_cliente_desde_pdf() + _ruta_cache() usa .ocr_cache/ con retrocompat ✓
-- Borrar pipeline state files ✓
-- Tests 2841 PASS ✓
+### Completado sesion 111
+- Crear scripts/enriquecer_config.py — enriquece config.yaml con GPT-4o (formato_pdf, frecuencia, importe_rango, concepto_keywords, validacion, asiento, perfil_fiscal) ✓
+- Crear tests/test_enriquecer_config.py — 15 tests (merge, dry-run, YAML, backup, intracom, force) ✓
+- Ejecutar real Maria Isabel — 26 proveedores + 1 cliente enriquecidos, perfil_fiscal añadido ✓
+- Tests 2856 PASS ✓
 
-### Proxima sesion — pendientes (sesion 111)
+### Proxima sesion — pendientes (sesion 112)
 
 **CONTABILIDAD:**
-1. **Re-ejecutar pipeline María Isabel** — verificar que lee cache de .ocr_cache/
+1. **Re-ejecutar pipeline María Isabel** — 11 PDFs en inbox/ con config enriquecido
 2. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
 3. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+4. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
