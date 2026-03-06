@@ -1,5 +1,39 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-06 (sesión 111 cierre) | **Branch:** main | **Tests:** 2856 PASS | **Push:** OK
+> **Actualizado:** 2026-03-06 (sesión 112 cierre) | **Branch:** main | **Tests:** 2856 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 112 — Conectar campos v2 config.yaml al pipeline)
+
+### Commits sesión 112
+
+| Hash | Descripción |
+|------|-------------|
+| fff6e257 | feat(intake): clasificación por roles declarativos + config.buscar_por_cif + limpieza cache cuarentena |
+| 5b8acd07 | feat(pipeline): conectar campos v2 config.yaml al pipeline + 5 fixes |
+
+### Tasks sesión 112
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Fix config.yaml Dropbox subcuenta | ✅ DONE | 6290→6220 (servicios informáticos) en subcuenta y asiento.subcuenta_gasto |
+| concepto_keywords en intake multi-signal | ✅ DONE | señal f2 +30 puntos; busca keywords v2 en concepto OCR |
+| importe_rango en intake multi-signal | ✅ DONE | señal h2 +15 puntos; verifica si total cae en [min, max] |
+| checks V1-V3 en pre_validation | ✅ DONE | V1=iva_esperado, V2=irpf_obligatorio, V3=total_max — solo avisos |
+| asiento.subcuenta_gasto en registration | ✅ DONE | prioridad sobre subcuenta legacy; asiento.intracom también |
+| es_cif_propio/buscar_por_cif en scripts/core/config.py | ✅ DONE | paridad con sfce/core/config.py |
+| _normalizar_cif(None) safe | ✅ DONE | ambos config.py — `if not cif: return ""` |
+| entidad_cif null bugfix intake | ✅ DONE | `(entidad.get("cif") or "")` en _construir_documento_confianza y doc_resultado |
+| Pipeline María Isabel 11/11 | ✅ DONE | 11 registrados, 12/13 cross-val PASS, asientos cuadrados |
+| Tests pytest | ✅ DONE | 2856 PASS |
+
+### Pendientes sesión 113 (CONTABILIDAD)
+
+1. **Dropbox duplicadas** — `1 Enero -8.pdf` + `1 Enero -8_1.pdf` (mismo hash, conf 31%): descartar o procesar 1 como FP intracom
+2. **cross_validation.py** — migrar api_get a FSAdapter (nice to have)
+3. **Enriquecer otros clientes** — ejecutar enriquecer_config.py para el resto de clientes cuando estén onboarded
+4. **FV sin IRPF** — Ingresos 3T-3 y 3T-4: aviso "[MANUAL] Autonomo emite factura sin retencion IRPF" — verificar si es correcto o falta IRPF 15%
+5. **FV totales asiento discrepan** — Ingresos 3T-2 y 3T-5: total asiento != total factura (posible IVA repercutido en FV con IRPF)
 
 ---
 
