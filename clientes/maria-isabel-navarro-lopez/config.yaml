@@ -1048,6 +1048,9 @@ clientes:
     nombre_fs: Maria Isabel Navarro Lopez
     subcuenta: '629'
     codimpuesto: IVA0
+    pais: ESP
+    divisa: EUR
+    regimen: general
     notas: Cuota Consejo de la Abogacía
 tipos_cambio: {}
 tolerancias:

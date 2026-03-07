@@ -95,7 +95,7 @@ def test_extraer_emisor_adeudo_ing_importe():
 
 def test_extraer_emisor_adeudo_ing_fecha():
     resultado = extraer_emisor_adeudo_ing(TEXTO_ADEUDO_ING_ICAM)
-    assert resultado["fecha"] == "28/01/2025"
+    assert resultado["fecha"] == "2025-01-28"
 
 
 def test_extraer_emisor_adeudo_ing_referencia():

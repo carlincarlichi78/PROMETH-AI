@@ -8,6 +8,7 @@ Tipos soportados:
 """
 import logging
 import re
+from datetime import datetime
 from typing import Optional
 
 logger = logging.getLogger("sfce.detectores_doc")
@@ -56,18 +57,38 @@ def extraer_emisor_adeudo_ing(texto_raw: str) -> dict:
     if m:
         resultado["emisor_nombre"] = m.group(1).strip()
 
-    # Importe (la línea siguiente a "Importe euros")
-    m = re.search(r"Importe\s+euros\s*\n\s*([\d.,]+)", texto_raw, re.IGNORECASE)
-    if m:
+    # Importe y fecha — formato tabla markdown (Mistral OCR):
+    # | Importe euros | Cláusula gastos | Fecha operación | Fecha valor |
+    # | --- | --- | --- | --- |
+    # | 107,18 | Comportidos | 28/01/2025 | 28/01/2025 |
+    m_tabla = re.search(
+        r"\|\s*Importe\s+euros\s*\|[^\n]*\n\|[^\n]*\n\|\s*([\d.,]+)\s*\|[^\|]*\|\s*(\d{2}/\d{2}/\d{4})\s*\|",
+        texto_raw, re.IGNORECASE
+    )
+    if m_tabla:
         try:
-            resultado["total"] = float(m.group(1).replace(".", "").replace(",", "."))
+            resultado["total"] = float(m_tabla.group(1).replace(".", "").replace(",", "."))
         except ValueError:
-            resultado["total"] = m.group(1).strip()
+            resultado["total"] = m_tabla.group(1).strip()
+        try:
+            resultado["fecha"] = datetime.strptime(m_tabla.group(2), "%d/%m/%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            resultado["fecha"] = m_tabla.group(2)
+    else:
+        # Fallback: formato texto plano (documentos ING con formato antiguo)
+        m = re.search(r"Importe\s+euros\s*\n\s*([\d.,]+)", texto_raw, re.IGNORECASE)
+        if m:
+            try:
+                resultado["total"] = float(m.group(1).replace(".", "").replace(",", "."))
+            except ValueError:
+                resultado["total"] = m.group(1).strip()
 
-    # Fecha de operación
-    m = re.search(r"Fecha\s+operaci[oó]n\s*\n\s*(\d{2}/\d{2}/\d{4})", texto_raw, re.IGNORECASE)
-    if m:
-        resultado["fecha"] = m.group(1).strip()
+        m = re.search(r"Fecha\s+operaci[oó]n\s*\n\s*(\d{2}/\d{2}/\d{4})", texto_raw, re.IGNORECASE)
+        if m:
+            try:
+                resultado["fecha"] = datetime.strptime(m.group(1), "%d/%m/%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                resultado["fecha"] = m.group(1)
 
     # Referencia SEPA → número de factura
     m = re.search(r"Referencia\s*\n\s*(.+?)(?:\n|$)", texto_raw, re.IGNORECASE)

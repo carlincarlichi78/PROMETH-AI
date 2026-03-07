@@ -1239,7 +1239,8 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     confianza_global_val = doc_confianza.confianza_global()
     campos_bajos = doc_confianza.campos_bajo_umbral()
 
-    # Floor de confianza para proveedores conocidos vía multi-signal
+    # Floor de confianza para proveedores conocidos vía config.yaml
+    # Caso 1: multi-signal (_enriquecer_desde_config escribió _config_match)
     config_match = datos_gpt.get("_config_match")
     if config_match:
         score_ms = config_match.get("score", 0)
@@ -1247,6 +1248,14 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             confianza_global_val = max(confianza_global_val, 80)
         elif score_ms >= 35:
             confianza_global_val = max(confianza_global_val, 65)
+    # Caso 2: entidad resuelta por _identificar_entidad() (lookup directo CIF/nombre)
+    elif entidad and not entidad.get("auto_detectado") and not entidad.get("skip_fs_lookup"):
+        # Sub-caso 2a: detector documental regex (determinista, fiabilidad ≥ multi-signal score≥50)
+        if datos_gpt.get("_fuente") == "detector_adeudo_ing":
+            confianza_global_val = max(confianza_global_val, 75)
+        else:
+            # Sub-caso 2b: lookup directo sin detector → floor mínimo conservador
+            confianza_global_val = max(confianza_global_val, 55)
 
     nivel = calcular_nivel(confianza_global_val)
 
