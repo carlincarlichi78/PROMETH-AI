@@ -1212,13 +1212,24 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
                     logger.info(
                         f"  [{nombre_archivo}] Discovery: sugerencia generada para {_cif_para_discovery}"
                     )
-            _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
-                                f"CIF desconocido: {cif_desc}")
-            avisos.append((f"CIF desconocido: {cif_desc}",
-                          {"archivo": nombre_archivo, "cif": cif_desc,
-                           "nombre": nombre_desc}))
-            return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
-                    "sugerencias": sugerencias}
+
+            # Safety Net: resolver identidad con IA antes de cuarentena
+            entidad_ia = _resolver_entidad_con_ia(datos_gpt, tipo_doc, config, texto_raw)
+            if entidad_ia:
+                _autoregistrar_entidad(entidad_ia, tipo_doc, config)
+                logger.info(
+                    f"  [{nombre_archivo}] Safety Net: entidad resuelta → "
+                    f"{entidad_ia.get('_nombre_corto')} ({entidad_ia.get('cif')})"
+                )
+                entidad = entidad_ia
+            else:
+                _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
+                                    f"CIF desconocido: {cif_desc}")
+                avisos.append((f"CIF desconocido: {cif_desc}",
+                              {"archivo": nombre_archivo, "cif": cif_desc,
+                               "nombre": nombre_desc}))
+                return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
+                        "sugerencias": sugerencias}
 
     # 5. Calcular confianza
     doc_confianza = _construir_documento_confianza(
@@ -1610,6 +1621,135 @@ def detectar_trabajador(datos_ocr: dict, config: ConfigCliente) -> Optional[dict
             "default": 14,
         },
     }
+
+
+def _resolver_entidad_con_ia(
+    datos_gpt: dict,
+    tipo_doc: str,
+    config: "ConfigCliente",
+    texto_raw: str,
+) -> Optional[dict]:
+    """Llama a GPT-4o para identificar una entidad desconocida antes de cuarentena.
+
+    Usa nombre + CIF + texto_raw para deducir subcuenta, codimpuesto e IRPF.
+    Retorna dict compatible con entidad de config, o None si no puede resolver.
+    """
+    import openai
+
+    key = os.environ.get("OPENAI_API_KEY", "")
+    if not key:
+        return None
+
+    es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
+    cif = (datos_gpt.get("emisor_cif") if es_proveedor
+           else datos_gpt.get("receptor_cif")) or ""
+    nombre = (datos_gpt.get("emisor_nombre") if es_proveedor
+              else datos_gpt.get("receptor_nombre")) or ""
+    total = datos_gpt.get("total", 0)
+    iva_pct = datos_gpt.get("iva_porcentaje", 21)
+    concepto = datos_gpt.get("concepto_resumen", "")
+
+    if not nombre and not cif:
+        return None
+
+    prompt = f"""Eres un experto en contabilidad española.
+Necesito clasificar una entidad desconocida para el plan contable español (PGC 2007).
+
+Datos del documento:
+- CIF/NIF: {cif or "desconocido"}
+- Nombre: {nombre or "desconocido"}
+- Tipo documento: {tipo_doc}
+- Importe total: {total} EUR
+- IVA declarado: {iva_pct}%
+- Concepto: {concepto}
+- Fragmento texto original: {texto_raw[:500]}
+
+Responde SOLO con JSON con estos campos:
+{{
+  "nombre_fs": "nombre canonico para FacturaScripts",
+  "cif": "{cif}",
+  "subcuenta": "cuenta PGC 3 digitos (ej: 628, 621, 410)",
+  "codimpuesto": "IVA0 o IVA4 o IVA10 o IVA21",
+  "irpf": true o false,
+  "pais": "ESP u otro codigo ISO",
+  "notas": "descripcion breve actividad",
+  "_nombre_corto": "identificador corto snake_case max 20 chars",
+  "_ia_resuelta": true
+}}"""
+
+    try:
+        client = openai.OpenAI(api_key=key)
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+        )
+        datos = json.loads(resp.choices[0].message.content)
+        if not datos.get("_nombre_corto"):
+            datos["_nombre_corto"] = (nombre.lower().replace(" ", "_")[:20])
+        logger.info(
+            "Safety Net IA: '%s' (%s) → subcuenta=%s codimpuesto=%s irpf=%s",
+            nombre, cif, datos.get("subcuenta"), datos.get("codimpuesto"), datos.get("irpf"),
+        )
+        return datos
+    except Exception as e:
+        logger.warning("Safety Net IA falló: %s", e)
+        return None
+
+
+def _autoregistrar_entidad(
+    entidad: dict,
+    tipo_doc: str,
+    config: "ConfigCliente",
+) -> None:
+    """Registra la entidad resuelta por IA en config.yaml para futuros documentos.
+
+    Solo actúa si _ia_resuelta=True. Nunca sobreescribe entidades existentes.
+    """
+    if not entidad.get("_ia_resuelta"):
+        return
+
+    nombre_corto = entidad.get("_nombre_corto", "")
+    if not nombre_corto:
+        return
+
+    try:
+        with open(config.ruta, "r", encoding="utf-8") as f:
+            config_data = yaml.safe_load(f) or {}
+
+        seccion = "proveedores" if tipo_doc in ("FC", "NC", "ANT", "SUM") else "clientes"
+        if seccion not in config_data:
+            config_data[seccion] = {}
+
+        # No sobreescribir si ya existe
+        if nombre_corto in config_data[seccion]:
+            return
+
+        entrada = {
+            "cif": entidad.get("cif", ""),
+            "nombre_fs": entidad.get("nombre_fs", nombre_corto),
+            "subcuenta": entidad.get("subcuenta", "628"),
+            "codimpuesto": entidad.get("codimpuesto", "IVA21"),
+            "notas": entidad.get("notas", f"Auto-registrado por IA desde {tipo_doc}"),
+        }
+        if entidad.get("pais") and entidad["pais"] != "ESP":
+            entrada["pais"] = entidad["pais"]
+        if entidad.get("irpf"):
+            entrada["irpf_porcentaje"] = 15
+
+        config_data[seccion][nombre_corto] = entrada
+
+        with open(config.ruta, "w", encoding="utf-8") as f:
+            yaml.dump(config_data, f, allow_unicode=True,
+                      default_flow_style=False, sort_keys=False)
+
+        logger.info(
+            "Auto-registrado en config.yaml: [%s][%s] CIF=%s subcuenta=%s",
+            seccion, nombre_corto, entrada["cif"], entrada["subcuenta"],
+        )
+    except Exception as e:
+        logger.warning("Error auto-registrando entidad: %s", e)
 
 
 # --- Alias publico para uso en pipeline paralelo ---

@@ -55,7 +55,7 @@ def _parsear_con_mistral(texto: str) -> Optional[dict]:
         )
         datos = json.loads(respuesta.choices[0].message.content)
         datos["_fuente"] = "mistral"
-        return datos
+        return _corregir_iva_porcentaje(datos)
     except Exception as e:
         logger.warning("Mistral parseo falló: %s", e)
         return None
@@ -77,7 +77,7 @@ def _parsear_con_gpt_mini(texto: str) -> Optional[dict]:
         )
         datos = json.loads(respuesta.choices[0].message.content)
         datos["_fuente"] = "gpt-4o-mini"
-        return datos
+        return _corregir_iva_porcentaje(datos)
     except Exception as e:
         logger.warning("GPT-4o-mini parseo falló: %s", e)
         return None
@@ -99,10 +99,30 @@ def _parsear_con_gpt4o(texto: str) -> Optional[dict]:
         )
         datos = json.loads(respuesta.choices[0].message.content)
         datos["_fuente"] = "gpt-4o"
-        return datos
+        return _corregir_iva_porcentaje(datos)
     except Exception as e:
         logger.error("GPT-4o parseo falló: %s", e)
         return None
+
+
+def _corregir_iva_porcentaje(datos: dict) -> dict:
+    """Si iva_porcentaje no cuadra con base_imponible e iva_importe, recalcula desde los importes."""
+    base = datos.get("base_imponible")
+    iva_importe = datos.get("iva_importe")
+    iva_pct = datos.get("iva_porcentaje")
+    if base and iva_importe and iva_pct is not None:
+        try:
+            calculado = round(float(iva_importe) / float(base) * 100)
+            declarado = round(float(iva_pct))
+            if calculado != declarado:
+                logger.info(
+                    "iva_porcentaje corregido: %s%% → %s%% (calculado desde base=%s / iva=%s)",
+                    declarado, calculado, base, iva_importe,
+                )
+                datos["iva_porcentaje"] = calculado
+        except (ZeroDivisionError, TypeError, ValueError):
+            pass
+    return datos
 
 
 def _resultado_es_suficiente(datos: dict) -> bool:

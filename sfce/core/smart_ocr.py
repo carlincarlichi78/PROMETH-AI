@@ -1,8 +1,11 @@
-"""Router OCR inteligente: pdfplumber → EasyOCR → PaddleOCR → Mistral.
+"""Router OCR inteligente: pdfplumber → Mistral OCR3 Vision → GPT-4o Vision.
 
 Solo extrae TEXTO. El parseo a campos JSON lo hace SmartParser.
+EasyOCR y PaddleOCR eliminados: lentos, poco fiables en tickets térmicos y PDFs de imagen.
 """
+import base64
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -13,86 +16,108 @@ from .detectores_doc import procesar_adeudo_ing
 
 logger = logging.getLogger("sfce.smart_ocr")
 
-# Tipos de documento que siempre tienen texto (nunca necesitan OCR de imagen)
+# Tipos de documento que siempre tienen texto digital (nunca necesitan OCR de imagen)
 _TIPOS_SIEMPRE_DIGITAL = {"BAN", "IMP", "NOM"}
-# Calidad mínima de texto de EasyOCR/PaddleOCR para aceptar resultado
-_MIN_PALABRAS_LOCAL_OCR = 5
+# Mínimo de palabras para considerar texto pdfplumber aceptable
+_MIN_PALABRAS_PDFPLUMBER = 30
 
 
 def _elegir_motor_ocr(perfil: PDFProfile) -> str:
     """Decide qué motor OCR usar basándose en el PDFProfile."""
-    # Documentos siempre digitales: forzar pdfplumber
     if perfil.tipo_doc in _TIPOS_SIEMPRE_DIGITAL:
         return "pdfplumber"
-    # Texto extractable de calidad suficiente
     if perfil.tiene_texto_extractable:
         return "pdfplumber"
-    # Scan simple → EasyOCR local (gratis)
-    return "easyocr"
+    return "mistral_ocr3"
 
 
-def _easyocr_extraer_texto(ruta_pdf: Path) -> str:
-    """Extrae texto de PDF escaneado usando EasyOCR (motor local, gratis)."""
+def _mistral_ocr3_extraer_texto(ruta_pdf: Path) -> str:
+    """Extrae texto con Mistral OCR3 Vision (mistral-ocr-latest).
+
+    Nivel 1 del cascade. Coste ~$1/1000 páginas.
+    """
     try:
-        import fitz
-        import easyocr
+        from mistralai import Mistral
+        key = os.environ.get("MISTRAL_API_KEY", "")
+        if not key:
+            logger.warning("MISTRAL_API_KEY no configurada")
+            return ""
 
-        reader = easyocr.Reader(["es", "en"], gpu=False, verbose=False)
-        doc = fitz.open(str(ruta_pdf))
-        texto_total = ""
+        with open(ruta_pdf, "rb") as f:
+            pdf_b64 = base64.standard_b64encode(f.read()).decode("utf-8")
 
-        for page in doc:
-            mat = fitz.Matrix(2.0, 2.0)  # 2x zoom para mejor resolución
-            pix = page.get_pixmap(matrix=mat)
-            resultado = reader.readtext(pix.tobytes("png"), detail=0)
-            texto_total += " ".join(resultado) + "\n"
+        client = Mistral(api_key=key)
+        resp = client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "document_url",
+                "document_url": f"data:application/pdf;base64,{pdf_b64}",
+            },
+        )
+        texto = ""
+        if hasattr(resp, "pages") and resp.pages:
+            for pagina in resp.pages:
+                texto += pagina.markdown + "\n"
 
-        return texto_total.strip()
+        logger.info("%s → Mistral OCR3 OK (%d palabras)", ruta_pdf.name, len(texto.split()))
+        return texto.strip()
     except Exception as e:
-        logger.warning("EasyOCR falló: %s", e)
+        logger.error("Mistral OCR3 falló: %s", e)
         return ""
 
 
-def _paddleocr_extraer_texto(ruta_pdf: Path) -> str:
-    """Extrae texto usando PaddleOCR (mejor para texto girado/espejado)."""
+def _gpt4o_extraer_texto(ruta_pdf: Path) -> str:
+    """Extrae texto con GPT-4o Vision (fallback final).
+
+    Nivel 2 del cascade. Convierte primera página a imagen y llama con vision.
+    Coste ~$0.01/página. Retorna siempre aunque sea parcial.
+    """
     try:
-        import fitz
-        from paddleocr import PaddleOCR
+        import openai
+        from pdf2image import convert_from_path
+        import io
 
-        ocr = PaddleOCR(use_angle_cls=True, lang="es", show_log=False)
-        doc = fitz.open(str(ruta_pdf))
-        texto_total = ""
+        key = os.environ.get("OPENAI_API_KEY", "")
+        if not key:
+            logger.warning("OPENAI_API_KEY no configurada")
+            return ""
 
-        for page in doc:
-            mat = fitz.Matrix(2.0, 2.0)
-            pix = page.get_pixmap(matrix=mat)
-            img_bytes = pix.tobytes("png")
-            resultado = ocr.ocr(img_bytes, cls=True)
-            if resultado and resultado[0]:
-                lineas = [line[1][0] for line in resultado[0] if line]
-                texto_total += " ".join(lineas) + "\n"
+        imagenes = convert_from_path(str(ruta_pdf), dpi=200, first_page=1, last_page=1)
+        if not imagenes:
+            return ""
 
-        return texto_total.strip()
+        buf = io.BytesIO()
+        imagenes[0].save(buf, format="PNG")
+        img_b64 = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+
+        client = openai.OpenAI(api_key=key)
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Extrae el texto completo de este documento. Devuelve solo el texto, sin comentarios.",
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{img_b64}"},
+                    },
+                ],
+            }],
+            max_tokens=2000,
+        )
+        texto = resp.choices[0].message.content or ""
+        logger.info("%s → GPT-4o Vision OK (%d palabras)", ruta_pdf.name, len(texto.split()))
+        return texto.strip()
     except Exception as e:
-        logger.warning("PaddleOCR falló: %s", e)
-        return ""
-
-
-def _mistral_extraer_texto(ruta_pdf: Path) -> str:
-    """Extrae texto con Mistral OCR3 (de pago, solo último recurso)."""
-    try:
-        from .ocr_mistral import extraer_factura_mistral
-        datos = extraer_factura_mistral(ruta_pdf)
-        if datos and datos.get("_texto_raw"):
-            return datos["_texto_raw"]
-        return ""
-    except Exception as e:
-        logger.error("Mistral OCR falló: %s", e)
+        logger.error("GPT-4o Vision falló: %s", e)
         return ""
 
 
 class SmartOCR:
-    """Fachada pública. Extrae texto de un PDF usando el motor más barato posible."""
+    """Fachada pública. Extrae texto de un PDF usando el motor más fiable posible."""
 
     @staticmethod
     def extraer_texto(
@@ -101,37 +126,32 @@ class SmartOCR:
     ) -> str:
         """Extrae texto bruto del PDF. Nunca parsea campos.
 
-        Cascade: pdfplumber (gratis) → EasyOCR (gratis) → PaddleOCR (gratis) → Mistral (pago).
+        Cascade: pdfplumber ($0) → Mistral OCR3 Vision (~$1/1000p) → GPT-4o Vision (~$0.01/p).
         """
         perfil = PDFAnalyzer().analizar(ruta_pdf, tipo_doc=tipo_doc)
         motor = _elegir_motor_ocr(perfil)
         logger.info("%s → motor inicial: %s", ruta_pdf.name, motor)
 
-        # Nivel 0: pdfplumber (ya hecho en PDFAnalyzer)
+        # Nivel 0: pdfplumber — solo si texto suficiente y sin ruido
         if motor == "pdfplumber":
-            if perfil.texto_pdfplumber:
-                logger.debug("%s → pdfplumber OK (%d words)",
-                             ruta_pdf.name, len(perfil.texto_pdfplumber.split()))
-                return perfil.texto_pdfplumber
-            # Si pdfplumber da vacío aunque era "digital", escalar a EasyOCR
-            logger.warning("%s → pdfplumber vacío, escalando a EasyOCR", ruta_pdf.name)
+            texto = perfil.texto_pdfplumber or ""
+            if len(texto.split()) >= _MIN_PALABRAS_PDFPLUMBER:
+                logger.debug("%s → pdfplumber OK (%d palabras)",
+                             ruta_pdf.name, len(texto.split()))
+                return texto
+            logger.warning("%s → pdfplumber insuficiente (%d palabras), escalando a Mistral OCR3",
+                           ruta_pdf.name, len(texto.split()))
 
-        # Nivel 1: EasyOCR local
-        texto = _easyocr_extraer_texto(ruta_pdf)
-        if len(texto.split()) >= _MIN_PALABRAS_LOCAL_OCR:
-            logger.info("%s → EasyOCR OK", ruta_pdf.name)
+        # Nivel 1: Mistral OCR3 Vision
+        logger.info("%s → Mistral OCR3 Vision (PAGO ~$0.001/pág)", ruta_pdf.name)
+        texto = _mistral_ocr3_extraer_texto(ruta_pdf)
+        if len(texto.split()) >= 20:
             return texto
 
-        # Nivel 2: PaddleOCR local (mejor para texto espejado/girado)
-        logger.info("%s → EasyOCR insuficiente, probando PaddleOCR", ruta_pdf.name)
-        texto = _paddleocr_extraer_texto(ruta_pdf)
-        if len(texto.split()) >= _MIN_PALABRAS_LOCAL_OCR:
-            logger.info("%s → PaddleOCR OK", ruta_pdf.name)
-            return texto
-
-        # Nivel 3: Mistral OCR (pago, último recurso)
-        logger.warning("%s → OCR local insuficiente, usando Mistral OCR (PAGO)", ruta_pdf.name)
-        return _mistral_extraer_texto(ruta_pdf)
+        # Nivel 2: GPT-4o Vision (fallback final)
+        logger.warning("%s → Mistral OCR3 insuficiente, usando GPT-4o Vision (PAGO ~$0.01/pág)",
+                       ruta_pdf.name)
+        return _gpt4o_extraer_texto(ruta_pdf)
 
     @staticmethod
     def extraer(

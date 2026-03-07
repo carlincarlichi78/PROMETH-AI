@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-07T20:18:06.347117'
+ultima_actualizacion: '2026-03-07T21:07:59.050001'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -1161,13 +1161,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:16.202196'
-  exitos: 3
+  exitos: 9
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-03-07. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:43.034882'
+  ultimo_exito: '2026-03-07T21:00:16.321240'
 - id: auto_20260307_183116
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-03\-30\.\ La\ factur
@@ -1188,13 +1188,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:17.500968'
-  exitos: 2
+  exitos: 5
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-03-31. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:43.630897'
+  ultimo_exito: '2026-03-07T21:00:16.933813'
 - id: auto_20260307_183118
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-04\-10\.\ La\ factur
@@ -1202,13 +1202,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:18.190388'
-  exitos: 3
+  exitos: 9
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-04-10. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:44.888864'
+  ultimo_exito: '2026-03-07T21:00:18.360792'
 - id: auto_20260307_183118
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-04\-30\.\ La\ factur
@@ -1229,13 +1229,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:19.510533'
-  exitos: 4
+  exitos: 10
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-05-16. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:46.227488'
+  ultimo_exito: '2026-03-07T21:00:19.728098'
 - id: auto_20260307_183120
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-05\-30\.\ La\ factur
@@ -1243,13 +1243,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:20.822156'
-  exitos: 2
+  exitos: 5
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-05-30. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:46.819533'
+  ultimo_exito: '2026-03-07T21:00:20.333705'
 - id: auto_20260307_183121
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-03\.\ La\ factur
@@ -1257,13 +1257,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:21.430301'
-  exitos: 2
+  exitos: 5
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-06-03. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:47.405344'
+  ultimo_exito: '2026-03-07T21:00:20.954482'
 - id: auto_20260307_183122
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-06\.\ La\ factur
@@ -1271,13 +1271,13 @@ patrones:
   tipo_doc:
   - FV
   aprendido: '2026-03-07T18:31:22.125529'
-  exitos: 5
+  exitos: 14
   fallos: 0
   origen: auto
   error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
     los datos - Fecha no válida: 2025-06-06. La factura FAC0007A4 es anterior a esta
     y sin embargo tiene fecha posterior: 30-09-2025. '
-  ultimo_exito: '2026-03-07T20:13:49.418077'
+  ultimo_exito: '2026-03-07T21:00:23.007194'
 - id: auto_20260307_183122
   regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
     los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-26\.\ La\ factur
