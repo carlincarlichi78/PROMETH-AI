@@ -9,6 +9,7 @@ from typing import Optional
 from .pdf_analyzer import PDFAnalyzer, PDFProfile
 from .cache_ocr import obtener_cache_ocr, guardar_cache_ocr
 from .smart_parser import SmartParser
+from .detectores_doc import procesar_adeudo_ing
 
 logger = logging.getLogger("sfce.smart_ocr")
 
@@ -155,7 +156,13 @@ class SmartOCR:
             logger.error("%s → sin texto tras todos los motores OCR", ruta_pdf.name)
             return None
 
-        # 3. Parsear campos (Parser layer)
+        # 3a. Detección temprana: adeudo ING → extracción regex sin LLM ($0)
+        datos_adeudo = procesar_adeudo_ing(texto)
+        if datos_adeudo:
+            guardar_cache_ocr(str(ruta_pdf), datos_adeudo)
+            return datos_adeudo
+
+        # 3b. Parsear campos (Parser layer)
         perfil = PDFAnalyzer().analizar(ruta_pdf, tipo_doc=tipo_doc)
         cif = cif_hint or perfil.cif_detectado
         datos = SmartParser.parsear(texto, tipo_doc=tipo_doc, cif=cif)
