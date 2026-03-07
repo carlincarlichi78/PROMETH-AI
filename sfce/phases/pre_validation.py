@@ -393,6 +393,35 @@ def _check_bancario_importe(datos: dict) -> Optional[str]:
     return None
 
 
+def _check_adeudo_ing_iva_exento(doc: dict) -> Optional[str]:
+    """ING1: Adeudo ING con IVA > 0 (exento Art.20 LIVA)."""
+    datos = doc.get("datos_extraidos", {})
+    meta = datos.get("metadata") or {}
+    if meta.get("tipo_documento") != "adeudo_ing":
+        return None
+    iva_pct = float(datos.get("iva_porcentaje", 0) or 0)
+    if iva_pct > 0:
+        return (f"[ING1] Adeudo ING con IVA {iva_pct}% — "
+                f"servicios financieros exentos Art.20 LIVA")
+    return None
+
+
+def _check_suplido_cuenta_554(doc: dict, config: ConfigCliente) -> Optional[str]:
+    """SUM1: Suplido sin cuenta 554."""
+    if doc.get("tipo") != "SUM":
+        return None
+    datos = doc.get("datos_extraidos", {})
+    cif = (datos.get("emisor_cif") or "").upper()
+    entidad = config.buscar_proveedor_por_cif(cif) if cif else None
+    if not entidad:
+        return None
+    subcuenta = str(entidad.get("subcuenta", "") or "")
+    if subcuenta and not subcuenta.startswith("554"):
+        return (f"[SUM1] Suplido de {entidad.get('_nombre_corto', cif)} "
+                f"con subcuenta {subcuenta} — suplidos deben usar 554xxx")
+    return None
+
+
 def _check_rlc_cuota(datos: dict) -> Optional[str]:
     """R1: cuota coherente con base (tolerancia amplia por alicuotas variables).
 
@@ -629,6 +658,15 @@ def validar_documento_individual(
         if aviso:
             avisos_doc.append(aviso)
 
+    aviso = _check_adeudo_ing_iva_exento(doc)
+    if aviso:
+        avisos_doc.append(aviso)
+
+    if tipo_doc == "SUM":
+        aviso = _check_suplido_cuenta_554(doc, config)
+        if aviso:
+            avisos_doc.append(aviso)
+
     # V1-V3: Checks de validacion v2 del config.yaml (solo AVISOS, no errores)
     if es_proveedor and entidad:
         validacion_cfg = entidad.get("validacion") or {}
@@ -722,6 +760,19 @@ def ejecutar_pre_validacion(
         datos = doc.get("datos_extraidos", {})
         errores_doc = []
         avisos_doc = []
+
+        # Check 0: preautorización anulada
+        _meta_doc = datos.get("metadata") or {}
+        if _meta_doc.get("preautorizacion_anulada"):
+            excluidos.append({
+                **doc,
+                "motivo_exclusion": "Preautorización anulada — ticket no válido",
+                "errores_validacion": ["Preautorización anulada"],
+                "avisos_validacion": [],
+            })
+            resultado.aviso(f"Excluido (preaut. anulada): {archivo}")
+            docs_procesados.append(doc)
+            continue
 
         logger.info(f"Validando: {archivo} ({tipo_doc})")
 
@@ -919,6 +970,15 @@ def ejecutar_pre_validacion(
 
         elif tipo_doc == "RLC":
             aviso = _check_rlc_cuota(datos)
+            if aviso:
+                avisos_doc.append(aviso)
+
+        aviso = _check_adeudo_ing_iva_exento(doc)
+        if aviso:
+            avisos_doc.append(aviso)
+
+        if tipo_doc == "SUM":
+            aviso = _check_suplido_cuenta_554(doc, config)
             if aviso:
                 avisos_doc.append(aviso)
 

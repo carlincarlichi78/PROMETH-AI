@@ -1,7 +1,7 @@
 """Router de parseo: texto bruto → campos JSON estructurados.
 
 Solo parsea campos. La extracción de texto la hace SmartOCR.
-Cascade: template regex ($0) → Gemini Flash gratis → GPT-4o-mini → GPT-4o.
+Cascade: template regex ($0) → Mistral Small → GPT-4o-mini → GPT-4o.
 """
 import json
 import logging
@@ -14,8 +14,6 @@ from .prompts import PROMPT_EXTRACCION_V3_2 as PROMPT_PARSEO_V3  # noqa: E402
 
 # Tipos de doc con template regex disponible
 _TIPOS_CON_TEMPLATE = {"BAN", "IMP"}
-# Mínimo de palabras para confiar en parseo Gemini (texto suficientemente rico)
-_MIN_PALABRAS_GEMINI = 8
 
 
 def _elegir_motor_parseo(
@@ -25,10 +23,7 @@ def _elegir_motor_parseo(
 ) -> str:
     if tipo_doc in _TIPOS_CON_TEMPLATE:
         return "template"
-    palabras = len(texto.split())
-    if palabras >= _MIN_PALABRAS_GEMINI:
-        return "gemini"
-    return "gpt-4o-mini"
+    return "mistral"
 
 
 def _parsear_con_template(texto: str, tipo_doc: str) -> Optional[dict]:
@@ -44,24 +39,25 @@ def _parsear_con_template(texto: str, tipo_doc: str) -> Optional[dict]:
     return resultado if len(resultado) > 2 else None
 
 
-def _parsear_con_gemini(texto: str) -> Optional[dict]:
-    """Parseo con Gemini Flash (free tier, 1500 req/día)."""
+def _parsear_con_mistral(texto: str) -> Optional[dict]:
+    """Parseo con Mistral Small (motor primario)."""
     try:
-        from google import genai
-        key = os.environ.get("GEMINI_API_KEY", "")
+        from mistralai import Mistral
+        key = os.environ.get("MISTRAL_API_KEY", "")
         if not key:
             return None
-        client = genai.Client(api_key=key)
-        respuesta = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[{"parts": [{"text": PROMPT_PARSEO_V3.format(texto_documento=texto[:3000])}]}],
-            config={"response_mime_type": "application/json", "temperature": 0.1},
+        client = Mistral(api_key=key)
+        respuesta = client.chat.complete(
+            model="mistral-small-latest",
+            messages=[{"role": "user", "content": PROMPT_PARSEO_V3.format(texto_documento=texto[:3000])}],
+            response_format={"type": "json_object"},
+            temperature=0.1,
         )
-        datos = json.loads(respuesta.text)
-        datos["_fuente"] = "gemini"
+        datos = json.loads(respuesta.choices[0].message.content)
+        datos["_fuente"] = "mistral"
         return datos
     except Exception as e:
-        logger.warning("Gemini parseo falló: %s", e)
+        logger.warning("Mistral parseo falló: %s", e)
         return None
 
 
@@ -139,25 +135,25 @@ class SmartParser:
             resultado = _parsear_con_template(texto, tipo_doc)
             if resultado:
                 return resultado
-            motor = "gemini"  # fallback si template falla
+            motor = "mistral"  # fallback si template falla
 
-        # Gemini Flash (gratis hasta 1500 req/día)
-        if motor == "gemini":
-            resultado = _parsear_con_gemini(texto)
+        # Motor primario: Mistral Small
+        if motor == "mistral":
+            resultado = _parsear_con_mistral(texto)
             if resultado and _resultado_es_suficiente(resultado):
                 return resultado
             if resultado:
-                logger.info("SmartParser: gemini incompleto (base_imponible null), escalando")
-            motor = "gpt-4o-mini"  # fallback
+                logger.info("SmartParser: mistral incompleto (base_imponible null), escalando")
+            motor = "gpt-4o-mini"
 
-        # GPT-4o-mini (barato, ~$0.0003/llamada)
+        # Fallback 1: GPT-4o-mini
         if motor == "gpt-4o-mini":
             resultado = _parsear_con_gpt_mini(texto)
             if resultado and _resultado_es_suficiente(resultado):
                 return resultado
             if resultado:
-                logger.info("SmartParser: gpt-4o-mini incompleto (base_imponible null), escalando")
+                logger.info("SmartParser: gpt-4o-mini incompleto, escalando")
 
-        # Último recurso: GPT-4o completo
+        # Último recurso: GPT-4o
         logger.warning("SmartParser escalando a GPT-4o (último recurso)")
         return _parsear_con_gpt4o(texto)

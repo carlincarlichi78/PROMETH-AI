@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-07 (sesión 116)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-07 (sesión 117)
 
 ---
 
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 116 — CERRADA)
+## Estado rápido (sesión 117 — CERRADA)
 
-- **Completado:** config.yaml maría-isabel: sección `emisor` + 4 proveedores ING (ICAM Q2963001I, Mutualidad V28024149, Uralde B92010768, Avatel A93135218) con CIFs verificados contra fuentes oficiales, importe_fijo, concepto_tipo, avisos SEPA. Detector adeudos ING en `detectores_doc.py`: regex $0 que cortocircuita LLMs para adeudos ING, integrado en SmartOCR paso 3a. 17 tests, 2875 PASS total.
-- **Pendiente sesión 117:** FAC0007A4 en FS Uralde bloquea FV por cronología. Gemini confunde dígitos 5→6 (desactivar en SmartParser). CIF 25719412F en intake lookup (13 tickets cuarentena). Mistral Vision primero para tickets. 1 Enero -14.pdf plenergy (revisar si preaut. anulada).
+- **Completado:** pre_validation: Check 0 en bucle principal + ING1 (adeudos ING IVA exento) + SUM1 (suplidos cuenta 554). registration: partida 473 automática en FV con IRPF + suplidos fuerzan 554. SmartParser: Mistral Small primario, Gemini eliminado del cascade (confunde CIFs). Diagnóstico SmartOCR vs SmartParser (dos capas independientes).
+- **Pendiente sesión 118:** Borrar caché OCR María Isabel (re-procesar con Mistral). Plenergy id=358 (.ocr.json manual). 12 tickets cuarentena (CIF 25719412F). Dropbox IE9852817J fecha 2024 bloqueado. FAC0007A4 FS Uralde cronología.
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`

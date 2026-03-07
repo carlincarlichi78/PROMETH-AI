@@ -420,6 +420,11 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
             es_intracomunitario = True
             logger.info(f"  Intracom declarado via asiento.intracom=true")
 
+    # SUM: suplidos → subcuenta 554 (deudores por anticipos)
+    if tipo_doc == "SUM" and not form.get("_subcuenta_gasto"):
+        form["_subcuenta_gasto"] = "5540000000"
+        logger.info("  Suplido: subcuenta 554 (deudores por anticipos)")
+
     # Bug fix: intracomunitario siempre IVA0 (autorepercusion se hace post-registro)
     if es_intracomunitario:
         codimpuesto_defecto = "IVA0"
@@ -1282,6 +1287,25 @@ def ejecutar_registro(
             if res_asiento.ok:
                 ya = "ya existia" if res_asiento.data.get("ya_existia") else "nuevo"
                 logger.info(f"  Asiento generado: {res_asiento.id_creado} ({ya})")
+                # Partida 473: HP acreedora por IRPF retenido en FV
+                datos_fv = doc_trabajo.get("datos_extraidos") or {}
+                irpf_pct_fv = float(datos_fv.get("irpf_porcentaje") or 0)
+                irpf_imp_fv = float(datos_fv.get("irpf_importe") or 0)
+                if irpf_pct_fv > 0 and irpf_imp_fv > 0 and res_asiento.id_creado:
+                    r473 = fs.crear_partida({
+                        "idasiento": res_asiento.id_creado,
+                        "codsubcuenta": "4730000000",
+                        "concepto": f"IRPF {irpf_pct_fv}% ret. factura venta",
+                        "debe": 0,
+                        "haber": irpf_imp_fv,
+                    })
+                    if r473.ok:
+                        logger.info(f"  Partida 473 creada: {irpf_imp_fv}€ HABER")
+                    else:
+                        logger.warning(f"  Partida 473 no creada: {r473.error}")
+                        resultado.aviso(
+                            f"Partida 473 no creada FV {idfactura}: {r473.error}"
+                        )
             else:
                 logger.warning(f"  Asiento no generado para FV {idfactura}: {res_asiento.error}")
                 resultado.aviso(f"Asiento FV no generado: {res_asiento.error}",

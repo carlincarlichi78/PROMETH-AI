@@ -1,5 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 116 cierre) | **Branch:** main | **Tests:** 2875 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 117 cierre) | **Branch:** main | **Tests:** ver abajo | **Push:** OK
+
+---
+
+## Estado actual (sesión 117 — Mistral primario SmartParser + pre_validation ING1/SUM1 + registration 473/554)
+
+### Commits sesión 117
+
+| Hash | Descripción |
+|------|-------------|
+| (ver abajo — commit cierre) | docs: cierre sesion 117 |
+| (código) | pre_validation: Check 0 + ING1 (adeudo ING IVA exento) + SUM1 (suplido 554) |
+| (código) | registration: partida 473 automática FV con IRPF + suplidos fuerzan subcuenta 554 |
+| (código) | smart_parser: Mistral Small primario, Gemini eliminado del cascade |
+
+### Tasks sesión 117
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| T1: pre_validation — Check 0 + checks semánticos | ✅ DONE | `_check_adeudo_ing_iva_exento` (ING1): adeudos ING sin cuota IVA son exentos, no error. `_check_suplido_cuenta_554` (SUM1): suplidos deben registrarse en 554, no 410. Check 0 integrado en bucle principal |
+| T2: registration — partida 473 + suplidos 554 | ✅ DONE | FV con IRPF genera automáticamente contrapartida 473. Suplidos fuerzan subcuenta 554 al registrar |
+| T3: Pipeline fase 0+1 María Isabel | ✅ DONE | 11 FC + 10 FV validados, 30 docs procesados (mayoría cache). Motor real era Gemini en parser — causa de errores CIF confirmada |
+| T4: Diagnóstico SmartOCR vs SmartParser | ✅ DONE | Dos capas independientes: SmartOCR extrae texto, SmartParser parsea a JSON con cascade LLM configurable |
+| T5: SmartParser — Mistral primario, Gemini eliminado | ✅ DONE | Nuevo orden cascade: template → Mistral Small → GPT-4o-mini → GPT-4o. Gemini eliminado (confunde dígitos CIFs). Tests actualizados |
+
+### Pendientes sesión 118 (CONTABILIDAD)
+
+1. **Borrar caché OCR María Isabel y re-procesar** con Mistral (cuando Carlos lo confirme) — archivos `.ocr.json` con `_fuente: gemini` tienen CIFs incorrectos
+2. **Plenergy id=358** — `.ocr.json` manual (IVA 20% impreso, no error OCR). Construir manualmente o corregir valor
+3. **12 tickets cuarentena María Isabel** — CIF receptor desconocido (25719412F sin registrar en intake lookup)
+4. **Dropbox IE9852817J — fecha 2024** — bloqueado por validación cronología. Investigar si aceptar o excluir
+5. **FAC0007A4 en FS Uralde** — bloquea inserción FV por cronología (fecha 30-09-2025). Investigar si es legítima o de prueba
 
 ---
 
