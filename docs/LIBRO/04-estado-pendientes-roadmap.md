@@ -1,5 +1,34 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 114 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 115 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 115 — SmartParser cascade fix + diagnóstico tickets térmicos + bloqueantes FS)
+
+### Commits sesión 115
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente commit cierre) | fix(smart_parser): _resultado_es_suficiente() — cascade no para con base_imponible null |
+
+### Tasks sesión 115
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| SmartParser cascade fix | ✅ DONE | Añadida `_resultado_es_suficiente()`: si base_imponible null, escala a siguiente motor (GPT-4o-mini → GPT-4o) |
+| GEMINI_API_KEY rotada | ✅ DONE | Clave anterior marcada como leaked por Google. Nueva clave en .env local y VPS producción + reinicio sfce_api |
+| Diagnóstico 1 Enero -14.pdf plenergy | ✅ DONE | Mistral Vision extrae B.Imp=24.79€, IVA 21%. pdfplumber ratio 0.894 pero semánticamente corrupto. Hash PDF=id 358 confirmado |
+| Pipeline 30 docs inbox María Isabel | ✅ DONE | OCR ejecutado. 2 bloqueantes identificados (ver pendientes). Gemini confunde 5→6 en CIFs y números factura |
+| FAC0007A4 bloqueante FV | ⚠️ PENDIENTE | Factura con fecha 30-09-2025 ya en FS bloquea inserción del 1T/2T. Investigar si es legítima o de prueba |
+| CIF desconocido tickets cuarentena | ⚠️ PENDIENTE | Intake rechaza tickets porque CIF receptor no identificable. Añadir 25719412F al lookup del intake |
+
+### Pendientes sesión 116 (CONTABILIDAD)
+
+1. **Investigar FAC0007A4** en FS instancia Uralde (empresa_id=14) — ¿registro legítimo del 3T o de prueba? Si es de prueba borrar. Si es legítimo, las FV 1T/2T deben insertarse antes con fecha anterior
+2. **Desactivar Gemini en SmartParser** — cascade directa: GPT-4o-mini → GPT-4o (Gemini confunde dígitos 5→6)
+3. **CIF María Isabel en config.yaml** — añadir `25719412F` al lookup del intake para que los tickets de la cliente no vayan a cuarentena por CIF desconocido
+4. **Tickets cuarentena por CIF desconocido** — resolver tras fix intake (13 tickets pendientes)
+5. **Mistral Vision primero para tickets** — cuando tipo_documento=="ticket", invocar Mistral antes que pdfplumber
 
 ---
 

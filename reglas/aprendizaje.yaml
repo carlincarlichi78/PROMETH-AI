@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-06T10:15:42.510963'
+ultima_actualizacion: '2026-03-07T18:31:23.819405'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
@@ -1154,3 +1154,135 @@ patrones:
   fallos: 0
   origen: auto
   error_original: No se encontro entidad en FS para Ingresos 3T-4.pdf
+- id: auto_20260307_183116
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-03\-07\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:16.202196'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-03-07. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183116
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-03\-30\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:16.886116'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-03-30. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183117
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-03\-31\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:17.500968'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-03-31. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183118
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-04\-10\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:18.190388'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-04-10. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183118
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-04\-30\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:18.809660'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-04-30. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183119
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-05\-16\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:19.510533'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-05-16. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+  ultimo_exito: '2026-03-07T18:31:20.201269'
+- id: auto_20260307_183120
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-05\-30\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:20.822156'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-05-30. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183121
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-03\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:21.430301'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-06-03. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+- id: auto_20260307_183122
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-06\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:22.125529'
+  exitos: 2
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-06-06. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '
+  ultimo_exito: '2026-03-07T18:31:23.529338'
+- id: auto_20260307_183122
+  regex: FS\ error\ creando\ cabecera:\ Ha\ ocurrido\ un\ error\ mientras\ se\ guardaban\
+    los\ datos\ \-\ Fecha\ no\ válida:\ 2025\-06\-26\.\ La\ factur
+  estrategia: adaptar_campos_ocr
+  tipo_doc:
+  - FV
+  aprendido: '2026-03-07T18:31:22.841223'
+  exitos: 1
+  fallos: 0
+  origen: auto
+  error_original: 'FS error creando cabecera: Ha ocurrido un error mientras se guardaban
+    los datos - Fecha no válida: 2025-06-26. La factura FAC0007A4 es anterior a esta
+    y sin embargo tiene fecha posterior: 30-09-2025. '

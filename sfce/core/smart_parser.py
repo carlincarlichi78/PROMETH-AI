@@ -109,6 +109,11 @@ def _parsear_con_gpt4o(texto: str) -> Optional[dict]:
         return None
 
 
+def _resultado_es_suficiente(datos: dict) -> bool:
+    """True solo si base_imponible está presente. Sin él el asiento no se puede generar."""
+    return datos.get("base_imponible") is not None
+
+
 class SmartParser:
     """Fachada pública. Parsea texto a campos JSON usando el motor más barato posible."""
 
@@ -139,15 +144,19 @@ class SmartParser:
         # Gemini Flash (gratis hasta 1500 req/día)
         if motor == "gemini":
             resultado = _parsear_con_gemini(texto)
-            if resultado:
+            if resultado and _resultado_es_suficiente(resultado):
                 return resultado
+            if resultado:
+                logger.info("SmartParser: gemini incompleto (base_imponible null), escalando")
             motor = "gpt-4o-mini"  # fallback
 
         # GPT-4o-mini (barato, ~$0.0003/llamada)
         if motor == "gpt-4o-mini":
             resultado = _parsear_con_gpt_mini(texto)
-            if resultado:
+            if resultado and _resultado_es_suficiente(resultado):
                 return resultado
+            if resultado:
+                logger.info("SmartParser: gpt-4o-mini incompleto (base_imponible null), escalando")
 
         # Último recurso: GPT-4o completo
         logger.warning("SmartParser escalando a GPT-4o (último recurso)")

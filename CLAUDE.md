@@ -134,24 +134,26 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 114 cierre)
+## Estado actual (07/03/2026, sesion 115 cierre)
 
 **Rama**: `main` | **Ultimo commit**: fix(pipeline): null safety + preautorizacion anulada | **Tests**: 2858 PASS
 
-### Completado sesion 114
-- Pipeline María Isabel 2025: 18 OK, 1 fallido (1 Enero -14 plenergy), 12 cuarentena ✓
-- Null safety registration.py: `.get(key, default)` → `.get(key) or default` en base_imponible, iva_porcentaje (5 lugares) ✓
-- pre_validation check 0: excluir `preautorizacion_anulada: true` antes de registro ✓
-- Factura 93 residual FS (total=0) — pendiente borrar MariaDB
+### Completado sesion 115
+- SmartParser cascade fix: `_resultado_es_suficiente()` — si Gemini devuelve base_imponible=null, escala a GPT-4o-mini/GPT-4o ✓
+- Diagnóstico ticket Plenergy id=358: pdfplumber extrae texto corrupto (alta ratio alfanumérica pero semánticamente inválido) ✓
+- Mistral Vision sobre 1 Enero -14.pdf: extrae correctamente B.Imp 24.79€ IVA21% ✓
+- GEMINI_API_KEY rotada (filtrada) — actualizada local .env + VPS prod + restart sfce_api ✓
+- Pipeline 30 docs María Isabel ejecutado via Mistral OCR3 ✓
+- Caché OCR de 1 Enero -14.pdf invalidada para re-procesamiento ✓
 
-### Proxima sesion — pendientes (sesion 115)
+### Proxima sesion — pendientes (sesion 116)
 
 **CONTABILIDAD:**
-1. **Factura 93 FS** — residual preautorización anulada (total=0). Borrar en MariaDB instancia Javier.
-2. **1 Enero -14.pdf plenergy** — fallido discrepancia (base/iva null). Revisar si preaut. anulada.
-3. **12 cuarentena María Isabel** — tickets sin CIF. Revisión manual.
-4. **Dropbox duplicadas** — BLOQUEADO: María Isabel necesita re-subir PDF (11.99€ intracom IE9852817).
-5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded.
+1. **FAC0007A4 FS Javier** — bloquea inserción FV por cronología (fecha 30-09-2025 posterior a facturas 1T/2T).
+2. **Tickets sin CIF → cuarentena** — CIF receptor 25719412F (María Isabel) no reconocido en intake lookup.
+3. **Factura 93 FS** — residual preautorización anulada (total=0). Borrar en MariaDB instancia Javier.
+4. **12 cuarentena María Isabel** — tickets sin CIF. Revisión manual.
+5. **Dropbox duplicadas** — BLOQUEADO: María Isabel necesita re-subir PDF (11.99€ intracom IE9852817).
 
 ## Decisiones de arquitectura — por qué
 

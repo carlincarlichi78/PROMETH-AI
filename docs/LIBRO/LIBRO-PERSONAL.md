@@ -47,10 +47,12 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 114 — CERRADA)
+## Estado rápido (sesión 115 — CERRADA)
 
-- **Completado:** Pipeline María Isabel 2025 ejecutado (18 OK, 1 fallido, 12 cuarentena). Fix null safety registration.py (base_imponible/iva_porcentaje con null explícito). Check 0 pre_validation para preautorizaciones anuladas. Tests 2858 PASS.
-- **Pendiente sesión 115:** Factura 93 residual FS (total=0, borrar MariaDB). 1 Enero -14.pdf plenergy fallido (revisar si preaut. anulada). 12 cuarentena revisión manual. Dropbox bloqueado (María Isabel re-subir PDF).
+- **Completado:** SmartParser fix cascade: `_resultado_es_suficiente()` evita que Gemini detenga cascade con base_imponible=null. Diagnóstico ticket Plenergy (id=358): pdfplumber extrae texto corrupto → Mistral Vision extrae correctamente B.Imp 24.79€ IVA21%. GEMINI_API_KEY rotada (filtrada). Pipeline 30 docs María Isabel: procesados via Mistral OCR3. Caché .ocr.json de 1 Enero -14 invalidada.
+- **Pendiente sesión 116:** FAC0007A4 en FS Javier bloquea FV por cronología (fecha 30-09-2025). Tickets sin CIF → cuarentena (CIF receptor 25719412F no reconocido). Factura 93 residual FS (total=0). 12 cuarentena revisión manual. Dropbox bloqueado (María Isabel re-subir PDF IE9852817).
+- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
+- **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
