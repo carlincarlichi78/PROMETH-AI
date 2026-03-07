@@ -115,6 +115,7 @@ proveedores:
     codimpuesto: IVA21
     regimen: general
     importe_fijo: 44.46
+    importe_tipico: 44.46
     concepto_tipo: asesoria
     notas: Gestora. Gasto G19 servicios profesionales. Domiciliado ING.
     formato_pdf: escaneado
@@ -303,25 +304,24 @@ proveedores:
     - AVATEL
     - AVATEL TELECOM
     - FIBRA, WIFI Y TELEFONIA INTEGRALES
+    - FIBRA, WIFI Y TELEFONIA INTEGRALES - AVATEL
+    - FIBRA WIFI Y TELEFONIA INTEGRALES AVATEL
+    - FIBRA, WIFI Y TELEFONÍA INTEGRALES - AVATEL
+    - FIBRA WIFI Y TELEFONÍA INTEGRALES AVATEL
     pais: ESP
     divisa: EUR
     subcuenta: '6290000001'
     codimpuesto: IVA21
     regimen: general
     importe_fijo: 59.99
+    importe_tipico: 59.99
+    importe_rango:
+    - 50
+    - 150
     concepto_tipo: telefonia
     notas: Internet y telefonia despacho. Domiciliado ING. Importe fijo mensual.
     formato_pdf: digital
     frecuencia: mensual
-    importe_rango:
-    - 50
-    - 150
-    concepto_keywords:
-    - internet
-    - telefonía
-    - avatel
-    - despacho
-    - servicio
     persona_fisica: false
     validacion:
       iva_esperado:
@@ -1003,6 +1003,15 @@ proveedores:
     asiento:
       subcuenta_gasto: '6230000000'
       intracom: false
+  plentil_us121_san:
+    cif: ''
+    nombre_fs: PLENTIL US121 SAN ROQUE
+    pais: ESP
+    divisa: EUR
+    regimen: general
+    subcuenta: '7000000000'
+    codimpuesto: IVA21
+    notas: Venta por aceptador (auto-registrado Safety Net)
 clientes:
   blanco_abogados:
     rol: cliente

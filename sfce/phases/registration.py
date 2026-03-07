@@ -510,10 +510,26 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         form["lineas"] = json.dumps(lineas_fs)
     else:
         # Sin lineas detalladas: crear una linea con el total
+        # pvpunitario debe ser la BASE NETA (sin IVA) — FS aplica IVA encima
+        _base = datos.get("base_imponible")
+        if _base:
+            _pvp = float(_base)
+        elif datos.get("total"):
+            # total del OCR siempre es el importe final (IVA incluido)
+            # calcular base dividiendo por factor IVA del codimpuesto del proveedor
+            _iva_rates = {"IVA21": 21.0, "IVA10": 10.0, "IVA4": 4.0, "IVA0": 0.0}
+            _iva_pct = _iva_rates.get(codimpuesto_defecto, 21.0)
+            _pvp = round(float(datos["total"]) / (1 + _iva_pct / 100), 4)
+            logger.info(
+                f"  base_imponible ausente: calculando base desde total "
+                f"({datos['total']}) / (1+{_iva_pct}%) = {_pvp}"
+            )
+        else:
+            _pvp = 0.0
         linea_unica = {
             "descripcion": datos.get("numero_factura") or "Factura",
             "cantidad": 1,
-            "pvpunitario": datos.get("base_imponible") or datos.get("total") or 0,
+            "pvpunitario": _pvp,
             "codimpuesto": codimpuesto_defecto,
         }
         # Shift-left: inyectar subcuenta del proveedor incluso en linea unica
