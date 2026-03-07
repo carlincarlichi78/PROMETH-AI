@@ -38,6 +38,7 @@ from ..core.nombres import renombrar_documento
 from ..core.ocr_mistral import extraer_factura_mistral
 from ..core.smart_ocr import SmartOCR
 from ..core.prompts import PROMPT_EXTRACCION
+from ..core import motor_plantillas
 from ..core.proveedor_discovery import (
     cargar_cifs_sugeridos,
     descubrir_proveedor,
@@ -1078,10 +1079,104 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
             avisos.append((f"Error pdfplumber: {nombre_archivo}", {"error": str(e)}))
             return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": -1, "sugerencias": []}
 
+        # 2a. Intentar plantilla regex antes de llamar al LLM (coste $0)
+        datos_gpt = None
+        _plantilla_aplicada = False
+        try:
+            _cifs_raw = _extraer_cif_del_texto(texto_raw)
+            _config_path = config.ruta if hasattr(config, "ruta") else None
+            if _cifs_raw and _config_path:
+                for _cif_candidato in _cifs_raw:
+                    _plantilla = motor_plantillas.cargar_plantilla(_config_path, _cif_candidato)
+                    if _plantilla and _plantilla.get("estado") != "fallido":
+                        _extraido = motor_plantillas.aplicar_plantilla(texto_raw, _plantilla)
+                        _campos_ok = all(
+                            _extraido.get(c) is not None
+                            for c in ("total", "fecha", "numero_factura")
+                        )
+                        if _campos_ok:
+                            datos_gpt = _extraido
+                            datos_gpt["_fuente"] = "plantilla"
+                            datos_gpt["_plantilla_cif"] = _cif_candidato
+                            _plantilla_aplicada = True
+                            motor_plantillas.actualizar_estado_plantilla(
+                                _config_path, _cif_candidato, exito=True
+                            )
+                            logger.info(
+                                f"  [{nombre_archivo}] Plantilla aplicada para CIF "
+                                f"{_cif_candidato} (sin LLM)"
+                            )
+                            break
+                        else:
+                            motor_plantillas.actualizar_estado_plantilla(
+                                _config_path, _cif_candidato, exito=False
+                            )
+                            logger.info(
+                                f"  [{nombre_archivo}] Plantilla falló para CIF "
+                                f"{_cif_candidato} — escalando a LLM"
+                            )
+        except Exception as _e_plantilla:
+            logger.warning(
+                f"  [{nombre_archivo}] motor_plantillas error (no interrumpe): {_e_plantilla}"
+            )
+
         # 2. Extraccion OCR via SmartOCR (pdfplumber→EasyOCR→PaddleOCR→Mistral)
-        _t_ocr = time.time()
-        datos_gpt = _extraer_datos_ocr(ruta_pdf)
-        _duracion_ocr = round(time.time() - _t_ocr, 3)
+        if not _plantilla_aplicada:
+            _t_ocr = time.time()
+            datos_gpt = _extraer_datos_ocr(ruta_pdf)
+            _duracion_ocr = round(time.time() - _t_ocr, 3)
+
+            # 2b. Post-extracción LLM: generar plantilla si plantillas_activas: true
+            try:
+                _config_path_post = config.ruta if hasattr(config, "ruta") else None
+                _plantillas_activas = False
+                if _config_path_post:
+                    from ruamel.yaml import YAML as _YAML
+                    _yaml_reader = _YAML()
+                    with open(_config_path_post, "r", encoding="utf-8") as _f:
+                        _cfg_raw = _yaml_reader.load(_f)
+                    _plantillas_activas = bool(
+                        (_cfg_raw.get("empresa") or {}).get("plantillas_activas", False)
+                    )
+
+                if _plantillas_activas and datos_gpt and _config_path_post:
+                    _cifs_post = _extraer_cif_del_texto(texto_raw)
+                    _cif_emisor = (datos_gpt.get("emisor_cif") or "").upper().strip()
+                    if _cif_emisor and _cif_emisor not in _cifs_post:
+                        _cifs_post.insert(0, _cif_emisor)
+
+                    for _cif_post in _cifs_post[:3]:  # probar con los 3 primeros CIFs
+                        _plantilla_existente = motor_plantillas.cargar_plantilla(
+                            _config_path_post, _cif_post
+                        )
+                        # Solo generar si no hay plantilla o está en fallido
+                        if _plantilla_existente and _plantilla_existente.get("estado") != "fallido":
+                            continue
+                        try:
+                            _nueva_plantilla = motor_plantillas.generar_plantilla_desde_llm(
+                                texto_raw, _cif_post
+                            )
+                            motor_plantillas.guardar_plantilla(
+                                _config_path_post, _cif_post, _nueva_plantilla
+                            )
+                            _exito_llm = datos_gpt.get("total") is not None
+                            motor_plantillas.actualizar_estado_plantilla(
+                                _config_path_post, _cif_post, exito=_exito_llm
+                            )
+                            logger.info(
+                                f"  [{nombre_archivo}] Nueva plantilla generada para CIF {_cif_post}"
+                            )
+                            break
+                        except Exception as _e_gen:
+                            logger.info(
+                                f"  [{nombre_archivo}] No se pudo generar plantilla "
+                                f"para {_cif_post}: {_e_gen}"
+                            )
+            except Exception as _e_post:
+                logger.warning(
+                    f"  [{nombre_archivo}] motor_plantillas post-LLM error (no interrumpe): "
+                    f"{_e_post}"
+                )
 
         if not datos_gpt:
             _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
