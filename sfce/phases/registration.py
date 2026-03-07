@@ -434,15 +434,15 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         # Si sum(precio_unitario) ≈ total (no base), los precios incluyen IVA
         suma_precios = sum(l.get("precio_unitario", 0) * l.get("cantidad", 1)
                           for l in lineas_gpt)
-        total_doc = float(datos.get("total", 0))
-        base_doc = float(datos.get("base_imponible", 0))
+        total_doc = float(datos.get("total") or 0)
+        base_doc = float(datos.get("base_imponible") or 0)
         precios_incluyen_iva = (
             total_doc > 0 and base_doc > 0 and total_doc != base_doc
             and abs(suma_precios - total_doc) < 0.10
             and abs(suma_precios - base_doc) > 1.0
         )
         if precios_incluyen_iva:
-            iva_pct = float(datos.get("iva_porcentaje", 21))
+            iva_pct = float(datos.get("iva_porcentaje") or 21)
             factor_iva = 1 + iva_pct / 100
             logger.info(f"  Lineas con IVA incluido detectadas: dividiendo por {factor_iva}")
 
@@ -508,7 +508,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
         linea_unica = {
             "descripcion": datos.get("numero_factura") or "Factura",
             "cantidad": 1,
-            "pvpunitario": datos.get("base_imponible", datos.get("total", 0)),
+            "pvpunitario": datos.get("base_imponible") or datos.get("total") or 0,
             "codimpuesto": codimpuesto_defecto,
         }
         # Shift-left: inyectar subcuenta del proveedor incluso en linea unica
@@ -526,7 +526,7 @@ def _construir_form_data(doc: dict, tipo_doc: str, config: ConfigCliente,
     # Marcar para post-procesamiento intracomunitario
     if es_intracomunitario:
         form["_intracomunitario"] = True
-        form["_iva_autorepercusion"] = float(datos.get("iva_porcentaje", 21))
+        form["_iva_autorepercusion"] = float(datos.get("iva_porcentaje") or 21)
 
     return form
 
@@ -603,7 +603,7 @@ def _verificar_factura_creada(idfactura: int, tipo_doc: str,
             # pero la factura real puede tener lineas con IVA diferente.
             # Si neto FS coincide con base_imponible, la diferencia es solo IVA.
             # neto_fs ya calculado arriba
-            base_esperada = float(datos.get("base_imponible", 0))
+            base_esperada = float(datos.get("base_imponible") or 0)
             if base_esperada and abs(neto_fs - base_esperada) < max(tolerancia, base_esperada * 0.005):
                 logger.info(f"  Total difiere pero neto OK ({neto_fs:.2f} vs base {base_esperada:.2f}), aceptando")
             else:

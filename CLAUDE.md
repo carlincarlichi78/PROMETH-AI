@@ -134,20 +134,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (06/03/2026, sesion 113 cierre)
+## Estado actual (07/03/2026, sesion 114 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `e58a8c9b` fix(registration) | **Tests**: 2858 PASS
+**Rama**: `main` | **Ultimo commit**: fix(pipeline): null safety + preautorizacion anulada | **Tests**: 2858 PASS
 
-### Completado sesion 113
-- FV IRPF bug: _construir_form_data inyecta _irpf_pct en lineas FV → totalirpf correcto ✓
-- Asientos 3T-2/3T-5 corregidos en MariaDB: partida 4730 añadida, totalirpf actualizado ✓
-- cross_validation.py migrado de api_get a FSAdapter._get ✓
-- 2 tests nuevos FV con/sin IRPF (2858 PASS total) ✓
-- Dropbox duplicadas investigado: archivos físicos no encontrados → BLOQUEADO ✓
-- FV sin IRPF (3T-3/4): correcto — receptores son particulares, no empresas ✓
+### Completado sesion 114
+- Pipeline María Isabel 2025: 18 OK, 1 fallido (1 Enero -14 plenergy), 12 cuarentena ✓
+- Null safety registration.py: `.get(key, default)` → `.get(key) or default` en base_imponible, iva_porcentaje (5 lugares) ✓
+- pre_validation check 0: excluir `preautorizacion_anulada: true` antes de registro ✓
+- Factura 93 residual FS (total=0) — pendiente borrar MariaDB
 
-### Proxima sesion — pendientes (sesion 114)
+### Proxima sesion — pendientes (sesion 115)
 
 **CONTABILIDAD:**
-1. **Dropbox duplicadas** — BLOQUEADO: archivos no disponibles localmente. Factura Dropbox (11.99€ intracom IE9852817, enero 2025) no en FS. María Isabel necesita re-subir PDF.
-2. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
+1. **Factura 93 FS** — residual preautorización anulada (total=0). Borrar en MariaDB instancia Javier.
+2. **1 Enero -14.pdf plenergy** — fallido discrepancia (base/iva null). Revisar si preaut. anulada.
+3. **12 cuarentena María Isabel** — tickets sin CIF. Revisión manual.
+4. **Dropbox duplicadas** — BLOQUEADO: María Isabel necesita re-subir PDF (11.99€ intracom IE9852817).
+5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded.

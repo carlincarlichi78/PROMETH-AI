@@ -442,6 +442,11 @@ def validar_documento_individual(
     errores_doc: list = []
     avisos_doc: list = []
 
+    # Check 0: preautorización anulada — ticket inválido, no contabilizar
+    meta_doc = datos.get("metadata") or {}
+    if meta_doc.get("preautorizacion_anulada"):
+        return ["Preautorización anulada — ticket no válido para contabilidad"], []
+
     # Determinar entidad y CIF relevante segun tipo
     es_proveedor = tipo_doc in ("FC", "NC", "ANT", "SUM")
     if tipo_doc in ("FC", "NC", "ANT", "SUM"):

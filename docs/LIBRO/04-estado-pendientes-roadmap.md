@@ -1,5 +1,35 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-06 (sesión 113 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 114 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 114 — null safety registration + preautorización anulada + pipeline María Isabel)
+
+### Commits sesión 114
+
+| Hash | Descripción |
+|------|-------------|
+| (pendiente) | fix(pipeline): null safety base_imponible/iva_porcentaje + excluir preautorizaciones anuladas |
+
+### Tasks sesión 114
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Pipeline María Isabel 2025 | ✅ DONE | 18 OK, 1 fallido (1 Enero -14 plenergy), 12 cuarentena. 18 PDFs movidos a procesado/T1/ |
+| Null safety registration.py | ✅ FIXED | 5 lugares con `.get(key, default)` → `.get(key) or default` para base_imponible e iva_porcentaje (keys con null explícito) |
+| Pre-validación preautorizaciones | ✅ FIXED | Check 0 en pre_validation: si `metadata.preautorizacion_anulada==True` → excluir antes de registro |
+| 1 Enero -13.pdf (preaut. anulada) | ✅ EXCLUIDA | Ticket plenergy con preautorización anulada — excluida correctamente por check 0. Factura 93 residual en FS (total=0) pendiente borrar |
+| 1 Enero -14.pdf (plenergy fallido) | ⚠️ PENDIENTE | base/iva null, IVA 0% vs esperado 21%. Discrepancia verificación. Revisar si también es preaut. anulada |
+| 12 cuarentena | ℹ️ INFO | Tickets ilegibles sin CIF reconocible. Sin OCR cache (borrado al mover a cuarentena). Revisión manual. |
+| Cross-validation FAILs 0.02€ | ⚠️ PENDIENTE | Diff ~0.02€ en 472/diario/303. Probablemente factura 93 residual (total=0 en FS) |
+
+### Pendientes sesión 115 (CONTABILIDAD)
+
+1. **Factura 93 en FS** — residual de preautorización anulada (1 Enero -13 plenergy, total=0). Borrar desde UI FS o MariaDB: `DELETE FROM facturascli WHERE idfactura=93` en instancia Javier (empresa 7=COMUNIDAD MIRADOR DEL MAR? verificar)
+2. **1 Enero -14.pdf (plenergy)** — revisar si es también preautorización anulada. Si sí: el check 0 la excluirá en próxima ejecución. Si no: corregir datos OCR manualmente.
+3. **12 cuarentena María Isabel** — tickets sin CIF. Requieren revisión manual (posiblemente tickets de gasolinera ilegibles)
+4. **Dropbox duplicadas** — BLOQUEADO: archivos físicos no disponibles. María Isabel necesita re-subir PDF (11.99€ intracom IE9852817, enero 2025)
+5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded
 
 ---
 
