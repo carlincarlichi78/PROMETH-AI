@@ -134,43 +134,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 117 cierre)
+## Estado actual (07/03/2026, sesion 118 cierre)
 
-**Rama**: `main` | **Ultimo commit**: ver git log | **Tests**: 2891 PASS
+**Rama**: `main` | **Ultimo commit**: `fa8a4278` feat(ocr): SmartOCR cascade Mistral OCR3 + GPT4o Vision + Safety Net CIF | **Tests**: 2900 PASS
 
-### Completado sesion 117
-- `sfce/phases/pre_validation.py`: Check 0 en bucle + `_check_adeudo_ing_iva_exento` (ING1) + `_check_suplido_cuenta_554` (SUM1) ✓
-- `sfce/phases/registration.py`: partida 473 automática en FV con IRPF + suplidos fuerzan subcuenta 554 ✓
-- `sfce/core/smart_parser.py`: Gemini eliminado del cascade. Nuevo orden: template → Mistral Small → GPT-4o-mini → GPT-4o ✓
-- Pipeline María Isabel fase 0+1: 11 FC + 10 FV validados. Diagnóstico SmartOCR vs SmartParser: dos capas independientes ✓
+### Completado sesion 118
+- SmartOCR refactor T1: elimina EasyOCR/PaddleOCR, cascade pdfplumber (>=30 palabras) -> Mistral OCR3 Vision -> GPT-4o Vision
+- Safety Net T2: `_resolver_entidad_con_ia()` + `_autoregistrar_entidad()` — GPT-4o clasifica entidad desconocida antes de cuarentena, auto-registra en config.yaml
+- SmartParser: `_corregir_iva_porcentaje()` correccion aritmetica cuando iva_porcentaje no cuadra con base+importe
+- `scripts/test_mistral_ocr3.py`: script standalone bypass pipeline para probar Mistral OCR3 + Mistral Small
+- 2900 tests PASS (25 nuevos: test_smart_ocr actualizado, test_safety_net nuevo)
 
-### Proxima sesion — pendientes (sesion 118)
+### Proxima sesion — pendientes (sesion 119)
 
 **CONTABILIDAD:**
-1. **Borrar caché OCR María Isabel** — re-procesar con Mistral (`.ocr.json` con `_fuente: gemini` tienen CIFs incorrectos)
-2. **Plenergy id=358** — `.ocr.json` manual (IVA 20% impreso, no error OCR)
-3. **12 tickets cuarentena María Isabel** — CIF receptor desconocido (25719412F sin registrar en intake lookup)
-4. **Dropbox IE9852817J — fecha 2024** — bloqueado por validación cronología. Investigar si aceptar o excluir
-5. **FAC0007A4 en FS Uralde** — bloquea inserción FV por cronología (fecha 30-09-2025). Investigar si legítima o de prueba
-
-## Decisiones de arquitectura — por qué
-
-- **Multi-modelo OCR (Mistral primario + GPT-4o fallback + Gemini auditor)**: ningún modelo es 100% fiable solo; consenso entre modelos maximiza accuracy y da resiliencia ante fallos de un proveedor
-- **FacturaScripts como ERP (no custom)**: ERP PHP maduro con plugins fiscales nativos (303/111/347/130/115/Verifactu), evita construir contabilidad desde cero
-- **SQLite en local, PostgreSQL en prod**: SQLite elimina dependencia de Docker en desarrollo; PostgreSQL para prod con backups automáticos Hetzner
-- **Credenciales FS cifradas en BD (Fernet)**: tokens API de cada instancia FacturaScripts no van en .env sino cifrados en PostgreSQL → multi-tenant sin archivos de config por gestoría
-- **Pipeline 7 fases con `--resume` y `--fase N`**: procesamiento OCR+registro puede durar minutos y fallar a mitad — resume desde la última fase completada sin reprocessar
-- **`config.yaml` por cliente como "verdad absoluta"**: CIFs, subcuentas y reglas de clasificación configuradas por cliente evitan hardcodear lógica de negocio en el código
-- **4 instancias FacturaScripts independientes (una por gestoría)**: aislamiento de datos entre gestorías sin compartir BD ni schema — cada instancia es autónoma
-
-## Patrones que NO funcionan (lecciones aprendidas)
-
-- **Endpoints `crear*` de FacturaScripts con JSON**: FS requiere `application/x-www-form-urlencoded`; JSON devuelve error silencioso sin código de error útil — usar `requests.post(url, data=...)`
-- **Filtros API FS por `idempresa`, `idasiento`, `codejercicio`**: no funcionan en la API REST de FS — siempre recuperar todo y post-filtrar en Python
-- **`crearFacturaProveedor` en multi-empresa FS**: incompatible — usar POST 2 pasos separados: `facturaproveedores` + `lineasfacturaproveedores`
-- **Crear facturas sin `codejercicio` explícito**: FS asigna a la empresa incorrecta (empresa por defecto del wizard) — siempre pasar `codejercicio`
-- **Pasar `codsubcuenta` al crear proveedores desde config.yaml**: FS auto-asigna 400x y el valor manual causa conflicto — omitirlo siempre
-- **Campos `_*` en `form_data` sin filtrar**: FS rechaza silenciosamente campos internos — filtrar antes de POST con `{k:v for k,v in form.items() if not k.startswith('_')}`
-- **`base_imponible`/`iva_porcentaje` sin null safety**: crash en facturas de preautorizaciones anuladas — usar `.get(key) or default`, nunca `.get(key, default)` si el valor puede ser `None` explícito
-- **OCR invierte emisor/receptor en facturas de venta (FV)**: Mistral y GPT confunden perspectiva en FV — swap explícito obligatorio en el pipeline para este tipo de documento
-- **`numero_factura` null sin validación previa**: crash en `registration.py` — validar existencia antes de registrar
+1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel (cronologia 30-09-2025). Investigar si legitima o de prueba. BLOQUEADOR PRINCIPAL.
+2. **Poppler en Windows** — instalar para habilitar fallback `_gpt4o_extraer_texto()`. Sin el, adeudos con Mistral 500 se pierden.
+3. **12 adeudos en cuarentena** — Mistral 500 (transitorio) + proveedor desconocido. Safety Net resuelve segundos si poppler instalado.
+4. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox actual.
+5. **Plenergy id=358** — en cuarentena por emisor_cif null. IVA ya corregido a 21% por `_corregir_iva_porcentaje()`.

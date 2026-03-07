@@ -1,5 +1,34 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 117 cierre) | **Branch:** main | **Tests:** ver abajo | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 118 cierre) | **Branch:** main | **Tests:** 2900 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 118 — SmartOCR Mistral OCR3 + GPT4o Vision + Safety Net CIF)
+
+### Commits sesión 118
+
+| Hash | Descripción |
+|------|-------------|
+| fa8a4278 | feat(ocr): SmartOCR cascade Mistral OCR3 + GPT4o Vision + Safety Net CIF |
+
+### Tasks sesión 118
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| T0: Borrar caché OCR María Isabel | ✅ DONE | Eliminados `.ocr.json` con `_fuente: gemini` (CIFs incorrectos), re-run con Mistral correcto |
+| T1: SmartOCR refactor | ✅ DONE | Elimina EasyOCR/PaddleOCR. Cascade: pdfplumber (≥30 palabras) → Mistral OCR3 Vision → GPT-4o Vision |
+| T2: Safety Net CIF desconocido | ✅ DONE | `_resolver_entidad_con_ia()` + `_autoregistrar_entidad()` en intake.py: GPT-4o clasifica entidad antes de cuarentena, auto-registra en config.yaml |
+| T3: _corregir_iva_porcentaje | ✅ DONE | SmartParser recalcula iva_porcentaje aritméticamente si no cuadra con base+importe |
+| T4: script test_mistral_ocr3.py | ✅ DONE | Script standalone bypass pipeline para probar Mistral OCR3 + Mistral Small directo |
+| T5: Tests | ✅ DONE | 2900 PASS (25 nuevos: test_smart_ocr actualizado, test_safety_net nuevo) |
+
+### Pendientes sesión 119 (CONTABILIDAD)
+
+1. **FAC0007A4 en FS Uralde** — factura fecha 30-09-2025 bloquea inserción de todas las FV de María Isabel (1T y 2T 2025). Investigar si es legítima o de prueba — bloqueador principal no resuelto
+2. **Poppler en Windows** — instalar para habilitar fallback `_gpt4o_extraer_texto()`. Sin poppler los adeudos con Mistral 500 se pierden (sin texto)
+3. **12 adeudos en cuarentena** — algunos con Mistral 500 (transitorio), algunos con proveedor desconocido → Safety Net los resuelve si poppler instalado
+4. **3 Ingresos 3T María Isabel** — no aparecen en inbox (solo 1T y 2T procesados)
+5. **Plenergy id=358** — ticket en cuarentena por emisor_cif null + emisor_nombre garbled. IVA ya corregido aritméticamente a 21%
 
 ---
 
