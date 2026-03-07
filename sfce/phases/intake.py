@@ -98,14 +98,26 @@ def _extraer_texto_pdf(ruta_pdf: Path) -> str:
     return "\n\n".join(texto_paginas)
 
 
+_POPPLER_PATH_WINDOWS = r"C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin"
+
+
 def _pdf_a_imagen_base64(ruta_pdf: Path) -> Optional[str]:
     """Convierte primera pagina del PDF a imagen base64 para GPT-4o Vision.
 
     Requiere pdf2image (poppler). Si no esta disponible, retorna None.
+    En Windows usa _POPPLER_PATH_WINDOWS si pdftoppm no esta en PATH.
     """
     try:
         from pdf2image import convert_from_path
-        imagenes = convert_from_path(str(ruta_pdf), first_page=1, last_page=1, dpi=200)
+        import platform
+        # En Windows pasar poppler_path explícito si el binario no está en PATH
+        _kwargs: dict = {"first_page": 1, "last_page": 1, "dpi": 200}
+        if platform.system() == "Windows":
+            import os
+            _pop = os.environ.get("POPPLER_PATH", _POPPLER_PATH_WINDOWS)
+            if os.path.isdir(_pop):
+                _kwargs["poppler_path"] = _pop
+        imagenes = convert_from_path(str(ruta_pdf), **_kwargs)
         if not imagenes:
             return None
         import io

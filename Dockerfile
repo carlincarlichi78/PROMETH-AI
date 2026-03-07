@@ -20,7 +20,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Runtime libraries (libpq para psycopg2, libgomp para PyMuPDF, pango/cairo para WeasyPrint)
+# Runtime libraries (libpq para psycopg2, libgomp para PyMuPDF, pango/cairo para WeasyPrint, poppler para pdf2image)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libgomp1 \
@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0t64 \
     libffi8 \
     fonts-liberation \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder
