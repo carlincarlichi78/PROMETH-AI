@@ -134,22 +134,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 118 cierre)
+## Estado actual (07/03/2026, sesion 120 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `fa8a4278` feat(ocr): SmartOCR cascade Mistral OCR3 + GPT4o Vision + Safety Net CIF | **Tests**: 2900 PASS
+**Rama**: `main` | **Ultimo commit**: `e214a78a` feat(pipeline): sistema plantillas formato_pdf — motor_plantillas.py + intake integration | **Tests**: 2923 PASS
 
-### Completado sesion 118
-- SmartOCR refactor T1: elimina EasyOCR/PaddleOCR, cascade pdfplumber (>=30 palabras) -> Mistral OCR3 Vision -> GPT-4o Vision
-- Safety Net T2: `_resolver_entidad_con_ia()` + `_autoregistrar_entidad()` — GPT-4o clasifica entidad desconocida antes de cuarentena, auto-registra en config.yaml
-- SmartParser: `_corregir_iva_porcentaje()` correccion aritmetica cuando iva_porcentaje no cuadra con base+importe
-- `scripts/test_mistral_ocr3.py`: script standalone bypass pipeline para probar Mistral OCR3 + Mistral Small
-- 2900 tests PASS (25 nuevos: test_smart_ocr actualizado, test_safety_net nuevo)
+### Completado sesion 120
+- `sfce/core/motor_plantillas.py`: motor completo con 5 funciones publicas (cargar/generar/aplicar/actualizar/guardar plantilla)
+- Sistema de strikes: auto_generado (1 fallo → fallido, 5 exitos → validado), validado (3 fallos → fallido)
+- Integracion intake.py paso 2a: aplica plantilla regex antes de LLM si existe y estado != fallido
+- Post-LLM: genera plantilla nueva si `plantillas_activas: true` en config.yaml del cliente
+- 23 tests nuevos en test_motor_plantillas.py | 2923 PASS total
 
-### Proxima sesion — pendientes (sesion 119)
+### Proxima sesion — pendientes (sesion 121)
 
 **CONTABILIDAD:**
-1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel (cronologia 30-09-2025). Investigar si legitima o de prueba. BLOQUEADOR PRINCIPAL.
+1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel (cronologia 30-09-2025). BLOQUEADOR PRINCIPAL.
 2. **Poppler en Windows** — instalar para habilitar fallback `_gpt4o_extraer_texto()`. Sin el, adeudos con Mistral 500 se pierden.
-3. **12 adeudos en cuarentena** — Mistral 500 (transitorio) + proveedor desconocido. Safety Net resuelve segundos si poppler instalado.
+3. **12 adeudos en cuarentena** — Mistral 500 (transitorio) + proveedor desconocido. Safety Net resuelve si poppler instalado.
 4. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox actual.
-5. **Plenergy id=358** — en cuarentena por emisor_cif null. IVA ya corregido a 21% por `_corregir_iva_porcentaje()`.
+5. **Plenergy id=358** — en cuarentena por emisor_cif null. IVA ya corregido a 21%.
+6. **Activar plantillas_activas** — añadir `plantillas_activas: true` en config.yaml de clientes con alto volumen.

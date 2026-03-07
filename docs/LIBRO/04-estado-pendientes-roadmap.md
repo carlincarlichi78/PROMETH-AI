@@ -1,7 +1,37 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 118 cierre) | **Branch:** main | **Tests:** 2900 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 120 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
 
 ---
+
+## Estado actual (sesión 120 — Sistema Plantillas formato_pdf)
+
+### Commits sesión 120
+
+| Hash | Descripción |
+|------|-------------|
+| e214a78a | feat(pipeline): sistema plantillas formato_pdf — motor_plantillas.py + intake integration |
+
+### Tasks sesión 120
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| T1: Documento de diseño | ✅ DONE | `docs/plans/2026-03-07-sistema-plantillas-formato-pdf-design.md` — estructura YAML, ciclo de vida strikes, flujo integración, API pública |
+| T2: motor_plantillas.py | ✅ DONE | Nuevo módulo `sfce/core/motor_plantillas.py` con 5 funciones públicas: `cargar_plantilla`, `generar_plantilla_desde_llm`, `aplicar_plantilla`, `actualizar_estado_plantilla`, `guardar_plantilla` |
+| T3: Integración intake.py | ✅ DONE | Paso 2a antes del LLM: extrae CIFs del texto_raw, aplica plantilla si existe y estado≠fallido. Post-LLM: genera plantilla si `plantillas_activas: true`. Todo en try/except, nunca interrumpe pipeline |
+| T4: Tests | ✅ DONE | 23 nuevos PASS en `tests/test_motor_plantillas.py`. Suite completa: 2923 passed, 0 fallos |
+
+### Pendientes sesión 121 (CONTABILIDAD)
+
+1. **FAC0007A4 en FS Uralde** — bloquea inserción FV María Isabel (cronología 30-09-2025). BLOQUEADOR PRINCIPAL — investigar si es legítima o de prueba
+2. **Poppler en Windows** — instalar para habilitar fallback `_gpt4o_extraer_texto()`. Sin él, adeudos con Mistral 500 se pierden
+3. **12 adeudos en cuarentena** — Mistral 500 (transitorio) + proveedor desconocido. Safety Net resuelve si poppler instalado
+4. **3 Ingresos 3T María Isabel** — no aparecen en inbox actual
+5. **Plenergy id=358** — en cuarentena por emisor_cif null. IVA ya corregido a 21%
+6. **Activar plantillas en clientes reales** — añadir `plantillas_activas: true` en config.yaml de clientes con alto volumen (endesa, securitas, etc.) para beneficiarse del motor_plantillas
+
+---
+
+## Estado actual (sesión 118 — SmartOCR Mistral OCR3 + GPT4o Vision + Safety Net CIF)
 
 ## Estado actual (sesión 118 — SmartOCR Mistral OCR3 + GPT4o Vision + Safety Net CIF)
 

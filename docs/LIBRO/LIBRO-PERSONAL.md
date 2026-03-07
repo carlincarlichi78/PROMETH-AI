@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: ~2875 passed
+# Esperado: ~2923 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 117 — CERRADA)
+## Estado rápido (sesión 120 — CERRADA)
 
-- **Completado:** pre_validation: Check 0 en bucle principal + ING1 (adeudos ING IVA exento) + SUM1 (suplidos cuenta 554). registration: partida 473 automática en FV con IRPF + suplidos fuerzan 554. SmartParser: Mistral Small primario, Gemini eliminado del cascade (confunde CIFs). Diagnóstico SmartOCR vs SmartParser (dos capas independientes).
-- **Pendiente sesión 118:** Borrar caché OCR María Isabel (re-procesar con Mistral). Plenergy id=358 (.ocr.json manual). 12 tickets cuarentena (CIF 25719412F). Dropbox IE9852817J fecha 2024 bloqueado. FAC0007A4 FS Uralde cronología.
+- **Completado:** Sistema plantillas formato_pdf completo — `sfce/core/motor_plantillas.py` (5 funciones públicas), integración en intake.py (paso 2a pre-LLM + post-LLM generación), sistema de strikes (auto_generado/validado/fallido), flag `plantillas_activas` por cliente. 23 tests nuevos. Suite: 2923 PASS.
+- **Pendiente sesión 121:** FAC0007A4 FS Uralde (BLOQUEADOR). Poppler Windows. 12 adeudos cuarentena. 3 ingresos 3T María Isabel. Plenergy id=358. Activar `plantillas_activas: true` en clientes con alto volumen.
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
