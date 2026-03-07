@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-06 (sesión 113)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-07 (sesión 116)
 
 ---
 
@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: ~2820 passed
+# Esperado: ~2875 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 115 — CERRADA)
+## Estado rápido (sesión 116 — CERRADA)
 
-- **Completado:** SmartParser fix cascade: `_resultado_es_suficiente()` evita que Gemini detenga cascade con base_imponible=null. Diagnóstico ticket Plenergy (id=358): pdfplumber extrae texto corrupto → Mistral Vision extrae correctamente B.Imp 24.79€ IVA21%. GEMINI_API_KEY rotada (filtrada). Pipeline 30 docs María Isabel: procesados via Mistral OCR3. Caché .ocr.json de 1 Enero -14 invalidada.
-- **Pendiente sesión 116:** FAC0007A4 en FS Javier bloquea FV por cronología (fecha 30-09-2025). Tickets sin CIF → cuarentena (CIF receptor 25719412F no reconocido). Factura 93 residual FS (total=0). 12 cuarentena revisión manual. Dropbox bloqueado (María Isabel re-subir PDF IE9852817).
+- **Completado:** config.yaml maría-isabel: sección `emisor` + 4 proveedores ING (ICAM Q2963001I, Mutualidad V28024149, Uralde B92010768, Avatel A93135218) con CIFs verificados contra fuentes oficiales, importe_fijo, concepto_tipo, avisos SEPA. Detector adeudos ING en `detectores_doc.py`: regex $0 que cortocircuita LLMs para adeudos ING, integrado en SmartOCR paso 3a. 17 tests, 2875 PASS total.
+- **Pendiente sesión 117:** FAC0007A4 en FS Uralde bloquea FV por cronología. Gemini confunde dígitos 5→6 (desactivar en SmartParser). CIF 25719412F en intake lookup (13 tickets cuarentena). Mistral Vision primero para tickets. 1 Enero -14.pdf plenergy (revisar si preaut. anulada).
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 - **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`

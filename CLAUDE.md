@@ -134,26 +134,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 115 cierre)
+## Estado actual (07/03/2026, sesion 116 cierre)
 
-**Rama**: `main` | **Ultimo commit**: fix(pipeline): null safety + preautorizacion anulada | **Tests**: 2858 PASS
+**Rama**: `main` | **Ultimo commit**: `b30f7b23` feat(ocr): detector adeudos ING | **Tests**: 2875 PASS
 
-### Completado sesion 115
-- SmartParser cascade fix: `_resultado_es_suficiente()` — si Gemini devuelve base_imponible=null, escala a GPT-4o-mini/GPT-4o ✓
-- Diagnóstico ticket Plenergy id=358: pdfplumber extrae texto corrupto (alta ratio alfanumérica pero semánticamente inválido) ✓
-- Mistral Vision sobre 1 Enero -14.pdf: extrae correctamente B.Imp 24.79€ IVA21% ✓
-- GEMINI_API_KEY rotada (filtrada) — actualizada local .env + VPS prod + restart sfce_api ✓
-- Pipeline 30 docs María Isabel ejecutado via Mistral OCR3 ✓
-- Caché OCR de 1 Enero -14.pdf invalidada para re-procesamiento ✓
+### Completado sesion 116
+- config.yaml maría-isabel: sección `emisor` + 4 proveedores ING con CIFs verificados (ICAM Q2963001I, Mutualidad V28024149, Uralde B92010768, Avatel A93135218), importe_fijo, concepto_tipo, avisos SEPA ✓
+- `sfce/core/detectores_doc.py`: detector adeudos ING (regex $0, sin LLM) integrado en SmartOCR paso 3a ✓
+- 17 tests nuevos, suite total 2875 PASS ✓
 
-### Proxima sesion — pendientes (sesion 116)
+### Proxima sesion — pendientes (sesion 117)
 
 **CONTABILIDAD:**
-1. **FAC0007A4 FS Javier** — bloquea inserción FV por cronología (fecha 30-09-2025 posterior a facturas 1T/2T).
-2. **Tickets sin CIF → cuarentena** — CIF receptor 25719412F (María Isabel) no reconocido en intake lookup.
-3. **Factura 93 FS** — residual preautorización anulada (total=0). Borrar en MariaDB instancia Javier.
-4. **12 cuarentena María Isabel** — tickets sin CIF. Revisión manual.
-5. **Dropbox duplicadas** — BLOQUEADO: María Isabel necesita re-subir PDF (11.99€ intracom IE9852817).
+1. **FAC0007A4 en FS Uralde** — bloquea inserción FV por cronología (fecha 30-09-2025). Investigar si legítima o de prueba.
+2. **Gemini en SmartParser** — desactivar (confunde dígitos 5→6 en CIFs). Cascade directa: GPT-4o-mini → GPT-4o.
+3. **CIF 25719412F en intake lookup** — 13 tickets de María Isabel en cuarentena por CIF receptor no reconocido.
+4. **Mistral Vision primero para tickets** — cuando tipo_documento=="ticket", invocar Mistral antes que pdfplumber.
+5. **1 Enero -14.pdf plenergy** — revisar si es preautorización anulada (check 0 la excluiría automáticamente).
 
 ## Decisiones de arquitectura — por qué
 

@@ -1,5 +1,33 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 115 cierre) | **Branch:** main | **Tests:** 2858 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 116 cierre) | **Branch:** main | **Tests:** 2875 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 116 — config maria-isabel + detector adeudos ING)
+
+### Commits sesión 116
+
+| Hash | Descripción |
+|------|-------------|
+| `d5a3cce7` | feat(config): maria-isabel — sección emisor + 4 proveedores ING recurrentes |
+| `b30f7b23` | feat(ocr): detector adeudos ING — extracción regex sin LLM ($0), 17 tests |
+
+### Tasks sesión 116
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| config.yaml maria-isabel — emisor | ✅ DONE | Añadida sección `emisor` con NIF, tipo, IAE 731, regimen_irpf |
+| config.yaml — 4 proveedores ING | ✅ DONE | ICAM (Q2963001I ✓), Mutualidad (V28024149 ✓), Asesoría Uralde (B92010768), Avatel (A93135218). CIFs verificados contra fuentes oficiales. importe_fijo + concepto_tipo + avisos SEPA |
+| Detector adeudos ING | ✅ DONE | `sfce/core/detectores_doc.py`: detectar_tipo_adeudo_ing + extraer_emisor_adeudo_ing + procesar_adeudo_ing. Integrado en SmartOCR.extraer() paso 3a — cortocircuita LLMs, extracción regex $0 |
+| Tests detector | ✅ DONE | 17 tests en test_detectores_doc.py. Suite completo: 2875 pass, 4 skip |
+
+### Pendientes sesión 117 (CONTABILIDAD)
+
+1. **Investigar FAC0007A4** en FS instancia Uralde (empresa_id=14) — ¿registro legítimo del 3T o de prueba? Si es prueba, borrar. Si legítimo, las FV 1T/2T deben insertarse con fecha anterior
+2. **Desactivar Gemini en SmartParser** — cascade directa GPT-4o-mini → GPT-4o (Gemini confunde dígitos 5→6 en CIFs)
+3. **CIF María Isabel en intake lookup** — añadir `25719412F` para que tickets de la cliente no vayan a cuarentena por CIF desconocido (13 tickets pendientes)
+4. **Mistral Vision primero para tickets** — cuando tipo_documento=="ticket", invocar Mistral antes que pdfplumber
+5. **1 Enero -14.pdf plenergy** — revisar si es preautorización anulada (check 0 la excluiría) o corregir OCR
 
 ---
 
