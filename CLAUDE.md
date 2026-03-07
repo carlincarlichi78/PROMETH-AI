@@ -134,23 +134,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 120 cierre)
+## Estado actual (07/03/2026, sesion 121 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `e214a78a` feat(pipeline): sistema plantillas formato_pdf — motor_plantillas.py + intake integration | **Tests**: 2923 PASS
+**Rama**: `main` | **Ultimo commit**: `2cc6ddab` fix(registration): calcular base desde total cuando base_imponible ausente (adeudos ING) | **Tests**: 2923 PASS
 
-### Completado sesion 120
-- `sfce/core/motor_plantillas.py`: motor completo con 5 funciones publicas (cargar/generar/aplicar/actualizar/guardar plantilla)
-- Sistema de strikes: auto_generado (1 fallo → fallido, 5 exitos → validado), validado (3 fallos → fallido)
-- Integracion intake.py paso 2a: aplica plantilla regex antes de LLM si existe y estado != fallido
-- Post-LLM: genera plantilla nueva si `plantillas_activas: true` en config.yaml del cliente
-- 23 tests nuevos en test_motor_plantillas.py | 2923 PASS total
+### Completado sesion 121
+- Fix `registration.py`: pvpunitario = total/(1+iva%) cuando base_imponible ausente. Evita IVA doble en adeudos ING
+- AVATEL Enero (1 Enero -5) registrado en FS ID 116: neto=49.58, IVA=10.41, total=59.99
+- Poppler instalado en Docker runtime + `_POPPLER_PATH_WINDOWS` fallback en intake.py
+- config.yaml maria-isabel: duplicate key avatel fusionado (Safety Net habia auto-registrado segunda entrada con CIF vacio)
 
-### Proxima sesion — pendientes (sesion 121)
+### Proxima sesion — pendientes (sesion 122)
 
 **CONTABILIDAD:**
-1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel (cronologia 30-09-2025). BLOQUEADOR PRINCIPAL.
-2. **Poppler en Windows** — instalar para habilitar fallback `_gpt4o_extraer_texto()`. Sin el, adeudos con Mistral 500 se pierden.
-3. **12 adeudos en cuarentena** — Mistral 500 (transitorio) + proveedor desconocido. Safety Net resuelve si poppler instalado.
-4. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox actual.
-5. **Plenergy id=358** — en cuarentena por emisor_cif null. IVA ya corregido a 21%.
-6. **Activar plantillas_activas** — añadir `plantillas_activas: true` en config.yaml de clientes con alto volumen.
+1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel. BLOQUEADOR PRINCIPAL.
+2. **Poppler en PATH del proceso** — instalado en tools/poppler pero no en PATH del pipeline. Configurar en .env o PATH sistema.
+3. **Adeudos Feb/Mar cuarentena** — AVATEL 59.99 (Feb) + Uralde 44.46 (Mar+Ene) — Mistral 500 transitorio. Con poppler en PATH se resuelven al reintentar.
+4. **4 PDFs imagen sin datos** — 1 Enero -2, 2 Febrero -1, 2 Febrero -5, 3 Marzo -2 — revision manual.
+5. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox.
+6. **Plenergy id=358** — en cuarentena por emisor_cif null.

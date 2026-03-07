@@ -1,5 +1,34 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 120 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+> **Actualizado:** 2026-03-07 (sesión 121 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 121 — Fix base_imponible adeudos ING + AVATEL cuarentena)
+
+### Commits sesión 121
+
+| Hash | Descripción |
+|------|-------------|
+| 0c65e671 | feat(infra): poppler — Dockerfile + requirements + Windows path fallback |
+| 2cc6ddab | fix(registration): calcular base desde total cuando base_imponible ausente (adeudos ING) |
+
+### Tasks sesión 121
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Poppler local | ✅ DONE | Binarios en `C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin`, hardcodeado en `_POPPLER_PATH_WINDOWS` en intake.py. Docker: `poppler-utils` añadido al Dockerfile runtime stage |
+| Fix base_imponible | ✅ DONE | `registration.py`: cuando `base_imponible` ausente y hay `total`, calcula base = total/(1+iva%). Evita que FS aplique IVA sobre total ya con IVA incluido |
+| AVATEL Enero | ✅ DONE | `1 Enero -5_1_1.pdf` registrada ID 116: neto=49.58, IVA=10.41, total=59.99 |
+| Duplicate key avatel | ✅ DONE | config.yaml maría-isabel: Safety Net había auto-registrado segunda entrada `avatel` con CIF vacío. Fusionado en una sola con CIF A93135218 + aliases con tilde |
+
+### Pendientes sesión 122 (CONTABILIDAD)
+
+1. **FAC0007A4 en FS Uralde** — bloquea inserción FV María Isabel (cronología 30-09-2025). BLOQUEADOR PRINCIPAL
+2. **Poppler en PATH del sistema** — aunque está en `tools/poppler`, no está en PATH del proceso del pipeline. Añadir al PATH de Windows o configurar en `.env` para que GPT-4o Vision funcione como fallback cuando Mistral da 500
+3. **Adeudos Febrero/Marzo cuarentena** — AVATEL 59.99 (Feb) + Uralde 44.46 (Mar + Ene) — Mistral 500 transitorio, con poppler en PATH se resuelven solos al reintentar
+4. **4 PDFs imagen sin datos** — `1 Enero -2`, `2 Febrero -1`, `2 Febrero -5`, `3 Marzo -2` — ni Mistral ni GPT-4o extrae campos (documentos muy degradados o no facturas)
+5. **3 Ingresos 3T María Isabel** — no aparecen en inbox
+6. **Plenergy id=358** — en cuarentena por emisor_cif null
 
 ---
 

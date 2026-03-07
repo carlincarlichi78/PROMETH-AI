@@ -47,13 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 120 — CERRADA)
+## Estado rápido (sesión 121 — CERRADA)
 
-- **Completado:** Sistema plantillas formato_pdf completo — `sfce/core/motor_plantillas.py` (5 funciones públicas), integración en intake.py (paso 2a pre-LLM + post-LLM generación), sistema de strikes (auto_generado/validado/fallido), flag `plantillas_activas` por cliente. 23 tests nuevos. Suite: 2923 PASS.
-- **Pendiente sesión 121:** FAC0007A4 FS Uralde (BLOQUEADOR). Poppler Windows. 12 adeudos cuarentena. 3 ingresos 3T María Isabel. Plenergy id=358. Activar `plantillas_activas: true` en clientes con alto volumen.
-- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
-- **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
-- **MariaDB Uralde:** `docker exec fs-uralde-mariadb-1 mysql -u fsuser -pfs_uralde_2026 facturascripts`
+- **Completado:** Fix bug `registration.py` base_imponible ausente en adeudos ING (pvpunitario = total/(1+iva%) en lugar de total como base neta). AVATEL Enero registrado ID 116 (59.99 total, neto=49.58). Poppler instalado en Docker + path Windows fallback. Duplicate key `avatel` en config.yaml María Isabel fusionado (CIF A93135218 + aliases con tilde). 2923 PASS.
+- **Pendiente sesión 122:** FAC0007A4 FS Uralde (BLOQUEADOR FV María Isabel). Poppler en PATH del proceso (está instalado pero no en PATH → GPT-4o Vision falla). Adeudos Feb/Mar cuarentena (Mistral 500 transitorio, reintentar con poppler). 4 PDFs imagen sin datos. 3 Ingresos 3T. Plenergy id=358.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
