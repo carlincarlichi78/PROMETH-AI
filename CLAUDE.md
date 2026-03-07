@@ -152,3 +152,25 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 3. **12 cuarentena María Isabel** — tickets sin CIF. Revisión manual.
 4. **Dropbox duplicadas** — BLOQUEADO: María Isabel necesita re-subir PDF (11.99€ intracom IE9852817).
 5. **Enriquecer otros clientes** — ejecutar enriquecer_config.py cuando estén onboarded.
+
+## Decisiones de arquitectura — por qué
+
+- **Multi-modelo OCR (Mistral primario + GPT-4o fallback + Gemini auditor)**: ningún modelo es 100% fiable solo; consenso entre modelos maximiza accuracy y da resiliencia ante fallos de un proveedor
+- **FacturaScripts como ERP (no custom)**: ERP PHP maduro con plugins fiscales nativos (303/111/347/130/115/Verifactu), evita construir contabilidad desde cero
+- **SQLite en local, PostgreSQL en prod**: SQLite elimina dependencia de Docker en desarrollo; PostgreSQL para prod con backups automáticos Hetzner
+- **Credenciales FS cifradas en BD (Fernet)**: tokens API de cada instancia FacturaScripts no van en .env sino cifrados en PostgreSQL → multi-tenant sin archivos de config por gestoría
+- **Pipeline 7 fases con `--resume` y `--fase N`**: procesamiento OCR+registro puede durar minutos y fallar a mitad — resume desde la última fase completada sin reprocessar
+- **`config.yaml` por cliente como "verdad absoluta"**: CIFs, subcuentas y reglas de clasificación configuradas por cliente evitan hardcodear lógica de negocio en el código
+- **4 instancias FacturaScripts independientes (una por gestoría)**: aislamiento de datos entre gestorías sin compartir BD ni schema — cada instancia es autónoma
+
+## Patrones que NO funcionan (lecciones aprendidas)
+
+- **Endpoints `crear*` de FacturaScripts con JSON**: FS requiere `application/x-www-form-urlencoded`; JSON devuelve error silencioso sin código de error útil — usar `requests.post(url, data=...)`
+- **Filtros API FS por `idempresa`, `idasiento`, `codejercicio`**: no funcionan en la API REST de FS — siempre recuperar todo y post-filtrar en Python
+- **`crearFacturaProveedor` en multi-empresa FS**: incompatible — usar POST 2 pasos separados: `facturaproveedores` + `lineasfacturaproveedores`
+- **Crear facturas sin `codejercicio` explícito**: FS asigna a la empresa incorrecta (empresa por defecto del wizard) — siempre pasar `codejercicio`
+- **Pasar `codsubcuenta` al crear proveedores desde config.yaml**: FS auto-asigna 400x y el valor manual causa conflicto — omitirlo siempre
+- **Campos `_*` en `form_data` sin filtrar**: FS rechaza silenciosamente campos internos — filtrar antes de POST con `{k:v for k,v in form.items() if not k.startswith('_')}`
+- **`base_imponible`/`iva_porcentaje` sin null safety**: crash en facturas de preautorizaciones anuladas — usar `.get(key) or default`, nunca `.get(key, default)` si el valor puede ser `None` explícito
+- **OCR invierte emisor/receptor en facturas de venta (FV)**: Mistral y GPT confunden perspectiva en FV — swap explícito obligatorio en el pipeline para este tipo de documento
+- **`numero_factura` null sin validación previa**: crash en `registration.py` — validar existencia antes de registrar
