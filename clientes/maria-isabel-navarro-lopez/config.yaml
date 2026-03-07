@@ -20,6 +20,14 @@ empresa:
   ejercicios:
     '2025': '0007'
   regimen_iva: general
+emisor:
+  nombre: "MARIA ISABEL NAVARRO LOPEZ"
+  nif: "25719412F"
+  tipo: "autonomo"
+  actividad: "servicios_juridicos"
+  epigrafe_iae: "731"
+  regimen_irpf: "retencion_15"
+
 perfil:
   descripcion: Abogada autonoma. IAE 731. Estimacion directa simplificada. IVA 21%.
   modelo_negocio: 'Abogada autonoma con despacho profesional.
@@ -53,12 +61,16 @@ perfil:
 proveedores:
   mutualidad_abogacia:
     rol: proveedor
+    # CIF V28024149 verificado — fuente: documentación oficial Mutualidad de la Abogacía.
+    # Id. emisor SEPA en adeudos ING: ES57010V28024149 (CIF embebido en el id SEPA).
     cif: V28024149
+    concepto_tipo: mutualidad
     nombre_fs: MUTUALIDAD DE LA ABOGACIA
     aliases:
     - MUTUALIDAD ABOGACIA
     - MUTUALIDAD
     - MUTUA ABOGACIA
+    - MUTUALIDAD ABOGACIA C. GENERAL-RECIBOS
     pais: ESP
     divisa: EUR
     subcuenta: '6420000000'
@@ -90,6 +102,10 @@ proveedores:
       intracom: false
   asesoria_uralde:
     rol: proveedor
+    # CIF fiscal B92010768 correcto. Id. emisor SEPA en adeudos ING: ES13000B92010768 (distinto del CIF).
+    # AVISO: CIF extraído de id_emisor SEPA del adeudo ING.
+    # Verificar contra Registro Mercantil antes de usar en modelos fiscales (303, 347).
+    # El id_emisor SEPA puede diferir del CIF.
     cif: B92010768
     nombre_fs: ASESORIA LOPEZ DE URALDE S.L.
     aliases:
@@ -103,7 +119,9 @@ proveedores:
     subcuenta: '6230000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Gestora. Gasto G19 servicios profesionales
+    importe_fijo: 44.46
+    concepto_tipo: asesoria
+    notas: Gestora. Gasto G19 servicios profesionales. Domiciliado ING.
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -164,18 +182,21 @@ proveedores:
       intracom: false
   icam:
     rol: proveedor
+    # CIF Q2963001I verificado — fuente: icamalaga.es aviso legal.
     cif: Q2963001I
     nombre_fs: ILUSTRE COLEGIO DE ABOGADOS DE MALAGA
     aliases:
     - COLEGIO ABOGADOS
     - ICAM
     - COLEGIO ABOGADOS MALAGA
+    - ILUSTRE COLEGIO DE ABOGADOS DE MALAGA
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
-    codimpuesto: IVA21
+    codimpuesto: IVA0
     regimen: general
-    notas: Cuota colegial y servicios ICAM
+    concepto_tipo: cuota_colegial
+    notas: Cuota colegial y servicios ICAM. Exento IVA (cuota colegial art.20.Uno.12 LIVA)
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -281,17 +302,24 @@ proveedores:
       intracom: false
   avatel:
     rol: proveedor
+    # CIF fiscal A93135218. Id. emisor SEPA en adeudos ING: ES43131A93135218 (distinto del CIF).
+    # AVISO: CIF extraído de id_emisor SEPA del adeudo ING.
+    # Verificar contra Registro Mercantil antes de usar en modelos fiscales (303, 347).
+    # El id_emisor SEPA puede diferir del CIF.
     cif: A93135218
     nombre_fs: AVATEL TELECOM SA
     aliases:
     - AVATEL
     - AVATEL TELECOM
+    - FIBRA, WIFI Y TELEFONIA INTEGRALES
     pais: ESP
     divisa: EUR
-    subcuenta: '6290000000'
+    subcuenta: '6290000001'
     codimpuesto: IVA21
     regimen: general
-    notas: Internet y telefonia despacho
+    importe_fijo: 59.99
+    concepto_tipo: telefonia
+    notas: Internet y telefonia despacho. Domiciliado ING. Importe fijo mensual.
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
@@ -312,7 +340,7 @@ proveedores:
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
-      subcuenta_gasto: '6290000000'
+      subcuenta_gasto: '6290000001'
       intracom: false
   centro_estudios:
     rol: proveedor
