@@ -79,16 +79,18 @@ proveedores:
     subcuenta: '6420000000'
     codimpuesto: IVA0
     regimen: general
-    importe_tipico: 255.11
-    concepto_adeudo_ing: CUOTA X TRM BASE EXENTA
-    notas: 'Cuota mensual habitual 255,11€. Sin IVA (sustitutiva RETA — deducible IRPF).
-      Adeudo bancario ING sin factura formal. IBAN emisor ES57010V28024149. Ref. ING
-      tipo 181679524. Importe anómalo: 671,15€ mayo 2025 (posible pago trimestral o
-      ajuste — confirmar con clienta). Adeudo duplicado conservar solo uno por mes.'
+    importe_tipico: 269.06
+    concepto_adeudo_ing: MUTUALIDAD ABOGACIA C. GENERAL-RECIBOS
+    notas: 'Cuota mensual habitual: 255,11€ (ene-oct 2025) → 269,06€ (nov-dic 2025).
+      Sin IVA (sustitutiva RETA — deducible IRPF art.30 LIRPF). Subcuenta: 476 o 641
+      (confirmar con gestoría). Adeudo bancario ING sin factura formal. IBAN emisor
+      ES57010V28024149. Ref ING tipo 181679524, 182138984, 182282869. Importe anómalo:
+      671,15€ mayo 2025 (posible pago extraordinario — confirmar). Adeudo duplicado
+      conservar solo uno por mes.'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
-    - 200
+    - 250
     - 700
     concepto_keywords:
     - mutualidad
@@ -228,14 +230,15 @@ proveedores:
     regimen: general
     concepto_tipo: cuota_colegial
     importe_tipico: 107.18
-    notas: 'Cuota colegial trimestral 107,18€. Exento IVA (art.20.Uno.12 LIVA). CIF
-      a veces no visible en documentos. IBAN emisor ES20 0010 0295 6300 0012 7813.
-      Concepto ING: "CUOTA X TRM BASE EXENTA IVA:0,00EUR". Solo adeudo ING — no existe
-      factura formal emitida por el Colegio. Trimestres: enero, abril, julio, octubre.'
+    notas: 'DOS tipos de cargo: (1) Cuota colegial trimestral 107,18€ — IVA exenta
+      (art.20.Uno.12 LIVA), trimestres ene/abr/jul/oct. (2) Cargo mensual ~25€ por
+      Office 365 — IVA PARCIAL: base 20,66€ + IVA 21% 4,34€ = 25,00€. Solo el IVA
+      del Office 365 es deducible (4,34€). Concepto ING cuenta Office 365: "DEU...CUENTA
+      OFFICE 365 SUJETA-20,66EUR IVA-4,34EUR". IBAN emisor ES20 0010 0295 6300 0012 7813.'
     formato_pdf: digital
     frecuencia: trimestral
     importe_rango:
-    - 100
+    - 25
     - 120
     concepto_keywords:
     - cuota
@@ -576,31 +579,40 @@ proveedores:
     - PETROPRIX
     - PETROPRIX ENERGIA
     - '823709892'
+    domicilio: Calle Real 56, 11314 San Roque, Cádiz
+    telefono: '953900009'
+    email: info@petroprix.com
+    numero_comercio: '005265558'
+    terminal_tpv: '415030997'
+    tipo_combustible: Gasoleo-A B7
+    patron_factura: 'numérico largo (ej: 259001395752)'
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo
+    notas: 'Gasoleo-A B7. Estación Petroprix San Roque, Calle Real 56. Tel 953900009.
+      Nº comercio 005265558, terminal TPV 415030997. IIEE incluidos en precio. Tarjetas
+      habituales: ****1019 y ****2028.'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
-    - 50
-    - 150
+    - 20
+    - 80
     concepto_keywords:
     - combustible
     - vehículo
-    - gasolina
-    - PETROPRIX
+    - gasoil
+    - petroprix
     - energía
-    persona_fisica: true
+    persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 100
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
@@ -746,9 +758,16 @@ proveedores:
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: 'Gasoil. Estación E.S. Manilva II AP-7. Antes CEPSA Retail — renombrada
-      a Moeve Retail Operations SAU (mismo CIF A28354520). Factura simplificada.
-      Patrón nº factura: XXXXXXXXXX/XXXXXXXX (ej: 012080025/00003274).'
+    domicilio_fiscal: Paseo de la Castellana 259 A, 28046 Madrid
+    numero_tpv: '0001832724'
+    concesion_id: '179741'
+    tipo_combustible_variantes:
+    - GASOIL
+    - DSELSTAR  # diesel premium
+    notas: 'Gasoil/Diesel premium (DSELSTAR). Estación E.S. Manilva II, AP-7 km.138,5,
+      29691 Manilva. Antes CEPSA Retail — renombrada Moeve Retail Operations SAU
+      (mismo CIF A28354520). Domicilio fiscal Castellana 259A Madrid. Nº TPV 0001832724,
+      Concesión ID 179741. Patrón nº factura: XXXXXXXXXX/XXXXXXXX (ej: 012080025/00003274).'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
@@ -938,16 +957,21 @@ proveedores:
     aliases:
     - COLOSO ALGECIRAS
     - COLOSO
+    - COLOSO ALGECIRAS AV
     - COLOSO SAN ISIDRO
     - CoLoS0 SAN 46
     - COLOSO CHURRIANA
+    domicilio_fiscal: Avda. Manuel Fraga Iribarne 17, 29620 Torremolinos, Málaga
+    tipo_combustible: DIESEL
+    patron_factura: 'numérico (ej: 25305809)'
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: 'Gasolinera (estaciones San Isidro y Churriana). Combustible vehiculo DIESEL.
-      Posibles preautorizaciones anuladas — verificar que el importe final es el correcto.'
+    notas: 'Gasolinera DIESEL. Domicilio fiscal Torremolinos. Estaciones: San Isidro
+      y Churriana. Patrón nº factura numérico (ej: 25305809). IIEE incluidos en precio.
+      Posibles preautorizaciones anuladas — verificar importe final.'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
@@ -1330,6 +1354,47 @@ clientes:
       iva_emitido:
       - 21
       irpf_retenido: 15
+  euc_villa_parra:
+    rol: cliente
+    cif: H29642634
+    nombre_fs: EUC VILLA PARRA PALOMERAS
+    aliases:
+    - VILLA PARRA PALOMERAS
+    - EUC VILLA PARRA
+    - COMUNIDAD VILLA PARRA
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    subcuenta_cliente: '4300000003'
+    subcuenta_ingreso: '7050000000'
+    irpf_que_retienen: 15
+    notas: 'Comunidad de propietarios. Retiene IRPF 15%. Aparece en FV 3/2025 (309€)
+      y 23/2025 (840€).'
+    frecuencia: puntual
+    importe_rango:
+    - 200
+    - 1000
+  romur_spanish_properties:
+    rol: cliente
+    cif: PENDIENTE
+    nombre_fs: ROMUR SPANISH PROPERTIES SL
+    aliases:
+    - ROMUR
+    - ROMUR SPANISH PROPERTIES
+    pais: ESP
+    divisa: EUR
+    codimpuesto: IVA21
+    regimen: general
+    subcuenta_cliente: '4300000004'
+    subcuenta_ingreso: '7050000000'
+    irpf_que_retienen: 15
+    notas: 'Sociedad. Retiene IRPF 15%. FV 30/2025 (275€ base + suplidos 19,46€).
+      ⚠️ CIF pendiente de confirmar antes de contabilizar.'
+    frecuencia: puntual
+    importe_rango:
+    - 100
+    - 500
   varios_clientes:
     rol: cliente
     cif: "00000000T"
@@ -1341,7 +1406,10 @@ clientes:
     regimen: general
     fallback: true
     fallback_sin_cif: true
-    notas: Cliente generico para particulares y comunidades sin entrada propia
+    notas: 'Cliente genérico para particulares y comunidades sin entrada propia.
+      Clientes habituales sin retención: ANNA DABROWSKA (Y4793761T), SHENGGENG GUO
+      (Y1273146H), MIGUEL PERALES GARCÍA (75959820), CRISTINA PECINO MARTÍN (77204558K),
+      ROCIO MUÑOZ BARRANCO (75956480S), Mª CARMEN GONZÁLEZ RAGEL (31826595T).'
   cuota_abogacia:
     cif: ''
     nombre_fs: Maria Isabel Navarro Lopez
