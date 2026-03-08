@@ -803,9 +803,13 @@ def ejecutar_pre_validacion(
         tipos_cif_opcional = ("NOM", "BAN", "RLC", "IMP")
         # Si intake ya identifico la entidad (multi-signal/config match), no bloquear
         entidad_identificada = bool(doc.get("_config_match")) or bool(entidad)
-        err = _validar_cif_formato(cif_entidad, pais_entidad)
+        # Para FV sin receptor_cif, usar CIF canonico del fallback si intake lo asigno
+        cif_canonical = doc.get("entidad_cif", "")
+        cif_validar = cif_canonical if cif_canonical else cif_entidad
+        err = _validar_cif_formato(cif_validar, pais_entidad)
         if err:
-            if tipo_doc in tipos_cif_opcional or entidad_identificada:
+            es_fv_sin_receptor = tipo_doc == "FV" and not datos.get("receptor_cif")
+            if tipo_doc in tipos_cif_opcional or entidad_identificada or es_fv_sin_receptor:
                 avisos_doc.append(f"[CHECK 1] {err} (no bloqueante: entidad identificada)")
             else:
                 errores_doc.append(f"[CHECK 1] {err}")
