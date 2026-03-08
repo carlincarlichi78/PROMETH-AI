@@ -1,5 +1,36 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-08 (sesión 123 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+> **Actualizado:** 2026-03-08 (sesión 124 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 124 — Pipeline ingresos María Isabel completo + fixes asientos FV+IRPF)
+
+### Commits sesión 124
+
+| Hash | Descripción |
+|------|-------------|
+| c8abe95e | docs: eliminar pendientes 2-3-4 sesion 124 |
+| 8bc777c0 | fix(config): varios_clientes.cif = 00000000T para pasar CHECK 1 pre-validacion |
+| a04d53d4 | fix(pre_validation): CHECK 1 usa entidad_cif canonical para FV sin receptor_cif |
+| 3721eacb | fix(asientos): crear_asiento_directo acepta fs externo + fallback FV+IRPF corregido |
+| 3811c14d | fix(registration): vincular idasiento a facturaclientes tras crear asiento directo FV+IRPF |
+| 5c2f5248 | fix(asientos): importe correcto + concepto formato FS en asientos directos FV+IRPF |
+
+### Tasks sesión 124
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| Pipeline 16 ingresos María Isabel | ✅ DONE | 14 FV registradas en FS Uralde (idempresa=7, codejercicio=0007). 2 excluidas por CHECK 9 (FV previas válidas de sesiones anteriores) |
+| FV con IRPF 15% sin asiento | ✅ DONE | 6 FV (BLANCO ABOGADOS, DOMOS, CP MARÍPOLIS, CP GRAL LÓPEZ) → asientos directos 261-266 creados y vinculados |
+| fix varios_clientes.cif | ✅ DONE | config.yaml: `cif: "00000000T"` para pasar CHECK 1 |
+| fix pre_validation CHECK 1 | ✅ DONE | Usa `entidad_cif` canonical en vez de `receptor_cif` (null) para FV sin receptor |
+| fix crear_asiento_directo | ✅ DONE | Acepta `fs=` externo — evita usar API_BASE global (instancia incorrecta) |
+| fix importe + concepto asientos | ✅ DONE | `crear_asiento_con_partidas` pasa `importe=suma_debe`. Concepto = "Factura de Cliente FAC0007AX (N/2025) - NOMBRE" |
+
+### Pendientes sesión 125
+
+1. **Pipeline 63 gastos María Isabel** — `inbox/` con 63 PDFs. Ejecutar pipeline completo desde cero.
+2. **Poppler en PATH del proceso** — pendiente desde sesión 121. Necesario para GPT-4o Vision fallback.
 
 ---
 

@@ -134,18 +134,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 123 cierre)
+## Estado actual (08/03/2026, sesion 124 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `307c84b1` chore: ignorar archivos .code-workspace | **Tests**: 2923 PASS
+**Rama**: `main` | **Ultimo commit**: `5c2f5248` fix(asientos): importe correcto + concepto formato FS | **Tests**: 2923 PASS
 
-### Completado sesion 123
-- Limpieza completa Maria Isabel en FS Uralde (idempresa=7): 4 FV + 30 FP eliminadas, asientos borrados
-- OCR cache, auditoria, JSONs estado pipeline, inboxes auxiliares borrados
-- 63 PDFs gastos en inbox/, 16 PDFs ingresos en inbox/ingresos/ — listo para reprocesar desde cero
-- config.yaml intacto con plantillas_activas disponibles para activar
+### Completado sesion 124
+- Pipeline 16 ingresos Maria Isabel: 14 FV registradas en FS Uralde (idempresa=7, codejercicio=0007)
+- 6 FV con IRPF 15% sin asiento → asientos directos 261-266 creados y vinculados
+- fix varios_clientes.cif = 00000000T para CHECK 1 pre_validation
+- fix pre_validation CHECK 1: usa entidad_cif canonical para FV sin receptor_cif
+- fix crear_asiento_directo: param fs= externo para evitar usar API_BASE global incorrecto
+- fix importe cabecera asiento (suma debe) + concepto formato FS con FAC code y nombre cliente
 
-### Proxima sesion — pendientes (sesion 124)
+### Proxima sesion — pendientes (sesion 125)
 
 **CONTABILIDAD:**
 
-1. **Ejecutar pipeline Maria Isabel desde cero** — inbox (63 gastos) + inbox/ingresos (16 ingresos).
+1. **Ejecutar pipeline Maria Isabel gastos** — inbox/ (63 gastos). Ingresos ya completados.
+2. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.

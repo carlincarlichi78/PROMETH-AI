@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 123 — CERRADA)
+## Estado rápido (sesión 124 — CERRADA)
 
-- **Completado:** Limpieza completa María Isabel — FS Uralde idempresa=7 vaciado (4 FV + 30 FP eliminadas), OCR cache borrada, auditoría borrada, todos los PDFs consolidados en inbox/ (63 gastos) e inbox/ingresos/ (16 ingresos). Listo para reprocesar desde cero con plantillas activas.
-- **Pendiente sesión 124:** Ejecutar pipeline María Isabel desde cero (inbox + inbox/ingresos). Poppler en PATH proceso. 4 PDFs imagen sin datos. Plenergy id=358 (emisor_cif null).
+- **Completado:** Pipeline 16 ingresos María Isabel 100% — 14 FV registradas en FS Uralde. 6 FV con IRPF 15% sin asiento → asientos directos creados y vinculados (IDs 261-266). Fixes: varios_clientes.cif, CHECK 1 pre_validation, crear_asiento_directo con fs externo, importe+concepto en formato FS.
+- **Pendiente sesión 125:** Pipeline 63 gastos María Isabel (`inbox/`). Poppler en PATH proceso (pendiente desde s121).
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
