@@ -97,6 +97,18 @@
 - Fix sesión 124: CHECK 1 usa `doc.get("entidad_cif")` (canonical del intake) antes que `datos_extraidos.receptor_cif`. Si hay `entidad_cif` o `es_fv_sin_receptor=True` → no bloqueante.
 - `varios_clientes` en config.yaml necesita `cif: "00000000T"` (no null) para pasar el CHECK.
 
+## Scoring FV — floors diferenciados (sesión 127)
+
+- Para FV, `_config_match` nunca se ejecuta (multi-signal excluye FV, línea 1359 intake.py).
+- Floor por tipo receptor en bloque floor de `intake.py`, rama `elif tipo_doc == "FV"`:
+  - Receptor cliente en config (no fallback_sin_cif) → floor **85**
+  - Receptor NIF persona física (`inferir_tipo_persona == "fisica"`) → floor **72**
+  - Receptor CIF entidad jurídica nueva (varios_clientes + CIF no física) → floor **65**
+  - Sin receptor_cif (factura simplificada RD 1619/2012) → floor **60**
+  - FC/NC/etc sin cambio → floor **55**
+- Import: `from ..core.verificacion_fiscal import inferir_tipo_persona`
+- Tests: `tests/test_fv_scoring.py` (13 tests)
+
 ## Adeudos ING — identificación de proveedor
 
 - El texto OCR del adeudo ING contiene "CIF W00379866" (ING Bank NV) que contamina multi-signal.

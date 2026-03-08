@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 126 — CERRADA)
+## Estado rápido (sesión 127 — CERRADA)
 
-- **Completado:** Análisis OCR ingresos María Isabel (15 JSONs). Identificados 2 bugs en scoring FV: confianza 55 en todas las FV aunque CIF perfecto, y particulares con NIF válido van a varios_clientes con confianza incorrecta. Estrategia definida: NO lanzar pipeline masivo — enriquecer config.yaml con UNA muestra por proveedor. IBAN propio de María Isabel: `ES4114650100951735096975`.
-- **Pendiente sesión 127:** Fix scoring FV (prioritario). Añadir Domos/CPs al config clientes. Enriquecer config gastos con señales reales.
+- **Completado:** Fix scoring FV (floor 85 receptor en config, 72 NIF física, 65 CIF nuevo, 60 sin CIF). 13 tests nuevos. Config María Isabel enriquecido: 15 entradas actualizadas, aliases, cif_variantes_ocr, morilla_perez con IRPF15, sección alertas_deduplicacion. Análisis arquitectura directorio compartido — diferido. Carpeta extraccion_claude_desktop creada.
+- **Pendiente sesión 128:** Ingestar extracción Claude Desktop para config. Ejecutar pipeline 63 gastos María Isabel. Motor plantillas con señales (pendiente sesión 125). Poppler en PATH.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
@@ -63,7 +63,7 @@ cd dashboard && npm run dev
 - **`_leer_config_bd`**: está en `sfce.api.app`, NO en `sfce.db.base`.
 - **Motor Plantillas vs Motor Identificación**: cuando `_fuente == "plantilla"`, el LLM no se llama y las señales (iban/telefono) no se extraen del documento. Las señales vienen del config.yaml del proveedor.
 - **IBAN María Isabel (cobro)**: `ES4114650100951735096975` — aparece en FV a particulares como cuenta de pago.
-- **Scoring FV bug**: `confianza_global` siempre 55 en FV aunque CIF receptor coincida con config. Fix pendiente sesión 127.
+- **Scoring FV corregido** (sesión 127): floor 85 receptor en config, 72 NIF persona física, 65 CIF entidad nueva, 60 sin CIF. FC sin cambio (55).
 
 ## Regla de uso
 

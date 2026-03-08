@@ -1,5 +1,33 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-08 (sesión 126 cierre) | **Branch:** main | **Tests:** 2943 PASS | **Push:** OK
+> **Actualizado:** 2026-03-08 (sesión 127 cierre) | **Branch:** main | **Tests:** 2956 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 127 — Fix scoring FV + enriquecimiento config María Isabel)
+
+### Commits sesión 127
+
+| Commit | Descripción |
+|--------|-------------|
+| `fa5c8131` | fix(intake): scoring diferenciado FV — bonus emisor propio + umbral receptor |
+| `a0fb933c` | chore(config): maria-isabel — añadir señales OCR + alertas deduplicacion ING |
+
+### Completado sesión 127
+
+- **Bug 1 fix**: FV con receptor cliente en config → floor 85 (era 55). `intake.py` rama `elif tipo_doc == "FV"` en bloque de floor.
+- **Bug 2 fix**: FV receptor NIF persona física → floor 72. FV sin receptor_cif → floor 60. CIF jurídico nuevo → floor 65.
+- **13 tests nuevos** en `test_fv_scoring.py` — todos verdes. Suite: 2956 passed (+13).
+- **config.yaml María Isabel** enriquecido: 15 entradas actualizadas, aliases nuevos, `cif_variantes_ocr`, `codretencion` en morilla_perez, sección `alertas_deduplicacion` (3 pares FC+BAN).
+- **Arquitectura directorio compartido**: análisis completo — `directorio_entidades` ya existe en ORM pero sin implementar. Plan guardado, diferido a sesión futura.
+- **Carpeta creada**: `clientes/maria-isabel-navarro-lopez/extraccion_claude_desktop/` para ingestar datos de Claude Desktop.
+
+### Próxima sesión — pendientes (sesión 128)
+
+1. **Ingestar datos extracción Claude Desktop** — María Isabel pasará documentos para enriquecer config.yaml con proveedores nuevos y aliases.
+2. **Ejecutar pipeline 63 gastos María Isabel** — con config enriquecido. Verificar que scoring FV funciona correctamente en producción.
+3. **Integrar señales en motor_plantillas** — cuando `_fuente == "plantilla"` el LLM no se llama y las señales no se extraen. Pendiente desde sesión 125.
+4. **Poppler en PATH** — configurar para fallback GPT-4o Vision. Instalado en `C:\Users\carli\tools\poppler\...` pero no en PATH del proceso.
+5. **Directorio compartido fase 1** (opcional, baja prioridad) — activar `directorio_entidades` como fuente de lectura en intake.
 
 ---
 
