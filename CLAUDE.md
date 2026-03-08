@@ -134,22 +134,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (07/03/2026, sesion 121 cierre)
+## Estado actual (08/03/2026, sesion 122 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `2cc6ddab` fix(registration): calcular base desde total cuando base_imponible ausente (adeudos ING) | **Tests**: 2923 PASS
+**Rama**: `main` | **Ultimo commit**: `c4c924cf` fix(ci): añadir ruamel.yaml a requirements.txt | **Tests**: 2923 PASS
 
-### Completado sesion 121
-- Fix `registration.py`: pvpunitario = total/(1+iva%) cuando base_imponible ausente. Evita IVA doble en adeudos ING
-- AVATEL Enero (1 Enero -5) registrado en FS ID 116: neto=49.58, IVA=10.41, total=59.99
-- Poppler instalado en Docker runtime + `_POPPLER_PATH_WINDOWS` fallback en intake.py
-- config.yaml maria-isabel: duplicate key avatel fusionado (Safety Net habia auto-registrado segunda entrada con CIF vacio)
+### Completado sesion 122
+- Deploy manual produccion: imagen Docker reconstruida en VPS con commits sesion 121 (sfce_api healthy)
+- GitHub Actions operativo: repo publico = minutos ilimitados. CI/CD ya arranca en cada push
+- Fix CI: `ruamel.yaml` faltaba en requirements.txt → tests test_motor_plantillas fallaban en CI
+- CI corriendo con fix (run 22814805564) — resultado pendiente al cerrar sesion
 
-### Proxima sesion — pendientes (sesion 122)
+### Proxima sesion — pendientes (sesion 123)
 
 **CONTABILIDAD:**
 1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel. BLOQUEADOR PRINCIPAL.
 2. **Poppler en PATH del proceso** — instalado en tools/poppler pero no en PATH del pipeline. Configurar en .env o PATH sistema.
-3. **Adeudos Feb/Mar cuarentena** — AVATEL 59.99 (Feb) + Uralde 44.46 (Mar+Ene) — Mistral 500 transitorio. Con poppler en PATH se resuelven al reintentar.
+3. **Adeudos Feb/Mar cuarentena** — AVATEL 59.99 (Feb) + Uralde 44.46 (Mar+Ene) — con poppler en PATH se resuelven al reintentar.
 4. **4 PDFs imagen sin datos** — 1 Enero -2, 2 Febrero -1, 2 Febrero -5, 3 Marzo -2 — revision manual.
 5. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox.
 6. **Plenergy id=358** — en cuarentena por emisor_cif null.

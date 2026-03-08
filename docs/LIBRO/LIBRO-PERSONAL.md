@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 121 — CERRADA)
+## Estado rápido (sesión 122 — CERRADA)
 
-- **Completado:** Fix bug `registration.py` base_imponible ausente en adeudos ING (pvpunitario = total/(1+iva%) en lugar de total como base neta). AVATEL Enero registrado ID 116 (59.99 total, neto=49.58). Poppler instalado en Docker + path Windows fallback. Duplicate key `avatel` en config.yaml María Isabel fusionado (CIF A93135218 + aliases con tilde). 2923 PASS.
-- **Pendiente sesión 122:** FAC0007A4 FS Uralde (BLOQUEADOR FV María Isabel). Poppler en PATH del proceso (está instalado pero no en PATH → GPT-4o Vision falla). Adeudos Feb/Mar cuarentena (Mistral 500 transitorio, reintentar con poppler). 4 PDFs imagen sin datos. 3 Ingresos 3T. Plenergy id=358.
+- **Completado:** Deploy manual producción (imagen reconstruida en VPS, sfce_api healthy). GitHub Actions operativo: repo público = minutos ilimitados, CI/CD ya corre en cada push. Fix `ruamel.yaml` en requirements.txt (faltaba → tests test_motor_plantillas fallaban en CI). 2923 PASS.
+- **Pendiente sesión 123:** FAC0007A4 FS Uralde (BLOQUEADOR). Poppler en PATH proceso. Adeudos Feb/Mar cuarentena. 4 PDFs imagen sin datos. 3 Ingresos 3T. Plenergy id=358.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
