@@ -137,22 +137,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 125 cierre)
+## Estado actual (08/03/2026, sesion 126 cierre)
 
-**Rama**: `main` | **Ultimo commit**: motor identificacion proveedor — 5 fases completas | **Tests**: 2943 PASS (+20)
+**Rama**: `main` | **Ultimo commit**: cierre sesion 126 — analisis FV scoring + bugs identificados | **Tests**: 2943 PASS (sin cambios)
 
-### Completado sesion 125
-- Fase 1: `prompts.py` — bloque `senales_identificacion` en PROMPT_EXTRACCION_V3_2 (iban, telefono, direccion_fragmento, numero_comercio, tipo_doc_inferido)
-- Fase 2: `intake.py` — 5 señales nuevas en `_match_proveedor_multi_signal` (IBAN +60, nº comercio +50, teléfono +35, dirección +25, tipo_doc +20). Floor confianza: 85%/70%
-- Fase 3: `intake.py` — función `_enriquecer_perfil_fiscal`: calcula base desde total por codimpuesto, aplica IRPF desde codretencion, inyecta _subcuenta/_codimpuesto
-- Fase 4: `intake.py` — discovery exitoso → estado `proveedor_nuevo_pendiente` sin cuarentena. Cuarentena solo si discovery + Safety Net fallan
-- Fase 5: 20 tests nuevos verdes (test_prompt_senales, test_intake_matcher, test_enriquecimiento_fiscal, test_discovery_auto_alta)
-- Corregido repo en CLAUDE.md: SPICE → PROMETH-AI + documentado acceso MCP GitHub
+### Completado sesion 126
+- Análisis 15 JSONs OCR de ingresos María Isabel (1T, 2T, 3T)
+- Identificados 2 bugs en scoring FV: (1) confianza_global=55 aunque CIF receptor perfecto — scorer no distingue FV de FC; (2) particulares con NIF válido van a varios_clientes con confianza incorrectamente baja
+- Estrategia enriquecimiento definida: una muestra por proveedor es suficiente (IBAN/teléfono idénticos en todas las facturas del mismo proveedor)
+- IBAN propio María Isabel detectado: ES4114650100951735096975
+- Clientes recurrentes a añadir al config: Domos Advisers (B93509107), CP Marápolis (H29355872), CP Av. Gral López (H29546900)
 
-### Proxima sesion — pendientes (sesion 126)
+### Proxima sesion — pendientes (sesion 127)
 
-**CONTABILIDAD:**
-
-1. **Ejecutar pipeline Maria Isabel gastos** — inbox/ (63 gastos pendientes). Añadir iban/telefono/numero_comercio a proveedores conocidos en config.yaml antes de ejecutar para aprovechar nuevas señales.
-2. **Integrar senales_identificacion en motor_plantillas** — cuando `_fuente == "plantilla"` el LLM no se llama y las señales no se extraen. Opción A (recomendada): añadir iban/telefono/numero_comercio como patrones opcionales en schema `formato_pdf`.
-3. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.
+1. **[PRIORITARIO] Fix scoring FV** — lógica diferenciada: bonus emisor propio +30, receptor en config→90, NIF persona física→72, CIF entidad nueva→65/proveedor_nuevo_pendiente. Umbral FIABLE para FV = 70.
+2. **Tests scoring FV** — 4 casos cubiertos
+3. **Añadir clientes recurrentes al config.yaml** — Domos Advisers, CP Marápolis, CP Av. Gral López
+4. **Enriquecer config.yaml gastos** — OCR una muestra por proveedor, extraer iban/telefono/numero_comercio
+5. **Integrar señales en motor_plantillas** — Opción A: patrones en formato_pdf
+6. **Poppler en PATH del proceso** — pendiente desde sesión 121

@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-08 (sesión 125)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-08 (sesión 126)
 
 ---
 
@@ -47,21 +47,23 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 125 — CERRADA)
+## Estado rápido (sesión 126 — CERRADA)
 
-- **Completado:** Motor de Identificación de Proveedor — 5 fases: señales nuevas en prompts.py (iban/telefono/direccion/comercio/tipo_doc), matcher 5 señales nuevas (IBAN+60, comercio+50, tel+35, dir+25, tipo_doc+20), `_enriquecer_perfil_fiscal` (base desde total por codimpuesto, IRPF desde codretencion), discovery sin cuarentena, 20 tests verdes. Total: 2943 PASS.
-- **Pendiente sesión 126:** Pipeline 63 gastos María Isabel. Añadir iban/telefono en config.yaml proveedores conocidos antes de ejecutar. Integrar señales en motor_plantillas (Opción A). Poppler en PATH.
+- **Completado:** Análisis OCR ingresos María Isabel (15 JSONs). Identificados 2 bugs en scoring FV: confianza 55 en todas las FV aunque CIF perfecto, y particulares con NIF válido van a varios_clientes con confianza incorrecta. Estrategia definida: NO lanzar pipeline masivo — enriquecer config.yaml con UNA muestra por proveedor. IBAN propio de María Isabel: `ES4114650100951735096975`.
+- **Pendiente sesión 127:** Fix scoring FV (prioritario). Añadir Domos/CPs al config clientes. Enriquecer config gastos con señales reales.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
 
 ## Notas operacionales producción
 
-- **Seed IMAP ejecutado** (sesión 75). `scripts/crear_cuentas_imap_asesores.py` en git tiene passwords vacíos — no ejecutar directamente. Usar temp script vía `docker cp + docker exec`.
-- **`es_respuesta_ack` corregido** a `boolean` en prod. Fix: drop default → type change → restore default.
+- **Seed IMAP ejecutado** (sesión 75). `scripts/crear_cuentas_imap_asesores.py` en git tiene passwords vacíos — no ejecutar directamente.
+- **`es_respuesta_ack` corregido** a `boolean` en prod.
 - **IBAN interno C43**: formato `banco(4)+oficina(4)+cuenta(10)` sin prefijo ES (ver 03-bancario).
 - **`_leer_config_bd`**: está en `sfce.api.app`, NO en `sfce.db.base`.
-- **Motor Plantillas vs Motor Identificación**: capas independientes. Cuando `_fuente == "plantilla"`, el LLM no se llama y las señales (iban/telefono) no se extraen del documento. Las señales vienen del config.yaml del proveedor, no del OCR.
+- **Motor Plantillas vs Motor Identificación**: cuando `_fuente == "plantilla"`, el LLM no se llama y las señales (iban/telefono) no se extraen del documento. Las señales vienen del config.yaml del proveedor.
+- **IBAN María Isabel (cobro)**: `ES4114650100951735096975` — aparece en FV a particulares como cuenta de pago.
+- **Scoring FV bug**: `confianza_global` siempre 55 en FV aunque CIF receptor coincida con config. Fix pendiente sesión 127.
 
 ## Regla de uso
 
