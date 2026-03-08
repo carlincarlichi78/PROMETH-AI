@@ -3,6 +3,29 @@
 
 ---
 
+## Estado actual (sesión 130 — Verificación contabilidad + carga masiva FS María Isabel)
+
+### Commits sesión 130
+_(sin commits de código — trabajo directo en FS vía API)_
+
+### Completado sesión 130
+
+- **Revisión contabilidad 2025 María Isabel**: cruce M130/M303/M111 vs libros Excel del gestor → contabilidad CORRECTA, sin errores graves
+- **Limpieza FS**: borradas 14 FV (FAC0007A1-A14) + asientos del ejercicio 0007
+- **Carga masiva desde PROYECTO-OCR**: 162 FC (gastos) + 15 FV (ingresos) registradas en FS directamente via API sin usar pipeline
+- **Estado actual FS**: 162 FC (12.199€ total, 1.654€ IVA) + 15 FV (21.152€ total, 3.671€ IVA)
+
+### Próxima sesión — pendientes (sesión 131)
+
+1. **Completar FV que faltan en FS**: registrar FV 16 a 31 (sinteticos/ + meses may-dic OCR) — faltan ~19.357€ de ingresos
+2. **Cuadre final vs modelos fiscales**: ingresos FS deben llegar a 40.509€ (M130 casilla 01)
+3. **Revisar gastos FS**: 12.199€ vs 11.260€ libro gestor — diferencia de +938€ a justificar
+4. **Revisar IVA soportado FS**: 1.654€ vs 1.311€ declarado — diferencia +343€ a revisar
+5. **Confirmar importe Mutualidad mayo 2025** (671,15€ — anómalo)
+6. **Poppler en PATH del proceso** — pendiente sesiones anteriores
+
+---
+
 ## Estado actual (sesión 129 — Creación PROYECTO OCR)
 
 ### Commits sesión 129

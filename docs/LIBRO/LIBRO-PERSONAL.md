@@ -47,11 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 128 — CERRADA)
+## Estado rápido (sesión 130 — CERRADA)
 
-- **Completado:** Enriquecimiento masivo config.yaml María Isabel — 4 docs Claude Desktop procesados (63 gastos + 31 ingresos). 14 proveedores enriquecidos con IBAN/tel/nº comercio/aliases/cif_variantes. 3 proveedores nuevos (carrefour, apple_applecare, sabadell_consumer). 2 clientes ingresos nuevos. varios_clientes con 6 particulares con CIF real. id_emisor_adeudo_ing en 4 entidades. Nueva alerta dedup mutualidad.
-- **Pendiente sesión 129:** Ejecutar pipeline 63 gastos María Isabel. Confirmar importe Mutualidad mayo 671€. Obtener CIF Romur. Poppler en PATH. Motor plantillas señales (sesión 125). Facturas ingresos 4-15 y 18-21.
-- **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
+- **Completado:** Verificación contabilidad 2025 María Isabel (M130/M303/M111 vs libros Excel) → contabilidad correcta. Limpieza FS ejercicio 0007. Carga masiva desde PROYECTO-OCR: 162 FC + 15 FV registradas directamente en FS via API.
+- **Pendiente sesión 131:** Completar FV 16-31 en FS (faltan ~19.357€ ingresos). Cuadre final vs modelos fiscales. Revisar diferencia gastos (+938€) e IVA soportado (+343€). Mutualidad mayo 671€ anómalo. Poppler en PATH.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

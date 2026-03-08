@@ -137,23 +137,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 128 cierre)
+## Estado actual (08/03/2026, sesion 130 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `3c8417aa` chore(config): maria-isabel — enriquecimiento feb-abr 2025 + id_emisor_adeudo ING | **Tests**: 2956 PASS (sin cambios sesión 128)
+**Rama**: `main` | **Ultimo commit**: `8d3796db` docs: cierre sesion 129 | **Tests**: 2956 PASS (sin cambios sesión 130)
 
-### Completado sesion 128
-- 4 documentos Claude Desktop procesados (2 .docx + 2 .md) con 63 gastos + 31 ingresos de María Isabel
-- 14 proveedores enriquecidos con IBAN, teléfono, nº comercio, aliases, cif_variantes_ocr, patrones_numeracion
-- 3 proveedores nuevos: carrefour, apple_applecare, sabadell_consumer
-- 2 clientes ingresos nuevos: euc_villa_parra (H29642634), romur_spanish_properties (CIF pendiente)
-- varios_clientes actualizado con 6 particulares con CIF real
-- id_emisor_adeudo_ing añadido para 4 entidades; nueva alerta dedup mutualidad
+### Completado sesion 130
+- Verificación contabilidad 2025 María Isabel: M130/M303/M111 cruzados con libros Excel gestor → contabilidad CORRECTA
+- FS ejercicio 0007 limpiado (14 FV + asientos eliminados)
+- Carga masiva PROYECTO-OCR → FS directamente via API: 162 FC (12.199€, IVA 1.654€) + 15 FV (21.152€, IVA 3.671€)
 
-### Proxima sesion — pendientes (sesion 129)
+### Proxima sesion — pendientes (sesion 131)
 
-1. **Ejecutar pipeline 63 gastos María Isabel** — config enriquecido listo
-2. **Confirmar importe Mutualidad mayo 2025** — 671,15€ anómalo vs 255-269€ resto del año
-3. **Obtener CIF Romur Spanish Properties** — FV 30/2025 sin CIF
-4. **Poppler en PATH del proceso** — instalado pero no configurado
-5. **Integrar señales en motor_plantillas** — pendiente sesión 125
-6. **Facturas ingresos pendientes** — nº 4-15 y 18-21 María Isabel sin subir
+1. **Completar FV 16-31 en FS** — registrar ~16 FVs que faltan (sinteticos/ + may-dic OCR) → llegar a 40.509€ ingresos
+2. **Cuadre final vs M130/M303** — verificar que FS cuadra con los modelos fiscales presentados
+3. **Revisar diferencia gastos** — FS tiene 12.199€ vs 11.260€ libro gestor (+938€ a justificar)
+4. **Revisar IVA soportado** — FS 1.654€ vs 1.311€ declarado (+343€ a revisar)
+5. **Confirmar importe Mutualidad mayo 2025** — 671,15€ anómalo vs 255-269€ resto del año
+6. **Poppler en PATH del proceso** — instalado pero no configurado
