@@ -134,22 +134,21 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 122 cierre)
+## Estado actual (08/03/2026, sesion 123 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `c4c924cf` fix(ci): añadir ruamel.yaml a requirements.txt | **Tests**: 2923 PASS
+**Rama**: `main` | **Ultimo commit**: `307c84b1` chore: ignorar archivos .code-workspace | **Tests**: 2923 PASS
 
-### Completado sesion 122
-- Deploy manual produccion: imagen Docker reconstruida en VPS con commits sesion 121 (sfce_api healthy)
-- GitHub Actions operativo: repo publico = minutos ilimitados. CI/CD ya arranca en cada push
-- Fix CI: `ruamel.yaml` faltaba en requirements.txt → tests test_motor_plantillas fallaban en CI
-- CI corriendo con fix (run 22814805564) — resultado pendiente al cerrar sesion
+### Completado sesion 123
+- Limpieza completa Maria Isabel en FS Uralde (idempresa=7): 4 FV + 30 FP eliminadas, asientos borrados
+- OCR cache, auditoria, JSONs estado pipeline, inboxes auxiliares borrados
+- 63 PDFs gastos en inbox/, 16 PDFs ingresos en inbox/ingresos/ — listo para reprocesar desde cero
+- config.yaml intacto con plantillas_activas disponibles para activar
 
-### Proxima sesion — pendientes (sesion 123)
+### Proxima sesion — pendientes (sesion 124)
 
 **CONTABILIDAD:**
-1. **FAC0007A4 en FS Uralde** — bloquea insercion FV Maria Isabel. BLOQUEADOR PRINCIPAL.
-2. **Poppler en PATH del proceso** — instalado en tools/poppler pero no en PATH del pipeline. Configurar en .env o PATH sistema.
-3. **Adeudos Feb/Mar cuarentena** — AVATEL 59.99 (Feb) + Uralde 44.46 (Mar+Ene) — con poppler en PATH se resuelven al reintentar.
-4. **4 PDFs imagen sin datos** — 1 Enero -2, 2 Febrero -1, 2 Febrero -5, 3 Marzo -2 — revision manual.
-5. **3 Ingresos 3T Maria Isabel** — no aparecen en inbox.
-6. **Plenergy id=358** — en cuarentena por emisor_cif null.
+
+1. **Ejecutar pipeline Maria Isabel desde cero** — inbox (63 gastos) + inbox/ingresos (16 ingresos).
+2. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.
+3. **4 PDFs imagen sin datos** — revision manual.
+4. **Plenergy id=358** — en cuarentena por emisor_cif null.

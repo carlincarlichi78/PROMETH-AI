@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 122 — CERRADA)
+## Estado rápido (sesión 123 — CERRADA)
 
-- **Completado:** Deploy manual producción (imagen reconstruida en VPS, sfce_api healthy). GitHub Actions operativo: repo público = minutos ilimitados, CI/CD ya corre en cada push. Fix `ruamel.yaml` en requirements.txt (faltaba → tests test_motor_plantillas fallaban en CI). 2923 PASS.
-- **Pendiente sesión 123:** FAC0007A4 FS Uralde (BLOQUEADOR). Poppler en PATH proceso. Adeudos Feb/Mar cuarentena. 4 PDFs imagen sin datos. 3 Ingresos 3T. Plenergy id=358.
+- **Completado:** Limpieza completa María Isabel — FS Uralde idempresa=7 vaciado (4 FV + 30 FP eliminadas), OCR cache borrada, auditoría borrada, todos los PDFs consolidados en inbox/ (63 gastos) e inbox/ingresos/ (16 ingresos). Listo para reprocesar desde cero con plantillas activas.
+- **Pendiente sesión 124:** Ejecutar pipeline María Isabel desde cero (inbox + inbox/ingresos). Poppler en PATH proceso. 4 PDFs imagen sin datos. Plenergy id=358 (emisor_cif null).
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

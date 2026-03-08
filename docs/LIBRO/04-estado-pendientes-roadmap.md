@@ -1,5 +1,30 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-07 (sesión 121 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+> **Actualizado:** 2026-03-08 (sesión 123 cierre) | **Branch:** main | **Tests:** 2923 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 123 — Limpieza completa María Isabel)
+
+### Commits sesión 123
+
+Sin commits de código — sesión de limpieza de datos.
+
+### Tasks sesión 123
+
+| Task | Estado | Qué se hizo |
+|------|--------|-------------|
+| FS Uralde limpieza | ✅ DONE | 4 FV (FAC0007A1-A4) + 30 FP (idfactura 85-116) de idempresa=7 eliminadas. Asientos en cascada. |
+| OCR cache | ✅ DONE | `.ocr_cache/` borrado |
+| Auditoría y estados | ✅ DONE | `2025/auditoria/`, JSONs pipeline, inboxes auxiliares borrados |
+| PDFs consolidados | ✅ DONE | 63 gastos en `inbox/`, 16 ingresos en `inbox/ingresos/`. Listo para reprocesar. |
+| config.yaml | ✅ INTACT | Sin modificar |
+
+### Pendientes sesión 124
+
+1. **Ejecutar pipeline María Isabel desde cero** — observar comportamiento plantillas en primera pasada limpia.
+2. **Poppler en PATH del proceso** — habilitar fallback GPT-4o Vision.
+3. **4 PDFs imagen sin datos** — revisión manual.
+4. **Plenergy id=358** — cuarentena por emisor_cif null.
 
 ---
 
