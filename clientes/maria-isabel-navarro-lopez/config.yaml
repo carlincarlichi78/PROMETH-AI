@@ -64,6 +64,7 @@ proveedores:
     cif: V28024149
     cif_variantes_ocr:
     - ES57010V28024149
+    - V2802414
     concepto_tipo: mutualidad
     nombre_fs: MUTUALIDAD DE LA ABOGACIA
     aliases:
@@ -71,18 +72,24 @@ proveedores:
     - MUTUALIDAD
     - MUTUA ABOGACIA
     - MUTUALIDAD ABOGACIA C. GENERAL-RECIBOS
+    - MUTUALIDAD DE LA ABOGACIA C. GENERAL
+    iban_emisor: ES5701000V280241496
     pais: ESP
     divisa: EUR
     subcuenta: '6420000000'
     codimpuesto: IVA0
     regimen: general
-    notas: 'Cuota mensual ~255€. Sin IVA. Sustituye RETA. Gasto deducible IRPF (no
-      IVA). Adeudo bancario sin factura formal. CIF también como ES57010V28024149.'
+    importe_tipico: 255.11
+    concepto_adeudo_ing: CUOTA X TRM BASE EXENTA
+    notas: 'Cuota mensual habitual 255,11€. Sin IVA (sustitutiva RETA — deducible IRPF).
+      Adeudo bancario ING sin factura formal. IBAN emisor ES57010V28024149. Ref. ING
+      tipo 181679524. Importe anómalo: 671,15€ mayo 2025 (posible pago trimestral o
+      ajuste — confirmar con clienta). Adeudo duplicado conservar solo uno por mes.'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
-    - 100
-    - 300
+    - 200
+    - 700
     concepto_keywords:
     - mutualidad
     - abogacia
@@ -95,7 +102,7 @@ proveedores:
       iva_esperado:
       - 0
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 700
       deducibilidad_iva: 0
       deducibilidad_gasto: 100
     asiento:
@@ -107,10 +114,13 @@ proveedores:
     nombre_fs: ASESORIA LOPEZ DE URALDE S.L.
     aliases:
     - ASESORIA LOPEZ DE URALDE
+    - ASESORIA LOPEZ DE URALDE S.L.
     - URALDE
     - LOPEZ DE URALDE
     - 092010768
     - '892010768'
+    domicilio_receptor: CL EL TOMILLAR 309, 29130 ALHAURIN DE LA TORRE, MALAGA
+    iban_domiciliacion: ES41146501009517350969
     pais: ESP
     divisa: EUR
     subcuenta: '6230000000'
@@ -119,13 +129,17 @@ proveedores:
     importe_fijo: 44.46
     importe_tipico: 44.46
     concepto_tipo: asesoria
-    notas: 'Gestoría. Factura mensual fija 44,46€. Numeración correlativa ~95/mes.
-      Adeudo ING simultáneo — conservar factura PDF, descartar adeudo.'
+    patron_numeracion: 'correlativo con salto ~95-98 por mes. Ene=11, Feb=101, Mar=196,
+      Abr=292, May=386, Jun=484, Jul=587, Sep=792, Oct=890'
+    notas: 'Gestoría. Factura mensual fija 44,46€ (base 36,74 + IVA21 7,72). Numeración
+      correlativa con salto ~95/mes. Domiciliada ING IBAN ES41146501009517350969.
+      Adeudo ING simultáneo — conservar factura PDF, descartar adeudo. Falta factura
+      agosto 2025 (entre nº 587 jul y 792 sep).'
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
-    - 100
-    - 300
+    - 40
+    - 50
     concepto_keywords:
     - gestoría
     - asesoría fiscal
@@ -135,7 +149,7 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 100
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -153,31 +167,47 @@ proveedores:
     - PLENERGY GRUPO
     - PLENOIL S.L.
     - PLENOIL SAN ROQUE I
+    - PLENERGY GRUPO SL
+    domicilio: Edificio FITENI III, Calle Torrelaguna 64, 2ª Planta, 28043 Madrid
+    telefono: '910600796'
+    numero_cliente: '946423'
+    patron_factura: XXXD2500YYYYYY
+    prefijos_estacion:
+    - 052D  # estación Alcaidesa / San Roque alt
+    - 066D  # estación Alcaidesa
+    - 093D  # prefijo alternativo (detectado jun 2025)
+    - 279D  # estación principal La Alcaidesa
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo profesional. G18. Mismo CIF con dos marcas (Plenoil / Plenergy).
+    notas: 'Combustible gasoil profesional. Nº cliente 946423. Mismo CIF con dos marcas
+      (Plenoil / Plenergy). Dos estaciones: La Alcaidesa (prefijo 279D/093D) y Alhaurin
+      de la Torre (066D/052D). IIEE incluidos en precio — base no es litros×precio
+      directo. Frecuencia 2-4 veces/mes.'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
     - 30
-    - 100
+    - 80
     concepto_keywords:
     - combustible
     - vehículo
     - profesional
     - gasolina
     - diesel
+    - gasoil
+    - plenoil
+    - plenergy
     persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 200
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
@@ -190,32 +220,37 @@ proveedores:
     - ICAM
     - COLEGIO ABOGADOS MALAGA
     - ILUSTRE COLEGIO DE ABOGADOS DE MALAGA
+    iban_emisor: ES2000100295630000127813
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA0
     regimen: general
     concepto_tipo: cuota_colegial
-    notas: 'Cuota colegial y servicios ICAM. Exento IVA (art.20.Uno.12 LIVA). CIF a
-      veces no visible en documentos. Adeudo ING simultáneo — conservar recibo, descartar adeudo.'
-    formato_pdf: escaneado
-    frecuencia: mensual
+    importe_tipico: 107.18
+    notas: 'Cuota colegial trimestral 107,18€. Exento IVA (art.20.Uno.12 LIVA). CIF
+      a veces no visible en documentos. IBAN emisor ES20 0010 0295 6300 0012 7813.
+      Concepto ING: "CUOTA X TRM BASE EXENTA IVA:0,00EUR". Solo adeudo ING — no existe
+      factura formal emitida por el Colegio. Trimestres: enero, abril, julio, octubre.'
+    formato_pdf: digital
+    frecuencia: trimestral
     importe_rango:
-    - 50
-    - 150
+    - 100
+    - 120
     concepto_keywords:
     - cuota
     - colegial
     - servicios
     - abogados
     - malaga
+    - trimestral
     persona_fisica: false
     validacion:
       iva_esperado:
-      - 21
+      - 0
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
+      total_max: 200
+      deducibilidad_iva: 0
       deducibilidad_gasto: 100
     asiento:
       subcuenta_gasto: '6290000000'
@@ -229,38 +264,54 @@ proveedores:
     - A81412353
     - A5143255
     - A81430353
-    nombre_fs: AUTOPISTA DEL SOL CESA
+    - A61432353  # lectura OCR errónea frecuente (8→6)
+    nombre_fs: AUTOPISTA DEL SOL CESAU
     aliases:
     - AUTOPISTA DEL SOL
     - AUTOPISTA SOL
     - CESA
+    - CESAU
     - A81132353
     - A81412353
     - A5143255
+    domicilio: Autopista del Mediterráneo km.172, San Pedro de Alcántara, 29670 Marbella
+    email: clientes@autopistadelsol.com
+    patron_factura: AAMMDD001XXX-FBM
+    concesion: ESTEPONA-GUADIARO
+    tarjetas:
+    - ultimo4: '2028'
+    - ultimo4: '5044'
+      nota: genera factura separada de 1 tránsito (~3,90€)
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Peajes autopista vehiculo profesional
-    formato_pdf: ticket_termico
-    frecuencia: puntual
+    notas: 'Peajes autopista vehículo profesional. Concesión Estepona-Guadiaro. Dos
+      tarjetas activas (xxxx2028 y xxxx5044). La tarjeta 5044 genera facturas separadas
+      de 1 solo tránsito (3,90€). Período cubierto = mes anterior al de la factura.
+      Patrón factura: AAMMDD001XXX-FBM (ej: 250603001331-FBM).'
+    formato_pdf: digital
+    frecuencia: mensual
     importe_rango:
-    - 5
-    - 50
+    - 3
+    - 70
     concepto_keywords:
     - peaje
     - autopista
     - vehículo
     - profesional
-    persona_fisica: true
+    - tránsito
+    - estepona
+    - guadiaro
+    persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 100
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
@@ -277,28 +328,40 @@ proveedores:
     - B-85683167
     - NOTIFICADOS
     - NOTIFICAD@S
+    - EXTERNALIZACION DE NOTIFICADOS Y APLICACIONES ONLINE
+    domicilio: C/ Arboleda nº 32, 28901 Getafe, Madrid
+    email: atencion.cliente@notificados.com
+    telefono: '915010630'
+    precios_unitarios:
+      burofax_postal: 5.30
+      acuse_recibo: 1.90
+      pagina_adicional: 0.42
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Notificaciones electronicas y gestiones procesales. ~34 facturas/ano
+    notas: 'Burofax postal y notificaciones procesales. Precios fijos: Burofax 5,30€ +
+      Acuse 1,90€ + pág adicional 0,42€. Varias facturas por mes (hasta 6-7 en meses
+      intensos). ~34 facturas/año. Nº factura correlativo (52330, 59271, 84345, 93365...).'
     formato_pdf: digital
-    frecuencia: anual
+    frecuencia: mensual_multiple
     importe_rango:
-    - 1000
-    - 3000
+    - 8
+    - 50
     concepto_keywords:
     - notificaciones
     - gestiones
     - procesales
-    - electrónicas
+    - burofax
+    - acuse
+    - recibo
     persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 100
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -317,19 +380,33 @@ proveedores:
     - FIBRA, WIFI Y TELEFONÍA INTEGRALES - AVATEL
     - FIBRA WIFI Y TELEFONÍA INTEGRALES AVATEL
     - ES43131A93135218
+    - HOLAFIBRA TELECOM
+    domicilio: C/ Palma del Río 19, 29004 Málaga
+    web: avatel.es
+    numero_cliente: '10674'
+    lineas_telefono:
+    - '637834320'  # línea principal
+    - '722457299'
+    - '722457343'
+    iban_domiciliacion_ing: ES41146501009517350969
+    iban_domiciliacion_sabadell: ES0300817428310001592969
+    patron_factura: CFRA25/XXXXXX
+    servicio: T. HEAVY ACUMULABLE — Fibra 600Mb + Móvil Ilimitada + 100GB x3 líneas + MasCLICtv 2.0
     pais: ESP
     divisa: EUR
     subcuenta: '6290000001'
     codimpuesto: IVA21
     regimen: general
-    importe_fijo: 59.99
     importe_tipico: 59.99
     importe_rango:
     - 50
-    - 150
+    - 70
     concepto_tipo: telefonia
-    notas: 'Internet y telefonía despacho. 59,99€/mes. Referencia CFRA25/XXXXXX.
-      Domiciliado ING. Adeudo ING simultáneo — conservar factura, descartar adeudo.'
+    notas: 'Internet y telefonía despacho. Tarifa T. HEAVY ACUMULABLE. Nº cliente
+      10674. Emite día 1, cargo día 2. Patrón factura CFRA25/XXXXXX. Domiciliado ING
+      (IBAN ES41 1465...) y Sabadell (ES03 0081...). Tarifa: 59,99€ (ene-sep 2025)
+      → 60,27€ (may) → 64,89€ (jun) → 59,99€ (jul-sep) → 61,42€ (oct+). Adeudo
+      ING simultáneo — conservar factura PDF, descartar adeudo.'
     formato_pdf: digital
     frecuencia: mensual
     persona_fisica: false
@@ -337,7 +414,7 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 100
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -379,27 +456,35 @@ proveedores:
       intracom: false
   dropbox:
     rol: proveedor
-    cif: IE9852817
+    cif: IE9852817J
     cif_variantes_ocr:
-    - IE9852817J
+    - IE9852817
     nombre_fs: DROPBOX INTERNATIONAL UNLIMITED COMPANY
     aliases:
     - DROPBOX
+    - DROPBOX PLUS
+    domicilio: One Park Place, Floor 6, Hatch Street Upper, Dublin 2, Irlanda
+    email: billing-support@dropbox.com
+    email_receptor: mnavarro@icamalaga.org
+    dia_cargo: 13
+    importe_fijo: 11.99
     pais: IRL
     divisa: EUR
     subcuenta: '6220000000'
     codimpuesto: IVA0
     regimen: intracomunitario
-    notas: Dropbox Plus 11,99€/mes. Almacenamiento cloud. Intracomunitario IE. Verificar ejercicio.
+    notas: 'Dropbox Plus 11,99€/mes fijo (base 9,91 + IVA 21% 2,08). Almacenamiento
+      cloud profesional. Intracomunitario IE (VAT IE9852817J). Cargo día 13 de cada
+      mes. Nº factura alfanumérico (ej: 5G8LFPXGGJGQ).'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
-    - 10
-    - 20
+    - 11
+    - 13
     concepto_keywords:
     - almacenamiento
     - cloud
-    - Dropbox
+    - dropbox
     - servicio
     - mensual
     persona_fisica: false
@@ -407,7 +492,7 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 20
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -556,24 +641,35 @@ proveedores:
       intracom: false
   apple_distribution:
     rol: proveedor
-    cif: 9700053D
+    cif: IE9700053D
+    cif_variantes_ocr:
+    - 9700053D
+    - IE9700053
     nombre_fs: APPLE DISTRIBUTION INTERNATIONAL LTD
     aliases:
     - APPLE
     - APPLE DISTRIBUTION
     - ICLOUD
+    - ICLOUD+
+    - APPLE DISTRIBUTION INTERNATIONAL
+    domicilio: Hollyhill Industrial Estate, Hollyhill, Cork, Irlanda
+    email_receptor: mnavarro@icamalaga.org
+    dia_cargo: 11
+    importe_fijo: 2.99
+    producto: iCloud+ 200GB
     pais: IRL
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: intracomunitario
-    notas: 'iCloud+ 2,99€/mes. Software Apple. Intracomunitario IE. Factura simplificada
-      sin NIF ES — puede no tener CIF emisor.'
+    notas: 'iCloud+ 200GB mensual 2,99€ (base 2,47 + IVA 21% 0,52). Intracomunitario
+      IE (VAT IE9700053D — Apple Distribution International Ltd, Cork). Cargo día 11
+      de cada mes. Factura simplificada sin NIF ES.'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
-    - 10
-    - 50
+    - 2
+    - 4
     concepto_keywords:
     - icloud
     - software
@@ -585,7 +681,7 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 10
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -634,37 +730,45 @@ proveedores:
     aliases:
     - MOEVE
     - MOEVE RETAIL
-    - REPSOL
+    - MOEVE RETAIL OPERATIONS
     - A283354520
     - A2854520
     - CEPSA
+    - CEPSA RETAIL
     - CIA ESPANOLA DISTRIBUIDORA DE PETROLEOS
     - ES MANILVA II
-    - E.S. MANILVA II
+    - E.S. MANILVA II AP-7
+    estacion: E.S. Manilva II AP-7
+    patron_factura: XXXXXXXXXX/XXXXXXXX
+    tipo_combustible: Gasoil
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo (Repsol)
+    notas: 'Gasoil. Estación E.S. Manilva II AP-7. Antes CEPSA Retail — renombrada
+      a Moeve Retail Operations SAU (mismo CIF A28354520). Factura simplificada.
+      Patrón nº factura: XXXXXXXXXX/XXXXXXXX (ej: 012080025/00003274).'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
-    - 30
-    - 100
+    - 15
+    - 60
     concepto_keywords:
     - combustible
-    - repsol
     - vehículo
+    - gasoil
     - gasolina
-    persona_fisica: true
+    - cepsa
+    - moeve
+    persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 100
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
@@ -742,68 +846,88 @@ proveedores:
   markoil:
     rol: proveedor
     cif: A79209854
-    nombre_fs: MARKOIL SA
+    nombre_fs: MARKOIL SAU
     aliases:
     - MARKOIL
+    - MARKOIL SAU
+    - RED BP
+    - BP RIO PADRON
+    estacion: E.S. Río Padrón (Red BP), San Roque
+    patron_factura: XXXXXFE000XXXXXX
+    tipo_combustible: Gasolina 95
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo
+    notas: 'Gasolina 95 (no gasoil). Estación E.S. Río Padrón, Red BP, San Roque.
+      Factura simplificada. Patrón nº factura: XXXXXFE000XXXXXX (ej: 82125FE000006656).'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
-    - 30
-    - 100
+    - 15
+    - 60
     concepto_keywords:
     - combustible
     - vehículo
     - gasolina
-    - diesel
     - repostaje
+    - bp
+    - markoil
     persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 100
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
   eessa:
     rol: proveedor
     cif: A80393812
-    nombre_fs: EESSA
+    nombre_fs: EESSA DISA FSAVE
     aliases:
     - EESSA
+    - DISA
+    - DISA FSAVE
+    - FSAVE
+    - MI ENERGIA DISA
+    estacion: E.S. Puerto Banús (Red DISA/FSave)
+    domicilio: Río Bullaque 2, 28034 Madrid
+    app: Mi Energía DISA
+    patron_factura: '0000XXXXXX'
+    tipo_combustible: Gasoil
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo
+    notas: 'Gasoil. Estación E.S. Puerto Banús, Red DISA/FSave. Patrón nº factura:
+      0000XXXXXX (ej: 0000204957). Código IVA ''3'' = 21%. ID empresa en factura:
+      OK--05/04/202. App Mi Energía DISA.'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
-    - 30
-    - 100
+    - 15
+    - 60
     concepto_keywords:
     - combustible
     - vehículo
-    - EESSA
-    - gasolina
+    - eessa
+    - disa
     - gasoil
-    persona_fisica: true
+    - fsave
+    persona_fisica: false
     validacion:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
-      deducibilidad_iva: 100
-      deducibilidad_gasto: 100
+      total_max: 100
+      deducibilidad_iva: 50
+      deducibilidad_gasto: 50
     asiento:
       subcuenta_gasto: '6280000000'
       intracom: false
@@ -849,22 +973,25 @@ proveedores:
   algetonersl:
     rol: proveedor
     cif: B11554789
-    nombre_fs: SUMINISTROS DE OFICINAS ALGETONERSL
+    nombre_fs: SUMINISTROS OFICINAS ALGETONER SL
     aliases:
     - ALGETONERSL
     - SUMINISTROS OFICINAS ALGECIRAS
     - ALGETONER
+    - SUMINISTROS DE OFICINAS ALGETONERSL
+    patron_factura: 1T/XXXXXXX
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Toner y material oficina
+    notas: 'Tóner y material de oficina. Patrón nº factura: 1T/XXXXXXX (ej: 1T/2045678).
+      Aparición puntual según necesidad.'
     formato_pdf: escaneado
-    frecuencia: mensual
+    frecuencia: puntual
     importe_rango:
-    - 50
-    - 200
+    - 20
+    - 100
     concepto_keywords:
     - toner
     - material
@@ -876,7 +1003,7 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 200
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
@@ -884,26 +1011,35 @@ proveedores:
       intracom: false
   amazon:
     rol: proveedor
-    cif: W0184081H
+    cif: ESW0184081H
+    cif_variantes_ocr:
+    - W0184081H
     nombre_fs: AMAZON EU SARL
     aliases:
     - AMAZON
     - AMAZON EU
+    - AMAZON EU S.A R.L.
+    domicilio_fiscal: 38 avenue John F. Kennedy, L-1855 Luxemburgo
+    domicilio_sucursal_es: Calle de Ramírez de Prado 5, 28045 Madrid
+    domicilio_entrega: Urbanización Alzambra Centro de Negocios, The Hub by Vasari, Local 3-1 Oficina 18, Marbella, 29660
+    patron_factura: ESXXJABXLAEUS
     pais: LUX
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Material oficina online
+    notas: 'Material de oficina online. CIF ES W0184081H (sucursal ES). Sede Luxemburgo.
+      Nº documento ESXXJABXLAEUS. Entrega en oficina profesional (Alzambra, Marbella)
+      — confirmar uso exclusivo profesional para deducibilidad.'
     formato_pdf: digital
     frecuencia: puntual
     importe_rango:
-    - 50
+    - 5
     - 200
     concepto_keywords:
     - material
     - oficina
-    - Amazon
+    - amazon
     - papelería
     - consumibles
     persona_fisica: false
@@ -911,13 +1047,12 @@ proveedores:
       iva_esperado:
       - 21
       irpf_obligatorio: false
-      total_max: 500
+      total_max: 300
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
       subcuenta_gasto: '6290000000'
-      intracom: true
-      iva_autorepercusion: 21
+      intracom: false
   campmany_bermejo:
     rol: proveedor
     cif: 00383225E
@@ -997,33 +1132,166 @@ proveedores:
     aliases:
     - RUIZ RICO
     - RUIZ RICO MARQUEZ
+    - REGISTRO DE LA PROPIEDAD MALAGA 10
+    - REGISTRO PROPIEDAD MALAGA
+    cargo: Registrador de la Propiedad — Málaga nº 10
+    patron_factura: AAAA/XXXX
+    codretencion: IRPF15
     pais: ESP
     divisa: EUR
     subcuenta: '6230000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Profesional colaborador
+    notas: 'Registrador de la Propiedad de Málaga nº 10. Honorarios registrales.
+      IRPF 15% retención. Patrón nº factura: AAAA/XXXX (ej: 2025/1560). Total =
+      base + IVA21 - IRPF15.'
     formato_pdf: escaneado
-    frecuencia: mensual
+    frecuencia: puntual
     importe_rango:
-    - 100
-    - 300
+    - 5
+    - 50
     concepto_keywords:
-    - colaborador
-    - servicios
-    - profesionales
-    - asesoría
-    - consultoría
+    - registro
+    - propiedad
+    - honorarios
+    - registral
+    - certificacion
     persona_fisica: true
     validacion:
       iva_esperado:
       - 21
-      irpf_obligatorio: false
-      total_max: 500
+      irpf_obligatorio: true
+      total_max: 100
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
       subcuenta_gasto: '6230000000'
+      intracom: false
+      subcuenta_irpf: '4751000000'
+  carrefour:
+    rol: proveedor
+    cif: A28425270
+    nombre_fs: CENTROS COMERCIALES CARREFOUR SA
+    aliases:
+    - CARREFOUR
+    - CENTROS COMERCIALES CARREFOUR
+    domicilio: Avda. Transición Española 36, 28108 Alcobendas, Madrid
+    domicilio_receptor: AVDA DEL GOLF 8, ALCAIDESA, SAN ROQUE, CP 11360
+    patron_factura: AAAAFBFNxxxxxxxxx
+    pais: ESP
+    divisa: EUR
+    subcuenta: '6290000000'
+    codimpuesto: IVA21
+    regimen: general
+    notas: 'Papelería y material de oficina. Factura formal emitida a nombre de la
+      clienta (no ticket simplificado). Patrón nº factura: AAAAFBFNxxxxxxxxx (ej:
+      2025FBFN01921945). Aparición puntual.'
+    formato_pdf: digital
+    frecuencia: puntual
+    importe_rango:
+    - 10
+    - 200
+    concepto_keywords:
+    - papelería
+    - material
+    - oficina
+    - carrefour
+    - consumibles
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 21
+      irpf_obligatorio: false
+      total_max: 300
+      deducibilidad_iva: 100
+      deducibilidad_gasto: 100
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
+  apple_applecare:
+    rol: proveedor
+    cif: ''
+    nombre_fs: APPLE APPLECARE PLUS
+    aliases:
+    - APPLECARE
+    - APPLECARE+
+    - APPLE.COM/BILL
+    - ITUNES.COM
+    - APPLE ITUNES
+    numero_poliza: '970468623006280'
+    numero_serie_dispositivo: G2X1GKGPGJ
+    producto: AppleCare+ MacBook Air 15" M2
+    concepto_adeudo_ing: APPLE.COM/BILL ITUNES.COM
+    pais: IRL
+    divisa: EUR
+    subcuenta: '6290000000'
+    codimpuesto: IVA0
+    regimen: intracomunitario
+    notas: 'AppleCare+ póliza anual MacBook Air 15" M2. Nº póliza 970468623006280.
+      Nº serie G2X1GKGPGJ. Renovación anual 89,99€ el 26/08. IVA exenta (prima de
+      seguro). Cargo ING: APPLE.COM/BILL ITUNES.COM. Deducibilidad pendiente confirmar
+      con asesoría (equipo de trabajo profesional).'
+    formato_pdf: digital
+    frecuencia: anual
+    importe_rango:
+    - 85
+    - 95
+    concepto_keywords:
+    - applecare
+    - seguro
+    - apple
+    - poliza
+    - macbook
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 0
+      irpf_obligatorio: false
+      total_max: 100
+      deducibilidad_iva: 0
+      deducibilidad_gasto: 50
+    asiento:
+      subcuenta_gasto: '6290000000'
+      intracom: false
+  sabadell_consumer:
+    rol: proveedor
+    cif: A63574719
+    nombre_fs: SABADELL CONSUMER FINANCE SAU
+    aliases:
+    - SABADELL CONSUMER
+    - SABADELL CONSUMER FINANCE
+    - CONSUMER FINANCE
+    numero_contrato: '05999396'
+    ignorar_pipeline: true
+    pais: ESP
+    divisa: EUR
+    subcuenta: '5200000000'
+    codimpuesto: IVA0
+    regimen: general
+    notas: 'Cuota amortización préstamo. Contrato 05999396. Cuota mensual 56,25€.
+      Capital pendiente inicial 562,50€. TIN 0%. NO ES GASTO PROFESIONAL DEDUCIBLE
+      — no registrar en libros de gastos. Ignorar en pipeline.'
+    formato_pdf: digital
+    frecuencia: mensual
+    importe_rango:
+    - 50
+    - 60
+    concepto_keywords:
+    - sabadell
+    - prestamo
+    - cuota
+    - financiacion
+    - consumer
+    persona_fisica: false
+    validacion:
+      iva_esperado:
+      - 0
+      irpf_obligatorio: false
+      total_max: 100
+      deducibilidad_iva: 0
+      deducibilidad_gasto: 0
+    asiento:
+      subcuenta_gasto: '5200000000'
       intracom: false
   plentil_us121_san:
     cif: ''
@@ -1108,6 +1376,14 @@ alertas_deduplicacion:
     tipo_doc_descartar: BAN
     criterio: mismo_importe_mismo_mes
     notas: Recibo colegial + adeudo ING mismo importe. Conservar recibo formal.
+  - clave: mutualidad_adeudo_ing_doble
+    emisor_cif: V28024149
+    emisor_alias: MUTUALIDAD ABOGACIA
+    tipo_doc_conservar: BAN
+    tipo_doc_descartar: BAN
+    criterio: mismo_importe_mismo_mes
+    notas: 'Mutualidad solo genera adeudo ING (no emite factura formal). Si aparecen
+      dos adeudos ING en el mismo mes con mismo importe, conservar solo uno.'
 tolerancias:
   cuadre_asiento: 0.01
   comparacion_importes: 0.02
