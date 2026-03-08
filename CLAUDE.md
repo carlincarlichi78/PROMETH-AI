@@ -149,8 +149,4 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ### Proxima sesion — pendientes (sesion 132)
 
-1. **FV19+FV20** — cuando la clienta las aporte, cargar en FS (completa T3: +1.014,30€ base)
-2. **Commitear gastos_julio_2025.md** — archivo untracked en `clientes/maria-isabel-navarro-lopez/extraccion_claude_desktop/`
-3. **Poppler en PATH** — `C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin`
-4. **CIF Romur Spanish Properties** — pendiente verificar (FV30/2025)
-5. **Dropbox como intracomunitaria** — actualmente FC IVA21, debería ser adq. intracomunitaria (C36/C37 M303)
+*Pendientes anteriores cerrados en sesión 132: FV19/20 validadas por banco+gestor como sintéticas; gastos_julio_2025.md commiteado; Dropbox queda como IVA21 no intracomunitaria.*
