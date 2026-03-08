@@ -1369,7 +1369,12 @@ def ejecutar_registro(
                         partidas=partidas_fv,
                         fs=fs,
                     )
-                    logger.info(f"  Asiento directo FV creado: ID {res_dict['idasiento']}")
+                    idasiento_nuevo = res_dict["idasiento"]
+                    logger.info(f"  Asiento directo FV creado: ID {idasiento_nuevo}")
+                    # Vincular asiento a la factura (FS no lo hace automaticamente)
+                    r_link = fs._put(f"facturaclientes/{idfactura}", {"idasiento": idasiento_nuevo})
+                    if not r_link.ok:
+                        logger.warning(f"  No se pudo vincular asiento {idasiento_nuevo} a FV {idfactura}: {r_link.error}")
                 except Exception as e_asiento:
                     logger.warning(f"  Asiento directo FV fallido: {e_asiento}")
                     resultado.aviso(f"Asiento FV no generado: {e_asiento}",
