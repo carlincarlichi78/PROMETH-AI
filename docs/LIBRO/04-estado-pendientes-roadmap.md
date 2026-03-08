@@ -3,6 +3,34 @@
 
 ---
 
+## Estado actual (sesión 129 — Creación PROYECTO OCR)
+
+### Commits sesión 129
+
+| Commit | Descripción |
+|--------|-------------|
+| `d5ca389` | feat: proyecto OCR inicial — Streamlit + Claude Vision + deduplicación SQLite |
+| `f5da701` | refactor: versión mínima — Claude Code procesa, guardar.py persiste |
+| `d29824a` | feat: inbox/ + estado.py para gestión de lotes |
+
+### Completado sesión 129
+
+- **Nuevo proyecto creado**: `C:\Users\carli\PROYECTOS\PROYECTO-OCR\` con git local
+- **Stack decidido**: Claude Code procesa documentos directamente (sin API externa), Python guarda `.md`
+- **Módulos**: `duplicates.py` (SHA-256 + SQLite), `renderer.py`, `organizer.py`, `guardar.py`, `estado.py`
+- **Flujo**: documentos en `inbox/[cliente]/` → Claude Code los lee → genera `.md` en `output/[cliente]/[año-mes]/[tipo]/`
+- **Deduplicación**: SHA-256 impide reprocesar el mismo documento entre sesiones
+- **Añadido al workspace** de VS Code (`proyectos.code-workspace`)
+- **Sin repositorio remoto aún** (solo git local en PROYECTO-OCR)
+
+### Próxima sesión — pendientes (sesión 130)
+
+1. **Crear repo GitHub** para PROYECTO-OCR y hacer push
+2. **Ejecutar pipeline 63 gastos María Isabel** — con config enriquecido
+3. **Confirmar importe Mutualidad mayo 2025** (671,15€ — anómalo)
+
+---
+
 ## Estado actual (sesión 128 — Enriquecimiento masivo config.yaml María Isabel)
 
 ### Commits sesión 128

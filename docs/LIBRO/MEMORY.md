@@ -1,5 +1,15 @@
 # MEMORY — CONTABILIDAD-SPICE-PROMETH-AI
 
+## PROYECTO OCR — proyecto satélite
+
+- Ubicación: `C:\Users\carli\PROYECTOS\PROYECTO-OCR\`
+- Flujo: Claude Code lee documentos directamente (Read tool) → extrae campos → `guardar.py` persiste `.md`
+- Sin API externa: Claude Code hace el OCR y extracción, sin Mistral ni OpenAI
+- Deduplicación: SHA-256 + SQLite (`db/processed.db`)
+- Estructura output: `output/[cliente]/[año-mes]/[tipo]/[fecha]_[num]_[emisor].md`
+- Documentos entran por `inbox/[cliente]/`, `estado.py` muestra pendientes
+- Git local creado, sin remote aún (pendiente sesión 130)
+
 ## SmartParser cascade
 
 - `_resultado_es_suficiente(datos)` → True solo si `base_imponible is not None`. Sin este campo el asiento no se puede generar.

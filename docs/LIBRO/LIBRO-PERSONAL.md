@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-08 (sesión 126)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-08 (sesión 129)
 
 ---
 
