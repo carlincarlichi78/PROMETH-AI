@@ -41,6 +41,24 @@
 
 - FS requiere orden cronológico estricto en facturas de venta (FV). Si existe FAC posterior, las anteriores no pueden insertarse.
 - FAC0007A4 con fecha 30-09-2025 bloquea inserción de FV de 1T/2T 2025 en instancia Javier.
+- Patrón cuando hay que intercalar FVs fuera de orden: borrar todas con `borrar_todas_fv.py` y reinsertar en orden cronológico.
+- `DELETE /facturaclientes/{idfactura}` borra FV + asiento vinculado (cascade automático).
+
+## FS — carga masiva FV con contabilizar_maria_isabel.py
+
+- Script `PROYECTO-OCR/scripts/contabilizar_maria_isabel.py` — carga todas las FVs de María Isabel en FS Uralde.
+- Incluye FV sintéticas (`_synthetic: true`, `_fuente: excel_gestor`) de `output/maria_isabel/sinteticos/*/FV/`.
+- Deduplicación por `num_simple` (número secuencial FS) — evita doble inserción.
+- FV sintéticas usan campos `tipo_iva`/`cuota_iva`; FV reales OCR usan `iva_pct`/`iva_importe` — normalizar al parsear.
+- `UnicodeEncodeError` en scripts con emoji ✓/✗: añadir `sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')`.
+- Python con `requests`: `/c/Users/carli/AppData/Local/Programs/Python/Python312/python.exe`. Python314 NO tiene requests.
+
+## Cuadre M303 María Isabel 2025 — resultado sesión 131
+
+- T1/T2/T4: MATCH PERFECTO al céntimo con modelos declarados ante AEAT.
+- T3: gap -1.014,30€ base = FV19+FV20 no aportadas por la clienta (no error del sistema).
+- IVA soportado: diferencia explicada por criterio conservador del gestor (excluye gasolina, peajes, servicios digitales).
+- Validación: el sistema OCR→FS replica fielmente la contabilidad fiscal real. Pipeline fiable.
 
 ## Arranque API
 

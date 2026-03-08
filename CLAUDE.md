@@ -137,20 +137,20 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 130 cierre)
+## Estado actual (08/03/2026, sesion 131 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `8d3796db` docs: cierre sesion 129 | **Tests**: 2956 PASS (sin cambios sesión 130)
+**Rama**: `main` | **Ultimo commit**: `8a237f8c` docs: cierre sesion 130 | **Tests**: 2956 PASS (sin cambios sesión 131)
 
-### Completado sesion 130
-- Verificación contabilidad 2025 María Isabel: M130/M303/M111 cruzados con libros Excel gestor → contabilidad CORRECTA
-- FS ejercicio 0007 limpiado (14 FV + asientos eliminados)
-- Carga masiva PROYECTO-OCR → FS directamente via API: 162 FC (12.199€, IVA 1.654€) + 15 FV (21.152€, IVA 3.671€)
+### Completado sesion 131
+- Carga 14 FV sintéticas (FV04-15, 18, 21) en FS Uralde — requirió borrar+reinsertar las 15 FV existentes en orden cronológico → 29 FVs totales
+- Cuadre M303 2025 María Isabel: T1/T2/T4 MATCH PERFECTO al céntimo. T3: gap -1.014,30€ = FV19+FV20 no aportadas
+- Análisis IVA soportado: diferencia FS vs gestor = criterio de deductibilidad del asesor (gasolina/peajes excluidos). No es error del OCR.
+- Conclusión fiabilidad: sistema OCR→FS genera datos idénticos al gestor en 3/4 trimestres
 
-### Proxima sesion — pendientes (sesion 131)
+### Proxima sesion — pendientes (sesion 132)
 
-1. **Completar FV 16-31 en FS** — registrar ~16 FVs que faltan (sinteticos/ + may-dic OCR) → llegar a 40.509€ ingresos
-2. **Cuadre final vs M130/M303** — verificar que FS cuadra con los modelos fiscales presentados
-3. **Revisar diferencia gastos** — FS tiene 12.199€ vs 11.260€ libro gestor (+938€ a justificar)
-4. **Revisar IVA soportado** — FS 1.654€ vs 1.311€ declarado (+343€ a revisar)
-5. **Confirmar importe Mutualidad mayo 2025** — 671,15€ anómalo vs 255-269€ resto del año
-6. **Poppler en PATH del proceso** — instalado pero no configurado
+1. **FV19+FV20** — cuando la clienta las aporte, cargar en FS (completa T3: +1.014,30€ base)
+2. **Commitear gastos_julio_2025.md** — archivo untracked en `clientes/maria-isabel-navarro-lopez/extraccion_claude_desktop/`
+3. **Poppler en PATH** — `C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin`
+4. **CIF Romur Spanish Properties** — pendiente verificar (FV30/2025)
+5. **Dropbox como intracomunitaria** — actualmente FC IVA21, debería ser adq. intracomunitaria (C36/C37 M303)

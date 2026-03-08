@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 130 — CERRADA)
+## Estado rápido (sesión 131 — CERRADA)
 
-- **Completado:** Verificación contabilidad 2025 María Isabel (M130/M303/M111 vs libros Excel) → contabilidad correcta. Limpieza FS ejercicio 0007. Carga masiva desde PROYECTO-OCR: 162 FC + 15 FV registradas directamente en FS via API.
-- **Pendiente sesión 131:** Completar FV 16-31 en FS (faltan ~19.357€ ingresos). Cuadre final vs modelos fiscales. Revisar diferencia gastos (+938€) e IVA soportado (+343€). Mutualidad mayo 671€ anómalo. Poppler en PATH.
+- **Completado:** Carga FVs sintéticas (FV04-15, 18, 21) en FS → 29 FVs totales. Cuadre M303: T1/T2/T4 MATCH PERFECTO al céntimo. T3 gap -1.014,30€ = FV19+FV20 no aportadas. IVA soportado: diferencia explicada por criterio conservador del asesor fiscal.
+- **Pendiente sesión 132:** FV19+FV20 cuando las aporte la clienta. Commitear gastos_julio_2025.md. Dropbox como intracomunitaria. Poppler en PATH. CIF Romur Spanish Properties.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

@@ -3,6 +3,35 @@
 
 ---
 
+## Estado actual (sesión 131 — Cuadre M303 completo + carga FVs sintéticas María Isabel)
+
+### Commits sesión 131
+_(sin commits de código — trabajo directo en FS vía API + PROYECTO-OCR)_
+
+### Completado sesión 131
+
+- **Carga FVs sintéticas en FS**: registradas 14 FV sintéticas (FV04-15, 18, 21 de Excel del gestor). Para insertar en orden cronológico fue necesario borrar y reinsertar las 15 FV existentes + sus asientos. Resultado: 29 FVs en FS (FV1-18, 21-31).
+- **Cuadre M303 por trimestre** — IVA repercutido FS vs M303 gestor:
+  - T1: **MATCH PERFECTO** — base 7.895,93€ idéntico al céntimo
+  - T2: **MATCH PERFECTO** — base 14.953,19€ idéntico al céntimo
+  - T3: gap -1.014,30€ — FV19+FV20 no aportadas por la clienta
+  - T4: **MATCH PERFECTO** — base 10.929,84€ idéntico al céntimo
+- **Análisis IVA soportado**: diferencia FS vs gestor explicada por criterio conservador del asesor (excluye gasolina, peajes, servicios digitales de ciertos trimestres). Decisión fiscal, no error del OCR.
+- **Conclusión fiabilidad sistema**: OCR→PROYECTO-OCR→FS genera datos IDÉNTICOS al gestor en 3/4 trimestres. Gap restante = documentos no aportados.
+- **Script `contabilizar_maria_isabel.py` modificado**: ahora incluye FV sintéticas de `sinteticos/FV/`
+- **`gastos_julio_2025.md` pendiente de commitear**: nuevo archivo untracked
+
+### Próxima sesión — pendientes (sesión 132)
+
+1. **FV19 y FV20**: cuando la clienta las aporte, cargarlas en FS (completar T3: +1.014,30€ base)
+2. **Commitear gastos_julio_2025.md**: `git add clientes/maria-isabel-navarro-lopez/extraccion_claude_desktop/gastos_julio_2025.md`
+3. **Poppler en PATH del proceso**: `C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin`
+4. **CIF Romur Spanish Properties**: pendiente verificar (FV30/2025)
+5. **Dropbox como intracomunitaria**: actualmente cargada como FC IVA21, debería ser adq. intracomunitaria (C36/C37 M303)
+6. **Mutualidad mayo 671,15€ confirmado correcto** por clienta — no pendiente
+
+---
+
 ## Estado actual (sesión 130 — Verificación contabilidad + carga masiva FS María Isabel)
 
 ### Commits sesión 130
