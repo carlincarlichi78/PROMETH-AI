@@ -62,6 +62,8 @@ proveedores:
   mutualidad_abogacia:
     rol: proveedor
     cif: V28024149
+    cif_variantes_ocr:
+    - ES57010V28024149
     concepto_tipo: mutualidad
     nombre_fs: MUTUALIDAD DE LA ABOGACIA
     aliases:
@@ -74,8 +76,8 @@ proveedores:
     subcuenta: '6420000000'
     codimpuesto: IVA0
     regimen: general
-    notas: Cuota mensual Mutualidad Abogacia. Sin IVA. Sustituye RETA. Gasto IRPF
-      no IVA
+    notas: 'Cuota mensual ~255€. Sin IVA. Sustituye RETA. Gasto deducible IRPF (no
+      IVA). Adeudo bancario sin factura formal. CIF también como ES57010V28024149.'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
@@ -117,7 +119,8 @@ proveedores:
     importe_fijo: 44.46
     importe_tipico: 44.46
     concepto_tipo: asesoria
-    notas: Gestora. Gasto G19 servicios profesionales. Domiciliado ING.
+    notas: 'Gestoría. Factura mensual fija 44,46€. Numeración correlativa ~95/mes.
+      Adeudo ING simultáneo — conservar factura PDF, descartar adeudo.'
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -148,12 +151,14 @@ proveedores:
     - PLENERGY
     - PLENOIL
     - PLENERGY GRUPO
+    - PLENOIL S.L.
+    - PLENOIL SAN ROQUE I
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo profesional. G18
+    notas: Combustible vehiculo profesional. G18. Mismo CIF con dos marcas (Plenoil / Plenergy).
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
@@ -191,8 +196,8 @@ proveedores:
     codimpuesto: IVA0
     regimen: general
     concepto_tipo: cuota_colegial
-    notas: Cuota colegial y servicios ICAM. Exento IVA (cuota colegial art.20.Uno.12
-      LIVA)
+    notas: 'Cuota colegial y servicios ICAM. Exento IVA (art.20.Uno.12 LIVA). CIF a
+      veces no visible en documentos. Adeudo ING simultáneo — conservar recibo, descartar adeudo.'
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -223,6 +228,7 @@ proveedores:
     - A81132353
     - A81412353
     - A5143255
+    - A81430353
     nombre_fs: AUTOPISTA DEL SOL CESA
     aliases:
     - AUTOPISTA DEL SOL
@@ -269,6 +275,8 @@ proveedores:
     - 8-85683167
     - B-85683767
     - B-85683167
+    - NOTIFICADOS
+    - NOTIFICAD@S
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
@@ -308,6 +316,7 @@ proveedores:
     - FIBRA WIFI Y TELEFONIA INTEGRALES AVATEL
     - FIBRA, WIFI Y TELEFONÍA INTEGRALES - AVATEL
     - FIBRA WIFI Y TELEFONÍA INTEGRALES AVATEL
+    - ES43131A93135218
     pais: ESP
     divisa: EUR
     subcuenta: '6290000001'
@@ -319,7 +328,8 @@ proveedores:
     - 50
     - 150
     concepto_tipo: telefonia
-    notas: Internet y telefonia despacho. Domiciliado ING. Importe fijo mensual.
+    notas: 'Internet y telefonía despacho. 59,99€/mes. Referencia CFRA25/XXXXXX.
+      Domiciliado ING. Adeudo ING simultáneo — conservar factura, descartar adeudo.'
     formato_pdf: digital
     frecuencia: mensual
     persona_fisica: false
@@ -370,6 +380,8 @@ proveedores:
   dropbox:
     rol: proveedor
     cif: IE9852817
+    cif_variantes_ocr:
+    - IE9852817J
     nombre_fs: DROPBOX INTERNATIONAL UNLIMITED COMPANY
     aliases:
     - DROPBOX
@@ -378,7 +390,7 @@ proveedores:
     subcuenta: '6220000000'
     codimpuesto: IVA0
     regimen: intracomunitario
-    notas: Almacenamiento cloud. Mensual. Intracomunitario IE
+    notas: Dropbox Plus 11,99€/mes. Almacenamiento cloud. Intracomunitario IE. Verificar ejercicio.
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
@@ -555,7 +567,8 @@ proveedores:
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: intracomunitario
-    notas: iCloud y software Apple. Mensual. Intracomunitario IE
+    notas: 'iCloud+ 2,99€/mes. Software Apple. Intracomunitario IE. Factura simplificada
+      sin NIF ES — puede no tener CIF emisor.'
     formato_pdf: digital
     frecuencia: mensual
     importe_rango:
@@ -586,12 +599,13 @@ proveedores:
     aliases:
     - COMPLEMENTOS PUERTA DE EUROPA
     - PUERTA EUROPA
+    - PARPOIS
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Material oficina
+    notas: Material trabajo y oficina (Parpois). Aparición puntual.
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -623,6 +637,10 @@ proveedores:
     - REPSOL
     - A283354520
     - A2854520
+    - CEPSA
+    - CIA ESPANOLA DISTRIBUIDORA DE PETROLEOS
+    - ES MANILVA II
+    - E.S. MANILVA II
     pais: ESP
     divisa: EUR
     subcuenta: '6280000000'
@@ -662,7 +680,7 @@ proveedores:
     subcuenta: '6280000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Combustible vehiculo
+    notas: Combustible vehiculo. E.S. Galp Marbella.
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
@@ -798,12 +816,14 @@ proveedores:
     - COLOSO
     - COLOSO SAN ISIDRO
     - CoLoS0 SAN 46
+    - COLOSO CHURRIANA
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
     codimpuesto: IVA21
     regimen: general
-    notas: Gasolinera (estacion San Isidro, Churriana). Combustible vehiculo DIESEL
+    notas: 'Gasolinera (estaciones San Isidro y Churriana). Combustible vehiculo DIESEL.
+      Posibles preautorizaciones anuladas — verificar que el importe final es el correcto.'
     formato_pdf: ticket_termico
     frecuencia: puntual
     importe_rango:
@@ -911,7 +931,7 @@ proveedores:
     codimpuesto: IVA21
     codretencion: IRPF15
     regimen: general
-    notas: Abogado colaborador. IRPF 15%
+    notas: Registro de la Propiedad de Marbella 4. Certificaciones de dominio. Honorarios + IRPF 15%.
     formato_pdf: escaneado
     frecuencia: puntual
     importe_rango:
@@ -946,8 +966,9 @@ proveedores:
     divisa: EUR
     subcuenta: '6230000000'
     codimpuesto: IVA21
+    codretencion: IRPF15
     regimen: general
-    notas: Profesional colaborador
+    notas: Registro de la Propiedad de Málaga 9. Certificaciones de dominio. Honorarios + IRPF 15%.
     formato_pdf: escaneado
     frecuencia: mensual
     importe_rango:
@@ -961,13 +982,14 @@ proveedores:
     validacion:
       iva_esperado:
       - 21
-      irpf_obligatorio: false
+      irpf_obligatorio: true
       total_max: 500
       deducibilidad_iva: 100
       deducibilidad_gasto: 100
     asiento:
       subcuenta_gasto: '6230000000'
       intracom: false
+      subcuenta_irpf: '4751000000'
   ruiz_rico:
     rol: proveedor
     cif: 24870562H
@@ -1062,6 +1084,30 @@ clientes:
     regimen: general
     notas: Cuota Consejo de la Abogacía
 tipos_cambio: {}
+# Pares emisor+importe que generan documento doble (factura PDF + adeudo ING).
+# Regla: conservar la factura formal, descartar el adeudo bancario.
+alertas_deduplicacion:
+  - clave: uralde_mas_adeudo_ing
+    emisor_cif: B92010768
+    emisor_alias: ASESORIA LOPEZ DE URALDE
+    tipo_doc_conservar: FC
+    tipo_doc_descartar: BAN
+    criterio: mismo_importe_mismo_mes
+    notas: Factura PDF de gestoría + adeudo ING mismo importe. Conservar FC.
+  - clave: avatel_mas_adeudo_ing
+    emisor_cif: A93135218
+    emisor_alias: FIBRA WIFI Y TELEFONIA
+    tipo_doc_conservar: FC
+    tipo_doc_descartar: BAN
+    criterio: mismo_importe_mismo_mes
+    notas: Factura PDF Avatel + adeudo ING mismo importe. Conservar FC.
+  - clave: icam_mas_adeudo_ing
+    emisor_cif: Q2963001I
+    emisor_alias: ILUSTRE COLEGIO
+    tipo_doc_conservar: FC
+    tipo_doc_descartar: BAN
+    criterio: mismo_importe_mismo_mes
+    notas: Recibo colegial + adeudo ING mismo importe. Conservar recibo formal.
 tolerancias:
   cuadre_asiento: 0.01
   comparacion_importes: 0.02
