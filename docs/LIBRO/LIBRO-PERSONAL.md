@@ -1,5 +1,5 @@
 # SFCE — Libro Técnico Personal
-> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-07 (sesión 117)
+> **Versión:** Consolidada (5 + 3 manuales) | **Actualizado:** 2026-03-08 (sesión 125)
 
 ---
 
@@ -36,7 +36,7 @@
 ```bash
 # Verificar estado tests completo
 python -m pytest --tb=no -q
-# Esperado: ~2923 passed
+# Esperado: ~2943 passed
 
 # Commits recientes
 git log -5 --oneline
@@ -47,10 +47,10 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 124 — CERRADA)
+## Estado rápido (sesión 125 — CERRADA)
 
-- **Completado:** Pipeline 16 ingresos María Isabel 100% — 14 FV registradas en FS Uralde. 6 FV con IRPF 15% sin asiento → asientos directos creados y vinculados (IDs 261-266). Fixes: varios_clientes.cif, CHECK 1 pre_validation, crear_asiento_directo con fs externo, importe+concepto en formato FS.
-- **Pendiente sesión 125:** Pipeline 63 gastos María Isabel (`inbox/`). Poppler en PATH proceso (pendiente desde s121).
+- **Completado:** Motor de Identificación de Proveedor — 5 fases: señales nuevas en prompts.py (iban/telefono/direccion/comercio/tipo_doc), matcher 5 señales nuevas (IBAN+60, comercio+50, tel+35, dir+25, tipo_doc+20), `_enriquecer_perfil_fiscal` (base desde total por codimpuesto, IRPF desde codretencion), discovery sin cuarentena, 20 tests verdes. Total: 2943 PASS.
+- **Pendiente sesión 126:** Pipeline 63 gastos María Isabel. Añadir iban/telefono en config.yaml proveedores conocidos antes de ejecutar. Integrar señales en motor_plantillas (Opción A). Poppler en PATH.
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---
@@ -61,6 +61,7 @@ cd dashboard && npm run dev
 - **`es_respuesta_ack` corregido** a `boolean` en prod. Fix: drop default → type change → restore default.
 - **IBAN interno C43**: formato `banco(4)+oficina(4)+cuenta(10)` sin prefijo ES (ver 03-bancario).
 - **`_leer_config_bd`**: está en `sfce.api.app`, NO en `sfce.db.base`.
+- **Motor Plantillas vs Motor Identificación**: capas independientes. Cuando `_fuente == "plantilla"`, el LLM no se llama y las señales (iban/telefono) no se extraen del documento. Las señales vienen del config.yaml del proveedor, no del OCR.
 
 ## Regla de uso
 
