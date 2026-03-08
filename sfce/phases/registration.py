@@ -1300,13 +1300,13 @@ def ejecutar_registro(
                                {"idfactura": idfactura, "error": res_asiento.error})
         elif tipo_doc == "FV":
             res_asiento = fs.generar_asiento(idfactura, tipo="cliente")
+            datos_fv = doc_trabajo.get("datos_extraidos") or {}
+            irpf_pct_fv = float(datos_fv.get("irpf_porcentaje") or 0)
+            irpf_imp_fv = float(datos_fv.get("irpf_importe") or 0)
             if res_asiento.ok:
                 ya = "ya existia" if res_asiento.data.get("ya_existia") else "nuevo"
                 logger.info(f"  Asiento generado: {res_asiento.id_creado} ({ya})")
                 # Partida 473: HP acreedora por IRPF retenido en FV
-                datos_fv = doc_trabajo.get("datos_extraidos") or {}
-                irpf_pct_fv = float(datos_fv.get("irpf_porcentaje") or 0)
-                irpf_imp_fv = float(datos_fv.get("irpf_importe") or 0)
                 if irpf_pct_fv > 0 and irpf_imp_fv > 0 and res_asiento.id_creado:
                     r473 = fs.crear_partida({
                         "idasiento": res_asiento.id_creado,
@@ -1323,9 +1323,57 @@ def ejecutar_registro(
                             f"Partida 473 no creada FV {idfactura}: {r473.error}"
                         )
             else:
-                logger.warning(f"  Asiento no generado para FV {idfactura}: {res_asiento.error}")
-                resultado.aviso(f"Asiento FV no generado: {res_asiento.error}",
-                               {"idfactura": idfactura, "error": res_asiento.error})
+                # Fallback: FS no genera asiento para FV con IRPF via generate().
+                # Crear asiento directo con las 4 partidas contables.
+                logger.warning(f"  generate() fallo para FV {idfactura} — creando asiento directo")
+                base_fv = float(datos_fv.get("base_imponible") or form_data.get("neto") or 0)
+                iva_fv = float(datos_fv.get("iva_importe") or 0)
+                total_fv = float(datos_fv.get("total") or form_data.get("total") or 0)
+                _cuentas_pf = config.data.get("perfil_fiscal", {}).get("cuentas", {})
+                # Subcuenta cliente: del entidad config o default
+                _entidad_cli = config.clientes.get(doc_trabajo.get("entidad", ""), {})
+                subcuenta_cliente = (_entidad_cli.get("subcuenta_cliente")
+                                     or _cuentas_pf.get("cliente_default", "4300000000"))
+                subcuenta_ingreso = (_entidad_cli.get("subcuenta_ingreso")
+                                     or _cuentas_pf.get("ingreso_default", "7050000000"))
+                fecha_fv = datos_fv.get("fecha") or form_data.get("fecha") or ""
+                num_fv = datos_fv.get("numero_factura") or form_data.get("numero2") or ""
+                concepto_fv = f"FV {num_fv}"
+                # 477 — IVA repercutido: subcuenta especifica por porcentaje
+                iva_pct_fv = int(round(float(datos_fv.get("iva_porcentaje") or 21)))
+                subcuenta_iva = f"4770000{iva_pct_fv:03d}0"  # ej: 4770000021 para IVA21
+                partidas_fv = [
+                    # 430x — cliente (debe = total cobrado antes de retención)
+                    {"codsubcuenta": subcuenta_cliente, "concepto": concepto_fv,
+                     "debe": round(total_fv + irpf_imp_fv, 2), "haber": 0},
+                    # 705 — ingresos (haber = base imponible)
+                    {"codsubcuenta": subcuenta_ingreso, "concepto": concepto_fv,
+                     "debe": 0, "haber": round(base_fv, 2)},
+                    # 477 — IVA repercutido
+                    {"codsubcuenta": subcuenta_iva, "concepto": concepto_fv,
+                     "debe": 0, "haber": round(iva_fv, 2)},
+                ]
+                if irpf_pct_fv > 0 and irpf_imp_fv > 0:
+                    # 473 — IRPF retenido a mí (haber — reduce el cobro del cliente)
+                    partidas_fv.append({
+                        "codsubcuenta": "4730000000",
+                        "concepto": f"IRPF {irpf_pct_fv}% ret. FV {num_fv}",
+                        "debe": 0, "haber": round(irpf_imp_fv, 2),
+                    })
+                try:
+                    res_dict = crear_asiento_directo(
+                        concepto=concepto_fv,
+                        fecha=fecha_fv,
+                        codejercicio=config.codejercicio,
+                        idempresa=config.idempresa,
+                        partidas=partidas_fv,
+                        fs=fs,
+                    )
+                    logger.info(f"  Asiento directo FV creado: ID {res_dict['idasiento']}")
+                except Exception as e_asiento:
+                    logger.warning(f"  Asiento directo FV fallido: {e_asiento}")
+                    resultado.aviso(f"Asiento FV no generado: {e_asiento}",
+                                   {"idfactura": idfactura})
 
         # 5c. Autorepercusion IVA intracomunitario (fallback: solo si gen_asiento no lo manejó)
         # Si gen_asiento.php se ejecutó con intracom_pct, las partidas 472/477 ya están hechas.

@@ -224,6 +224,7 @@ def crear_asiento_directo(
     idempresa: int,
     partidas: list[dict],
     motor=None,
+    fs: "FSAdapter | None" = None,
 ) -> dict:
     """Crea un asiento contable directo via API (POST asientos + POST partidas).
 
@@ -234,6 +235,8 @@ def crear_asiento_directo(
         idempresa: ID de la empresa en FS
         partidas: lista de dicts con codsubcuenta, debe, haber, concepto
         motor: MotorReglas opcional para validacion pre-envio
+        fs: FSAdapter ya configurado (con base_url y token correctos). Si None,
+            usa API_BASE + token del entorno (instancia global).
 
     Returns:
         dict con idasiento y num_partidas
@@ -244,12 +247,21 @@ def crear_asiento_directo(
     from .fs_api import obtener_token, API_BASE
     logger.info(f"Creando asiento: {concepto} ({fecha})")
 
-    fs = FSAdapter(
-        base_url=API_BASE,
-        token=obtener_token(),
-        idempresa=idempresa,
-        codejercicio=codejercicio,
-    )
+    if fs is None:
+        fs = FSAdapter(
+            base_url=API_BASE,
+            token=obtener_token(),
+            idempresa=idempresa,
+            codejercicio=codejercicio,
+        )
+    else:
+        # Actualizar idempresa/codejercicio en el adapter existente
+        fs = FSAdapter(
+            base_url=fs.base_url,
+            token=fs.token,
+            idempresa=idempresa,
+            codejercicio=codejercicio,
+        )
     result = fs.crear_asiento_con_partidas(concepto, fecha, partidas)
     result.raise_if_error()
 
