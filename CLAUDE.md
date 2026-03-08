@@ -130,6 +130,7 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 - **F3** `docs/LIBRO/LIBRO-PERSONAL.md`: actualizar nº sesión, completado/pendiente, comandos de inicio.
 - **F4** `CLAUDE.md`: reemplazar `## Estado actual (...)` con fecha, nº sesión, último commit, tests, completado, pendientes. **El asistente estratégico puede hacer este paso directamente vía MCP** — Claude Code solo necesita hacer git add + commit + push del resto de docs/LIBRO/.
 - **F5** `MEMORY.md`: añadir lecciones nuevas, eliminar obsoletas, no duplicar libros.
+- **F5b** Copiar MEMORY al repo: `copy "C:\Users\carli\.claude\projects\c--Users-carli-PROYECTOS-CONTABILIDAD-SPICE-PROMETH-AI\memory\MEMORY.md" docs\LIBRO\MEMORY.md`
 - **F6** `git add docs/LIBRO/ CLAUDE.md && git commit -m "docs: cierre sesion N — [resumen]"` + `git push origin main`.
 - **F7 Deploy** (solo si hubo commits de código): CI/CD se dispara con el push. Verificar: `ssh carli@65.108.60.69 "docker compose -f /opt/apps/sfce/docker-compose.yml ps sfce_api | tail -2"`. Migraciones nuevas: `docker exec sfce_api python -m sfce.db.migraciones` o ejecutar manualmente.
 - **F8 Informe**: mostrar tabla con commits, tests, libros actualizados, estado push/deploy, y próximos pendientes numerados.
