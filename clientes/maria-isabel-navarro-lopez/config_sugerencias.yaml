@@ -1,0 +1,16 @@
+# === PROVEEDORES SUGERIDOS POR GPT-4o ===
+# Revisar y copiar los aprobados a config.yaml, luego reprocesar.
+
+# --- Sugerencias 2026-03-07 (1 proveedor(es)) ---
+
+# Fuente: "ING BANK NV" (CIF: W00379866) — 3 Marzo -4_1.pdf
+# ing_bank_nv:
+#   cif: "W00379866"
+#   nombre_fs: "ING BANK NV"
+#   aliases: ["ING BANK"]
+#   pais: NLD
+#   divisa: EUR
+#   subcuenta: "None"
+#   codimpuesto: IVA0
+#   regimen: intracomunitario
+#   notas: "Entidad bancaria de los Países Bajos, proveedor de servicios financieros."
