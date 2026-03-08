@@ -136,21 +136,22 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 124 cierre)
+## Estado actual (08/03/2026, sesion 125 cierre)
 
-**Rama**: `main` | **Ultimo commit**: `5c2f5248` fix(asientos): importe correcto + concepto formato FS | **Tests**: 2923 PASS
+**Rama**: `main` | **Ultimo commit**: motor identificacion proveedor — 5 fases completas | **Tests**: 2943 PASS (+20)
 
-### Completado sesion 124
-- Pipeline 16 ingresos Maria Isabel: 14 FV registradas en FS Uralde (idempresa=7, codejercicio=0007)
-- 6 FV con IRPF 15% sin asiento → asientos directos 261-266 creados y vinculados
-- fix varios_clientes.cif = 00000000T para CHECK 1 pre_validation
-- fix pre_validation CHECK 1: usa entidad_cif canonical para FV sin receptor_cif
-- fix crear_asiento_directo: param fs= externo para evitar usar API_BASE global incorrecto
-- fix importe cabecera asiento (suma debe) + concepto formato FS con FAC code y nombre cliente
+### Completado sesion 125
+- Fase 1: `prompts.py` — bloque `senales_identificacion` en PROMPT_EXTRACCION_V3_2 (iban, telefono, direccion_fragmento, numero_comercio, tipo_doc_inferido)
+- Fase 2: `intake.py` — 5 señales nuevas en `_match_proveedor_multi_signal` (IBAN +60, nº comercio +50, teléfono +35, dirección +25, tipo_doc +20). Floor confianza: 85%/70%
+- Fase 3: `intake.py` — función `_enriquecer_perfil_fiscal`: calcula base desde total por codimpuesto, aplica IRPF desde codretencion, inyecta _subcuenta/_codimpuesto
+- Fase 4: `intake.py` — discovery exitoso → estado `proveedor_nuevo_pendiente` sin cuarentena. Cuarentena solo si discovery + Safety Net fallan
+- Fase 5: 20 tests nuevos verdes (test_prompt_senales, test_intake_matcher, test_enriquecimiento_fiscal, test_discovery_auto_alta)
+- Corregido repo en CLAUDE.md: SPICE → PROMETH-AI + documentado acceso MCP GitHub
 
-### Proxima sesion — pendientes (sesion 125)
+### Proxima sesion — pendientes (sesion 126)
 
 **CONTABILIDAD:**
 
-1. **Ejecutar pipeline Maria Isabel gastos** — inbox/ (63 gastos). Ingresos ya completados.
-2. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.
+1. **Ejecutar pipeline Maria Isabel gastos** — inbox/ (63 gastos pendientes). Añadir iban/telefono/numero_comercio a proveedores conocidos en config.yaml antes de ejecutar para aprovechar nuevas señales.
+2. **Integrar senales_identificacion en motor_plantillas** — cuando `_fuente == "plantilla"` el LLM no se llama y las señales no se extraen. Opción A (recomendada): añadir iban/telefono/numero_comercio como patrones opcionales en schema `formato_pdf`.
+3. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.
