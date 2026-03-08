@@ -80,7 +80,16 @@ proveedores:
     codimpuesto: IVA0
     regimen: general
     importe_tipico: 269.06
+    id_emisor_adeudo_ing: ES57010V28024149
     concepto_adeudo_ing: MUTUALIDAD ABOGACIA C. GENERAL-RECIBOS
+    referencias_recibos_ejemplo:
+    - '181417499'  # feb 2025
+    - '181500887'  # mar 2025
+    - '181587506'  # abr 2025
+    - '181679524'  # may 2025
+    - '181761933'  # jun 2025
+    - '182138984'  # nov 2025
+    - '182282869'  # dic 2025
     notas: 'Cuota mensual habitual: 255,11€ (ene-oct 2025) → 269,06€ (nov-dic 2025).
       Sin IVA (sustitutiva RETA — deducible IRPF art.30 LIRPF). Subcuenta: 476 o 641
       (confirmar con gestoría). Adeudo bancario ING sin factura formal. IBAN emisor
@@ -123,6 +132,8 @@ proveedores:
     - '892010768'
     domicilio_receptor: CL EL TOMILLAR 309, 29130 ALHAURIN DE LA TORRE, MALAGA
     iban_domiciliacion: ES41146501009517350969
+    id_emisor_adeudo_ing: ES13000B92010768
+    concepto_adeudo_ing: 'FRA.N: 2025.X.XXX - DD/MM/2025 Bl.. 36,74 IVA 21.. 7,72 TOTAL.. 44,46 Euros'
     pais: ESP
     divisa: EUR
     subcuenta: '6230000000'
@@ -172,7 +183,11 @@ proveedores:
     - PLENERGY GRUPO SL
     domicilio: Edificio FITENI III, Calle Torrelaguna 64, 2ª Planta, 28043 Madrid
     telefono: '910600796'
-    numero_cliente: '946423'
+    numero_cliente:
+    - '946423'   # dirección La Alcaidesa
+    - 67Z119     # dirección Avda. del Golf 8
+    numero_comercio_tpv: '354509879'
+    terminal_tpv: '00810002'
     patron_factura: XXXD2500YYYYYY
     prefijos_estacion:
     - 052D  # estación Alcaidesa / San Roque alt
@@ -223,6 +238,7 @@ proveedores:
     - COLEGIO ABOGADOS MALAGA
     - ILUSTRE COLEGIO DE ABOGADOS DE MALAGA
     iban_emisor: ES2000100295630000127813
+    id_emisor_adeudo_ing: ES20001Q2963001I
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
@@ -230,11 +246,18 @@ proveedores:
     regimen: general
     concepto_tipo: cuota_colegial
     importe_tipico: 107.18
-    notas: 'DOS tipos de cargo: (1) Cuota colegial trimestral 107,18€ — IVA exenta
-      (art.20.Uno.12 LIVA), trimestres ene/abr/jul/oct. (2) Cargo mensual ~25€ por
-      Office 365 — IVA PARCIAL: base 20,66€ + IVA 21% 4,34€ = 25,00€. Solo el IVA
-      del Office 365 es deducible (4,34€). Concepto ING cuenta Office 365: "DEU...CUENTA
-      OFFICE 365 SUJETA-20,66EUR IVA-4,34EUR". IBAN emisor ES20 0010 0295 6300 0012 7813.'
+    importes_habituales:
+    - 18.00    # cuota gastos compartidos mensual
+    - 40.63    # cuota gastos compartidos mensual (tramo mayor)
+    - 107.18   # cuota trimestral base
+    - 122.14   # cuota responsabilidad civil colegial
+    notas: 'CUATRO tipos de cargo distintos: (1) Cuota gastos compartidos mensual ~18-40€
+      — IVA exenta. (2) Cuota trimestral 107,18€ — IVA exenta (art.20.Uno.12 LIVA),
+      trimestres ene/abr/jul/oct. (3) Cuota resp. civil colegial 122,14€ — IVA exenta.
+      (4) Cargo mensual ~25€ Office 365 — IVA PARCIAL: base 20,66€ + IVA 21% 4,34€.
+      Solo IVA Office 365 deducible (4,34€). Concepto ING Office 365: "DEU...CUENTA
+      OFFICE 365 SUJETA-20,66EUR IVA-4,34EUR". IBAN emisor ES20 0010 0295 6300 0012 7813.
+      Id. emisor adeudo ING: ES20001Q2963001I.'
     formato_pdf: digital
     frecuencia: trimestral
     importe_rango:
@@ -268,6 +291,7 @@ proveedores:
     - A5143255
     - A81430353
     - A61432353  # lectura OCR errónea frecuente (8→6)
+    - A81432293  # lectura OCR errónea frecuente (5→9)
     nombre_fs: AUTOPISTA DEL SOL CESAU
     aliases:
     - AUTOPISTA DEL SOL
@@ -334,7 +358,10 @@ proveedores:
     - EXTERNALIZACION DE NOTIFICADOS Y APLICACIONES ONLINE
     domicilio: C/ Arboleda nº 32, 28901 Getafe, Madrid
     email: atencion.cliente@notificados.com
-    telefono: '915010630'
+    telefono:
+    - '915010630'
+    - '902570318'
+    - '910752875'
     precios_unitarios:
       burofax_postal: 5.30
       acuse_recibo: 1.90
@@ -393,6 +420,8 @@ proveedores:
     - '722457343'
     iban_domiciliacion_ing: ES41146501009517350969
     iban_domiciliacion_sabadell: ES0300817428310001592969
+    id_emisor_adeudo_ing: ES43131A93135218
+    concepto_adeudo_ing: 'FACTURA NUM: CFRA25/XXXXXX FECHA DD/MM/2025'
     patron_factura: CFRA25/XXXXXX
     servicio: T. HEAVY ACUMULABLE — Fibra 600Mb + Móvil Ilimitada + 100GB x3 líneas + MasCLICtv 2.0
     pais: ESP
@@ -708,6 +737,9 @@ proveedores:
     - COMPLEMENTOS PUERTA DE EUROPA
     - PUERTA EUROPA
     - PARPOIS
+    - PARFOIS
+    domicilio_fiscal: Calle Cerezo 4, Bloque A, 11205 Algeciras, Cádiz
+    tienda: DIJE6 — Algeciras CC Puerta Europa, A-7 km.106, 11203 Algeciras
     pais: ESP
     divisa: EUR
     subcuenta: '6290000000'
