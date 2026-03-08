@@ -44,6 +44,7 @@ from ..core.proveedor_discovery import (
     descubrir_proveedor,
     guardar_sugerencias,
 )
+from ..core.verificacion_fiscal import inferir_tipo_persona
 
 # Import condicional Gemini (solo Tier 2)
 try:
@@ -1497,8 +1498,26 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         # Sub-caso 2a: detector documental regex (determinista, fiabilidad ≥ multi-signal score≥50)
         if datos_gpt.get("_fuente") == "detector_adeudo_ing":
             confianza_global_val = max(confianza_global_val, 75)
+        # Sub-caso 2b: FV — el emisor es la propia empresa, floor por tipo de receptor
+        elif tipo_doc == "FV":
+            es_fallback = entidad.get("fallback_sin_cif", False)
+            if not es_fallback:
+                # Receptor cliente registrado en config (Blanco Abogados, etc.) → alta confianza
+                confianza_global_val = max(confianza_global_val, 85)
+            else:
+                # Receptor desconocido → varios_clientes
+                cif_receptor = (datos_gpt.get("receptor_cif") or "").upper()
+                if cif_receptor and inferir_tipo_persona(cif_receptor) == "fisica":
+                    # NIF persona física válido extraído aunque no esté en config
+                    confianza_global_val = max(confianza_global_val, 72)
+                elif not cif_receptor:
+                    # Sin receptor_cif: factura simplificada (RD 1619/2012)
+                    confianza_global_val = max(confianza_global_val, 60)
+                else:
+                    # CIF entidad jurídica no registrada → floor moderado
+                    confianza_global_val = max(confianza_global_val, 65)
         else:
-            # Sub-caso 2b: lookup directo sin detector → floor mínimo conservador
+            # Sub-caso 2c: FC/NC/etc lookup directo sin detector → floor mínimo conservador
             confianza_global_val = max(confianza_global_val, 55)
 
     nivel = calcular_nivel(confianza_global_val)
