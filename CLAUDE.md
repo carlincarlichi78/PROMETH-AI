@@ -149,6 +149,3 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 **CONTABILIDAD:**
 
 1. **Ejecutar pipeline Maria Isabel desde cero** — inbox (63 gastos) + inbox/ingresos (16 ingresos).
-2. **Poppler en PATH del proceso** — configurar en .env o PATH sistema para fallback GPT-4o Vision.
-3. **4 PDFs imagen sin datos** — revision manual.
-4. **Plenergy id=358** — en cuarentena por emisor_cif null.
