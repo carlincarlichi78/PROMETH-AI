@@ -50,7 +50,12 @@ def _sugerencia_coloso():
 # ---------------------------------------------------------------------------
 
 def test_procesar_un_pdf_genera_sugerencia_para_cif_desconocido(tmp_path):
-    """Un doc con CIF válido pero desconocido va a cuarentena y genera sugerencia."""
+    """Un doc con CIF válido pero desconocido genera sugerencia y queda pendiente (no va a cuarentena).
+
+    Comportamiento actualizado (sesión 124): cuando discovery retorna sugerencia válida,
+    el doc queda en estado 'proveedor_nuevo_pendiente' para revisión manual.
+    Ya NO va automáticamente a cuarentena.
+    """
     from sfce.phases.intake import _procesar_un_pdf
 
     # Crear PDF mínimo
@@ -84,13 +89,14 @@ def test_procesar_un_pdf_genera_sugerencia_para_cif_desconocido(tmp_path):
             False, ruta_cuarentena, interactivo=False,
         )
 
-    # El doc va a cuarentena (doc=None)
-    assert resultado["doc"] is None
+    # El doc queda pendiente (NO va a cuarentena)
+    assert resultado["doc"] is not None
+    assert resultado["doc"]["_estado"] == "proveedor_nuevo_pendiente"
     # Se generó una sugerencia
     assert len(resultado["sugerencias"]) == 1
     assert resultado["sugerencias"][0]["cif"] == "B67718361"
-    # El PDF fue movido a cuarentena
-    assert (ruta_cuarentena / "factura_coloso.pdf").exists()
+    # El PDF NO fue movido a cuarentena
+    assert not ruta_cuarentena.exists() or not list(ruta_cuarentena.iterdir()) if ruta_cuarentena.exists() else True
     # descubrir_proveedor fue llamado
     mock_discovery.assert_called_once()
 

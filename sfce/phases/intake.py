@@ -537,6 +537,47 @@ def _match_proveedor_multi_signal(
                 if datos.get("pais") not in ("ESP", ""):
                     _add(clave, "idioma_extranjero", 10)
 
+    # j) IBAN exacto (+60) — señal más fuerte de identidad
+    senales_id = datos_gpt.get("senales_identificacion") or {}
+    iban_ocr = re.sub(r'\s', '', (senales_id.get("iban") or "")).upper()
+    if iban_ocr:
+        for clave, datos in config.proveedores.items():
+            iban_conf = re.sub(r'\s', '', (datos.get("iban") or "")).upper()
+            if iban_conf and iban_ocr == iban_conf:
+                _add(clave, "iban_exacto", 60)
+
+    # k) Número comercio exacto (+50)
+    num_comercio_ocr = re.sub(r'\s', '', (senales_id.get("numero_comercio") or ""))
+    if num_comercio_ocr:
+        for clave, datos in config.proveedores.items():
+            num_conf = re.sub(r'\s', '', (datos.get("numero_comercio") or ""))
+            if num_conf and num_comercio_ocr == num_conf:
+                _add(clave, "numero_comercio_exacto", 50)
+
+    # l) Teléfono exacto (+35) — solo dígitos
+    tel_ocr = re.sub(r'[^\d]', '', (senales_id.get("telefono") or ""))
+    if tel_ocr and len(tel_ocr) >= 9:
+        for clave, datos in config.proveedores.items():
+            tel_conf = re.sub(r'[^\d]', '', (datos.get("telefono") or ""))
+            if tel_conf and tel_ocr == tel_conf:
+                _add(clave, "telefono_exacto", 35)
+
+    # m) Dirección fragmento (+25)
+    dir_ocr = (senales_id.get("direccion_fragmento") or "").upper().strip()
+    if len(dir_ocr) >= 8:
+        for clave, datos in config.proveedores.items():
+            dir_conf = (datos.get("direccion_fragmento") or "").upper().strip()
+            if dir_conf and len(dir_conf) >= 8 and dir_conf in texto_raw.upper():
+                _add(clave, "direccion_fragmento", 25)
+
+    # n) tipo_doc_inferido coincide con tipo_doc_esperado (+20)
+    tipo_inferido = (senales_id.get("tipo_doc_inferido") or "").lower()
+    if tipo_inferido and tipo_inferido != "otro":
+        for clave, datos in config.proveedores.items():
+            tipo_esperado = (datos.get("tipo_doc_esperado") or "").lower()
+            if tipo_esperado and tipo_inferido == tipo_esperado:
+                _add(clave, f"tipo_doc({tipo_inferido})", 20)
+
     if not scores:
         return None
 
@@ -575,6 +616,67 @@ def _enriquecer_desde_config(datos_gpt: dict, match: dict) -> dict:
             "signals": match["signals"],
         },
     }
+
+
+def _enriquecer_perfil_fiscal(datos: dict, config_proveedor: dict) -> dict:
+    """Aplica el perfil fiscal del proveedor para rellenar campos null del OCR.
+
+    Calcula base_imponible desde total si es null, aplica IRPF desde codretencion,
+    y añade subcuenta + codimpuesto para el asiento.
+    Retorna un nuevo dict (no muta el original).
+    """
+    datos = dict(datos)  # copia
+
+    # 1. CIF canónico (override siempre si config tiene CIF)
+    if config_proveedor.get("cif"):
+        datos["emisor_cif"] = config_proveedor["cif"]
+
+    # 2. codimpuesto → tratamiento IVA
+    codimpuesto = config_proveedor.get("codimpuesto", "IVA21")
+    tasas = {"IVA21": 1.21, "IVA10": 1.10, "IVA4": 1.04, "IVA0": 1.0}
+    divisor = tasas.get(codimpuesto, 1.21)
+
+    # 3. Calcular base desde total si base es null
+    total = datos.get("total")
+    if datos.get("base_imponible") is None and total is not None:
+        try:
+            total_f = float(total)
+            datos["base_imponible"] = round(total_f / divisor, 2)
+            datos["iva_porcentaje"] = int(codimpuesto.replace("IVA", "")) if codimpuesto != "IVA0" else 0
+            datos["iva_importe"] = round(total_f - datos["base_imponible"], 2)
+        except (TypeError, ValueError):
+            pass
+
+    # 4. IRPF desde codretencion si no extraído
+    codretencion = config_proveedor.get("codretencion", "")
+    if datos.get("irpf_porcentaje") is None and codretencion:
+        try:
+            pct = int(codretencion.replace("IRPF", ""))
+            datos["irpf_porcentaje"] = pct
+            base = datos.get("base_imponible")
+            if base is not None:
+                datos["irpf_importe"] = round(float(base) * pct / 100, 2)
+        except (ValueError, AttributeError):
+            pass
+
+    # 5. Recalcular total si hay IRPF
+    if datos.get("irpf_importe") and datos.get("base_imponible"):
+        try:
+            datos["total"] = round(
+                float(datos["base_imponible"])
+                + float(datos.get("iva_importe") or 0)
+                - float(datos["irpf_importe"]),
+                2
+            )
+        except (TypeError, ValueError):
+            pass
+
+    # 6. Campos internos para asiento
+    datos["_subcuenta"] = config_proveedor.get("subcuenta")
+    datos["_codimpuesto"] = codimpuesto
+    datos["_perfil_aplicado"] = True
+
+    return datos
 
 
 def _descubrimiento_interactivo(datos_gpt: dict, tipo_doc: str,
@@ -1260,6 +1362,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         )
         if match_ms:
             datos_gpt = _enriquecer_desde_config(datos_gpt, match_ms)
+            datos_gpt = _enriquecer_perfil_fiscal(datos_gpt, match_ms["proveedor_datos"])
             entidad = match_ms["proveedor_datos"]
             # Reclasificar tipo si aún es OTRO/FV y el match es un proveedor
             if tipo_doc == "OTRO":
@@ -1279,6 +1382,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
         )
         if match_ms:
             datos_gpt = _enriquecer_desde_config(datos_gpt, match_ms)
+            datos_gpt = _enriquecer_perfil_fiscal(datos_gpt, match_ms["proveedor_datos"])
             entidad = match_ms["proveedor_datos"]
             tipo_doc = "FC"
             logger.info(
@@ -1308,19 +1412,51 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
                 return {"doc": None, "hash": hash_pdf, "avisos": avisos, "tier": ocr_tier,
                         "sugerencias": []}
         else:
-            # Intentar discovery solo si hay CIF válido y no fue sugerido antes
+            # 1. Discovery GPT: si retorna sugerencia válida → marcar pendiente, NO cuarentena
             _cif_para_discovery = (datos_gpt.get("emisor_cif") or "").strip().upper()
             _ya_sugerido = _cif_para_discovery in (cifs_sugeridos or set())
+            _sugerencia_discovery = None
             if _cif_para_discovery and not _ya_sugerido:
-                sugerencia = descubrir_proveedor(datos_gpt, config)
-                if sugerencia:
-                    sugerencia["_archivo"] = nombre_archivo
-                    sugerencias.append(sugerencia)
+                _sugerencia_discovery = descubrir_proveedor(datos_gpt, config)
+                if _sugerencia_discovery:
+                    _sugerencia_discovery["_archivo"] = nombre_archivo
+                    sugerencias.append(_sugerencia_discovery)
                     logger.info(
                         f"  [{nombre_archivo}] Discovery: sugerencia generada para {_cif_para_discovery}"
                     )
 
-            # Safety Net: resolver identidad con IA antes de cuarentena
+            if _sugerencia_discovery:
+                # Proveedor nuevo descubierto: doc pendiente de revisión, no va a cuarentena
+                _nombre_corto_sug = _sugerencia_discovery.get("_nombre_corto") or _sugerencia_discovery.get("nombre_fs", "?")
+                logger.info(
+                    f"  [{nombre_archivo}] Proveedor nuevo pendiente: {_nombre_corto_sug}"
+                )
+                # Construir doc mínimo para retornar (sin entidad resuelta aún)
+                _doc_pendiente = {
+                    "archivo": nombre_archivo,
+                    "hash_sha256": hash_pdf,
+                    "tipo": tipo_doc,
+                    "datos_extraidos": datos_gpt,
+                    "entidad": "pendiente_discovery",
+                    "entidad_cif": cif_desc if cif_desc != "?" else "",
+                    "confianza_global": 0,
+                    "nivel_confianza": "sin_entidad",
+                    "campos_bajo_umbral": [],
+                    "confianza_detalle": {},
+                    "_ocr_tier": ocr_tier,
+                    "_ocr_tier_motivo": tier_motivo,
+                    "_ocr_motores_usados": motores_usados,
+                    "_carpeta_origen": carpeta_origen,
+                    "_ruta_completa": str(ruta_pdf),
+                    "_nombre_estandar": nombre_archivo,
+                    "_estado": "proveedor_nuevo_pendiente",
+                    "_discovery_sugerencia": _nombre_corto_sug,
+                    "telemetria": {"duracion_ocr_s": _duracion_ocr, "cache_hit": cache_datos is not None},
+                }
+                return {"doc": _doc_pendiente, "hash": hash_pdf, "avisos": avisos,
+                        "tier": ocr_tier, "sugerencias": sugerencias}
+
+            # 2. Safety Net: resolver identidad con IA antes de cuarentena
             entidad_ia = _resolver_entidad_con_ia(datos_gpt, tipo_doc, config, texto_raw)
             if entidad_ia:
                 _autoregistrar_entidad(entidad_ia, tipo_doc, config)
@@ -1330,6 +1466,7 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
                 )
                 entidad = entidad_ia
             else:
+                # 3. Ambos fallaron → cuarentena
                 _mover_a_cuarentena(ruta_pdf, ruta_cuarentena,
                                     f"CIF desconocido: {cif_desc}")
                 avisos.append((f"CIF desconocido: {cif_desc}",
@@ -1352,9 +1489,9 @@ def _procesar_un_pdf(ruta_pdf, hash_pdf, config, client, motor_primario,
     if config_match:
         score_ms = config_match.get("score", 0)
         if score_ms >= 50:
-            confianza_global_val = max(confianza_global_val, 80)
+            confianza_global_val = max(confianza_global_val, 85)
         elif score_ms >= 35:
-            confianza_global_val = max(confianza_global_val, 65)
+            confianza_global_val = max(confianza_global_val, 70)
     # Caso 2: entidad resuelta por _identificar_entidad() (lookup directo CIF/nombre)
     elif entidad and not entidad.get("auto_detectado") and not entidad.get("skip_fs_lookup"):
         # Sub-caso 2a: detector documental regex (determinista, fiabilidad ≥ multi-signal score≥50)

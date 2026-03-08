@@ -28,8 +28,25 @@ ESQUEMA UNIVERSAL:
   "irpf_importe": null,
   "total": null,
   "divisa": "EUR",
-  "metadata": {{}}
+  "metadata": {{}},
+  "senales_identificacion": {{
+    "iban": null,
+    "telefono": null,
+    "direccion_fragmento": null,
+    "numero_comercio": null,
+    "tipo_doc_inferido": null
+  }}
 }}
+
+SEÑALES DE IDENTIFICACIÓN (bloque senales_identificacion):
+
+Extrae aunque el campo no sea fiscal. Son señales de identidad del emisor.
+- iban: IBAN completo si aparece (ej: ES2101820000120201631223). Sin espacios.
+- telefono: teléfono del emisor normalizado (ej: +34911234567). Solo dígitos y +.
+- direccion_fragmento: fragmento suficiente de dirección del emisor (ej: "C/ Mayor 12, Madrid").
+- numero_comercio: número de comercio/TPV si aparece (ej: "123456789").
+- tipo_doc_inferido: uno de: "comision_bancaria" | "seguro" | "suministro" | "honorarios" | "ticket_gasolina" | "cuota_colegial" | "nomina" | "alquiler" | "leasing" | "otro"
+- Si no aparece → null. NUNCA inventar.
 
 === EJEMPLO 1: FACTURA PROFESIONAL (CON IRPF) ===
 Entrada: CARLOS RUIZ ASESORIA, NIF 45123678A a MARIA ISABEL NAVARRO,
@@ -104,7 +121,14 @@ Salida:
   "irpf_importe": null,
   "total": 40.00,
   "divisa": "EUR",
-  "metadata": {{}}
+  "metadata": {{}},
+  "senales_identificacion": {{
+    "iban": null,
+    "telefono": null,
+    "direccion_fragmento": null,
+    "numero_comercio": null,
+    "tipo_doc_inferido": "ticket_gasolina"
+  }}
 }}
 
 === EJEMPLO 4: RLC SEGURIDAD SOCIAL ===
