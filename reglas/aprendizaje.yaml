@@ -1,5 +1,5 @@
 version: 1
-ultima_actualizacion: '2026-03-08T09:08:52.982236'
+ultima_actualizacion: '2026-03-08T09:56:33.000763'
 patrones:
 - id: base_001
   regex: No se encontro entidad.*en FS|Entidad no encontrada
