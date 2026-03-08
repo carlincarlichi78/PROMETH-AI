@@ -1,5 +1,37 @@
 # SFCE — Estado Actual, Pendientes y Roadmap
-> **Actualizado:** 2026-03-08 (sesión 127 cierre) | **Branch:** main | **Tests:** 2956 PASS | **Push:** OK
+> **Actualizado:** 2026-03-08 (sesión 128 cierre) | **Branch:** main | **Tests:** 2956 PASS | **Push:** OK
+
+---
+
+## Estado actual (sesión 128 — Enriquecimiento masivo config.yaml María Isabel)
+
+### Commits sesión 128
+
+| Commit | Descripción |
+|--------|-------------|
+| `9fa9540d` | chore(config): maria-isabel — enriquecimiento masivo config.yaml con datos reales facturas may-oct 2025 |
+| `4dd056ec` | chore(config): maria-isabel — enriquecimiento Q4 2025 + clientes nuevos ingresos |
+| `3c8417aa` | chore(config): maria-isabel — enriquecimiento feb-abr 2025 + id_emisor_adeudo ING |
+
+### Completado sesión 128
+
+- **4 documentos Claude Desktop procesados**: 2 .docx (may-jun 2025, jul-oct 2025) + 2 .md (ingresos + feb-abr gastos)
+- **63 facturas gastos + 31 facturas ingresos** analizadas, datos volcados al config.yaml
+- **14 proveedores enriquecidos** con IBAN, teléfono, nº comercio, aliases, cif_variantes_ocr, patrones_numeracion
+- **3 proveedores nuevos**: carrefour, apple_applecare, sabadell_consumer
+- **2 clientes nuevos ingresos**: euc_villa_parra (H29642634), romur_spanish_properties (CIF pendiente)
+- **varios_clientes** actualizado con 6 particulares documentados con CIF real
+- **id_emisor_adeudo_ing** añadido para 4 entidades: Mutualidad, Uralde, Avatel, ICAM
+- **Nueva alerta deduplicación**: mutualidad_adeudo_ing_doble
+
+### Próxima sesión — pendientes (sesión 129)
+
+1. **Ejecutar pipeline 63 gastos María Isabel** — con config enriquecido. Verificar scoring FV en producción.
+2. **Confirmar importe Mutualidad mayo 2025** (671,15€ — anómalo vs resto 255-269€)
+3. **Obtener CIF de Romur Spanish Properties** — FV 30/2025 pendiente de vincular
+4. **Poppler en PATH del proceso** — `C:\Users\carli\tools\poppler\poppler-24.08.0\Library\bin` instalado pero no en PATH
+5. **Integrar señales en motor_plantillas** — cuando `_fuente == "plantilla"`, señales no se extraen (pendiente sesión 125)
+6. **Facturas ingresos pendientes** — nº 4-15 y 18-21 de María Isabel sin subir todavía
 
 ---
 

@@ -47,10 +47,11 @@ cd dashboard && npm run dev
 
 ---
 
-## Estado rápido (sesión 127 — CERRADA)
+## Estado rápido (sesión 128 — CERRADA)
 
-- **Completado:** Fix scoring FV (floor 85 receptor en config, 72 NIF física, 65 CIF nuevo, 60 sin CIF). 13 tests nuevos. Config María Isabel enriquecido: 15 entradas actualizadas, aliases, cif_variantes_ocr, morilla_perez con IRPF15, sección alertas_deduplicacion. Análisis arquitectura directorio compartido — diferido. Carpeta extraccion_claude_desktop creada.
-- **Pendiente sesión 128:** Ingestar extracción Claude Desktop para config. Ejecutar pipeline 63 gastos María Isabel. Motor plantillas con señales (pendiente sesión 125). Poppler en PATH.
+- **Completado:** Enriquecimiento masivo config.yaml María Isabel — 4 docs Claude Desktop procesados (63 gastos + 31 ingresos). 14 proveedores enriquecidos con IBAN/tel/nº comercio/aliases/cif_variantes. 3 proveedores nuevos (carrefour, apple_applecare, sabadell_consumer). 2 clientes ingresos nuevos. varios_clientes con 6 particulares con CIF real. id_emisor_adeudo_ing en 4 entidades. Nueva alerta dedup mutualidad.
+- **Pendiente sesión 129:** Ejecutar pipeline 63 gastos María Isabel. Confirmar importe Mutualidad mayo 671€. Obtener CIF Romur. Poppler en PATH. Motor plantillas señales (sesión 125). Facturas ingresos 4-15 y 18-21.
+- **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 - **ARRANCAR API CORRECTAMENTE:** `python arrancar_api.py` (NO `export $(xargs)` — trunca SFCE_FERNET_KEY)
 
 ---

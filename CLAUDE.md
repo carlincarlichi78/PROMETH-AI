@@ -137,22 +137,23 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 
 ---
 
-## Estado actual (08/03/2026, sesion 126 cierre)
+## Estado actual (08/03/2026, sesion 128 cierre)
 
-**Rama**: `main` | **Ultimo commit**: cierre sesion 126 — analisis FV scoring + bugs identificados | **Tests**: 2943 PASS (sin cambios)
+**Rama**: `main` | **Ultimo commit**: `3c8417aa` chore(config): maria-isabel — enriquecimiento feb-abr 2025 + id_emisor_adeudo ING | **Tests**: 2956 PASS (sin cambios sesión 128)
 
-### Completado sesion 126
-- Análisis 15 JSONs OCR de ingresos María Isabel (1T, 2T, 3T)
-- Identificados 2 bugs en scoring FV: (1) confianza_global=55 aunque CIF receptor perfecto — scorer no distingue FV de FC; (2) particulares con NIF válido van a varios_clientes con confianza incorrectamente baja
-- Estrategia enriquecimiento definida: una muestra por proveedor es suficiente (IBAN/teléfono idénticos en todas las facturas del mismo proveedor)
-- IBAN propio María Isabel detectado: ES4114650100951735096975
-- Clientes recurrentes a añadir al config: Domos Advisers (B93509107), CP Marápolis (H29355872), CP Av. Gral López (H29546900)
+### Completado sesion 128
+- 4 documentos Claude Desktop procesados (2 .docx + 2 .md) con 63 gastos + 31 ingresos de María Isabel
+- 14 proveedores enriquecidos con IBAN, teléfono, nº comercio, aliases, cif_variantes_ocr, patrones_numeracion
+- 3 proveedores nuevos: carrefour, apple_applecare, sabadell_consumer
+- 2 clientes ingresos nuevos: euc_villa_parra (H29642634), romur_spanish_properties (CIF pendiente)
+- varios_clientes actualizado con 6 particulares con CIF real
+- id_emisor_adeudo_ing añadido para 4 entidades; nueva alerta dedup mutualidad
 
-### Proxima sesion — pendientes (sesion 127)
+### Proxima sesion — pendientes (sesion 129)
 
-1. **[PRIORITARIO] Fix scoring FV** — lógica diferenciada: bonus emisor propio +30, receptor en config→90, NIF persona física→72, CIF entidad nueva→65/proveedor_nuevo_pendiente. Umbral FIABLE para FV = 70.
-2. **Tests scoring FV** — 4 casos cubiertos
-3. **Añadir clientes recurrentes al config.yaml** — Domos Advisers, CP Marápolis, CP Av. Gral López
-4. **Enriquecer config.yaml gastos** — OCR una muestra por proveedor, extraer iban/telefono/numero_comercio
-5. **Integrar señales en motor_plantillas** — Opción A: patrones en formato_pdf
-6. **Poppler en PATH del proceso** — pendiente desde sesión 121
+1. **Ejecutar pipeline 63 gastos María Isabel** — config enriquecido listo
+2. **Confirmar importe Mutualidad mayo 2025** — 671,15€ anómalo vs 255-269€ resto del año
+3. **Obtener CIF Romur Spanish Properties** — FV 30/2025 sin CIF
+4. **Poppler en PATH del proceso** — instalado pero no configurado
+5. **Integrar señales en motor_plantillas** — pendiente sesión 125
+6. **Facturas ingresos pendientes** — nº 4-15 y 18-21 María Isabel sin subir
