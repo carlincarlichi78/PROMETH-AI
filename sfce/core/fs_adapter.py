@@ -465,7 +465,8 @@ class FSAdapter:
 
         Necesario cuando FS no acepta lineas en el POST de asientos.
         """
-        result = self._post("asientos", {"concepto": concepto, "fecha": fecha})
+        importe = round(sum(p.get("debe", 0) for p in partidas), 2)
+        result = self._post("asientos", {"concepto": concepto, "fecha": fecha, "importe": importe})
         if not result.ok:
             return result
 

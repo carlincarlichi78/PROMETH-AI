@@ -1338,7 +1338,11 @@ def ejecutar_registro(
                                      or _cuentas_pf.get("ingreso_default", "7050000000"))
                 fecha_fv = datos_fv.get("fecha") or form_data.get("fecha") or ""
                 num_fv = datos_fv.get("numero_factura") or form_data.get("numero2") or ""
-                concepto_fv = f"FV {num_fv}"
+                # Concepto en formato FS: "Factura de Cliente FAC0007A3 (6/2025) - NOMBRE"
+                _fv_fs = fs._get_one(f"facturaclientes/{idfactura}") or {}
+                _codigo_fs = _fv_fs.get("codigo", "")
+                _nombre_cli = form_data.get("nombrecliente", "")
+                concepto_fv = f"Factura de Cliente {_codigo_fs} ({num_fv}) - {_nombre_cli}".strip()
                 # 477 — IVA repercutido: subcuenta especifica por porcentaje
                 iva_pct_fv = int(round(float(datos_fv.get("iva_porcentaje") or 21)))
                 subcuenta_iva = f"4770000{iva_pct_fv:03d}0"  # ej: 4770000021 para IVA21
