@@ -1,4 +1,4 @@
-# Proyecto CONTABILIDAD - CLAUDE.md
+# PROMETH-AI (SFCE) - CLAUDE.md
 
 ## Libro de Instrucciones (LEER PRIMERO)
 
@@ -150,3 +150,12 @@ Uso pipeline: `export $(grep -v '^#' .env | xargs) && python scripts/pipeline.py
 ### Proxima sesion — pendientes (sesion 132)
 
 *Pendientes anteriores cerrados en sesión 132: FV19/20 validadas por banco+gestor como sintéticas; gastos_julio_2025.md commiteado; Dropbox queda como IVA21 no intracomunitaria.*
+
+
+## Sincronización con PROYECTO-GENERAL
+
+Al cerrar sesión, actualizar:
+- `C:\Users\carli\PROYECTOS\PROYECTO-GENERAL\INDICE_PROYECTOS.md`
+  - Actualizar: Estado, Próximos pasos, Última sync (fecha de hoy)
+- Luego: commit + push en PROYECTO-GENERAL
+
